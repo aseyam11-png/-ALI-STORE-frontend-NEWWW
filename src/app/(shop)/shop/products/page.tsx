@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   Filter,
@@ -15,7 +15,8 @@ import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { ProductPagination } from "@/components/commerce/products/ProductPagination";
 
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
-import { mapMockProductToSummary } from "@/features/products/services/product.mapper";
+import { getProducts } from "@/features/products/services/product.service";
+import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 
 import {
   filterCatalogProducts,
@@ -25,21 +26,82 @@ import {
 
 import { paginate } from "@/features/catalog/services/pagination.service";
 
-import { featuredProducts } from "@/mocks/products";
-
-
 const PAGE_SIZE = 12;
 
 export default function ProductsPage() {
   const [search, setSearch] =
     useState("");
 
-  // mock source → canonical ProductSummary → page-local B2CProduct view —
-  // this page no longer normalizes the raw mock array directly.
-  const allProducts =
-    featuredProducts
-      .map(mapMockProductToSummary)
-      .map(normalizeB2CProduct);
+  const [allProducts, setAllProducts] = useState<B2CProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const timer = window.setTimeout(() => {
+      setCatalogLoading(true);
+      setCatalogError("");
+
+      void getProducts({
+        search,
+        categoryId: undefined,
+        subcategoryId: undefined,
+        brand: undefined,
+        supplierId: undefined,
+        minPrice:
+          minPrice.trim()
+            ? Number(minPrice)
+            : undefined,
+        maxPrice:
+          maxPrice.trim()
+            ? Number(maxPrice)
+            : undefined,
+        minRating: undefined,
+        verifiedSupplierOnly: false,
+        discountOnly: false,
+        inStockOnly: inStock,
+        featuredOnly: false,
+        bestsellerOnly: false,
+        newArrivalOnly: false,
+        sort: "relevance",
+        page: 1,
+        pageSize: 100,
+      })
+        .then((response) => {
+          if (cancelled) return;
+          setAllProducts(
+            response.items.map(
+              normalizeB2CProduct,
+            ),
+          );
+        })
+        .catch((error) => {
+          if (cancelled) return;
+          setAllProducts([]);
+          setCatalogError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load products.",
+          );
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setCatalogLoading(false);
+          }
+        });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    search,
+    minPrice,
+    maxPrice,
+    inStock,
+  ]);
 
   const brands = useMemo(
     () => [
@@ -681,8 +743,74 @@ export default function ProductsPage() {
 
               </div>
 
-              {visibleProducts.length >
-              0 ? (
+              {catalogLoading ? (
+                <div className="rounded-2xl border border-neutral-200 bg-surface p-12 text-center">
+                  <p className="text-sm font-bold text-neutral-600">
+                    Loading products…
+                  </p>
+                </div>
+              ) : catalogError ? (
+                <div className="rounded-2xl border border-danger-100 bg-danger-surface p-10 text-center">
+                  <h2 className="text-xl font-black text-danger-700">
+                    Unable to load catalog
+                  </h2>
+                  <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-danger-600">
+                    {catalogError}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCatalogError("");
+                      setCatalogLoading(true);
+                      void getProducts({
+                        search,
+                        categoryId: undefined,
+                        subcategoryId: undefined,
+                        brand: undefined,
+                        supplierId: undefined,
+                        minPrice:
+                          minPrice.trim()
+                            ? Number(minPrice)
+                            : undefined,
+                        maxPrice:
+                          maxPrice.trim()
+                            ? Number(maxPrice)
+                            : undefined,
+                        minRating: undefined,
+                        verifiedSupplierOnly: false,
+                        discountOnly: false,
+                        inStockOnly: inStock,
+                        featuredOnly: false,
+                        bestsellerOnly: false,
+                        newArrivalOnly: false,
+                        sort: "relevance",
+                        page: 1,
+                        pageSize: 100,
+                      })
+                        .then((response) =>
+                          setAllProducts(
+                            response.items.map(
+                              normalizeB2CProduct,
+                            ),
+                          ),
+                        )
+                        .catch((error) =>
+                          setCatalogError(
+                            error instanceof Error
+                              ? error.message
+                              : "Unable to load products.",
+                          ),
+                        )
+                        .finally(() =>
+                          setCatalogLoading(false),
+                        );
+                    }}
+                    className="mt-5 h-10 rounded-xl bg-brand px-5 text-xs font-black text-white hover:bg-brand-hover"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : visibleProducts.length > 0 ? (
                 <>
                   <div
                     className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
