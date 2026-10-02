@@ -21,6 +21,7 @@ import { useCustomerStore } from "@/stores/customer-store";
 import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import { getMyAddresses } from "@/features/addresses/services/address-api.service";
 import { useSession } from "@/features/auth/session";
+import { useRouter } from "next/navigation";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
@@ -65,6 +66,7 @@ export default function CheckoutPage() {
   );
 
   const session = useSession();
+  const router = useRouter();
 
   const [form, setForm] =
     useState<FormState>(initialForm);
@@ -73,6 +75,11 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.replace("/login?next=/shop/checkout");
+      return;
+    }
+
     if (session.status !== "authenticated") return;
 
     setForm((current) => ({
@@ -104,7 +111,7 @@ export default function CheckoutPage() {
       .catch(() => {
         setAddresses([]);
       });
-  }, [session.status, session.user?.email]);
+  }, [router, session.status, session.user?.email]);
 
   const [paymentMethod, setPaymentMethod] =
     useState("card");
@@ -121,6 +128,18 @@ export default function CheckoutPage() {
     useState("");
   const [successPaymentStatus, setSuccessPaymentStatus] =
     useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
+
+  if (session.status !== "authenticated") {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-3xl px-4 py-16 text-center text-body-sm text-muted-foreground">
+            جارٍ التحقق من الحساب...
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
 
   const subtotal = useMemo(
     () =>
