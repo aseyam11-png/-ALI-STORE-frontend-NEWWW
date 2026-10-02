@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface CartItem {
   productId: string;
@@ -57,8 +58,9 @@ interface CartState {
   getShippingInfo: () => CartShippingInfo;
 }
 
-export const useCartStore = create<CartState>(
-  (set, get) => ({
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
     items: [],
 
     addItem: (item) => {
@@ -220,5 +222,9 @@ export const useCartStore = create<CartState>(
           "Delivery date will be confirmed at checkout",
       };
     },
-  }),
+    }),
+    {
+      name: "alistore-cart",
+    },
+  ),
 );
