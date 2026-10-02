@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getProducts } from "@/features/products/services/product.service";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import { B2CProductCard } from "./B2CProductCard";
@@ -33,7 +34,7 @@ export async function ProductDiscovery() {
             <p className="text-label font-medium uppercase tracking-wide text-muted-foreground">الكتالوج</p>
             <h2 className="mt-2 text-h2 font-bold tracking-tight text-foreground lg:text-h1">اكتشف المنتجات</h2>
           </div>
-          <a href="/shop/products" className="text-body-sm font-medium text-brand hover:text-brand-hover">عرض الكل</a>
+          <Link href="/shop/products" className="text-body-sm font-medium text-brand hover:text-brand-hover">عرض الكل</Link>
         </div>
 
         {products.length === 0 ? (
