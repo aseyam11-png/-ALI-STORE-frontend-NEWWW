@@ -1,20 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, Flame } from "lucide-react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+import { getProducts } from "@/features/products/services/product.service";
+import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
+import { B2CProductCard } from "./B2CProductCard";
 
-import { FlashDealsLazy } from "./FlashDealsLazy";
-
-// Same real discount data /shop/deals uses (featuredProducts filtered by an
-// active discount) — no separate "deals" dataset, no fabricated countdown.
 export function FlashDeals() {
-  const deals = featuredProducts
-    .filter((product) => product.discount !== undefined && product.discount > 0)
-    .sort((a, b) => (b.discount ?? 0) - (a.discount ?? 0))
-    .map(mapLegacyProductToCard);
+  const query = useQuery({
+    queryKey: ["home-catalog", "deals"],
+    queryFn: () =>
+      getProducts({
+        search: "",
+        categoryId: undefined,
+        subcategoryId: undefined,
+        brand: undefined,
+        supplierId: undefined,
+        minPrice: undefined,
+        maxPrice: undefined,
+        minRating: undefined,
+        verifiedSupplierOnly: false,
+        discountOnly: true,
+        inStockOnly: true,
+        featuredOnly: false,
+        bestsellerOnly: false,
+        newArrivalOnly: false,
+        sort: "relevance",
+        page: 1,
+        pageSize: 8,
+      }),
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+  });
 
-  if (deals.length === 0) {
+  const deals = (query.data?.items ?? []).map(normalizeB2CProduct);
+
+  if (!query.isPending && !query.isError && deals.length === 0) {
     return null;
   }
 
@@ -27,7 +50,6 @@ export function FlashDeals() {
               <Flame className="h-3.5 w-3.5" />
               عروض محدودة
             </div>
-
             <h2 className="mt-4 text-h2 font-bold tracking-tight text-white lg:text-h1">
               عروض اليوم
             </h2>
@@ -43,7 +65,23 @@ export function FlashDeals() {
         </div>
 
         <div className="mt-10">
-          <FlashDealsLazy products={deals} />
+          {query.isPending ? (
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="aspect-[0.86] animate-pulse rounded-2xl bg-white/10" />
+              ))}
+            </div>
+          ) : query.isError ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/70">
+              تعذر تحميل العروض الآن.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+              {deals.map((product) => (
+                <B2CProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
