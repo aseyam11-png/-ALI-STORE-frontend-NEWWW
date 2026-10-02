@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useSession } from "@/features/auth/session";
 import {
@@ -16,6 +16,9 @@ export function CustomerRuntime() {
   const { status } =
     useSession();
 
+  const wasAuthenticated =
+    useRef(false);
+
   const setCartItems =
     useCartStore(
       (state) => state.setItems,
@@ -28,11 +31,36 @@ export function CustomerRuntime() {
 
   useEffect(() => {
     if (
+      status ===
+      "unauthenticated"
+    ) {
+      if (
+        wasAuthenticated.current
+      ) {
+        useCartStore
+          .getState()
+          .clearCart();
+
+        useWishlistStore
+          .getState()
+          .clearWishlist();
+      }
+
+      wasAuthenticated.current =
+        false;
+
+      return;
+    }
+
+    if (
       status !==
       "authenticated"
     ) {
       return;
     }
+
+    wasAuthenticated.current =
+      true;
 
     let cancelled = false;
 
