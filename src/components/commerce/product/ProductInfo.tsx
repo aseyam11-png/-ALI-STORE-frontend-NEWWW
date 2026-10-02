@@ -163,9 +163,16 @@ export function ProductInfo({
           <button
             type="button"
             onClick={() =>
-              toggleWishlist(
-                product.id,
-              )
+              toggleWishlist({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.images[0]?.url,
+                brand: product.brand,
+                category: product.category,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+              })
             }
             aria-label={
               saved
