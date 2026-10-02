@@ -17,12 +17,16 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { useAddressStore } from "@/stores/address-store";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
+import {
+  createBackendOrder,
+  processBackendPayment,
+  replaceBackendCart,
+} from "@/features/commerce/services/checkout-api.service";
 
 interface FormState {
   fullName: string;
@@ -56,10 +60,6 @@ export default function CheckoutPage() {
 
   const clearCart = useCartStore(
     (state) => state.clearCart,
-  );
-
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
   );
 
   const getDefaultAddress = useCustomerStore(
@@ -163,6 +163,8 @@ export default function CheckoutPage() {
 
   const [successOrderId, setSuccessOrderId] =
     useState("");
+  const [successPaymentStatus, setSuccessPaymentStatus] =
+    useState<"PENDING" | "COMPLETED">("PENDING");
 
   const subtotal = useMemo(
     () =>
@@ -221,70 +223,59 @@ export default function CheckoutPage() {
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setError("");
 
     if (items.length === 0) {
-      setError(
-        "Your cart is empty.",
-      );
+      setError("Your cart is empty.");
       return;
     }
 
     if (!validate()) {
-      setError(
-        "Please complete all required shipping information.",
-      );
+      setError("Please complete all required shipping information.");
       return;
     }
 
-    const order = createOrder({
-      customerName:
-        form.fullName,
+    try {
+      await replaceBackendCart(items);
 
-      customerEmail:
-        form.email,
-
-      address: {
-        fullName:
+      const order = await createBackendOrder({
+        shippingAddress: [
           form.fullName,
-        phone:
           form.phone,
-        address:
           form.address,
-        city:
           form.city,
-        country:
           form.country,
-        postalCode:
           form.postalCode,
-      },
+        ].filter(Boolean).join(", "),
+        couponCode: appliedCoupon?.coupon.code,
+      });
 
-      paymentMethod,
+      const backendPaymentMethod =
+        paymentMethod === "cod"
+          ? "CASH_ON_DELIVERY"
+          : paymentMethod === "wallet"
+            ? "PAYPAL"
+            : "CREDIT_CARD";
 
-      items,
+      const payment = await processBackendPayment({
+        orderId: order.id,
+        amount: order.totalAmount,
+        method: backendPaymentMethod,
+      });
 
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
-
-      estimatedDelivery:
-        shipping.estimatedDelivery,
-
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
+      clearCart();
+      setSuccessOrderId(String(order.id));
+      setSuccessPaymentStatus(
+        payment.status === "COMPLETED" ? "COMPLETED" : "PENDING",
+      );
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to place the order. Please try again.";
+      setError(message);
+    }
   };
 
   if (successOrderId) {
@@ -308,7 +299,7 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
+                Your order has been created successfully. We&apos;ll send tracking
                 information as soon as your order ships.
               </p>
 
@@ -330,7 +321,7 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                    PAID
+                    {successPaymentStatus === "COMPLETED" ? "PAID" : "PENDING"}
                   </span>
                 </div>
 
