@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { apiClient, HttpApiError } from "@/lib/api/http-client";
 
 export type SessionUser = {
@@ -28,7 +29,7 @@ type BackendSession = {
 };
 
 export type Session = {
-  status: "unauthenticated" | "authenticating" | "authenticated";
+  status: "unauthenticated" | "authenticating" | "authenticated" | "error";
   user?: SessionUser;
 };
 
@@ -50,6 +51,7 @@ export function useSession(): Session {
   });
 
   if (query.isLoading) return { status: "authenticating" };
+  if (query.isError) return { status: "error" };
   if (!query.data) return { status: "unauthenticated" };
 
   return {
@@ -112,7 +114,7 @@ export async function login(credentials: {
   }
 }
 
-export async function logout(queryClient?: { invalidateQueries: Function; removeQueries?: Function }) {
+export async function logout(queryClient?: QueryClient) {
   try {
     await apiClient.request<ApiResponse<null>>("/api/v1/auth/logout", {
       method: "POST",
