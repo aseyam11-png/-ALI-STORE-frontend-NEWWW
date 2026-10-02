@@ -151,3 +151,48 @@ export async function getShippingQuote(
     `/v1/shipping/quote?subtotal=${encodeURIComponent(subtotal)}&method=${method}&currency=${encodeURIComponent(currency)}`,
   );
 }
+
+
+export interface BackendAdminProduct {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  price: number;
+  currency: string;
+  sku?: string | null;
+  status: "ACTIVE" | "ARCHIVED" | "DRAFT" | "DISCONTINUED";
+  categoryId: number;
+  categoryName: string;
+  brandId?: number | null;
+  brandName?: string | null;
+  images: string[];
+  primaryImageUrl?: string | null;
+  supplierId?: number | null;
+  supplierCode?: string | null;
+  supplierName?: string | null;
+  supplierSku?: string | null;
+  supplierCost?: number | null;
+}
+
+export async function getAdminProducts(page = 0, pageSize = 50) {
+  return apiClient.request<BackendPage<BackendAdminProduct>>(
+    "/v1/products/admin?page=" + page + "&size=" + pageSize,
+  );
+}
+
+export async function getAdminProduct(id: number) {
+  return apiClient.request<BackendAdminProduct>(
+    "/v1/products/admin/" + id,
+  );
+}
+
+export async function updateAdminProductStatus(
+  id: number,
+  status: BackendAdminProduct["status"],
+) {
+  return apiClient.request<BackendAdminProduct>("/v1/products/" + id, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
