@@ -38,6 +38,7 @@ interface WishlistState {
   ) => boolean;
 
   clearWishlist: () => void;
+  replaceItems: (items: WishlistProduct[]) => void;
 }
 
 function buildProductIds(
@@ -147,6 +148,8 @@ export const useWishlistStore =
             item.id ===
             productId,
         ),
+
+      replaceItems: (items) => set({ items, productIds: buildProductIds(items) }),
 
       clearWishlist: () => {
         set({
