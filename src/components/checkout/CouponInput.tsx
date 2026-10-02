@@ -1,247 +1,122 @@
 "use client";
 
-import {
-  CheckCircle2,
-  Tag,
-  X,
-} from "lucide-react";
-import {
-  useState,
-} from "react";
-
-import {
-  validateCoupon,
-} from "@/features/coupons/services/coupon.service";
-
-import type {
-  AppliedCoupon,
-} from "@/features/coupons/types/coupon.types";
-
-import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
+import { CheckCircle2, Tag, X } from "lucide-react";
+import { useState } from "react";
+import { validateServerCoupon, type BackendCoupon } from "@/features/coupons/services/coupon-api.service";
+import { formatSAR } from "@/features/localization/services/currency.service";
 
 interface CouponInputProps {
   subtotal: number;
-
-  shipping: number;
-
-  onApply?: (
-    coupon: AppliedCoupon,
-  ) => void;
-
+  onApply?: (value: { code: string; discountAmount: number }) => void;
   onRemove?: () => void;
 }
 
-export function CouponInput({
-  subtotal,
-  shipping,
-  onApply,
-  onRemove,
-}: CouponInputProps) {
-  const [
-    code,
-    setCode,
-  ] = useState("");
+export function CouponInput({ subtotal, onApply, onRemove }: CouponInputProps) {
+  const [code, setCode] = useState("");
+  const [applied, setApplied] = useState<BackendCoupon | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [message, setMessage] = useState("");
+  const [valid, setValid] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    applied,
-    setApplied,
-  ] =
-    useState<AppliedCoupon | null>(
-      null,
-    );
+  const apply = async () => {
+    if (!code.trim() || loading) return;
+    setLoading(true);
+    setMessage("");
+    setValid(null);
 
-  const [
-    message,
-    setMessage,
-  ] = useState("");
+    try {
+      const coupon = await validateServerCoupon(code);
+      if (!coupon.isActive) throw new Error("الكوبون غير فعال.");
+      if (new Date(coupon.expirationDate).getTime() < Date.now()) throw new Error("انتهت صلاحية الكوبون.");
+      if (coupon.minimumOrderAmount !== undefined && subtotal < coupon.minimumOrderAmount) {
+        throw new Error("قيمة الطلب لا تحقق الحد الأدنى لهذا الكوبون.");
+      }
 
-  const [
-    valid,
-    setValid,
-  ] = useState<
-    boolean | null
-  >(null);
-
-  const apply = () => {
-    const result =
-      validateCoupon(
-        code,
+      const discount = Math.min(
         subtotal,
-        shipping,
+        Number(((subtotal * Number(coupon.discountPercentage)) / 100).toFixed(2)),
       );
 
-    setMessage(
-      result.message,
-    );
-
-    setValid(
-      result.valid,
-    );
-
-    if (
-      result.valid &&
-      result.applied
-    ) {
-      setApplied(
-        result.applied,
-      );
-
-      onApply?.(
-        result.applied,
-      );
-    } else {
+      setApplied(coupon);
+      setDiscountAmount(discount);
+      setValid(true);
+      setMessage("تم تطبيق الكوبون.");
+      onApply?.({ code: coupon.code, discountAmount: discount });
+    } catch (error) {
       setApplied(null);
+      setDiscountAmount(0);
+      setValid(false);
+      setMessage(error instanceof Error ? error.message : "تعذر التحقق من الكوبون.");
+      onRemove?.();
+    } finally {
+      setLoading(false);
     }
   };
 
   const remove = () => {
     setCode("");
     setApplied(null);
+    setDiscountAmount(0);
     setMessage("");
     setValid(null);
     onRemove?.();
   };
 
-  if (applied) {
-    return (
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-
-        <div className="flex items-start gap-3">
-
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600">
-            <CheckCircle2 className="h-5 w-5" />
-          </div>
-
-          <div className="min-w-0 flex-1">
-
-            <p className="text-sm font-black text-emerald-800">
-              Coupon applied
-            </p>
-
-            <p className="mt-1 text-xs text-emerald-700">
-              Code:{" "}
-              <span className="font-black">
-                {
-                  applied.coupon.code
-                }
-              </span>
-            </p>
-
-            <div className="mt-2 flex items-center gap-2 text-[10px] font-black text-emerald-700">
-
-              Discount:
-
-              <LocalizedPrice
-                amountUSD={
-                  applied.finalDiscount
-                }
-              />
-
-            </div>
-
-          </div>
-
-          <button
-            type="button"
-            onClick={
-              remove
-            }
-            aria-label="Remove coupon"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-white"
-          >
-            <X className="h-4 w-4" />
-          </button>
-
+  return applied ? (
+    <section className="rounded-2xl border border-success-200 bg-success-surface p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-success-600">
+          <CheckCircle2 className="h-5 w-5" />
         </div>
-
-      </section>
-    );
-  }
-
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5">
-
-      <div className="flex items-center gap-3">
-
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-          <Tag className="h-4 w-4" />
-        </div>
-
-        <div>
-          <h2 className="text-sm font-black text-slate-900">
-            Coupon or promo code
-          </h2>
-
-          <p className="mt-1 text-[10px] text-slate-400">
-            Enter your discount code before placing the order.
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-black text-success-800">Coupon applied</p>
+          <p className="mt-1 text-xs text-success-700">Code: <span className="font-black">{applied.code}</span></p>
+          <p className="mt-2 text-xs font-black text-success-700">
+            Discount: {formatSAR(discountAmount)}
           </p>
         </div>
-
+        <button type="button" onClick={remove} aria-label="Remove coupon" className="flex h-8 w-8 items-center justify-center rounded-lg text-success-600 hover:bg-white">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </section>
+  ) : (
+    <section className="rounded-2xl border border-neutral-200 bg-surface p-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-brand">
+          <Tag className="h-4 w-4" />
+        </div>
+        <div>
+          <h2 className="text-sm font-black text-foreground">Coupon or promo code</h2>
+          <p className="mt-1 text-xs text-muted-foreground">سيتم التحقق من الكود مع الخادم.</p>
+        </div>
       </div>
 
       <div className="mt-4 flex gap-2">
-
         <input
           value={code}
-          onChange={(
-            event,
-          ) =>
-            setCode(
-              event.target.value,
-            )
-          }
-          onKeyDown={(
-            event,
-          ) => {
-            if (
-              event.key ===
-              "Enter"
-            ) {
+          onChange={(event) => setCode(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
               event.preventDefault();
-              apply();
+              void apply();
             }
           }}
-          placeholder="e.g. WELCOME10"
+          placeholder="WELCOME10"
           aria-label="Coupon code"
-          className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm font-bold uppercase outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+          className="h-11 min-w-0 flex-1 rounded-xl border border-neutral-200 px-3 text-sm font-bold uppercase outline-none focus:border-brand"
         />
-
-        <button
-          type="button"
-          onClick={
-            apply
-          }
-          disabled={
-            !code.trim()
-          }
-          className="h-11 rounded-xl bg-[#2563EB] px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          Apply
+        <button type="button" onClick={() => void apply()} disabled={!code.trim() || loading} className="h-11 rounded-xl bg-brand px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-neutral-300">
+          {loading ? "..." : "Apply"}
         </button>
-
       </div>
 
       {message && (
-        <p
-          role={
-            valid
-              ? "status"
-              : "alert"
-          }
-          className={`mt-3 text-xs font-bold ${
-            valid
-              ? "text-emerald-600"
-              : "text-red-600"
-          }`}
-        >
+        <p role={valid ? "status" : "alert"} className={"mt-3 text-xs font-bold " + (valid ? "text-success-600" : "text-danger-600")}>
           {message}
         </p>
       )}
-
-      <div className="mt-3 text-[9px] text-slate-400">
-        Test codes: WELCOME10 · SAVE20 · FREESHIP
-      </div>
-
     </section>
   );
 }
