@@ -125,21 +125,6 @@ export function AdminShell({
   const menuCloseRef = useRef<HTMLButtonElement | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
 
-  if (
-    session.status !== "authenticated" ||
-    session.user?.role !== "ROLE_ADMIN"
-  ) {
-    return (
-      <LocalizationProvider>
-        <div className="min-h-screen bg-[#F8FAFC]">
-          <main className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-slate-500">
-            جارٍ التحقق من صلاحيات الإدارة...
-          </main>
-        </div>
-      </LocalizationProvider>
-    );
-  }
-
   const isActive = (href: string) =>
     href === "/admin"
       ? pathname === "/admin"
@@ -198,6 +183,21 @@ export function AdminShell({
       trigger?.focus();
     };
   }, [mobileNavOpen]);
+
+  if (
+    session.status !== "authenticated" ||
+    session.user?.role !== "ROLE_ADMIN"
+  ) {
+    return (
+      <LocalizationProvider>
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <main className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-slate-500">
+            جارٍ التحقق من صلاحيات الإدارة...
+          </main>
+        </div>
+      </LocalizationProvider>
+    );
+  }
 
   return (
     <LocalizationProvider>
