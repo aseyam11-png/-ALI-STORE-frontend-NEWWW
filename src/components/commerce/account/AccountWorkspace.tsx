@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 
 import { CustomerShell } from "@/components/commerce/CustomerShell";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/features/auth/session";
 
 // The one customer Account Workspace shell. Before this, /buyer,
 // /buyer/orders, /buyer/wishlist and /buyer/addresses were four
@@ -37,6 +40,25 @@ export function AccountWorkspace({
   description,
   children,
 }: AccountWorkspaceProps) {
+  const router = useRouter();
+  const session = useSession();
+
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.replace("/login?next=/buyer");
+    }
+  }, [router, session.status]);
+
+  if (session.status !== "authenticated") {
+    return (
+      <CustomerShell>
+        <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-muted-foreground">
+          جارٍ التحقق من جلسة الحساب...
+        </div>
+      </CustomerShell>
+    );
+  }
+
   return (
     <CustomerShell>
       <section className="border-b border-neutral-200 bg-surface">
