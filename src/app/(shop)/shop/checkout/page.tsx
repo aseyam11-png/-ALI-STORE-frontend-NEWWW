@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -82,11 +82,6 @@ export default function CheckoutPage() {
 
     if (session.status !== "authenticated") return;
 
-    setForm((current) => ({
-      ...current,
-      email: session.user?.email ?? current.email,
-    }));
-
     getMyAddresses()
       .then((nextAddresses) => {
         setAddresses(nextAddresses);
@@ -129,6 +124,8 @@ export default function CheckoutPage() {
   const [successPaymentStatus, setSuccessPaymentStatus] =
     useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
 
+  const effectiveEmail = form.email || session.user?.email || "";
+
   if (session.status !== "authenticated") {
     return (
       <AppShell>
@@ -141,16 +138,9 @@ export default function CheckoutPage() {
     );
   }
 
-  const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          total +
-          item.price *
-            item.quantity,
-        0,
-      ),
-    [items],
+  const subtotal = items.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
   );
 
   const shippingCost =
