@@ -162,7 +162,7 @@ function mapBackendProductToDetails(
   const summary =
     mapBackendProductToSummary(product);
 
-  const images =
+  const images: ProductDetails["images"] =
     product.images
       .filter(Boolean)
       .map((url, index) => ({
@@ -176,7 +176,10 @@ function mapBackendProductToDetails(
     images.length === 0 &&
     summary.thumbnail
   ) {
-    images.push(summary.thumbnail);
+    images.push({
+      ...summary.thumbnail,
+      sortOrder: summary.thumbnail.sortOrder ?? 0,
+    });
   }
 
   return {
