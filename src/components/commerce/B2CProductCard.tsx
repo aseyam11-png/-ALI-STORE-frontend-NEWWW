@@ -2,14 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, Heart, ShoppingCart, Star, Truck, Zap } from "lucide-react";
+import {
+  CheckCircle2,
+  Heart,
+  ShoppingCart,
+  Star,
+  Truck,
+  Zap,
+} from "lucide-react";
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
+import { useSession } from "@/features/auth/session";
 import { formatSAR } from "@/features/localization/services/currency.service";
+import { useTranslation } from "@/lib/i18n/dictionary";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
-import { useTranslation } from "@/lib/i18n/dictionary";
-import { useSession } from "@/features/auth/session";
 import {
   addServerWishlistItem,
   removeServerWishlistItem,
@@ -18,13 +25,18 @@ import {
 export function B2CProductCard({ product }: { product: B2CProduct }) {
   const { t } = useTranslation();
   const session = useSession();
+
   const addItem = useCartStore((state) => state.addItem);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
-  const saved = useWishlistStore((state) => state.productIds.includes(product.id));
+  const saved = useWishlistStore((state) =>
+    state.productIds.includes(product.id),
+  );
+
   const available = product.availability === "IN_STOCK";
 
   const handleCart = () => {
     if (!available) return;
+
     addItem({
       productId: product.id,
       name: product.name,
@@ -33,8 +45,8 @@ export function B2CProductCard({ product }: { product: B2CProduct }) {
       quantity: 1,
       image: product.images[0]?.url,
       minOrderQuantity: 1,
-      shippingMethod: product.shipping.method,
-      estimatedDelivery: product.shipping.estimatedDelivery,
+      shippingMethod: "STANDARD",
+      estimatedDelivery: "تظهر بعد اختيار الشحن",
     });
   };
 
@@ -60,27 +72,17 @@ export function B2CProductCard({ product }: { product: B2CProduct }) {
           await addServerWishlistItem(product.id);
         }
       }
-
       toggleWishlist(snapshot);
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0]?.url,
-      brand: product.brand,
-      category: product.category,
-      originalPrice: product.originalPrice,
-      discountPercentage: product.discountPercentage,
-      rating: product.rating,
-      reviewCount: product.reviewCount,
-    });
     } catch {
-      return;
+      // Keep the current visual state when the remote write fails.
+      // The backend remains authoritative for authenticated accounts.
     }
   };
 
-  const oldPrice = product.originalPrice && product.originalPrice > product.price
-    ? formatSAR(product.originalPrice)
-    : null;
+  const oldPrice =
+    product.originalPrice && product.originalPrice > product.price
+      ? formatSAR(product.originalPrice)
+      : null;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
@@ -114,11 +116,19 @@ export function B2CProductCard({ product }: { product: B2CProduct }) {
 
         <button
           type="button"
-          onClick={handleWishlist}
-          aria-label={saved ? t("removeFromWishlist", { name: product.name }) : t("addToWishlist", { name: product.name })}
+          onClick={() => void handleWishlist()}
+          aria-label={
+            saved
+              ? t("removeFromWishlist", { name: product.name })
+              : t("addToWishlist", { name: product.name })
+          }
           aria-pressed={saved}
-          className={"absolute end-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-surface/95 shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 " +
-            (saved ? "text-danger-500" : "text-neutral-500 hover:text-danger-500")}
+          className={
+            "absolute end-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-surface/95 shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 " +
+            (saved
+              ? "text-danger-500"
+              : "text-neutral-500 hover:text-danger-500")
+          }
         >
           <Heart className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
         </button>
@@ -134,32 +144,54 @@ export function B2CProductCard({ product }: { product: B2CProduct }) {
 
         <div className="mt-3 flex items-center gap-2">
           <Star className="h-4 w-4 fill-warning-500 text-warning-500" />
-          <span className="text-sm font-black">{product.rating > 0 ? product.rating.toFixed(1) : "جديد"}</span>
+          <span className="text-sm font-black">
+            {product.rating > 0 ? product.rating.toFixed(1) : "جديد"}
+          </span>
           {product.reviewCount > 0 && (
-            <span className="text-xs text-neutral-400">{t("reviewsCount", { count: product.reviewCount.toLocaleString() })}</span>
+            <span className="text-xs text-neutral-400">
+              {t(
+                "reviewsCount",
+                { count: product.reviewCount.toLocaleString() },
+              )}
+            </span>
           )}
         </div>
 
         <div className="mt-3 flex items-end gap-2">
-          <span className="text-xl font-black text-foreground">{formatSAR(product.price)}</span>
-          {oldPrice && <span className="text-xs font-semibold text-neutral-400 line-through">{oldPrice}</span>}
+          <span className="text-xl font-black text-foreground">
+            {formatSAR(product.price)}
+          </span>
+          {oldPrice && (
+            <span className="text-xs font-semibold text-neutral-400 line-through">
+              {oldPrice}
+            </span>
+          )}
         </div>
 
         <div className="mt-3 flex items-center gap-2">
           {product.availability === "IN_STOCK" ? (
-            <span className="text-xs font-bold text-success-700">{t("inStock")}</span>
+            <span className="text-xs font-bold text-success-700">
+              {t("inStock")}
+            </span>
           ) : product.availability === "UNKNOWN" ? (
-            <span className="text-xs font-bold text-warning-700">التوفر يتأكد عند الطلب</span>
+            <span className="text-xs font-bold text-warning-700">
+              التوفر يتأكد عند الطلب
+            </span>
           ) : (
-            <span className="text-xs font-black text-danger-700">{t("outOfStock")}</span>
+            <span className="text-xs font-black text-danger-700">
+              {t("outOfStock")}
+            </span>
           )}
         </div>
 
         <div className="mt-3 rounded-xl bg-neutral-50 p-3">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-success-600" />
-            <span className="truncate text-xs font-bold text-neutral-800">{t("shippedByAliStore")}</span>
+            <span className="truncate text-xs font-bold text-neutral-800">
+              {t("shippedByAliStore")}
+            </span>
           </div>
+
           <div className="mt-2 flex items-center gap-2 text-[11px] text-neutral-500">
             <Truck className="h-3.5 w-3.5 text-success-600" />
             {product.shipping.method}
