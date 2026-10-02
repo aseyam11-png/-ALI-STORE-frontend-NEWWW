@@ -1,243 +1,443 @@
-import type { Product } from "@/mocks/products";
-
-import { featuredProducts } from "@/mocks/products";
-
-import {
-  mapMockProductToDetails,
-  mapMockProductToSummary,
-} from "./product.mapper";
+import { apiClient } from "@/lib/api/http-client";
+import type {
+  BackendProduct,
+  PageResponse,
+} from "@/lib/api/contracts";
 
 import type {
   ProductDetails,
+  ProductImage,
   ProductListResponse,
   ProductSummary,
+  ProductStockStatus,
 } from "../types/product.types";
 
-import type { ProductFilters } from "../types/product-filter.types";
+import type {
+  ProductFilters,
+} from "../types/product-filter.types";
 
-function matchesSearch(
-  product: ProductSummary,
-  search: string,
-): boolean {
-  if (!search.trim()) return true;
-
-  const query = search.trim().toLowerCase();
-
-  return [
-    product.name,
-    product.sku,
-    product.supplier.name,
-    product.category?.name ?? "",
-    product.brand?.name ?? "",
-    ...product.tags,
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(query);
+function toStockStatus(
+  availability: BackendProduct["availability"],
+): ProductStockStatus {
+  switch (availability) {
+    case "IN_STOCK":
+      return "in_stock";
+    case "OUT_OF_STOCK":
+      return "out_of_stock";
+    default:
+      return "unknown";
+  }
 }
 
-function matchesFilters(
-  product: ProductSummary,
-  filters: ProductFilters,
-): boolean {
-  if (!matchesSearch(product, filters.search)) {
-    return false;
-  }
-
-  if (
-    filters.categoryId &&
-    product.category?.id !== filters.categoryId
-  ) {
-    return false;
-  }
-
-  if (
-    filters.brand &&
-    product.brand?.name.toLowerCase() !==
-      filters.brand.toLowerCase()
-  ) {
-    return false;
-  }
-
-  if (
-    filters.supplierId &&
-    product.supplier.id !== filters.supplierId
-  ) {
-    return false;
-  }
-
-  if (
-    filters.minPrice !== undefined &&
-    product.price.amount < filters.minPrice
-  ) {
-    return false;
-  }
-
-  if (
-    filters.maxPrice !== undefined &&
-    product.price.amount > filters.maxPrice
-  ) {
-    return false;
-  }
-
-  if (
-    filters.minRating !== undefined &&
-    product.rating < filters.minRating
-  ) {
-    return false;
-  }
-
-  if (
-    filters.verifiedSupplierOnly &&
-    !product.supplier.verified
-  ) {
-    return false;
-  }
-
-  if (
-    filters.discountOnly &&
-    product.discountPercentage === undefined
-  ) {
-    return false;
-  }
-
-  if (
-    filters.inStockOnly &&
-    product.stockStatus === "out_of_stock"
-  ) {
-    return false;
-  }
-
-  if (
-    filters.featuredOnly &&
-    !product.featured
-  ) {
-    return false;
-  }
-
-  if (
-    filters.bestsellerOnly &&
-    !product.bestseller
-  ) {
-    return false;
-  }
-
-  if (
-    filters.newArrivalOnly &&
-    !product.newArrival
-  ) {
-    return false;
-  }
-
-  return true;
+function mapImage(
+  url: string,
+  index: number,
+  productName: string,
+): ProductImage {
+  return {
+    id: `${productName}-image-${index}`,
+    url,
+    alt: productName,
+    sortOrder: index,
+  };
 }
 
-function sortProducts(
-  products: ProductSummary[],
+function mapBackendProduct(
+  product: BackendProduct,
+): ProductSummary {
+  const images = product.images
+    .filter(Boolean)
+    .map((url, index) =>
+      mapImage(url, index, product.name),
+    );
+
+  const primaryUrl =
+    product.primaryImageUrl ??
+    product.images[0];
+
+  const thumbnail =
+    primaryUrl
+      ? mapImage(
+          primaryUrl,
+          0,
+          product.name,
+        )
+      : undefined;
+
+  return {
+    id: String(product.id),
+    sku:
+      product.sku ??
+      `PRODUCT-${product.id}`,
+    name: product.name,
+    slug: product.slug,
+    shortDescription:
+      product.description ??
+      undefined,
+    price: {
+      amount: Number(product.price),
+      currency: product.currency,
+      unit: "unit",
+    },
+    minOrderQuantity: 1,
+    rating: 0,
+    reviewCount: 0,
+    // Customer UI must never expose the external supplier identity.
+    // Supplier execution remains a backend/fulfillment concern.
+    supplier: {
+      id: "internal-fulfillment",
+      name: "ALI STORE",
+      verified: true,
+    },
+    shipping: "Tracked delivery",
+    thumbnail,
+    category: {
+      id: String(product.categoryId),
+      name: product.categoryName,
+      slug: product.categoryName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, ""),
+    },
+    brand:
+      product.brandId != null &&
+      product.brandName
+        ? {
+            id: String(product.brandId),
+            name: product.brandName,
+            slug: product.brandName
+              .toLowerCase()
+              .replace(
+                /[^a-z0-9]+/g,
+                "-",
+              )
+              .replace(
+                /^-|-$/g,
+                "",
+              ),
+          }
+        : undefined,
+    stockQuantity: 0,
+    availableQuantity: 0,
+    stockStatus: toStockStatus(
+      product.availability,
+    ),
+    status:
+      product.status === "ACTIVE"
+        ? "active"
+        : product.status ===
+            "ARCHIVED"
+          ? "archived"
+          : "draft",
+    featured: false,
+    bestseller: false,
+    newArrival: false,
+    tags: [],
+    createdAt:
+      product.createdAt ??
+      "",
+    updatedAt:
+      product.updatedAt ??
+      "",
+  };
+}
+
+function mapPage(
+  page: PageResponse<BackendProduct>,
+): ProductListResponse {
+  return {
+    items: page.content.map(
+      mapBackendProduct,
+    ),
+    pagination: {
+      page: page.pageNumber + 1,
+      pageSize: page.pageSize,
+      totalItems:
+        page.totalElements,
+      totalPages:
+        page.totalPages,
+      hasNextPage:
+        page.pageNumber + 1 <
+        page.totalPages,
+      hasPreviousPage:
+        page.pageNumber > 0,
+    },
+  };
+}
+
+function backendSort(
   sort: ProductFilters["sort"],
-): ProductSummary[] {
-  return [...products].sort((a, b) => {
-    switch (sort) {
-      case "price_asc":
-        return a.price.amount - b.price.amount;
-
-      case "price_desc":
-        return b.price.amount - a.price.amount;
-
-      case "rating_desc":
-        return b.rating - a.rating;
-
-      case "reviews_desc":
-        return b.reviewCount - a.reviewCount;
-
-      case "name_asc":
-        return a.name.localeCompare(b.name);
-
-      case "name_desc":
-        return b.name.localeCompare(a.name);
-
-      case "discount_desc":
-        return (
-          (b.discountPercentage ?? 0) -
-          (a.discountPercentage ?? 0)
-        );
-
-      case "newest":
-        return (
-          new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
-        );
-
-      case "relevance":
-      default:
-        return (
-          Number(b.featured) - Number(a.featured) ||
-          b.rating - a.rating ||
-          b.reviewCount - a.reviewCount
-        );
-    }
-  });
+): string {
+  switch (sort) {
+    case "price_asc":
+      return "price_asc";
+    case "price_desc":
+      return "price_desc";
+    default:
+      return "relevance";
+  }
 }
 
 export async function getProducts(
   filters: ProductFilters,
 ): Promise<ProductListResponse> {
-  const products =
-    featuredProducts.map(mapMockProductToSummary);
+  const params =
+    new URLSearchParams();
 
-  const filtered =
-    products.filter((product) =>
-      matchesFilters(product, filters),
+  if (filters.search.trim()) {
+    params.set(
+      "q",
+      filters.search.trim(),
     );
+  }
 
-  const sorted =
-    sortProducts(filtered, filters.sort);
+  if (filters.categoryId) {
+    params.set(
+      "category",
+      filters.categoryId,
+    );
+  }
 
-  const totalItems = sorted.length;
+  if (
+    filters.minPrice !==
+    undefined
+  ) {
+    params.set(
+      "minPrice",
+      String(filters.minPrice),
+    );
+  }
 
-  const pageSize =
-    Math.max(1, filters.pageSize);
+  if (
+    filters.maxPrice !==
+    undefined
+  ) {
+    params.set(
+      "maxPrice",
+      String(filters.maxPrice),
+    );
+  }
+
+  if (filters.inStockOnly) {
+    params.set(
+      "availability",
+      "IN_STOCK",
+    );
+  }
+
+  params.set(
+    "sort",
+    backendSort(filters.sort),
+  );
+
+  params.set(
+    "page",
+    String(
+      Math.max(
+        0,
+        filters.page - 1,
+      ),
+    ),
+  );
+
+  params.set(
+    "pageSize",
+    String(
+      Math.min(
+        100,
+        Math.max(
+          1,
+          filters.pageSize,
+        ),
+      ),
+    ),
+  );
+
+  const query =
+    params.toString();
 
   const page =
-    Math.max(1, filters.page);
+    await apiClient.request<
+      PageResponse<BackendProduct>
+    >(
+      `/api/v1/products${query ? `?${query}` : ""}`,
+    );
 
-  const totalPages =
-    totalItems === 0
-      ? 0
-      : Math.ceil(totalItems / pageSize);
+  let response =
+    mapPage(page);
 
-  const start =
-    (page - 1) * pageSize;
+  // Backend does not currently expose rating, supplier-verified, discount,
+  // featured or newest metadata. Never fabricate those filters/sorts.
+  // Name sorting is safe client-side because the backend already returned
+  // the canonical product records.
+  if (
+    filters.brand &&
+    filters.brand !== "all"
+  ) {
+    response = {
+      ...response,
+      items:
+        response.items.filter(
+          (product) =>
+            product.brand?.name
+              .toLowerCase() ===
+            filters.brand!.toLowerCase(),
+        ),
+    };
+  }
 
-  return {
-    items: sorted.slice(
-      start,
-      start + pageSize,
-    ),
-
-    pagination: {
-      page,
-      pageSize,
-      totalItems,
-      totalPages,
-      hasNextPage:
-        totalPages > 0 &&
-        page < totalPages,
-      hasPreviousPage: page > 1,
-    },
-  };
+  return response;
 }
 
 export async function getProductById(
   id: string,
 ): Promise<ProductDetails | null> {
-  const product = featuredProducts.find(
-    (item: Product) => item.id === id,
-  );
+  let product: BackendProduct;
 
-  if (!product) return null;
+  try {
+    product =
+      await apiClient.request<BackendProduct>(
+        `/api/v1/products/${encodeURIComponent(id)}`,
+      );
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      Number(
+        (error as { status?: unknown })
+          .status,
+      ) === 404
+    ) {
+      return null;
+    }
 
-  return mapMockProductToDetails(product);
+    throw error;
+  }
+
+  const summary =
+    mapBackendProduct(product);
+
+  const images =
+    product.images
+      .filter(Boolean)
+      .map(
+        (url, index) =>
+          mapImage(
+            url,
+            index,
+            product.name,
+          ),
+      );
+
+  const primary =
+    images.find(
+      (image) =>
+        image.url ===
+        product.primaryImageUrl,
+    ) ??
+    images[0];
+
+  const shippingMethod = {
+    id: `${summary.id}-standard`,
+    name: "Tracked delivery",
+    description:
+      "Delivery estimate is confirmed by fulfillment.",
+    price: 0,
+    currency:
+      summary.price.currency,
+    estimatedMinDays: 0,
+    estimatedMaxDays: 0,
+    available: true,
+  };
+
+  return {
+    ...summary,
+    description:
+      product.description ??
+      "",
+    images,
+    videos: [],
+    variants: [
+      {
+        id: `${summary.id}-default`,
+        sku: summary.sku,
+        name: "Standard",
+        price: summary.price,
+        stockQuantity: 0,
+        availableQuantity: 0,
+        options: [
+          {
+            id: `${summary.id}-type`,
+            name: "Type",
+            value: "Standard",
+          },
+        ],
+        image: primary,
+        active:
+          summary.stockStatus ===
+          "in_stock",
+      },
+    ],
+    specifications: [
+      {
+        key: "sku",
+        label: "SKU",
+        value: summary.sku,
+      },
+      {
+        key: "category",
+        label: "Category",
+        value:
+          product.categoryName,
+      },
+      ...(product.brandName
+        ? [
+            {
+              key: "brand",
+              label: "Brand",
+              value:
+                product.brandName,
+            },
+          ]
+        : []),
+    ],
+    priceTiers: [
+      {
+        minQuantity: 1,
+        unitPrice:
+          summary.price.amount,
+        currency:
+          summary.price.currency,
+      },
+    ],
+    shippingMethods: [
+      shippingMethod,
+    ],
+    reviewSummary: {
+      rating: summary.rating,
+      reviewCount:
+        summary.reviewCount,
+      distribution: {
+        five: 0,
+        four: 0,
+        three: 0,
+        two: 0,
+        one: 0,
+      },
+    },
+    seo: {
+      title: `${summary.name} | AliStore`,
+      description:
+        summary.shortDescription ??
+        summary.name,
+      keywords: [
+        summary.name,
+        product.categoryName,
+      ],
+    },
+    relatedProductIds: [],
+  };
 }
 
 export async function getRelatedProducts(
@@ -245,53 +445,85 @@ export async function getRelatedProducts(
   categoryId?: string,
   limit = 4,
 ): Promise<ProductSummary[]> {
-  const pool = featuredProducts
-    .filter((item) => item.id !== productId)
-    .map(mapMockProductToSummary);
+  const response =
+    await getProducts({
+      search: "",
+      categoryId,
+      subcategoryId:
+        undefined,
+      brand: undefined,
+      supplierId:
+        undefined,
+      minPrice:
+        undefined,
+      maxPrice:
+        undefined,
+      minRating:
+        undefined,
+      verifiedSupplierOnly:
+        false,
+      discountOnly:
+        false,
+      inStockOnly:
+        false,
+      featuredOnly:
+        false,
+      bestsellerOnly:
+        false,
+      newArrivalOnly:
+        false,
+      sort: "relevance",
+      page: 1,
+      pageSize: Math.max(
+        limit + 1,
+        5,
+      ),
+    });
 
-  const sameCategory = categoryId
-    ? pool.filter(
-        (product) =>
-          product.category?.id === categoryId,
-      )
-    : [];
-
-  const sameCategoryIds = new Set(
-    sameCategory.map((product) => product.id),
-  );
-
-  const rest = pool.filter(
-    (product) => !sameCategoryIds.has(product.id),
-  );
-
-  return [...sameCategory, ...rest].slice(
-    0,
-    limit,
-  );
+  return response.items
+    .filter(
+      (product) =>
+        product.id !==
+        productId,
+    )
+    .slice(0, limit);
 }
 
 export async function searchProducts(
   query: string,
 ): Promise<ProductSummary[]> {
-  const response = await getProducts({
-    search: query,
-    categoryId: undefined,
-    subcategoryId: undefined,
-    brand: undefined,
-    supplierId: undefined,
-    minPrice: undefined,
-    maxPrice: undefined,
-    minRating: undefined,
-    verifiedSupplierOnly: false,
-    discountOnly: false,
-    inStockOnly: false,
-    featuredOnly: false,
-    bestsellerOnly: false,
-    newArrivalOnly: false,
-    sort: "relevance",
-    page: 1,
-    pageSize: 96,
-  });
+  const response =
+    await getProducts({
+      search: query,
+      categoryId:
+        undefined,
+      subcategoryId:
+        undefined,
+      brand: undefined,
+      supplierId:
+        undefined,
+      minPrice:
+        undefined,
+      maxPrice:
+        undefined,
+      minRating:
+        undefined,
+      verifiedSupplierOnly:
+        false,
+      discountOnly:
+        false,
+      inStockOnly:
+        false,
+      featuredOnly:
+        false,
+      bestsellerOnly:
+        false,
+      newArrivalOnly:
+        false,
+      sort: "relevance",
+      page: 1,
+      pageSize: 100,
+    });
 
   return response.items;
 }
