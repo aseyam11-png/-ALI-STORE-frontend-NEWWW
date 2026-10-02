@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   BarChart3,
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { LocalizationProvider } from "../providers/LocalizationProvider";
+import { useSession } from "@/features/auth/session";
 
 const adminNav = [
   {
@@ -107,7 +108,15 @@ export function AdminShell({
   children,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const session = useSession();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.replace("/login?next=" + encodeURIComponent(pathname ?? "/admin"));
+    }
+  }, [session.status, pathname, router]);
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuCloseRef = useRef<HTMLButtonElement | null>(null);
@@ -171,6 +180,40 @@ export function AdminShell({
       trigger?.focus();
     };
   }, [mobileNavOpen]);
+
+  if (session.status === "loading" || session.status === "unauthenticated") {
+    return (
+      <LocalizationProvider>
+        <div className="min-h-screen bg-[#F8FAFC] px-6 py-20 text-center">
+          <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8">
+            <ShieldCheck className="mx-auto h-8 w-8 text-[#2563EB]" />
+            <p className="mt-4 text-sm font-bold text-slate-800">جارٍ التحقق من صلاحية الجلسة...</p>
+          </div>
+        </div>
+      </LocalizationProvider>
+    );
+  }
+
+  if (session.user?.role !== "ROLE_ADMIN" && session.user?.role !== "ADMIN") {
+    return (
+      <LocalizationProvider>
+        <div className="min-h-screen bg-[#F8FAFC] px-6 py-20 text-center">
+          <div className="mx-auto max-w-md rounded-2xl border border-red-100 bg-white p-8">
+            <ShieldCheck className="mx-auto h-8 w-8 text-red-500" />
+            <h1 className="mt-4 text-xl font-black text-slate-900">غير مصرح</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500">ليس لديك صلاحية الوصول إلى لوحة الإدارة.</p>
+            <button
+              type="button"
+              onClick={() => router.replace("/")}
+              className="mt-6 h-11 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white"
+            >
+              العودة للمتجر
+            </button>
+          </div>
+        </div>
+      </LocalizationProvider>
+    );
+  }
 
   return (
     <LocalizationProvider>
