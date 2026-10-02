@@ -13,6 +13,10 @@ export type BackendWishlistItem = {
   createdAt: string;
 };
 
+export async function getMyWishlist() {
+  return apiClient.request<BackendWishlistItem[]>("/api/v1/wishlists");
+}
+
 export async function getWishlistIds(): Promise<string[]> {
   const items = await apiClient.request<BackendWishlistItem[]>("/api/v1/wishlists");
   return items.map((item) => String(item.productId));
