@@ -22,8 +22,6 @@ import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 interface CouponInputProps {
   subtotal: number;
 
-  shipping: number;
-
   onApply?: (
     coupon: AppliedCoupon,
   ) => void;
@@ -33,7 +31,6 @@ interface CouponInputProps {
 
 export function CouponInput({
   subtotal,
-  shipping,
   onApply,
   onRemove,
 }: CouponInputProps) {
@@ -66,7 +63,7 @@ export function CouponInput({
 
   const apply = async () => {
     setApplying(true);
-    const result = await validateCoupon(code, subtotal, shipping);
+    const result = await validateCoupon(code, subtotal);
     setApplying(false);
 
     setMessage(result.message);
