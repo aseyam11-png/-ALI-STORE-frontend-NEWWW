@@ -115,25 +115,47 @@ export function SmartAutocomplete({
       null,
     );
 
-  const suggestions =
-    useMemo(
-      () =>
-        getAutocompleteSuggestions(
-          debouncedValue,
-          8,
-        ),
-      [debouncedValue],
-    );
+  const [suggestions, setSuggestions] =
+    useState<AutocompleteSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] =
+    useState(false);
 
-  const [
-    trackedDebouncedValue,
-    setTrackedDebouncedValue,
-  ] = useState(debouncedValue);
+  useEffect(() => {
+    let cancelled = false;
 
-  if (debouncedValue !== trackedDebouncedValue) {
-    setTrackedDebouncedValue(debouncedValue);
-    setHighlighted(0);
-  }
+    if (debouncedValue.trim().length < 2) {
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setLoadingSuggestions(true);
+
+    void getAutocompleteSuggestions(
+      debouncedValue,
+      8,
+    )
+      .then((items) => {
+        if (cancelled) return;
+        setSuggestions(items);
+        setHighlighted(0);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSuggestions([]);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingSuggestions(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedValue]);
 
   useEffect(() => {
     const handleOutside =
@@ -341,8 +363,7 @@ export function SmartAutocomplete({
       </div>
 
       {open &&
-        suggestions.length >
-          0 && (
+        (loadingSuggestions || suggestions.length > 0) && (
           <div
             id="smart-search-suggestions"
             role="listbox"
