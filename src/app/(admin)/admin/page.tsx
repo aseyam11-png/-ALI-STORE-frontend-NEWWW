@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
+
 import {
   ArrowRight,
   BarChart3,
@@ -82,12 +84,6 @@ const management = [
     title: "Support",
     description: "Respond to customer support conversations.",
     icon: LifeBuoy,
-  },
-  {
-    href: "/warehouse",
-    title: "Warehouse",
-    description: "Inventory and logistics operations.",
-    icon: Boxes,
   },
 ] as const;
 
@@ -174,7 +170,7 @@ export default function AdminPage() {
                 return (
                   <Link
                     key={item.href + item.title}
-                    href={item.href}
+                    href={item.href as Route}
                     className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between">
