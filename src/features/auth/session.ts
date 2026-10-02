@@ -1,46 +1,183 @@
 "use client";
 
-// The customer authentication boundary. No auth backend, session cookie,
-// token store, or credential service exists anywhere in this repository
-// today (verified by repository-wide search before writing this file) —
-// there is nothing real to integrate with yet. This module exists so
-// customer-facing UI (Login, Account, the Header) has ONE real seam to
-// depend on instead of each screen inventing its own "am I logged in"
-// logic or, worse, fabricating a logged-in state. Until a real backend is
-// wired in, `status` can only ever be "unauthenticated" — this is
-// intentional, not a bug: it is never allowed to silently become
-// "authenticated" without a real credential exchange behind it.
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-export type SessionStatus = "unauthenticated" | "authenticating" | "authenticated";
+import { apiClient, HttpApiError } from "@/lib/api/http-client";
+
+export type SessionStatus =
+  | "unauthenticated"
+  | "authenticating"
+  | "authenticated";
+
+export type SessionRole = "CUSTOMER" | "ADMIN";
+
+export interface SessionUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  role: SessionRole;
+}
 
 export interface Session {
   status: SessionStatus;
+  user?: SessionUser;
 }
 
-// Deliberately not a hook with internal state yet — there is no session
-// source to subscribe to. Kept as a function (not a stub returning fake
-// user data) so call sites already read it the way they will once a real
-// session provider exists, without pretending one exists now.
-export function useSession(): Session {
+interface MeResponse {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  role: string;
+}
+
+let snapshot: Session = { status: "unauthenticated" };
+let initialized = false;
+let inFlight: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+
+function emit(next: Session) {
+  snapshot = next;
+  listeners.forEach((listener) => listener());
+}
+
+function normalizeRole(role: string): SessionRole {
+  return role === "ROLE_ADMIN" || role === "ADMIN" ? "ADMIN" : "CUSTOMER";
+}
+
+function mapUser(user: MeResponse): SessionUser {
+  return {
+    id: String(user.id),
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    role: normalizeRole(user.role),
+  };
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot() {
+  return snapshot;
+}
+
+function getServerSnapshot(): Session {
   return { status: "unauthenticated" };
 }
 
-export interface LoginResult {
-  ok: false;
-  reason: "auth_backend_unavailable";
+export async function refreshSession(): Promise<void> {
+  if (inFlight) return inFlight;
+
+  inFlight = (async () => {
+    const previousUser = snapshot.user;
+    emit({
+      status: "authenticating",
+      user: previousUser,
+    });
+
+    try {
+      const user = await apiClient.requestApi<MeResponse>("/api/v1/auth/session");
+      emit({
+        status: "authenticated",
+        user: mapUser(user),
+      });
+    } catch (error) {
+      if (!(error instanceof HttpApiError) || error.status !== 401) {
+        // A failed session lookup is still safer as unauthenticated than
+        // rendering protected UI from stale client state.
+      }
+      emit({ status: "unauthenticated" });
+    }
+  })().finally(() => {
+    inFlight = null;
+  });
+
+  return inFlight;
 }
 
-// Always fails honestly — there is no authentication backend to call. This
-// function exists so the Login form has one real integration point to
-// call (and to replace, wholesale, the day a real auth API exists) instead
-// of the form component itself deciding what "success" would look like.
+export function useSession(): Session {
+  const session = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+
+  useEffect(() => {
+    if (!initialized) {
+      initialized = true;
+      void refreshSession();
+    }
+  }, []);
+
+  return session;
+}
+
+export type LoginResult =
+  | { ok: true; user: SessionUser }
+  | {
+      ok: false;
+      reason:
+        | "invalid_credentials"
+        | "auth_unavailable"
+        | "invalid_identifier";
+    };
+
 export async function login(credentials: {
   identifier: string;
   password: string;
 }): Promise<LoginResult> {
-  // Real input is accepted (and will be sent to a real backend once one
-  // exists) but is not usable yet — nothing here inspects or stores it.
-  void credentials;
+  const email = credentials.identifier.trim().toLowerCase();
 
-  return { ok: false, reason: "auth_backend_unavailable" };
+  if (!email.includes("@")) {
+    return { ok: false, reason: "invalid_identifier" };
+  }
+
+  emit({ status: "authenticating" });
+
+  try {
+    await apiClient.requestApi("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password: credentials.password,
+      }),
+    });
+
+    await refreshSession();
+
+    if (snapshot.status === "authenticated" && snapshot.user) {
+      return { ok: true, user: snapshot.user };
+    }
+
+    return { ok: false, reason: "auth_unavailable" };
+  } catch (error) {
+    emit({ status: "unauthenticated" });
+
+    if (error instanceof HttpApiError && (error.status === 401 || error.status === 403)) {
+      return { ok: false, reason: "invalid_credentials" };
+    }
+
+    return { ok: false, reason: "auth_unavailable" };
+  }
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await apiClient.requestApi<void>("/api/v1/auth/logout", {
+      method: "POST",
+    });
+  } finally {
+    emit({ status: "unauthenticated" });
+  }
+}
+
+export function useLogout() {
+  return useCallback(() => logout(), []);
 }
