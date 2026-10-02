@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { HttpApiError, apiClient } from "@/lib/api/http-client";
+import { apiClient } from "@/lib/api/http-client";
 
-export type SessionStatus =
-  | "loading"
-  | "unauthenticated"
-  | "authenticated";
+export type SessionStatus = "loading" | "unauthenticated" | "authenticated";
 
 export interface CurrentUser {
   id: number;
@@ -35,29 +32,39 @@ interface RegisterCredentials extends Credentials {
 }
 
 export function useSession(): Session {
-  const [session, setSession] = useState<Session>({
-    status: "loading",
-    user: null,
+  const query = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      try {
+        return await apiClient.request<CurrentUser>("/v1/auth/session");
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          "status" in error &&
+          (error as { status?: number }).status === 401
+        ) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    retry: false,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 
-  const refresh = useCallback(async () => {
-    try {
-      const user = await apiClient.request<CurrentUser>("/v1/auth/session");
-      setSession({ status: "authenticated", user });
-    } catch (error) {
-      if (error instanceof HttpApiError && error.status === 401) {
-        setSession({ status: "unauthenticated", user: null });
-        return;
-      }
-      setSession({ status: "unauthenticated", user: null });
-    }
-  }, []);
+  if (query.isPending) {
+    return { status: "loading", user: null };
+  }
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  if (!query.data) {
+    return { status: "unauthenticated", user: null };
+  }
 
-  return session;
+  return {
+    status: "authenticated",
+    user: query.data,
+  };
 }
 
 export async function login(credentials: Credentials) {
