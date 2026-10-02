@@ -11,18 +11,21 @@ import {
 import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useSession } from "@/features/auth/session";
 
 import {
   useSupportChatStore,
 } from "@/stores/support-chat-store";
 
 export default function BuyerSupportPage() {
+  const session = useSession();
+  const customerId = session.user?.id ?? "";
+  const customerName = session.user ? (session.user.firstName + " " + session.user.lastName).trim() : "Customer";
+
   const conversations =
     useSupportChatStore(
       (state) =>
-        state.getCustomerConversations(
-          "customer-001",
-        ),
+        state.getCustomerConversations(customerId),
     );
 
   const createConversation =
@@ -52,21 +55,14 @@ export default function BuyerSupportPage() {
       [conversations, search],
     );
 
-  const newConversation =
-    () => {
+  const newConversation = () => {
       const id =
         createConversation({
-          orderId:
-            "AS-2026-10482",
 
-          shipmentId:
-            "SHIP-1001",
 
-          customerId:
-            "customer-001",
+          customerId,
 
-          customerName:
-            "Customer",
+          customerName,
 
           subject:
             "Customer support request",
