@@ -1,6 +1,16 @@
 import { apiClient } from "@/lib/api/http-client";
 import type { BackendOrder } from "@/features/orders/services/order.service";
 
+export type AdminPayment = {
+  id: number;
+  orderId: number;
+  amount: number;
+  method: "CREDIT_CARD" | "PAYPAL" | "CASH_ON_DELIVERY";
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  transactionId?: string | null;
+  createdAt: string;
+};
+
 export type AdminProduct = {
   id: number;
   name: string;
@@ -35,6 +45,12 @@ type Page<T> = {
 export async function getAdminProducts(page = 0, size = 50) {
   return apiClient.request<Page<AdminProduct>>(
     "/api/v1/admin/products?page=" + Math.max(0, page) + "&size=" + Math.min(100, Math.max(1, size)),
+  );
+}
+
+export async function getAdminPayments(page = 0, size = 100) {
+  return apiClient.request<Page<AdminPayment>>(
+    "/api/v1/admin/payments?page=" + Math.max(0, page) + "&size=" + Math.min(100, Math.max(1, size)),
   );
 }
 
