@@ -50,6 +50,7 @@ export default function ProductsPage() {
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -95,8 +96,9 @@ export default function ProductsPage() {
   }, [brand, brands]);
 
   useEffect(() => {
+    let active = true;
+
     const timer = window.setTimeout(() => {
-      let active = true;
       setLoading(true);
       setError("");
 
@@ -130,14 +132,13 @@ export default function ProductsPage() {
         .finally(() => {
           if (active) setLoading(false);
         });
-
-      return () => {
-        active = false;
-      };
     }, 250);
 
-    return () => window.clearTimeout(timer);
-  }, [search, resolvedCategoryId, resolvedBrandId, minPrice, maxPrice, inStock, sort, page]);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [search, resolvedCategoryId, resolvedBrandId, minPrice, maxPrice, inStock, sort, page, reloadKey]);
 
   useEffect(() => {
     const next = new URLSearchParams();
@@ -391,7 +392,7 @@ export default function ProductsPage() {
                   <p className="text-sm font-black text-red-700">{error}</p>
                   <button
                     type="button"
-                    onClick={() => setPage((current) => current)}
+                    onClick={() => setReloadKey((value) => value + 1)}
                     className="mt-4 rounded-xl bg-brand px-5 py-2 text-xs font-black text-white"
                   >
                     Retry
