@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import {
+  useEffect,
+  useState,
+} from "react";
+import {
   ArrowLeft,
   CheckCircle2,
   MapPin,
@@ -9,59 +13,61 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import {
-  useState,
-} from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useSession } from "@/features/auth/session";
+import type { CustomerAddress } from "@/features/addresses/types/address.types";
+import { useAddressStore } from "@/stores/address-store";
 
-import {
-  useAddressStore,
-} from "@/stores/address-store";
+type AddressForm = {
+  label: string;
+  country: string;
+  city: string;
+  area: string;
+  street: string;
+  postalCode: string;
+  isDefault: boolean;
+};
 
-import type {
-  CustomerAddress,
-} from "@/features/addresses/types/address.types";
-
-const emptyForm = {
+const emptyForm: AddressForm = {
   label: "",
-  recipientName: "",
-  phone: "",
   country: "Palestine",
   city: "",
   area: "",
   street: "",
-  building: "",
-  apartment: "",
   postalCode: "",
-  notes: "",
+  isDefault: false,
 };
 
 export default function BuyerAddressesPage() {
+  const {
+    status: sessionStatus,
+    user,
+  } = useSession();
+
   const addresses =
     useAddressStore(
       (state) =>
         state.addresses,
     );
-
+  const hydrate =
+    useAddressStore(
+      (state) => state.hydrate,
+    );
   const addAddress =
     useAddressStore(
-      (state) =>
-        state.addAddress,
+      (state) => state.addAddress,
     );
-
   const updateAddress =
     useAddressStore(
       (state) =>
         state.updateAddress,
     );
-
   const deleteAddress =
     useAddressStore(
       (state) =>
         state.deleteAddress,
     );
-
   const setDefaultAddress =
     useAddressStore(
       (state) =>
@@ -71,9 +77,7 @@ export default function BuyerAddressesPage() {
   const [
     editingId,
     setEditingId,
-  ] = useState<
-    string | null
-  >(null);
+  ] = useState<string | null>(null);
 
   const [
     showForm,
@@ -83,20 +87,62 @@ export default function BuyerAddressesPage() {
   const [
     form,
     setForm,
-  ] = useState(emptyForm);
+  ] = useState<AddressForm>(
+    emptyForm,
+  );
 
-  const startAdd =
-    () => {
-      setEditingId(
-        null,
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  useEffect(() => {
+    if (
+      sessionStatus !==
+      "authenticated"
+    ) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    void hydrate()
+      .catch((err) => {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load addresses.",
+        );
+      })
+      .finally(() =>
+        setLoading(false),
       );
-      setForm(
-        emptyForm,
-      );
-      setShowForm(
-        true,
-      );
-    };
+  }, [
+    sessionStatus,
+    hydrate,
+  ]);
+
+  const startAdd = () => {
+    setEditingId(null);
+    setForm({
+      ...emptyForm,
+      isDefault:
+        addresses.length === 0,
+    });
+    setShowForm(true);
+    setError("");
+  };
 
   const startEdit = (
     address: CustomerAddress,
@@ -104,14 +150,10 @@ export default function BuyerAddressesPage() {
     setEditingId(
       address.id,
     );
-
     setForm({
       label:
-        address.label,
-      recipientName:
-        address.recipientName,
-      phone:
-        address.phone,
+        address.label ||
+        "Address",
       country:
         address.country,
       city:
@@ -120,109 +162,140 @@ export default function BuyerAddressesPage() {
         address.area,
       street:
         address.street,
-      building:
-        address.building ??
-        "",
-      apartment:
-        address.apartment ??
-        "",
       postalCode:
         address.postalCode ??
         "",
-      notes:
-        address.notes ??
-        "",
+      isDefault:
+        address.isDefault,
     });
-
-    setShowForm(
-      true,
-    );
+    setShowForm(true);
+    setError("");
   };
 
-  const save =
-    () => {
-      if (
-        !form.label.trim() ||
-        !form.recipientName.trim() ||
-        !form.phone.trim() ||
-        !form.city.trim() ||
-        !form.area.trim() ||
-        !form.street.trim()
-      ) {
-        return;
-      }
+  const save = async () => {
+    if (
+      !form.city.trim() ||
+      !form.street.trim() ||
+      !form.country.trim()
+    ) {
+      setError(
+        "Country, city and street are required.",
+      );
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const payload = {
+        label:
+          form.label.trim() ||
+          "Address",
+        recipientName:
+          user
+            ? `${user.firstName} ${user.lastName}`.trim()
+            : "",
+        phone:
+          user?.phoneNumber ??
+          "",
+        customerId:
+          user
+            ? String(user.id)
+            : "",
+        country:
+          form.country.trim(),
+        city:
+          form.city.trim(),
+        area:
+          form.area.trim(),
+        street:
+          form.street.trim(),
+        postalCode:
+          form.postalCode.trim(),
+        isDefault:
+          form.isDefault,
+      };
 
       if (editingId) {
-        updateAddress(
+        await updateAddress(
           editingId,
-          {
-            ...form,
-            label:
-              form.label.trim(),
-            recipientName:
-              form.recipientName.trim(),
-            phone:
-              form.phone.trim(),
-            city:
-              form.city.trim(),
-            area:
-              form.area.trim(),
-            street:
-              form.street.trim(),
-          },
+          payload,
         );
       } else {
-        addAddress({
-          ...form,
-
-          label:
-            form.label.trim(),
-
-          recipientName:
-            form.recipientName.trim(),
-
-          phone:
-            form.phone.trim(),
-
-          city:
-            form.city.trim(),
-
-          area:
-            form.area.trim(),
-
-          street:
-            form.street.trim(),
-
-          customerId:
-            "customer-001",
-
-          isDefault:
-            addresses.length ===
-            0,
-        });
+        await addAddress(
+          payload,
+        );
       }
 
-      setShowForm(
-        false,
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to save address.",
       );
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      setEditingId(
-        null,
-      );
+  const remove = async (
+    id: string,
+  ) => {
+    if (
+      !window.confirm(
+        "Delete this address?",
+      )
+    ) {
+      return;
+    }
 
-      setForm(
-        emptyForm,
+    setError("");
+
+    try {
+      await deleteAddress(
+        id,
       );
-    };
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to delete address.",
+      );
+    }
+  };
+
+  const makeDefault = async (
+    id: string,
+  ) => {
+    setError("");
+
+    try {
+      await setDefaultAddress(
+        id,
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update the default address.",
+      );
+    }
+  };
+
+  const accountName =
+    user
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : "Account";
 
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
-
         <section className="border-b border-slate-200 bg-white">
-
           <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-6 lg:px-8">
-
             <Link
               href="/buyer"
               className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
@@ -232,131 +305,79 @@ export default function BuyerAddressesPage() {
             </Link>
 
             <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-
               <div>
-
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
                   Delivery
                 </p>
-
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
                   My addresses
                 </h1>
-
                 <p className="mt-2 text-sm text-slate-500">
-                  Manage saved shipping addresses for faster checkout.
+                  Saved addresses used by checkout.
                 </p>
-
               </div>
 
               <button
                 type="button"
-                onClick={
-                  startAdd
+                onClick={startAdd}
+                disabled={
+                  sessionStatus !==
+                  "authenticated"
                 }
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" />
                 Add address
               </button>
-
             </div>
-
           </div>
         </section>
 
         <div className="mx-auto max-w-[1100px] px-4 py-7 sm:px-6 lg:px-8">
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-xl border border-danger-100 bg-danger-surface px-4 py-3 text-sm font-bold text-danger-700"
+            >
+              {error}
+            </div>
+          )}
 
           {showForm && (
             <section className="mb-6 rounded-2xl border border-blue-200 bg-white p-6 shadow-sm">
-
               <div className="flex items-center justify-between gap-4">
-
                 <div>
                   <h2 className="text-lg font-black text-slate-900">
                     {editingId
                       ? "Edit address"
                       : "Add new address"}
                   </h2>
-
                   <p className="mt-1 text-xs text-slate-400">
-                    Required fields must be completed before saving.
+                    The store saves the delivery location and default selection.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() =>
-                    setShowForm(
-                      false,
-                    )
+                    setShowForm(false)
                   }
                   className="text-xs font-black text-slate-400 hover:text-slate-700"
                 >
                   Cancel
                 </button>
-
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
                 <Field
                   label="Address label"
-                  value={
-                    form.label
-                  }
+                  value={form.label}
                   placeholder="Home, Work..."
-                  onChange={(
-                    value,
-                  ) =>
+                  onChange={(value) =>
                     setForm(
-                      (
-                        current,
-                      ) => ({
+                      (current) => ({
                         ...current,
                         label:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Recipient name"
-                  value={
-                    form.recipientName
-                  }
-                  placeholder="Full name"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        recipientName:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Phone"
-                  value={
-                    form.phone
-                  }
-                  placeholder="+970..."
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        phone:
                           value,
                       }),
                     )
@@ -368,14 +389,9 @@ export default function BuyerAddressesPage() {
                   value={
                     form.country
                   }
-                  placeholder="Country"
-                  onChange={(
-                    value,
-                  ) =>
+                  onChange={(value) =>
                     setForm(
-                      (
-                        current,
-                      ) => ({
+                      (current) => ({
                         ...current,
                         country:
                           value,
@@ -389,38 +405,26 @@ export default function BuyerAddressesPage() {
                   value={
                     form.city
                   }
-                  placeholder="City"
-                  onChange={(
-                    value,
-                  ) =>
+                  onChange={(value) =>
                     setForm(
-                      (
-                        current,
-                      ) => ({
+                      (current) => ({
                         ...current,
-                        city:
-                          value,
+                        city: value,
                       }),
                     )
                   }
                 />
 
                 <Field
-                  label="Area"
+                  label="Area / district"
                   value={
                     form.area
                   }
-                  placeholder="Area / district"
-                  onChange={(
-                    value,
-                  ) =>
+                  onChange={(value) =>
                     setForm(
-                      (
-                        current,
-                      ) => ({
+                      (current) => ({
                         ...current,
-                        area:
-                          value,
+                        area: value,
                       }),
                     )
                   }
@@ -431,58 +435,11 @@ export default function BuyerAddressesPage() {
                   value={
                     form.street
                   }
-                  placeholder="Street"
-                  onChange={(
-                    value,
-                  ) =>
+                  onChange={(value) =>
                     setForm(
-                      (
-                        current,
-                      ) => ({
+                      (current) => ({
                         ...current,
                         street:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Building"
-                  value={
-                    form.building
-                  }
-                  placeholder="Building number"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        building:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Apartment"
-                  value={
-                    form.apartment
-                  }
-                  placeholder="Apartment"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        apartment:
                           value,
                       }),
                     )
@@ -494,14 +451,9 @@ export default function BuyerAddressesPage() {
                   value={
                     form.postalCode
                   }
-                  placeholder="Optional"
-                  onChange={(
-                    value,
-                  ) =>
+                  onChange={(value) =>
                     setForm(
-                      (
-                        current,
-                      ) => ({
+                      (current) => ({
                         ...current,
                         postalCode:
                           value,
@@ -510,208 +462,181 @@ export default function BuyerAddressesPage() {
                   }
                 />
 
-                <div className="sm:col-span-2">
-
-                  <label
-                    htmlFor="address-notes"
-                    className="text-xs font-black text-slate-600"
-                  >
-                    Delivery notes
-                  </label>
-
-                  <textarea
-                    id="address-notes"
-                    rows={3}
-                    value={
-                      form.notes
+                <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={
+                      form.isDefault
                     }
                     onChange={(
                       event,
                     ) =>
                       setForm(
-                        (
-                          current,
-                        ) => ({
+                        (current) => ({
                           ...current,
-                          notes:
+                          isDefault:
                             event
                               .target
-                              .value,
+                              .checked,
                         }),
                       )
                     }
-                    placeholder="Optional delivery instructions"
-                    className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                    className="h-4 w-4 accent-[#2563EB]"
                   />
-
-                </div>
-
+                  <span className="text-xs font-bold text-slate-700">
+                    Use this as my default delivery address
+                  </span>
+                </label>
               </div>
 
               <button
                 type="button"
-                onClick={
-                  save
+                onClick={() => {
+                  void save();
+                }}
+                disabled={
+                  saving
                 }
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white disabled:opacity-50"
               >
-                {editingId
-                  ? "Save changes"
-                  : "Save address"}
+                {saving
+                  ? "Saving…"
+                  : editingId
+                    ? "Save changes"
+                    : "Save address"}
               </button>
-
             </section>
           )}
 
-          <div className="grid gap-5 md:grid-cols-2">
-
-            {addresses.map(
-              (address) => (
-                <article
-                  key={
-                    address.id
-                  }
-                  className={`rounded-2xl border bg-white p-5 shadow-sm ${
-                    address.isDefault
-                      ? "border-blue-300 ring-2 ring-blue-50"
-                      : "border-slate-200"
-                  }`}
-                >
-
-                  <div className="flex items-start justify-between gap-4">
-
-                    <div className="flex items-start gap-3">
-
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                        <MapPin className="h-5 w-5" />
-                      </div>
-
-                      <div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-
-                          <h2 className="text-sm font-black text-slate-900">
-                            {
-                              address.label
-                            }
-                          </h2>
-
-                          {address.isDefault && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[9px] font-black text-[#2563EB]">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Default
-                            </span>
-                          )}
-
+          {loading ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <p className="text-sm font-bold text-slate-500">
+                Loading addresses…
+              </p>
+            </section>
+          ) : addresses.length ===
+            0 ? (
+            <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <MapPin className="mx-auto h-9 w-9 text-slate-300" />
+              <h2 className="mt-4 text-xl font-black text-slate-900">
+                No saved addresses
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Add your first delivery address to speed up checkout.
+              </p>
+            </section>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2">
+              {addresses.map(
+                (address) => (
+                  <article
+                    key={address.id}
+                    className={`rounded-2xl border bg-white p-5 shadow-sm ${
+                      address.isDefault
+                        ? "border-blue-300 ring-2 ring-blue-50"
+                        : "border-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+                          <MapPin className="h-5 w-5" />
                         </div>
 
-                        <p className="mt-2 text-sm font-bold text-slate-800">
-                          {
-                            address.recipientName
-                          }
-                        </p>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-sm font-black text-slate-900">
+                              {address.label ||
+                                "Address"}
+                            </h2>
 
+                            {address.isDefault && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[9px] font-black text-[#2563EB]">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Default
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="mt-2 text-sm font-bold text-slate-800">
+                            {accountName}
+                          </p>
+                          {user?.phoneNumber && (
+                            <p className="mt-1 text-xs text-slate-400">
+                              {user.phoneNumber}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void remove(
+                            address.id,
+                          );
+                        }}
+                        aria-label={`Delete ${address.label} address`}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        deleteAddress(
-                          address.id,
-                        )
-                      }
-                      aria-label={`Delete ${address.label} address`}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-
-                  </div>
-
-                  <div className="mt-5 space-y-1 text-xs leading-5 text-slate-500">
-
-                    <p>
-                      {
-                        address.phone
-                      }
-                    </p>
-
-                    <p>
-                      {
-                        address.street
-                      }
-                      {address.building
-                        ? ` · Building ${address.building}`
-                        : ""}
-                      {address.apartment
-                        ? ` · Apt ${address.apartment}`
-                        : ""}
-                    </p>
-
-                    <p>
-                      {
-                        address.area
-                      }
-                      ,{" "}
-                      {
-                        address.city
-                      }
-                      ,{" "}
-                      {
-                        address.country
-                      }
-                    </p>
-
-                    {address.notes && (
-                      <p className="pt-2 text-slate-400">
-                        Note:{" "}
-                        {
-                          address.notes
-                        }
+                    <div className="mt-5 space-y-1 text-xs leading-5 text-slate-500">
+                      <p>
+                        {address.street}
                       </p>
-                    )}
+                      <p>
+                        {address.area
+                          ? `${address.area}, `
+                          : ""}
+                        {address.city},{" "}
+                        {address.country}
+                      </p>
+                      {address.postalCode && (
+                        <p>
+                          Postal code:{" "}
+                          {
+                            address.postalCode
+                          }
+                        </p>
+                      )}
+                    </div>
 
-                  </div>
-
-                  <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        startEdit(
-                          address,
-                        )
-                      }
-                      className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-black text-slate-600"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </button>
-
-                    {!address.isDefault && (
+                    <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
                       <button
                         type="button"
                         onClick={() =>
-                          setDefaultAddress(
-                            address.id,
+                          startEdit(
+                            address,
                           )
                         }
-                        className="inline-flex h-9 items-center rounded-lg bg-blue-50 px-3 text-[10px] font-black text-[#2563EB]"
+                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-black text-slate-600"
                       >
-                        Set default
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
                       </button>
-                    )}
 
-                  </div>
-
-                </article>
-              ),
-            )}
-
-          </div>
-
+                      {!address.isDefault && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void makeDefault(
+                              address.id,
+                            );
+                          }}
+                          className="inline-flex h-9 items-center rounded-lg bg-blue-50 px-3 text-[10px] font-black text-[#2563EB]"
+                        >
+                          Set default
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ),
+              )}
+            </div>
+          )}
         </div>
       </main>
     </AppShell>
@@ -732,7 +657,7 @@ function Field({
   ) => void;
 }) {
   const id =
-    `field-${label
+    `address-field-${label
       .toLowerCase()
       .replace(
         /[^a-z0-9]+/g,
@@ -747,16 +672,11 @@ function Field({
       >
         {label}
       </label>
-
       <input
         id={id}
         value={value}
-        placeholder={
-          placeholder
-        }
-        onChange={(
-          event,
-        ) =>
+        placeholder={placeholder}
+        onChange={(event) =>
           onChange(
             event.target.value,
           )
