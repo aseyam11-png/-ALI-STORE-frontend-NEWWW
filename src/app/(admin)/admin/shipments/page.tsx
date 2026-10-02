@@ -76,6 +76,19 @@ export default function AdminShipmentsPage() {
     [orders, search],
   );
 
+  const refreshShipments = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const page = await getAdminOrders();
+      setOrders(page.content);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل الشحنات.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const changeStatus = async (
     shipmentId: number,
     status: typeof SHIPMENT_STATUSES[number],
@@ -84,7 +97,7 @@ export default function AdminShipmentsPage() {
     setError("");
     try {
       await updateShipmentStatus(shipmentId, status);
-      await load();
+      await refreshShipments();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "تعذر تحديث حالة الشحنة.");
     } finally {
