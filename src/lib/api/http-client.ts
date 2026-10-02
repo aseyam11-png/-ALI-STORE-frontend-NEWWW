@@ -19,32 +19,52 @@ export class HttpApiError extends Error implements ApiError {
   }
 }
 
+function isJsonResponse(response: Response) {
+  return response.headers.get("content-type")?.includes("application/json") ?? false;
+}
+
 export class HttpClient {
   constructor(private readonly baseUrl: string) {}
 
-  async request<T>(path: string, init?: RequestInit): Promise<T> {
+  async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
+      credentials: "include",
+      cache: init.cache ?? "no-store",
       headers: {
         Accept: "application/json",
-        ...(init?.body ? { "Content-Type": "application/json" } : {}),
-        ...init?.headers,
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...init.headers,
       },
     });
 
+    let body: unknown = null;
+    if (isJsonResponse(response)) {
+      body = await response.json().catch(() => null);
+    }
+
     if (!response.ok) {
-      const body = await response.json().catch(() => null) as { message?: string; code?: string } | null;
+      const errorBody =
+        typeof body === "object" && body !== null
+          ? (body as { message?: string; code?: string })
+          : null;
+
       throw new HttpApiError({
         status: response.status,
-        message: body?.message ?? response.statusText,
-        code: body?.code,
+        message: errorBody?.message ?? response.statusText ?? "Request failed",
+        code: errorBody?.code,
         correlationId: response.headers.get("X-Correlation-Id") ?? undefined,
       });
     }
 
-    if (response.status === 204) return undefined as T;
-    return response.json() as Promise<T>;
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return body as T;
   }
 }
 
-export const apiClient = new HttpClient(process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080");
+export const apiClient = new HttpClient(
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080",
+);
