@@ -5,7 +5,7 @@ import { getProducts } from "@/features/products/services/product.service";
 import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 import { FlashDealsLazy } from "./FlashDealsLazy";
 
-export default async function FlashDeals() {
+export async function FlashDeals() {
   const response = await getProducts({
     search: "",
     categoryId: undefined,
@@ -66,3 +66,5 @@ export default async function FlashDeals() {
     </section>
   );
 }
+
+export default FlashDeals;
