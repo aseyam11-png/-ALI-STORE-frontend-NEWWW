@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,9 +18,16 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
-import { useCustomerStore } from "@/stores/customer-store";
 import { useAddressStore } from "@/stores/address-store";
+import { useSession } from "@/features/auth/session";
+import { listAddresses } from "@/features/addresses/services/address.service";
+import {
+  syncLocalCart,
+} from "@/features/cart/services/cart.service";
+import {
+  createOrder,
+  createPayment,
+} from "@/features/orders/services/order.service";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
@@ -58,21 +66,26 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
-  );
+  const router = useRouter();
+  const {
+    status: sessionStatus,
+    user,
+  } = useSession();
 
-  const getDefaultAddress = useCustomerStore(
-    (state) => state.getDefaultAddress,
-  );
-
-  const selectedAddressId = useAddressStore(
-    (state) => state.selectedAddressId,
-  );
+  const selectedAddressId =
+    useAddressStore(
+      (state) =>
+        state.selectedAddressId,
+    );
 
   const addresses = useAddressStore(
     (state) => state.addresses,
   );
+
+  const setAddresses =
+    useAddressStore(
+      (state) => state.setAddresses,
+    );
 
   const [form, setForm] =
     useState<FormState>(
@@ -90,79 +103,98 @@ export default function CheckoutPage() {
   const [error, setError] =
     useState("");
 
-  const defaultAddress = getDefaultAddress();
+  const selectedAddress =
+    addresses.find(
+      (address) =>
+        address.id ===
+        selectedAddressId,
+    );
 
-  const selectedAddress = addresses.find(
-    (address) =>
-      address.id === selectedAddressId,
-  );
-
-  const addressSyncKey =
-    selectedAddress?.id ??
-    (defaultAddress ? `default:${defaultAddress.fullName}` : null);
-
-  const [syncedAddressKey, setSyncedAddressKey] =
-    useState<string | null>(null);
-
-  if (addressSyncKey !== syncedAddressKey) {
-    setSyncedAddressKey(addressSyncKey);
-
-    if (selectedAddress) {
-      setForm((current) => ({
-        fullName:
-          selectedAddress.recipientName,
-        email:
-          current.email,
-        phone:
-          selectedAddress.phone,
-        address:
-          [
-            selectedAddress.street,
-            selectedAddress.building
-              ? `Building ${selectedAddress.building}`
-              : "",
-            selectedAddress.apartment
-              ? `Apt ${selectedAddress.apartment}`
-              : "",
-            selectedAddress.area,
-          ]
-            .filter(Boolean)
-            .join(", "),
-        city:
-          selectedAddress.city,
-        country:
-          selectedAddress.country,
-        postalCode:
-          selectedAddress.postalCode ?? "",
-      }));
-    } else if (defaultAddress) {
-      setForm((current) => ({
-        ...current,
-        fullName:
-          current.fullName ||
-          defaultAddress.fullName,
-        phone:
-          current.phone ||
-          defaultAddress.phone,
-        address:
-          current.address ||
-          defaultAddress.addressLine1,
-        city:
-          current.city ||
-          defaultAddress.city,
-        country:
-          current.country ||
-          defaultAddress.country,
-        postalCode:
-          current.postalCode ||
-          defaultAddress.postalCode ||
-          "",
-      }));
+  useEffect(() => {
+    if (
+      sessionStatus !==
+      "authenticated"
+    ) {
+      return;
     }
-  }
+
+    void listAddresses()
+      .then((backendAddresses) =>
+        setAddresses(
+          backendAddresses,
+        ),
+      )
+      .catch(() => {
+        setAddresses([]);
+      });
+  }, [
+    sessionStatus,
+    setAddresses,
+  ]);
+
+  useEffect(() => {
+    if (
+      sessionStatus ===
+      "unauthenticated"
+    ) {
+      router.replace(
+        "/login?next=/shop/checkout",
+      );
+    }
+  }, [
+    sessionStatus,
+    router,
+  ]);
+
+  useEffect(() => {
+    setForm((current) => ({
+      ...current,
+      fullName:
+        current.fullName ||
+        (user
+          ? `${user.firstName} ${user.lastName}`.trim()
+          : ""),
+      email:
+        user?.email ??
+        current.email,
+      phone:
+        user?.phoneNumber ??
+        current.phone,
+      ...(selectedAddress
+        ? {
+            address:
+              selectedAddress.street,
+            city:
+              selectedAddress.city,
+            country:
+              selectedAddress.country,
+            postalCode:
+              selectedAddress.postalCode ??
+              current.postalCode,
+          }
+        : {}),
+    }));
+  }, [
+    selectedAddress?.id,
+    user?.id,
+  ]);
 
   const [successOrderId, setSuccessOrderId] =
     useState("");
+  const [
+    successPaymentStatus,
+    setSuccessPaymentStatus,
+  ] = useState<
+    "PENDING" |
+    "COMPLETED" |
+    "FAILED" |
+    "REFUNDED" |
+    ""
+  >("");
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
 
   const subtotal = useMemo(
     () =>
@@ -176,11 +208,10 @@ export default function CheckoutPage() {
     [items],
   );
 
-  const shippingCost =
-    shippingMode === "express" &&
-    items.length > 0
-      ? shipping.cost + 8
-      : shipping.cost;
+  // Shipping is not a client-calculated charge.
+  // The current backend order contract does not accept a shipping amount,
+  // so the UI must not manufacture one or add a fake express surcharge.
+  const shippingCost = 0;
 
   const couponDiscount =
     appliedCoupon?.finalDiscount ?? 0;
@@ -221,8 +252,18 @@ export default function CheckoutPage() {
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setError("");
+
+    if (
+      sessionStatus !==
+      "authenticated"
+    ) {
+      router.replace(
+        "/login?next=/shop/checkout",
+      );
+      return;
+    }
 
     if (items.length === 0) {
       setError(
@@ -238,53 +279,78 @@ export default function CheckoutPage() {
       return;
     }
 
-    const order = createOrder({
-      customerName:
-        form.fullName,
+    setSubmitting(true);
 
-      customerEmail:
-        form.email,
+    try {
+      // Backend owns cart state and validates live stock/supplier mappings.
+      await syncLocalCart(items);
 
-      address: {
-        fullName:
-          form.fullName,
-        phone:
-          form.phone,
-        address:
-          form.address,
-        city:
-          form.city,
-        country:
-          form.country,
-        postalCode:
-          form.postalCode,
-      },
+      const shippingAddress = [
+        form.fullName.trim(),
+        form.phone.trim(),
+        form.address.trim(),
+        form.city.trim(),
+        form.country.trim(),
+        form.postalCode.trim(),
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-      paymentMethod,
+      const backendOrder =
+        await createOrder({
+          shippingAddress,
+          couponCode:
+            appliedCoupon?.coupon
+              .code,
+        });
 
-      items,
+      const method =
+        paymentMethod ===
+        "card"
+          ? "CREDIT_CARD"
+          : paymentMethod ===
+              "wallet"
+            ? "PAYPAL"
+            : "CASH_ON_DELIVERY";
 
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
+      const backendPayment =
+        await createPayment({
+          orderId:
+            backendOrder.id,
+          amount:
+            Number(
+              backendOrder.totalAmount,
+            ),
+          method,
+        });
 
-      estimatedDelivery:
-        shipping.estimatedDelivery,
+      if (
+        backendPayment.status ===
+        "FAILED"
+      ) {
+        throw new Error(
+          "Payment failed. Your order was not submitted for fulfillment.",
+        );
+      }
 
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
+      clearCart();
+      setSuccessOrderId(
+        String(
+          backendOrder.id,
+        ),
+      );
+      setSuccessPaymentStatus(
+        backendPayment.status,
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to complete your order.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (successOrderId) {
@@ -308,8 +374,8 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
-                information as soon as your order ships.
+                Your order was created by AliStore. We&apos;ll update tracking
+                as the fulfillment process progresses.
               </p>
 
               <div className="mx-auto mt-7 max-w-md rounded-2xl bg-slate-50 p-5 text-start">
@@ -330,7 +396,11 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                    PAID
+                    {successPaymentStatus === "COMPLETED"
+                      ? "PAID"
+                      : successPaymentStatus === "PENDING"
+                        ? "PENDING"
+                        : successPaymentStatus || "RECORDED"}
                   </span>
                 </div>
 
@@ -660,71 +730,26 @@ export default function CheckoutPage() {
 
                 {/* Shipping */}
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
                   <div className="flex items-center gap-3">
                     <Truck className="h-5 w-5 text-emerald-600" />
-
                     <div>
                       <h2 className="text-lg font-black text-slate-900">
-                        Delivery speed
+                        Delivery
                       </h2>
-
                       <p className="mt-1 text-xs text-slate-400">
-                        Applied to your entire order.
+                        Final carrier and delivery estimate are managed by fulfillment.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "standard",
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "standard"
-                          ? "border-[#2563EB] bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <p className="text-sm font-black text-slate-900">
-                        Standard
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Best available rate
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "express",
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "express"
-                          ? "border-[#2563EB] bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <p className="text-sm font-black text-slate-900">
-                        Express
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Faster delivery — +<LocalizedPrice amountUSD={8} />
-                      </p>
-                    </button>
-
+                  <div className="mt-5 rounded-2xl border border-[#2563EB] bg-blue-50 p-4">
+                    <p className="text-sm font-black text-slate-900">
+                      Tracked delivery
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {shipping.estimatedDelivery || "Confirmed after order processing"}
+                    </p>
                   </div>
-
                 </section>
 
                 {/* Payment */}
@@ -917,7 +942,10 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  onClick={placeOrder}
+                  onClick={() => {
+                    void placeOrder();
+                  }}
+                  disabled={submitting}
                   className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
