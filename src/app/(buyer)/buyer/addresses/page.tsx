@@ -38,11 +38,50 @@ const emptyForm = {
 };
 
 export default function BuyerAddressesPage() {
+  const session = useSession();
+
   const addresses =
     useAddressStore(
-      (state) =>
-        state.addresses,
+      (state) => state.addresses,
     );
+
+  const replaceAddresses =
+    useAddressStore(
+      (state) => state.replaceAddresses,
+    );
+
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
+
+  const addressesQuery = useQuery({
+    queryKey: ["shipping-addresses"],
+    queryFn: getBackendAddresses,
+    enabled: session.status === "authenticated",
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (!addressesQuery.data) return;
+
+    replaceAddresses(
+      addressesQuery.data.map((address) => ({
+        id: String(address.id),
+        customerId: String(session.user?.id ?? ""),
+        label: address.label ?? "Address",
+        recipientName: address.recipientName ?? "",
+        phone: address.phone ?? "",
+        country: address.country,
+        city: address.city,
+        area: address.area ?? "",
+        street: address.street,
+        building: address.building ?? "",
+        apartment: address.apartment ?? "",
+        postalCode: address.postalCode ?? "",
+        notes: address.notes ?? "",
+        isDefault: Boolean(address.isDefault),
+      })),
+    );
+  }, [addressesQuery.data, replaceAddresses, session.user?.id]);
 
   const addAddress =
     useAddressStore(
@@ -139,81 +178,67 @@ export default function BuyerAddressesPage() {
     );
   };
 
-  const save =
-    () => {
-      if (
-        !form.label.trim() ||
-        !form.recipientName.trim() ||
-        !form.phone.trim() ||
-        !form.city.trim() ||
-        !form.area.trim() ||
-        !form.street.trim()
-      ) {
-        return;
-      }
+  const save = async () => {
+    setActionError("");
 
-      if (editingId) {
-        updateAddress(
-          editingId,
-          {
-            ...form,
-            label:
-              form.label.trim(),
-            recipientName:
-              form.recipientName.trim(),
-            phone:
-              form.phone.trim(),
-            city:
-              form.city.trim(),
-            area:
-              form.area.trim(),
-            street:
-              form.street.trim(),
-          },
-        );
-      } else {
-        addAddress({
-          ...form,
+    if (
+      !form.label.trim() ||
+      !form.recipientName.trim() ||
+      !form.phone.trim() ||
+      !form.city.trim() ||
+      !form.area.trim() ||
+      !form.street.trim()
+    ) {
+      setActionError("أكمل بيانات العنوان المطلوبة.");
+      return;
+    }
 
-          label:
-            form.label.trim(),
+    if (session.status !== "authenticated") {
+      setActionError("سجّل الدخول أولًا لحفظ العنوان.");
+      return;
+    }
 
-          recipientName:
-            form.recipientName.trim(),
+    setSaving(true);
 
-          phone:
-            form.phone.trim(),
-
-          city:
-            form.city.trim(),
-
-          area:
-            form.area.trim(),
-
-          street:
-            form.street.trim(),
-
-          customerId:
-            "customer-001",
-
-          isDefault:
-            addresses.length ===
-            0,
-        });
-      }
-
-      setShowForm(
-        false,
-      );
-
-      setEditingId(
-        null,
-      );
-
-      setForm(
-        emptyForm,
-      );
+    const payload = {
+      label: form.label.trim(),
+      recipientName: form.recipientName.trim(),
+      phone: form.phone.trim(),
+      country: form.country.trim() || "Palestine",
+      city: form.city.trim(),
+      area: form.area.trim(),
+      street: form.street.trim(),
+      building: form.building.trim(),
+      apartment: form.apartment.trim(),
+      postalCode: form.postalCode.trim(),
+      notes: form.notes.trim(),
+      isDefault: editingId
+        ? Boolean(addresses.find((item) => item.id === editingId)?.isDefault)
+        : addresses.length === 0,
     };
+
+    try {
+      if (editingId) {
+        await updateBackendAddress(Number(editingId), payload);
+      } else {
+        await createBackendAddress(payload);
+      }
+
+      await addressesQuery.refetch();
+
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "تعذر حفظ العنوان.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <AppShell>
