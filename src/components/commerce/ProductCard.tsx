@@ -6,6 +6,8 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { formatSAR } from "@/features/localization/services/currency.service";
+import { useSession } from "@/features/auth/session";
+import { addToWishlist, removeFromWishlist } from "@/features/wishlist/services/wishlist-api.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
@@ -21,13 +23,14 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
-  const toggleWishlist = useWishlistStore((state) => state.toggle);
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const isSaved = useWishlistStore((state) =>
     state.productIds.includes(product.id),
   );
 
   const formattedPrice = formatSAR(product.price.amount);
   const canAddToCart = product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
+  const session = useSession();
 
   const originalAmount =
     product.price.originalAmount ??
@@ -39,6 +42,45 @@ export function ProductCard({ product }: ProductCardProps) {
     originalAmount !== undefined
       ? formatSAR(originalAmount)
       : undefined;
+
+  const handleWishlist = async () => {
+    const wasSaved = isSaved;
+    toggleWishlist({
+      id: product.id,
+      name: product.name,
+      price: product.price.amount,
+      image: product.image?.url,
+      brand: product.brand,
+      category: product.category,
+      originalPrice: product.price.originalAmount,
+      discountPercentage: product.discountPercentage,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+    });
+
+    if (session.status !== "authenticated") return;
+
+    try {
+      if (wasSaved) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product.id);
+      }
+    } catch {
+      toggleWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price.amount,
+        image: product.image?.url,
+        brand: product.brand,
+        category: product.category,
+        originalPrice: product.price.originalAmount,
+        discountPercentage: product.discountPercentage,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+      });
+    }
+  };
 
   const handleAddToCart = () => {
     addItem({
@@ -83,20 +125,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <button
           type="button"
-          onClick={() =>
-            toggleWishlist({
-              id: product.id,
-              name: product.name,
-              price: product.price.amount,
-              image: product.image?.url,
-              brand: product.brand,
-              category: product.category,
-              originalPrice: product.price.originalAmount,
-              discountPercentage: product.discountPercentage,
-              rating: product.rating,
-              reviewCount: product.reviewCount,
-            })
-          }
+          onClick={() => void handleWishlist()}
           aria-label={
             isSaved
               ? t("removeFromWishlist", { name: product.name })
