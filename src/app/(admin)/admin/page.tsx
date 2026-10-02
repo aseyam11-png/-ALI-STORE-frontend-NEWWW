@@ -6,7 +6,6 @@ import type { Route } from "next";
 import {
   ArrowRight,
   BarChart3,
-  Boxes,
   CreditCard,
   LifeBuoy,
   Package,
