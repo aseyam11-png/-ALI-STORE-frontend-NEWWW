@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Loader2, Package, RefreshCw } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Package, RefreshCw } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
 import {
@@ -19,53 +19,35 @@ const labels: Record<string, string> = {
 };
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<BackendAdminProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [workingId, setWorkingId] = useState<number | null>(null);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
-  const load = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const page = await getAdminProducts(0, 50);
-      setProducts(page.content);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "تعذر تحميل منتجات الإدارة.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const productsQuery = useQuery({
+    queryKey: ["admin-products"],
+    queryFn: () => getAdminProducts(0, 50),
+  });
 
-  useEffect(() => {
-    void load();
-  }, []);
+  const mutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: number;
+      status: BackendAdminProduct["status"];
+    }) => updateAdminProductStatus(id, status),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["admin-products"],
+      });
+    },
+  });
 
-  const setStatus = async (
-    id: number,
-    status: BackendAdminProduct["status"],
-  ) => {
-    setWorkingId(id);
-    setError("");
-    try {
-      const updated = await updateAdminProductStatus(id, status);
-      setProducts((current) =>
-        current.map((item) => (item.id === id ? updated : item)),
-      );
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "تعذر تحديث حالة المنتج.",
-      );
-    } finally {
-      setWorkingId(null);
-    }
-  };
+  const products = productsQuery.data?.content ?? [];
+  const error =
+    productsQuery.error instanceof Error
+      ? productsQuery.error.message
+      : mutation.error instanceof Error
+        ? mutation.error.message
+        : "";
 
   return (
     <AdminShell>
@@ -76,35 +58,42 @@ export default function AdminProductsPage() {
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand">
                 Catalog moderation
               </p>
-              <h1 className="mt-2 text-3xl font-black text-foreground">
-                المنتجات
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                هذه الصفحة تغيّر حالة المنتج على الـbackend نفسه؛ أي منتج يصبح
-                ACTIVE يظهر في الكتالوج العام وفق قواعد النشر والمورد.
+              <h1 className="mt-2 text-3xl font-black text-foreground">المنتجات</h1>
+              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                التغيير يتم على سجل المنتج نفسه في الـbackend، ويطبق عليه تحقق المورد
+                قبل أن يصبح ACTIVE في الكتالوج العام.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={() => void load()}
-              disabled={loading}
+              onClick={() => void productsQuery.refetch()}
+              disabled={productsQuery.isFetching}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-xs font-black"
             >
-              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+              <RefreshCw
+                className={
+                  productsQuery.isFetching
+                    ? "h-4 w-4 animate-spin"
+                    : "h-4 w-4"
+                }
+              />
               تحديث
             </button>
           </div>
 
           {error && (
-            <div role="alert" className="mt-6 rounded-2xl border border-danger-100 bg-danger-surface p-4 text-sm font-bold text-danger-700">
+            <div
+              role="alert"
+              className="mt-6 rounded-2xl border border-danger-100 bg-danger-surface p-4 text-sm font-bold text-danger-700"
+            >
               {error}
             </div>
           )}
 
-          {loading ? (
+          {productsQuery.isPending ? (
             <div className="mt-8 flex items-center justify-center rounded-2xl border border-neutral-200 bg-surface p-14">
-              <Loader2 className="h-6 w-6 animate-spin text-brand" />
+              <RefreshCw className="h-6 w-6 animate-spin text-brand" />
             </div>
           ) : products.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-dashed border-neutral-300 bg-surface p-14 text-center">
@@ -127,7 +116,10 @@ export default function AdminProductsPage() {
                   </thead>
                   <tbody>
                     {products.map((product) => (
-                      <tr key={product.id} className="border-b border-neutral-100 last:border-0">
+                      <tr
+                        key={product.id}
+                        className="border-b border-neutral-100 last:border-0"
+                      >
                         <td className="px-4 py-4">
                           <Link
                             href={"/admin/products/" + product.id}
@@ -158,8 +150,13 @@ export default function AdminProductsPage() {
                             {product.status !== "ACTIVE" && (
                               <button
                                 type="button"
-                                disabled={workingId === product.id}
-                                onClick={() => void setStatus(product.id, "ACTIVE")}
+                                disabled={mutation.isPending}
+                                onClick={() =>
+                                  mutation.mutate({
+                                    id: product.id,
+                                    status: "ACTIVE",
+                                  })
+                                }
                                 className="rounded-lg bg-success-600 px-3 py-2 text-[11px] font-black text-white disabled:opacity-50"
                               >
                                 نشر
@@ -168,8 +165,13 @@ export default function AdminProductsPage() {
                             {product.status === "ACTIVE" && (
                               <button
                                 type="button"
-                                disabled={workingId === product.id}
-                                onClick={() => void setStatus(product.id, "ARCHIVED")}
+                                disabled={mutation.isPending}
+                                onClick={() =>
+                                  mutation.mutate({
+                                    id: product.id,
+                                    status: "ARCHIVED",
+                                  })
+                                }
                                 className="rounded-lg border border-neutral-200 px-3 py-2 text-[11px] font-black text-neutral-700 disabled:opacity-50"
                               >
                                 أرشفة
