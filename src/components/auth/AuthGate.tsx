@@ -17,6 +17,10 @@ export function AuthGate({ children, requiredRole }: AuthGateProps) {
   const session = useSession();
 
   useEffect(() => {
+    if (session.status === "error") {
+      return;
+    }
+
     if (session.status === "unauthenticated") {
       router.replace("/login?next=" + encodeURIComponent(pathname ?? "/"));
       return;
@@ -26,6 +30,24 @@ export function AuthGate({ children, requiredRole }: AuthGateProps) {
       router.replace("/buyer");
     }
   }, [pathname, requiredRole, router, session.status, session.user?.role]);
+
+  if (session.status === "error") {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center bg-background px-4">
+        <div className="rounded-xl border border-danger-100 bg-danger-surface px-6 py-8 text-center">
+          <p className="text-sm font-black text-danger-700">تعذر التحقق من جلسة الحساب</p>
+          <p className="mt-2 text-xs text-danger-600">تحقق من اتصال Backend ثم أعد تحميل الصفحة.</p>
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="mt-5 rounded-xl bg-brand px-5 py-2.5 text-xs font-black text-white"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (session.status !== "authenticated") {
     return (
