@@ -70,51 +70,21 @@ export default async function ProductDetailPage({
   const category =
     productDetails.category?.name ?? "General";
 
-  // Supplier-cost -> AliStore selling-price markup. This is the real
-  // dropshipping pricing mechanism (not a marketplace concept) — the
-  // customer only ever sees the resulting AliStore selling price.
-  //
-  // Reads the plain seed module directly rather than the client-only
-  // `usePricingRuleStore` Zustand hook: this is a Server Component (`async
-  // function`), and a "use client" module's exports become RSC client
-  // references when imported into server code — `usePricingRuleStore
-  // .getState` was never a real function here, it crashed on every
-  // request (see FE-034 in the forensic report). There is also no backend
-  // to persist admin-edited rules to, so the server was always going to
-  // compute pricing from this seed regardless of what an admin session's
-  // client-side store state held.
-  const pricingRule = getActiveRuleForCategory(
-    pricingRulesSeed,
-    category,
+  // Backend price is already the final AliStore selling price.
+  // The frontend must never apply a second markup or a client-side pricing seed.
+  const product = normalizeB2CProduct(
+    productDetails,
   );
-
-  const supplierPrice =
-    productDetails.price.amount;
-
-  const sellingPrice =
-    calculateSellingPrice(
-      supplierPrice,
-      "AUTOMATIC",
-      pricingRule,
-    );
-
-  // Normalize once, here, through the canonical adapter — the AliStore
-  // selling price then replaces the raw supplier price on the resulting
-  // view model before anything customer-facing renders it. ProductInfo
-  // (and anything else downstream) receives this already-normalized
-  // value rather than normalizing it again itself.
-  const product = {
-    ...normalizeB2CProduct(productDetails),
-    price: sellingPrice,
-  };
 
   const primaryShippingMethod =
     productDetails.shippingMethods[0];
 
   const estimatedDelivery =
-    primaryShippingMethod
+    primaryShippingMethod &&
+    primaryShippingMethod.estimatedMinDays > 0 &&
+    primaryShippingMethod.estimatedMaxDays > 0
       ? `${primaryShippingMethod.estimatedMinDays}-${primaryShippingMethod.estimatedMaxDays} business days`
-      : "Delivery estimate available at checkout";
+      : "Delivery estimate will be confirmed at checkout";
 
   const relatedProducts =
     await getRelatedProducts(
