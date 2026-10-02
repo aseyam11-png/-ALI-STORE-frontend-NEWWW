@@ -1,3 +1,4 @@
+import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import Link from "next/link";
 import { ArrowRight, Flame, ShieldCheck, Tag, Timer } from "lucide-react";
 
@@ -7,7 +8,7 @@ import { getProducts } from "@/features/products/services/product.service";
 import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 
 export default async function DealsPage() {
-  let dealProducts = [];
+  let dealProducts: ProductCardModel[] = [];
   try {
     const response = await getProducts({
       search: "",

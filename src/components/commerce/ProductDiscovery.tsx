@@ -1,10 +1,12 @@
+import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { getProducts } from "@/features/products/services/product.service";
 import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
-import { ProductCard } from "./ProductCard";
 import { Tabs } from "@/components/ui/tabs";
+import { ProductCard } from "./ProductCard";
 
 export async function ProductDiscovery() {
-  let products = [];
+  let products: ProductCardModel[] = [];
+
   try {
     const response = await getProducts({
       search: "",
@@ -36,7 +38,7 @@ export async function ProductDiscovery() {
     (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
   );
 
-  const renderGrid = (items: typeof products) => (
+  const renderGrid = (items: ProductCardModel[]) => (
     <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
       {items.map((product) => <ProductCard key={product.id} product={product} />)}
     </div>
