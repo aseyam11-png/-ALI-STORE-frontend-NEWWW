@@ -784,7 +784,7 @@ export default function CheckoutPage() {
                           type="button"
                           onClick={() =>
                             setPaymentMethod(
-                              option.value,
+                              option.value as "CREDIT_CARD" | "PAYPAL" | "CASH_ON_DELIVERY",
                             )
                           }
                           className={`rounded-2xl border p-4 text-start transition ${
