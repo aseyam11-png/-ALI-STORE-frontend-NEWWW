@@ -46,3 +46,9 @@ test("homepage product discovery does not depend on mocks", () => {
   assert.match(source, /getProducts/);
   assert.doesNotMatch(source, /@\/mocks\/products/);
 });
+
+
+test("legacy warehouse surface is removed", () => {
+  const source = read("src/app/(admin)/admin/page.tsx");
+  assert.doesNotMatch(source, /warehouse|Boxes/i);
+});
