@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Package, Truck } from "lucide-react";
+import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
