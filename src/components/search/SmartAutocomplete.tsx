@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Search, X } from "lucide-react";
 
 import { getAutocompleteSuggestions } from "@/features/search/services/autocomplete.service";
-import type { AutocompleteSuggestion } from "@/features/search/types/autocomplete.types";
 
 interface SmartAutocompleteProps {
   value: string;
