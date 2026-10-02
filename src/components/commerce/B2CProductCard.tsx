@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import {
   CheckCircle2,
   Heart,
@@ -14,6 +15,11 @@ import {
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatSAR } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
+import {
+  addCartItem,
+  mapCartItem,
+} from "@/features/cart/services/cart.service";
+import { useSession } from "@/features/auth/session";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
@@ -31,6 +37,18 @@ export function B2CProductCard({
     (state) => state.addItem,
   );
 
+  const setItems = useCartStore(
+    (state) => state.setItems,
+  );
+
+  const { status: sessionStatus } =
+    useSession();
+
+  const [adding, setAdding] =
+    useState(false);
+  const [cartError, setCartError] =
+    useState("");
+
   const toggleWishlist =
     useWishlistStore(
       (state) => state.toggle,
@@ -47,15 +65,16 @@ export function B2CProductCard({
   const livePrice = product.price;
   const available =
     product.stockStatus === "in_stock";
-  const hasKnownStock =
-    product.stockStatus !== "unknown";
-
-  const handleCart = () => {
-    if (!available) {
+  const handleCart = async () => {
+    if (!available || adding) {
       return;
     }
 
-    addItem({
+    setCartError("");
+    setAdding(true);
+
+    const item = {
+
       productId:
         product.id,
 
@@ -87,7 +106,44 @@ export function B2CProductCard({
       estimatedDelivery:
         product.shipping
           .estimatedDelivery,
-    });
+      currency:
+        product.currency,
+    };
+
+    try {
+      if (
+        sessionStatus ===
+        "authenticated"
+      ) {
+        const serverCart =
+          await addCartItem(
+            product.id,
+            1,
+          );
+
+        setItems(
+          serverCart.items.map(
+            mapCartItem,
+          ),
+        );
+      } else {
+        addItem(item);
+      }
+    } catch (error) {
+      if (
+        error instanceof Error
+      ) {
+        setCartError(
+          error.message,
+        );
+      } else {
+        setCartError(
+          "Unable to add this product to the cart.",
+        );
+      }
+    } finally {
+      setAdding(false);
+    }
   };
 
   const oldPrice =
@@ -254,15 +310,19 @@ export function B2CProductCard({
 
         <button
           type="button"
-          onClick={handleCart}
+          onClick={() => {
+            void handleCart();
+          }}
           disabled={!available}
           className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <ShoppingCart className="h-4 w-4" />
 
-          {available
-            ? t("addToCart")
-            : t("outOfStock")}
+          {adding
+            ? "Adding…"
+            : available
+              ? t("addToCart")
+              : t("outOfStock")}
         </button>
 
       </div>
