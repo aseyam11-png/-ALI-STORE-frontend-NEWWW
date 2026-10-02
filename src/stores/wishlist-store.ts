@@ -9,6 +9,10 @@ import type {
 interface WishlistState {
   items: WishlistProduct[];
 
+  setItems: (
+    items: WishlistProduct[],
+  ) => void;
+
   /*
    * Backward-compatible fields used by older components.
    */
@@ -52,8 +56,14 @@ export const useWishlistStore =
   create<WishlistState>(
     (set, get) => ({
       items: [],
-
       productIds: [],
+
+      setItems: (items) =>
+        set({
+          items,
+          productIds:
+            buildProductIds(items),
+        }),
 
       addItem: (product) => {
         set((state) => {
