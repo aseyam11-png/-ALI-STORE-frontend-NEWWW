@@ -93,30 +93,6 @@ export default function BuyerAddressesPage() {
     );
   }, [addressesQuery.data, replaceAddresses, session.user?.id]);
 
-  const addAddress =
-    useAddressStore(
-      (state) =>
-        state.addAddress,
-    );
-
-  const updateAddress =
-    useAddressStore(
-      (state) =>
-        state.updateAddress,
-    );
-
-  const deleteAddress =
-    useAddressStore(
-      (state) =>
-        state.deleteAddress,
-    );
-
-  const setDefaultAddress =
-    useAddressStore(
-      (state) =>
-        state.setDefaultAddress,
-    );
-
   const [
     editingId,
     setEditingId,
