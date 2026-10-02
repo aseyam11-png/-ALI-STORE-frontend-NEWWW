@@ -8,27 +8,14 @@ import { SmartAutocomplete } from "@/components/search/SmartAutocomplete";
 import { VisualSearch } from "@/components/search/VisualSearch";
 import { Dialog } from "@/components/ui/dialog";
 
-// The Header's search: text search (existing SmartAutocomplete, reused as
-// is) plus the image-search entry point living inside the same control as a
-// dialog — not a separate page section. Only navigation is added here; the
-// search/autocomplete/visual-search business logic is untouched.
-export function HomeSearchBar({
-  className = "",
-}: {
-  className?: string;
-}) {
+export function HomeSearchBar({ className = "" }: { className?: string }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
 
   const submit = () => {
     const query = value.trim();
-
-    router.push(
-      query
-        ? `/shop/products?q=${encodeURIComponent(query)}`
-        : "/shop/products",
-    );
+    router.push(query ? `/shop/products?q=${encodeURIComponent(query)}` : "/shop/products");
   };
 
   return (
