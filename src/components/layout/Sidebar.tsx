@@ -4,14 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const categories = [
-  { name: "Consumer Electronics", slug: "electronics" },
-  { name: "Apparel & Accessories", slug: "apparel" },
-  { name: "Home & Garden", slug: "home-garden" },
-  { name: "Beauty & Personal Care", slug: "beauty" },
-  { name: "Machinery", slug: "machinery" },
-  { name: "Automotive", slug: "automotive" },
-  { name: "Sports & Entertainment", slug: "sports" },
-  { name: "Packaging & Printing", slug: "packaging" },
+  { name: "Fashion", slug: "fashion" },
+  { name: "Accessories", slug: "accessories" },
+  { name: "Beauty & Care", slug: "beauty-care" },
 ] as const;
 
 export function Sidebar() {
