@@ -181,7 +181,8 @@ export const useOrderStore =
         paymentMethod:
           input.paymentMethod,
 
-        paymentStatus: "PAID",
+        // Legacy local-order fallback is never allowed to claim payment success.
+        paymentStatus: "PENDING",
 
         subtotal:
           input.subtotal,
@@ -196,7 +197,7 @@ export const useOrderStore =
 
         estimatedProfit,
 
-        status: "PAID",
+        status: "PENDING_PAYMENT",
 
         items: input.items,
 
@@ -206,7 +207,7 @@ export const useOrderStore =
         estimatedDelivery:
           input.estimatedDelivery,
 
-        shipmentStatus: "PROCESSING",
+        shipmentStatus: "PENDING",
 
         events: [
           {
