@@ -1,768 +1,314 @@
 "use client";
 
-import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+
+import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
+import { useSession } from "@/features/auth/session";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  MapPin,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import {
-  useState,
-} from "react";
+  createServerAddress,
+  deleteServerAddress,
+  getServerAddresses,
+  setServerDefaultAddress,
+  updateServerAddress,
+  type AddressInput,
+  type BackendAddress,
+} from "@/features/addresses/services/address-api.service";
 
-import { AppShell } from "@/components/layout/AppShell";
-
-import {
-  useAddressStore,
-} from "@/stores/address-store";
-
-import type {
-  CustomerAddress,
-} from "@/features/addresses/types/address.types";
-
-const emptyForm = {
-  label: "",
-  recipientName: "",
-  phone: "",
-  country: "Palestine",
-  city: "",
-  area: "",
+const emptyForm: AddressInput = {
   street: "",
-  building: "",
-  apartment: "",
+  city: "",
+  state: "",
+  country: "",
   postalCode: "",
-  notes: "",
+  isDefault: false,
 };
 
 export default function BuyerAddressesPage() {
-  const addresses =
-    useAddressStore(
-      (state) =>
-        state.addresses,
-    );
+  const session = useSession();
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<AddressInput>(emptyForm);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState("");
 
-  const addAddress =
-    useAddressStore(
-      (state) =>
-        state.addAddress,
-    );
+  const addressesQuery = useQuery({
+    queryKey: ["server-addresses"],
+    queryFn: getServerAddresses,
+    enabled: session.status === "authenticated",
+    staleTime: 30_000,
+  });
 
-  const updateAddress =
-    useAddressStore(
-      (state) =>
-        state.updateAddress,
-    );
-
-  const deleteAddress =
-    useAddressStore(
-      (state) =>
-        state.deleteAddress,
-    );
-
-  const setDefaultAddress =
-    useAddressStore(
-      (state) =>
-        state.setDefaultAddress,
-    );
-
-  const [
-    editingId,
-    setEditingId,
-  ] = useState<
-    string | null
-  >(null);
-
-  const [
-    showForm,
-    setShowForm,
-  ] = useState(false);
-
-  const [
-    form,
-    setForm,
-  ] = useState(emptyForm);
-
-  const startAdd =
-    () => {
-      setEditingId(
-        null,
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (editingId) return updateServerAddress(editingId, form);
+      return createServerAddress(form);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["server-addresses"] });
+      setForm(emptyForm);
+      setEditingId(null);
+      setShowForm(false);
+      setError("");
+    },
+    onError: (mutationError) => {
+      setError(
+        mutationError instanceof Error
+          ? mutationError.message
+          : "تعذر حفظ العنوان.",
       );
-      setForm(
-        emptyForm,
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteServerAddress,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["server-addresses"] }),
+    onError: (mutationError) => {
+      setError(
+        mutationError instanceof Error
+          ? mutationError.message
+          : "تعذر حذف العنوان.",
       );
-      setShowForm(
-        true,
+    },
+  });
+
+  const defaultMutation = useMutation({
+    mutationFn: setServerDefaultAddress,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["server-addresses"] }),
+    onError: (mutationError) => {
+      setError(
+        mutationError instanceof Error
+          ? mutationError.message
+          : "تعذر تحديث العنوان الافتراضي.",
       );
-    };
+    },
+  });
 
-  const startEdit = (
-    address: CustomerAddress,
-  ) => {
-    setEditingId(
-      address.id,
-    );
-
-    setForm({
-      label:
-        address.label,
-      recipientName:
-        address.recipientName,
-      phone:
-        address.phone,
-      country:
-        address.country,
-      city:
-        address.city,
-      area:
-        address.area,
-      street:
-        address.street,
-      building:
-        address.building ??
-        "",
-      apartment:
-        address.apartment ??
-        "",
-      postalCode:
-        address.postalCode ??
-        "",
-      notes:
-        address.notes ??
-        "",
-    });
-
-    setShowForm(
-      true,
-    );
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+    setError("");
   };
 
-  const save =
-    () => {
-      if (
-        !form.label.trim() ||
-        !form.recipientName.trim() ||
-        !form.phone.trim() ||
-        !form.city.trim() ||
-        !form.area.trim() ||
-        !form.street.trim()
-      ) {
-        return;
-      }
+  const openEdit = (address: BackendAddress) => {
+    setEditingId(address.id);
+    setForm({
+      street: address.street,
+      city: address.city,
+      state: address.state ?? "",
+      country: address.country,
+      postalCode: address.postalCode ?? "",
+      isDefault: address.isDefault,
+    });
+    setShowForm(true);
+    setError("");
+  };
 
-      if (editingId) {
-        updateAddress(
-          editingId,
-          {
-            ...form,
-            label:
-              form.label.trim(),
-            recipientName:
-              form.recipientName.trim(),
-            phone:
-              form.phone.trim(),
-            city:
-              form.city.trim(),
-            area:
-              form.area.trim(),
-            street:
-              form.street.trim(),
-          },
-        );
-      } else {
-        addAddress({
-          ...form,
+  const submit = () => {
+    if (!form.street.trim() || !form.city.trim() || !form.country.trim()) {
+      setError("أكمل الشارع والمدينة والدولة.");
+      return;
+    }
 
-          label:
-            form.label.trim(),
-
-          recipientName:
-            form.recipientName.trim(),
-
-          phone:
-            form.phone.trim(),
-
-          city:
-            form.city.trim(),
-
-          area:
-            form.area.trim(),
-
-          street:
-            form.street.trim(),
-
-          customerId:
-            "customer-001",
-
-          isDefault:
-            addresses.length ===
-            0,
-        });
-      }
-
-      setShowForm(
-        false,
-      );
-
-      setEditingId(
-        null,
-      );
-
-      setForm(
-        emptyForm,
-      );
-    };
+    saveMutation.mutate();
+  };
 
   return (
-    <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-
-        <section className="border-b border-slate-200 bg-white">
-
-          <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-6 lg:px-8">
-
-            <Link
-              href="/buyer"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
+    <AccountWorkspace
+      activeTab="addresses"
+      title="العناوين"
+      description="إدارة عناوين الشحن المحفوظة على حسابك."
+    >
+      {session.status !== "authenticated" ? (
+        <div className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center">
+          <MapPin className="mx-auto h-9 w-9 text-neutral-300" />
+          <h2 className="mt-4 text-xl font-bold text-foreground">
+            سجّل الدخول لإدارة عناوينك
+          </h2>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              {addressesQuery.data?.length ?? 0} عنوان محفوظ
+            </p>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white hover:bg-brand-hover"
             >
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              Account
-            </Link>
-
-            <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-
-              <div>
-
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
-                  Delivery
-                </p>
-
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
-                  My addresses
-                </h1>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Manage saved shipping addresses for faster checkout.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={
-                  startAdd
-                }
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
-              >
-                <Plus className="h-4 w-4" />
-                Add address
-              </button>
-
-            </div>
-
+              <Plus className="h-4 w-4" />
+              إضافة عنوان
+            </button>
           </div>
-        </section>
 
-        <div className="mx-auto max-w-[1100px] px-4 py-7 sm:px-6 lg:px-8">
+          {error && (
+            <p role="alert" className="mt-5 rounded-xl border border-danger-100 bg-danger-surface px-4 py-3 text-sm font-medium text-danger-700">
+              {error}
+            </p>
+          )}
 
           {showForm && (
-            <section className="mb-6 rounded-2xl border border-blue-200 bg-white p-6 shadow-sm">
-
-              <div className="flex items-center justify-between gap-4">
-
-                <div>
-                  <h2 className="text-lg font-black text-slate-900">
-                    {editingId
-                      ? "Edit address"
-                      : "Add new address"}
-                  </h2>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    Required fields must be completed before saving.
-                  </p>
-                </div>
-
+            <section className="mt-6 rounded-2xl border border-neutral-200 bg-surface p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-foreground">
+                  {editingId ? "تعديل العنوان" : "عنوان جديد"}
+                </h2>
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowForm(
-                      false,
-                    )
-                  }
-                  className="text-xs font-black text-slate-400 hover:text-slate-700"
+                  onClick={() => setShowForm(false)}
+                  className="text-sm font-bold text-muted-foreground hover:text-foreground"
                 >
-                  Cancel
+                  إلغاء
                 </button>
-
               </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
-                <Field
-                  label="Address label"
-                  value={
-                    form.label
-                  }
-                  placeholder="Home, Work..."
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        label:
-                          value,
-                      }),
-                    )
-                  }
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <input
+                  value={form.street}
+                  onChange={(e) => setForm({ ...form, street: e.target.value })}
+                  placeholder="الشارع والعنوان"
+                  className="h-11 rounded-xl border border-neutral-200 px-3 text-sm outline-none focus:border-brand"
                 />
-
-                <Field
-                  label="Recipient name"
-                  value={
-                    form.recipientName
-                  }
-                  placeholder="Full name"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        recipientName:
-                          value,
-                      }),
-                    )
-                  }
+                <input
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  placeholder="المدينة"
+                  className="h-11 rounded-xl border border-neutral-200 px-3 text-sm outline-none focus:border-brand"
                 />
-
-                <Field
-                  label="Phone"
-                  value={
-                    form.phone
-                  }
-                  placeholder="+970..."
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        phone:
-                          value,
-                      }),
-                    )
-                  }
+                <input
+                  value={form.state ?? ""}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  placeholder="المنطقة / المحافظة"
+                  className="h-11 rounded-xl border border-neutral-200 px-3 text-sm outline-none focus:border-brand"
                 />
-
-                <Field
-                  label="Country"
-                  value={
-                    form.country
-                  }
-                  placeholder="Country"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        country:
-                          value,
-                      }),
-                    )
-                  }
+                <input
+                  value={form.country}
+                  onChange={(e) => setForm({ ...form, country: e.target.value })}
+                  placeholder="الدولة"
+                  className="h-11 rounded-xl border border-neutral-200 px-3 text-sm outline-none focus:border-brand"
                 />
-
-                <Field
-                  label="City"
-                  value={
-                    form.city
-                  }
-                  placeholder="City"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        city:
-                          value,
-                      }),
-                    )
-                  }
+                <input
+                  value={form.postalCode ?? ""}
+                  onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
+                  placeholder="الرمز البريدي"
+                  className="h-11 rounded-xl border border-neutral-200 px-3 text-sm outline-none focus:border-brand"
                 />
-
-                <Field
-                  label="Area"
-                  value={
-                    form.area
-                  }
-                  placeholder="Area / district"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        area:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Street"
-                  value={
-                    form.street
-                  }
-                  placeholder="Street"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        street:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Building"
-                  value={
-                    form.building
-                  }
-                  placeholder="Building number"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        building:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Apartment"
-                  value={
-                    form.apartment
-                  }
-                  placeholder="Apartment"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        apartment:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <Field
-                  label="Postal code"
-                  value={
-                    form.postalCode
-                  }
-                  placeholder="Optional"
-                  onChange={(
-                    value,
-                  ) =>
-                    setForm(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-                        postalCode:
-                          value,
-                      }),
-                    )
-                  }
-                />
-
-                <div className="sm:col-span-2">
-
-                  <label
-                    htmlFor="address-notes"
-                    className="text-xs font-black text-slate-600"
-                  >
-                    Delivery notes
-                  </label>
-
-                  <textarea
-                    id="address-notes"
-                    rows={3}
-                    value={
-                      form.notes
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setForm(
-                        (
-                          current,
-                        ) => ({
-                          ...current,
-                          notes:
-                            event
-                              .target
-                              .value,
-                        }),
-                      )
-                    }
-                    placeholder="Optional delivery instructions"
-                    className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                  />
-
-                </div>
-
               </div>
+
+              <label className="mt-5 flex items-center gap-3 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.isDefault)}
+                  onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
+                  className="h-5 w-5 accent-brand"
+                />
+                اجعل هذا العنوان افتراضيًا
+              </label>
 
               <button
                 type="button"
-                onClick={
-                  save
-                }
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                onClick={submit}
+                disabled={saveMutation.isPending}
+                className="mt-6 h-11 rounded-xl bg-brand px-5 text-sm font-bold text-white disabled:opacity-50"
               >
-                {editingId
-                  ? "Save changes"
-                  : "Save address"}
+                {saveMutation.isPending ? "جاري الحفظ..." : "حفظ العنوان"}
               </button>
-
             </section>
           )}
 
-          <div className="grid gap-5 md:grid-cols-2">
-
-            {addresses.map(
-              (address) => (
+          <div className="mt-7 grid gap-4">
+            {addressesQuery.isLoading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="h-32 animate-pulse rounded-2xl bg-neutral-100" />
+              ))
+            ) : addressesQuery.data?.length ? (
+              addressesQuery.data.map((address) => (
                 <article
-                  key={
-                    address.id
-                  }
-                  className={`rounded-2xl border bg-white p-5 shadow-sm ${
-                    address.isDefault
-                      ? "border-blue-300 ring-2 ring-blue-50"
-                      : "border-slate-200"
-                  }`}
+                  key={address.id}
+                  className="rounded-2xl border border-neutral-200 bg-surface p-5"
                 >
-
-                  <div className="flex items-start justify-between gap-4">
-
-                    <div className="flex items-start gap-3">
-
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-brand">
                         <MapPin className="h-5 w-5" />
                       </div>
-
                       <div>
-
                         <div className="flex flex-wrap items-center gap-2">
-
-                          <h2 className="text-sm font-black text-slate-900">
-                            {
-                              address.label
-                            }
-                          </h2>
-
+                          <h3 className="text-sm font-bold text-foreground">
+                            {address.city}
+                          </h3>
                           {address.isDefault && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[9px] font-black text-[#2563EB]">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Default
+                            <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-bold text-success-700">
+                              افتراضي
                             </span>
                           )}
-
                         </div>
-
-                        <p className="mt-2 text-sm font-bold text-slate-800">
-                          {
-                            address.recipientName
-                          }
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {[
+                            address.street,
+                            address.city,
+                            address.state,
+                            address.country,
+                            address.postalCode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
                         </p>
-
                       </div>
-
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        deleteAddress(
-                          address.id,
-                        )
-                      }
-                      aria-label={`Delete ${address.label} address`}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-
-                  </div>
-
-                  <div className="mt-5 space-y-1 text-xs leading-5 text-slate-500">
-
-                    <p>
-                      {
-                        address.phone
-                      }
-                    </p>
-
-                    <p>
-                      {
-                        address.street
-                      }
-                      {address.building
-                        ? ` · Building ${address.building}`
-                        : ""}
-                      {address.apartment
-                        ? ` · Apt ${address.apartment}`
-                        : ""}
-                    </p>
-
-                    <p>
-                      {
-                        address.area
-                      }
-                      ,{" "}
-                      {
-                        address.city
-                      }
-                      ,{" "}
-                      {
-                        address.country
-                      }
-                    </p>
-
-                    {address.notes && (
-                      <p className="pt-2 text-slate-400">
-                        Note:{" "}
-                        {
-                          address.notes
-                        }
-                      </p>
-                    )}
-
-                  </div>
-
-                  <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        startEdit(
-                          address,
-                        )
-                      }
-                      className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-black text-slate-600"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </button>
-
-                    {!address.isDefault && (
+                    <div className="flex items-center gap-2">
+                      {!address.isDefault && (
+                        <button
+                          type="button"
+                          onClick={() => defaultMutation.mutate(address.id)}
+                          disabled={defaultMutation.isPending}
+                          className="inline-flex h-9 items-center rounded-lg border border-neutral-200 px-3 text-xs font-bold hover:border-brand hover:text-brand disabled:opacity-50"
+                        >
+                          جعله افتراضيًا
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() =>
-                          setDefaultAddress(
-                            address.id,
-                          )
-                        }
-                        className="inline-flex h-9 items-center rounded-lg bg-blue-50 px-3 text-[10px] font-black text-[#2563EB]"
+                        onClick={() => openEdit(address)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-muted-foreground hover:text-brand"
+                        aria-label="تعديل العنوان"
                       >
-                        Set default
+                        <Pencil className="h-4 w-4" />
                       </button>
-                    )}
-
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm("حذف هذا العنوان؟")) {
+                            deleteMutation.mutate(address.id);
+                          }
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-danger-600 hover:bg-danger-surface"
+                        aria-label="حذف العنوان"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-
                 </article>
-              ),
+              ))
+            ) : (
+              <div className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center">
+                <MapPin className="mx-auto h-9 w-9 text-neutral-300" />
+                <h2 className="mt-4 text-xl font-bold text-foreground">لا توجد عناوين</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  أضف عنوانك مرة واحدة واستخدمه لاحقًا في checkout.
+                </p>
+              </div>
             )}
-
           </div>
-
-        </div>
-      </main>
-    </AppShell>
-  );
-}
-
-function Field({
-  label,
-  value,
-  placeholder,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  placeholder?: string;
-  onChange: (
-    value: string,
-  ) => void;
-}) {
-  const id =
-    `field-${label
-      .toLowerCase()
-      .replace(
-        /[^a-z0-9]+/g,
-        "-",
-      )}`;
-
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="text-xs font-black text-slate-600"
-      >
-        {label}
-      </label>
-
-      <input
-        id={id}
-        value={value}
-        placeholder={
-          placeholder
-        }
-        onChange={(
-          event,
-        ) =>
-          onChange(
-            event.target.value,
-          )
-        }
-        className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-      />
-    </div>
+        </>
+      )}
+    </AccountWorkspace>
   );
 }
