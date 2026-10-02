@@ -17,12 +17,34 @@ import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { FreeShippingProgress } from "@/components/commerce/cart/FreeShippingProgress";
 import { RecommendationSection } from "@/components/commerce/recommendations/RecommendationSection";
+import { useEffect, useState } from "react";
 import { useCartStore } from "@/stores/cart-store";
+import { useSession } from "@/features/auth/session";
+import {
+  getCart,
+  mapCartItem,
+  removeCartItem,
+  updateCartItem,
+  clearServerCart,
+  syncLocalCart,
+} from "@/features/cart/services/cart.service";
 
 export default function CartPage() {
   const items = useCartStore(
     (state) => state.items,
   );
+
+  const setItems = useCartStore(
+    (state) => state.setItems,
+  );
+
+  const { status: sessionStatus } =
+    useSession();
+
+  const [syncing, setSyncing] =
+    useState(false);
+  const [syncError, setSyncError] =
+    useState("");
 
   const shipping =
     useCartStore
@@ -41,6 +63,150 @@ export default function CartPage() {
   const clearCart = useCartStore(
     (state) => state.clearCart,
   );
+
+  useEffect(() => {
+    if (
+      sessionStatus !==
+      "authenticated"
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const hydrate = async () => {
+      setSyncing(true);
+      setSyncError("");
+
+      try {
+        const localItems =
+          useCartStore.getState().items;
+
+        const serverCart =
+          localItems.length > 0
+            ? await syncLocalCart(
+                localItems,
+              )
+            : await getCart();
+
+        if (!cancelled) {
+          setItems(
+            serverCart.items.map(
+              mapCartItem,
+            ),
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSyncError(
+            error instanceof Error
+              ? error.message
+              : "Unable to synchronize your cart.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setSyncing(false);
+        }
+      }
+    };
+
+    void hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    sessionStatus,
+    setItems,
+  ]);
+
+  const handleQuantity = async (
+    item: (typeof items)[number],
+    quantity: number,
+  ) => {
+    if (quantity < 1) return;
+
+    if (item.serverItemId) {
+      try {
+        const cart =
+          await updateCartItem(
+            item.serverItemId,
+            item.productId,
+            quantity,
+          );
+        setItems(
+          cart.items.map(
+            mapCartItem,
+          ),
+        );
+      } catch (error) {
+        setSyncError(
+          error instanceof Error
+            ? error.message
+            : "Unable to update the cart.",
+        );
+      }
+      return;
+    }
+
+    updateQuantity(
+      item.productId,
+      quantity,
+    );
+  };
+
+  const handleRemove = async (
+    item: (typeof items)[number],
+  ) => {
+    if (item.serverItemId) {
+      try {
+        const cart =
+          await removeCartItem(
+            item.serverItemId,
+          );
+        setItems(
+          cart.items.map(
+            mapCartItem,
+          ),
+        );
+      } catch (error) {
+        setSyncError(
+          error instanceof Error
+            ? error.message
+            : "Unable to remove the item.",
+        );
+      }
+      return;
+    }
+
+    removeItem(item.productId);
+  };
+
+  const handleClear = async () => {
+    try {
+      if (
+        sessionStatus ===
+        "authenticated"
+      ) {
+        const cart =
+          await clearServerCart();
+        setItems(
+          cart.items.map(
+            mapCartItem,
+          ),
+        );
+      } else {
+        clearCart();
+      }
+    } catch (error) {
+      setSyncError(
+        error instanceof Error
+          ? error.message
+          : "Unable to clear the cart.",
+      );
+    }
+  };
 
   const subtotal = items.reduce(
     (total, item) =>
@@ -119,6 +285,14 @@ export default function CartPage() {
             </div>
           ) : (
             <div className="space-y-7">
+              {syncError && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-danger-100 bg-danger-surface px-4 py-3 text-sm font-bold text-danger-700"
+                >
+                  {syncError}
+                </div>
+              )}
 
               <FreeShippingProgress
                 subtotal={subtotal}
@@ -146,9 +320,10 @@ export default function CartPage() {
 
                     <button
                       type="button"
-                      onClick={
-                        clearCart
-                      }
+                      onClick={() => {
+                        void handleClear();
+                      }}
+                      disabled={syncing}
                       className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -217,6 +392,7 @@ export default function CartPage() {
                                   <p className="mt-2 text-lg font-black text-[#0F2747]">
                                     <LocalizedPrice
                                       amountUSD={item.price}
+                                      currency={item.currency ?? "USD"}
                                     />
                                   </p>
 
@@ -226,13 +402,12 @@ export default function CartPage() {
 
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          updateQuantity(
-                                            item.productId,
-                                            item.quantity -
-                                              1,
-                                          )
-                                        }
+                                        onClick={() => {
+                                          void handleQuantity(
+                                            item,
+                                            item.quantity - 1,
+                                          );
+                                        }}
                                         disabled={
                                           item.quantity <=
                                           1
@@ -250,13 +425,12 @@ export default function CartPage() {
 
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          updateQuantity(
-                                            item.productId,
-                                            item.quantity +
-                                              1,
-                                          )
-                                        }
+                                        onClick={() => {
+                                          void handleQuantity(
+                                            item,
+                                            item.quantity + 1,
+                                          );
+                                        }}
                                         className="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50"
                                       >
                                         <Plus className="h-4 w-4" />
@@ -278,11 +452,9 @@ export default function CartPage() {
 
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      removeItem(
-                                        item.productId,
-                                      )
-                                    }
+                                    onClick={() => {
+                                      void handleRemove(item);
+                                    }}
                                     className="text-xs font-bold text-red-600 hover:underline"
                                   >
                                     Remove
