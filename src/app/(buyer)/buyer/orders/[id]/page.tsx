@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -76,13 +77,34 @@ export default function BuyerOrderTrackingPage() {
   const orderId = params?.id ?? "";
 
   const order = useOrderStore(
-    (state) =>
-      state.getOrder(orderId),
+    (state) => state.getOrder(orderId),
   );
+  const isLoading = useOrderStore((state) => state.isLoading);
+  const loadOrder = useOrderStore((state) => state.loadOrder);
+
+  useEffect(() => {
+    if (orderId) {
+      void loadOrder(orderId).catch(() => undefined);
+    }
+  }, [loadOrder, orderId]);
 
   const locale = useLocalizationStore(
     (state) => state.locale,
   );
+
+  if (isLoading && !order) {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-[#F8FAFC]">
+          <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+            <p className="text-sm font-bold text-slate-500">
+              Loading order...
+            </p>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
 
   if (!order) {
     return (
