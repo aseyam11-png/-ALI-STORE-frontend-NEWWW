@@ -157,7 +157,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: "alistore-cart",
+      name: "alistore-cart-v2",
       partialize: (state) => ({ items: state.items }),
     },
   ),
