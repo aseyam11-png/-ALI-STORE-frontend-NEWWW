@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/features/auth/session";
@@ -12,6 +13,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const searchParams = useSearchParams();
 
   const [identifierError, setIdentifierError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
@@ -56,7 +58,13 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign("/buyer");
+    const next = searchParams.get("next");
+    const target =
+      next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : "/buyer";
+
+    window.location.assign(target);
   };
 
   return (
