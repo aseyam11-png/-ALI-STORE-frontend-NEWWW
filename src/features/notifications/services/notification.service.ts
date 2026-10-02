@@ -29,3 +29,15 @@ export async function markNotificationRead(
     },
   );
 }
+
+
+export async function deleteNotification(
+  id: string,
+): Promise<void> {
+  await apiClient.request<void>(
+    `/api/v1/notifications/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
