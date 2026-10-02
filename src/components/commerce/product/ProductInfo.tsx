@@ -21,6 +21,8 @@ import {
 } from "@/features/products/services/variant.utils";
 
 import { useWishlistStore } from "@/stores/wishlist-store";
+import { useSession } from "@/features/auth/session";
+import { addToWishlist, removeFromWishlist } from "@/features/wishlist/services/wishlist-api.service";
 import { formatSAR } from "@/features/localization/services/currency.service";
 
 import { ProductActions } from "./ProductActions";
@@ -58,6 +60,47 @@ export function ProductInfo({
           product.id,
         ),
     );
+
+  const session = useSession();
+
+  const syncWishlist = async () => {
+    const wasSaved = saved;
+    toggleWishlist({
+      id: product.id,
+      name: product.name,
+      price: activePrice,
+      image: activeImage,
+      brand: product.brand,
+      category: product.category,
+      originalPrice: product.originalPrice,
+      discountPercentage: product.discountPercentage,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+    });
+
+    if (session.status !== "authenticated") return;
+
+    try {
+      if (wasSaved) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product.id);
+      }
+    } catch (error) {
+      toggleWishlist({
+        id: product.id,
+        name: product.name,
+        price: activePrice,
+        image: activeImage,
+        brand: product.brand,
+        category: product.category,
+        originalPrice: product.originalPrice,
+        discountPercentage: product.discountPercentage,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+      });
+    }
+  };
 
   const firstVariant =
     product.variants.find(
@@ -162,20 +205,7 @@ export function ProductInfo({
 
           <button
             type="button"
-            onClick={() =>
-              toggleWishlist({
-                id: product.id,
-                name: product.name,
-                price: activePrice,
-                image: activeImage,
-                brand: product.brand,
-                category: product.category,
-                originalPrice: product.originalPrice,
-                discountPercentage: product.discountPercentage,
-                rating: product.rating,
-                reviewCount: product.reviewCount,
-              })
-            }
+            onClick={() => void syncWishlist()}
             aria-label={
               saved
                 ? "Remove from wishlist"
