@@ -1,5 +1,5 @@
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 
 import { Tabs } from "@/components/ui/tabs";
 import { ProductCard } from "./ProductCard";
@@ -7,8 +7,28 @@ import { ProductCard } from "./ProductCard";
 // One section, one dataset source, two honest views of it: "Featured" is the
 // catalog's editorial order, "Best Sellers" re-sorts the same real products
 // by rating/review count. No separate section, no invented metrics.
-export function ProductDiscovery() {
-  const featured = featuredProducts.map(mapLegacyProductToCard);
+export async function ProductDiscovery() {
+  const response = await getProducts({
+    search: "",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: false,
+    inStockOnly: false,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+    sort: "relevance",
+    page: 1,
+    pageSize: 8,
+  });
+
+  const featured = response.items.map(mapProductSummaryToCard);
 
   const bestSellers = [...featured].sort(
     (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
