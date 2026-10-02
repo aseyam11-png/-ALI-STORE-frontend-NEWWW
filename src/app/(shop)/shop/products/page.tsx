@@ -104,7 +104,9 @@ export default function ProductsPage() {
       else params.set(key, value);
     }
 
-    params.delete("page");
+    if (patch.page === undefined) {
+      params.delete("page");
+    }
     router.replace(buildSearchHref(params));
   };
 
