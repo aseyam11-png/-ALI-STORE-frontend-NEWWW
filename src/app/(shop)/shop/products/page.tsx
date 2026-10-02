@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -130,7 +131,7 @@ export default function ProductsPage() {
     }
 
     const query = next.toString();
-    router.push(query ? "/shop/products?" + query : "/shop/products");
+    router.push((query ? "/shop/products?" + query : "/shop/products") as Route);
   };
 
   return (
