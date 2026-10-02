@@ -61,16 +61,24 @@ export default function WishlistPage() {
       reviewCount: 0,
     }));
 
-  if (
-    session.status === "authenticated" &&
-    wishlistQuery.isSuccess
-  ) {
+  useEffect(() => {
+    if (session.status !== "authenticated" || !wishlistQuery.isSuccess) {
+      return;
+    }
+
     const localIds = new Set(localItems.map((item) => item.id));
-    const missing = hydratedItems.filter((item) => !localIds.has(item.id));
-    if (missing.length > 0 || localItems.length !== hydratedItems.length) {
+    const missing = hydratedItems.some((item) => !localIds.has(item.id));
+
+    if (missing || localItems.length !== hydratedItems.length) {
       replaceItems(hydratedItems);
     }
-  }
+  }, [
+    hydratedItems,
+    localItems,
+    replaceItems,
+    session.status,
+    wishlistQuery.isSuccess,
+  ]);
 
   const items =
     session.status === "authenticated" && wishlistQuery.isSuccess
