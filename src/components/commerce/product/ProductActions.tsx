@@ -101,6 +101,9 @@ export function ProductActions({
 
       price,
 
+      currency:
+        product.currency,
+
       supplierPrice:
         product.supplierPrice,
 
