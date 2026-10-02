@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, CreditCard, DollarSign, ShieldCheck, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, CreditCard, DollarSign, XCircle } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
