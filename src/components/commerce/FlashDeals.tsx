@@ -1,22 +1,40 @@
 import Link from "next/link";
 import { ArrowLeft, Flame } from "lucide-react";
 
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
-
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 import { FlashDealsLazy } from "./FlashDealsLazy";
 
-// Same real discount data /shop/deals uses (featuredProducts filtered by an
-// active discount) — no separate "deals" dataset, no fabricated countdown.
-export function FlashDeals() {
-  const deals = featuredProducts
-    .filter((product) => product.discount !== undefined && product.discount > 0)
-    .sort((a, b) => (b.discount ?? 0) - (a.discount ?? 0))
-    .map(mapLegacyProductToCard);
+export default async function FlashDeals() {
+  const response = await getProducts({
+    search: "",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: true,
+    inStockOnly: true,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+    sort: "relevance",
+    page: 1,
+    pageSize: 8,
+  });
 
-  if (deals.length === 0) {
-    return null;
-  }
+  const deals = response.items
+    .filter((product) => product.discountPercentage !== undefined)
+    .sort(
+      (a, b) =>
+        (b.discountPercentage ?? 0) - (a.discountPercentage ?? 0),
+    )
+    .map(mapProductSummaryToCard);
+
+  if (deals.length === 0) return null;
 
   return (
     <section className="bg-ink-900">
@@ -27,7 +45,6 @@ export function FlashDeals() {
               <Flame className="h-3.5 w-3.5" />
               عروض محدودة
             </div>
-
             <h2 className="mt-4 text-h2 font-bold tracking-tight text-white lg:text-h1">
               عروض اليوم
             </h2>
