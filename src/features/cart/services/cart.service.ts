@@ -29,6 +29,7 @@ export async function addCartItem(
 
 export async function updateCartItem(
   itemId: number,
+  productId: string,
   quantity: number,
 ): Promise<BackendCart> {
   return apiClient.request<BackendCart>(
@@ -36,7 +37,7 @@ export async function updateCartItem(
     {
       method: "PATCH",
       body: JSON.stringify({
-        productId: 0,
+        productId: Number(productId),
         quantity,
       }),
     },
