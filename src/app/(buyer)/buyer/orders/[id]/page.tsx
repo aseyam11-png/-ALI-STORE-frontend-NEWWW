@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -13,39 +14,127 @@ import {
 
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
-import { useOrderStore } from "@/stores/order-store";
+import { getMyOrder } from "@/features/orders/services/order.service";
+import type { BackendOrder } from "@/lib/api/contracts";
 import { useLocalizationStore } from "@/stores/localization-store";
 
-function progressFor(status: string) {
+function shipmentFor(order: BackendOrder) {
+  return [...order.shipments].sort((a, b) => {
+    const rank = (status: string) =>
+      ({
+        PENDING: 0,
+        SHIPPED: 2,
+        IN_TRANSIT: 3,
+        DELIVERED: 4,
+        CANCELLED: -1,
+      })[status] ?? 1;
+
+    return rank(b.status) - rank(a.status);
+  })[0];
+}
+
+function progressFor(order: BackendOrder) {
+  const status = shipmentFor(order)?.status;
+
   switch (status) {
-    case "PROCESSING":
-      return 20;
-    case "PACKED":
-      return 40;
     case "SHIPPED":
       return 60;
     case "IN_TRANSIT":
       return 75;
-    case "OUT_FOR_DELIVERY":
-      return 90;
     case "DELIVERED":
       return 100;
+    case "PENDING":
+      return 20;
     default:
-      return 0;
+      return order.status === "PROCESSING" ? 20 : 0;
   }
 }
 
-function formatTrackingDate(timestamp: string, locale: "en" | "ar") {
-  const date = new Date(timestamp);
+function timelineFor(order: BackendOrder) {
+  const shipment = shipmentFor(order);
+  const shipped =
+    shipment?.status === "SHIPPED" ||
+    shipment?.status === "IN_TRANSIT" ||
+    shipment?.status === "DELIVERED";
+  const inTransit =
+    shipment?.status === "IN_TRANSIT" ||
+    shipment?.status === "DELIVERED";
+  const delivered =
+    shipment?.status === "DELIVERED";
+  const processing = [
+    "PROCESSING",
+    "SHIPPED",
+    "DELIVERED",
+  ].includes(order.status);
 
+  return [
+    {
+      id: `${order.id}-received`,
+      title: "Order received",
+      description:
+        "AliStore received your order.",
+      timestamp: order.createdAt,
+      completed: true,
+    },
+    {
+      id: `${order.id}-processing`,
+      title: "Processing",
+      description:
+        "The order is being prepared for fulfillment.",
+      timestamp: order.createdAt,
+      completed: processing,
+    },
+    {
+      id: `${order.id}-shipped`,
+      title: "Shipped",
+      description:
+        "The shipment was handed to the carrier.",
+      timestamp:
+        shipment?.shippedAt ??
+        order.createdAt,
+      completed: Boolean(shipped),
+    },
+    {
+      id: `${order.id}-transit`,
+      title: "In transit",
+      description:
+        "The package is moving through the carrier network.",
+      timestamp:
+        shipment?.shippedAt ??
+        order.createdAt,
+      completed: Boolean(inTransit),
+    },
+    {
+      id: `${order.id}-delivered`,
+      title: "Delivered",
+      description:
+        "The package was delivered successfully.",
+      timestamp:
+        shipment?.deliveredAt ??
+        order.createdAt,
+      completed: Boolean(delivered),
+    },
+  ];
+}
+
+function formatDate(
+  value: string,
+  locale: "ar" | "en",
+) {
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return timestamp;
+    return value;
   }
 
-  return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return new Intl.DateTimeFormat(
+    locale === "ar"
+      ? "ar-SA"
+      : "en-US",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    },
+  ).format(date);
 }
 
 function Info({
@@ -60,7 +149,6 @@ function Info({
       <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
         {label}
       </p>
-
       <p className="mt-1 break-words text-xs font-bold text-slate-700">
         {value}
       </p>
@@ -69,20 +157,72 @@ function Info({
 }
 
 export default function BuyerOrderTrackingPage() {
-  const params = useParams<{
-    id: string;
-  }>();
+  const params =
+    useParams<{
+      id: string;
+    }>();
+  const orderId =
+    params?.id ?? "";
 
-  const orderId = params?.id ?? "";
+  const locale =
+    useLocalizationStore(
+      (state) => state.locale,
+    );
 
-  const order = useOrderStore(
-    (state) =>
-      state.getOrder(orderId),
-  );
+  const [order, setOrder] =
+    useState<BackendOrder | null>(
+      null,
+    );
+  const [loading, setLoading] =
+    useState(true);
+  const [error, setError] =
+    useState("");
 
-  const locale = useLocalizationStore(
-    (state) => state.locale,
-  );
+  useEffect(() => {
+    if (!orderId) return;
+
+    let cancelled = false;
+
+    void getMyOrder(orderId)
+      .then((result) => {
+        if (!cancelled) {
+          setOrder(result);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Order could not be loaded.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-[#F8FAFC]">
+          <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+            <Package className="mx-auto h-8 w-8 text-slate-300" />
+            <p className="mt-4 text-sm font-bold text-slate-500">
+              Loading order…
+            </p>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
 
   if (!order) {
     return (
@@ -90,15 +230,12 @@ export default function BuyerOrderTrackingPage() {
         <main className="min-h-screen bg-[#F8FAFC]">
           <div className="mx-auto max-w-4xl px-4 py-12 text-center">
             <Package className="mx-auto h-8 w-8 text-slate-300" />
-
             <h1 className="mt-4 text-2xl font-black text-slate-900">
               Order not found
             </h1>
-
             <p className="mt-2 text-sm text-slate-500">
-              This order does not exist in the current session.
+              {error || "This order could not be found."}
             </p>
-
             <Link
               href="/buyer/orders"
               className="mt-6 inline-flex h-11 items-center rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
@@ -111,7 +248,12 @@ export default function BuyerOrderTrackingPage() {
     );
   }
 
-  const progress = progressFor(order.shipmentStatus);
+  const shipment =
+    shipmentFor(order);
+  const progress =
+    progressFor(order);
+  const timeline =
+    timelineFor(order);
 
   return (
     <AppShell>
@@ -131,18 +273,24 @@ export default function BuyerOrderTrackingPage() {
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
                   Order
                 </p>
-
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
-                  {order.id}
+                  <span dir="ltr">{order.id}</span>
                 </h1>
-
                 <p className="mt-2 text-sm text-slate-500">
                   Track your delivery from this page.
                 </p>
               </div>
 
               <LocalizedPrice
-                amountUSD={order.grandTotal}
+                amountUSD={
+                  Number(
+                    order.totalAmount,
+                  )
+                }
+                currency={
+                  order.currency ??
+                  "USD"
+                }
                 className="text-2xl font-black text-[#0F2747]"
               />
             </div>
@@ -158,20 +306,20 @@ export default function BuyerOrderTrackingPage() {
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
                       <Truck className="h-5 w-5" />
                     </div>
-
                     <div>
                       <p className="text-sm font-black text-slate-900">
-                        {order.carrier ??
+                        {shipment?.carrier ??
                           "Carrier not assigned"}
-
-                        {order.trackingNumber &&
-                          ` · ${order.trackingNumber}`}
+                        {shipment?.trackingNumber
+                          ? ` · ${shipment.trackingNumber}`
+                          : ""}
                       </p>
                     </div>
                   </div>
 
                   <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-[#2563EB]">
-                    {order.shipmentStatus}
+                    {shipment?.status ??
+                      order.status}
                   </span>
                 </div>
 
@@ -180,7 +328,6 @@ export default function BuyerOrderTrackingPage() {
                     <span className="text-xs font-black text-slate-700">
                       Delivery progress
                     </span>
-
                     <span className="text-xs font-black text-[#2563EB]">
                       {progress}%
                     </span>
@@ -203,24 +350,20 @@ export default function BuyerOrderTrackingPage() {
                     <h2 className="text-sm font-black text-slate-900">
                       Delivery timeline
                     </h2>
-
                     <span className="text-[10px] font-bold text-slate-400">
-                      {order.events.length} tracking events
+                      {timeline.length} tracking steps
                     </span>
                   </div>
 
                   <div className="mt-5">
-                    {order.events.map(
-                      (
-                        event,
-                        index,
-                      ) => (
+                    {timeline.map(
+                      (event, index) => (
                         <div
                           key={event.id}
                           className="relative flex gap-4"
                         >
                           {index <
-                            order.events.length -
+                            timeline.length -
                               1 && (
                             <div className="absolute start-4 top-8 h-full w-px bg-slate-200" />
                           )}
@@ -244,9 +387,8 @@ export default function BuyerOrderTrackingPage() {
                               <p className="text-sm font-black text-slate-800">
                                 {event.title}
                               </p>
-
                               <span className="text-[10px] font-bold text-slate-400">
-                                {formatTrackingDate(
+                                {formatDate(
                                   event.timestamp,
                                   locale,
                                 )}
@@ -256,13 +398,6 @@ export default function BuyerOrderTrackingPage() {
                             <p className="mt-1 text-xs leading-5 text-slate-500">
                               {event.description}
                             </p>
-
-                            {event.location && (
-                              <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-                                <MapPin className="h-3 w-3" />
-                                {event.location}
-                              </div>
-                            )}
 
                             <span
                               className={`mt-2 inline-flex rounded-full px-2 py-1 text-[9px] font-black ${
@@ -286,42 +421,38 @@ export default function BuyerOrderTrackingPage() {
                   <h2 className="text-sm font-black text-slate-900">
                     Order details
                   </h2>
-
                   <div className="mt-4 space-y-3">
                     <Info
                       label="Carrier"
                       value={
-                        order.carrier ??
+                        shipment?.carrier ??
                         "Not assigned"
                       }
                     />
-
                     <Info
                       label="Tracking"
                       value={
-                        order.trackingNumber ??
+                        shipment?.trackingNumber ??
                         "Not assigned"
                       }
                     />
-
                     <Info
-                      label="Shipping method"
+                      label="Delivery"
                       value={
-                        order.shippingMethod
+                        shipment?.estimatedDeliveryDate
+                          ? formatDate(
+                              shipment.estimatedDeliveryDate,
+                              locale,
+                            )
+                          : "To be confirmed after shipping"
                       }
                     />
-
-                    <Info
-                      label="Estimated delivery"
-                      value={
-                        order.estimatedDelivery
-                      }
-                    />
-
                     <Info
                       label="Last updated"
-                      value={formatTrackingDate(
-                        order.updatedAt,
+                      value={formatDate(
+                        shipment?.deliveredAt ??
+                          shipment?.shippedAt ??
+                          order.createdAt,
                         locale,
                       )}
                     />
@@ -332,20 +463,52 @@ export default function BuyerOrderTrackingPage() {
               <div className="border-t border-slate-100 p-5">
                 <div className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#2563EB]" />
-
                   <div>
                     <p className="text-xs font-black text-slate-800">
                       Delivery address
                     </p>
-
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {order.address.address},{" "}
-                      {order.address.city},{" "}
-                      {order.address.country}
+                      {order.shippingAddress}
                     </p>
                   </div>
                 </div>
               </div>
+
+              {order.items.length > 0 && (
+                <div className="border-t border-slate-100 p-5">
+                  <h2 className="text-sm font-black text-slate-900">
+                    Items
+                  </h2>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {order.items.map(
+                      (item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
+                        >
+                          <span className="min-w-0 truncate text-xs font-bold text-slate-700">
+                            {item.productName}
+                            {" × "}
+                            {item.quantity}
+                          </span>
+                          <LocalizedPrice
+                            amountUSD={
+                              Number(
+                                item.subTotal,
+                              )
+                            }
+                            currency={
+                              order.currency ??
+                              "USD"
+                            }
+                            className="shrink-0 text-xs font-black text-slate-900"
+                          />
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           </div>
         </div>
