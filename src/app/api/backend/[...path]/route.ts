@@ -15,6 +15,7 @@ const ALLOWED_PREFIXES = [
   "/v1/payments",
   "/v1/wishlists",
   "/v1/shipping",
+  "/v1/coupons",
   "/v1/shipping-addresses",
   "/v1/reviews",
 ];
