@@ -5,7 +5,7 @@ import { Package, Search, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
-import { getAdminProducts, type AdminProduct } from "@/features/admin/services/admin-commerce.service";
+import { getAdminProducts, updateAdminProductStatus, type AdminProduct } from "@/features/admin/services/admin-commerce.service";
 import { formatSAR } from "@/features/localization/services/currency.service";
 
 export default function AdminProductsPage() {
@@ -14,6 +14,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -35,6 +36,19 @@ export default function AdminProductsPage() {
       active = false;
     };
   }, []);
+
+  const changeStatus = async (productId: number, nextStatus: AdminProduct["status"]) => {
+    setUpdatingId(productId);
+    setError("");
+    try {
+      const updated = await updateAdminProductStatus(productId, nextStatus);
+      setProducts((current) => current.map((item) => item.id === productId ? updated : item));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "تعذر تحديث حالة المنتج.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const filtered = useMemo(
     () =>
@@ -139,13 +153,35 @@ export default function AdminProductsPage() {
                           </p>
                         </div>
 
-                        <Link
-                          href={"/admin/products/" + product.id}
-                          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700 hover:bg-slate-50"
-                        >
-                          Details
-                          <Truck className="h-3.5 w-3.5" />
-                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={"/admin/products/" + product.id}
+                            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700 hover:bg-slate-50"
+                          >
+                            Details
+                            <Truck className="h-3.5 w-3.5" />
+                          </Link>
+                          {product.status !== "ACTIVE" && (
+                            <button
+                              type="button"
+                              disabled={updatingId === product.id}
+                              onClick={() => void changeStatus(product.id, "ACTIVE")}
+                              className="inline-flex h-10 items-center rounded-xl bg-emerald-600 px-4 text-xs font-black text-white disabled:opacity-50"
+                            >
+                              {updatingId === product.id ? "Updating..." : "Publish"}
+                            </button>
+                          )}
+                          {product.status === "ACTIVE" && (
+                            <button
+                              type="button"
+                              disabled={updatingId === product.id}
+                              onClick={() => void changeStatus(product.id, "ARCHIVED")}
+                              className="inline-flex h-10 items-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-xs font-black text-amber-700 disabled:opacity-50"
+                            >
+                              Archive
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </article>
