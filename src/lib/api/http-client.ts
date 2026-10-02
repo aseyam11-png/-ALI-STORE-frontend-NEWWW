@@ -5,6 +5,12 @@ export type ApiError = {
   correlationId?: string;
 };
 
+export type ApiEnvelope<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+};
+
 export class HttpApiError extends Error implements ApiError {
   status: number;
   code?: string;
@@ -19,12 +25,26 @@ export class HttpApiError extends Error implements ApiError {
   }
 }
 
+function isApiEnvelope<T>(value: unknown): value is ApiEnvelope<T> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "success" in value &&
+    "data" in value
+  );
+}
+
 export class HttpClient {
-  constructor(private readonly baseUrl: string) {}
+  private readonly baseUrl: string;
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl.replace(/\/+$/, "");
+  }
 
   async request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
+      credentials: init?.credentials ?? "include",
       headers: {
         Accept: "application/json",
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
@@ -33,7 +53,10 @@ export class HttpClient {
     });
 
     if (!response.ok) {
-      const body = await response.json().catch(() => null) as { message?: string; code?: string } | null;
+      const body = await response.json().catch(() => null) as
+        | { message?: string; code?: string }
+        | null;
+
       throw new HttpApiError({
         status: response.status,
         message: body?.message ?? response.statusText,
@@ -42,9 +65,31 @@ export class HttpClient {
       });
     }
 
-    if (response.status === 204) return undefined as T;
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
     return response.json() as Promise<T>;
+  }
+
+  async requestApi<T>(path: string, init?: RequestInit): Promise<T> {
+    const response = await this.request<ApiEnvelope<T>>(path, init);
+
+    if (!isApiEnvelope<T>(response)) {
+      return response as T;
+    }
+
+    if (!response.success) {
+      throw new HttpApiError({
+        status: 500,
+        message: response.message || "API operation failed",
+      });
+    }
+
+    return response.data;
   }
 }
 
-export const apiClient = new HttpClient(process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080");
+export const apiClient = new HttpClient(
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080",
+);
