@@ -18,7 +18,6 @@ import { addWishlistProduct, removeWishlistProduct } from "@/features/wishlist/s
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useInventoryStore } from "@/stores/inventory-store";
-import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
 interface B2CProductCardProps {
