@@ -1,18 +1,31 @@
 import Link from "next/link";
 import { ArrowLeft, Flame } from "lucide-react";
+import { getProducts } from "@/features/products/services/product.service";
+import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
+import { B2CProductCard } from "./B2CProductCard";
 
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+export async function FlashDeals() {
+  const response = await getProducts({
+    search: "",
+    page: 1,
+    pageSize: 8,
+    sort: "discount_desc",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: true,
+    inStockOnly: false,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+  });
 
-import { FlashDealsLazy } from "./FlashDealsLazy";
-
-// Same real discount data /shop/deals uses (featuredProducts filtered by an
-// active discount) — no separate "deals" dataset, no fabricated countdown.
-export function FlashDeals() {
-  const deals = featuredProducts
-    .filter((product) => product.discount !== undefined && product.discount > 0)
-    .sort((a, b) => (b.discount ?? 0) - (a.discount ?? 0))
-    .map(mapLegacyProductToCard);
+  const deals = response.items.map(normalizeB2CProduct);
 
   if (deals.length === 0) {
     return null;
@@ -25,25 +38,21 @@ export function FlashDeals() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-sm bg-discount px-3 py-1.5 text-label font-medium text-white">
               <Flame className="h-3.5 w-3.5" />
-              عروض محدودة
+              عروض فعلية
             </div>
-
-            <h2 className="mt-4 text-h2 font-bold tracking-tight text-white lg:text-h1">
-              عروض اليوم
-            </h2>
+            <h2 className="mt-4 text-h2 font-bold tracking-tight text-white lg:text-h1">عروض اليوم</h2>
           </div>
 
-          <Link
-            href="/shop/deals"
-            className="inline-flex items-center gap-2 text-body-sm font-medium text-white transition-colors duration-200 ease-brand hover:text-primary-300"
-          >
+          <Link href="/shop/deals" className="inline-flex items-center gap-2 text-body-sm font-medium text-white hover:text-primary-300">
             تصفّح جميع العروض
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           </Link>
         </div>
 
-        <div className="mt-10">
-          <FlashDealsLazy products={deals} />
+        <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+          {deals.map((product) => (
+            <B2CProductCard key={product.id} product={product} />
+          ))}
         </div>
       </div>
     </section>
