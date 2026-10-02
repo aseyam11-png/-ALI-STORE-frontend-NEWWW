@@ -21,9 +21,7 @@ export type {
   ProductApiError,
 } from "./types/product.types";
 
-export type {
-  ProductCardModel,
-} from "./types/product-card.types";
+export type { ProductCardModel } from "./types/product-card.types";
 
 export type {
   ProductSort,
@@ -33,40 +31,16 @@ export type {
   ProductFilterUpdate,
 } from "./types/product-filter.types";
 
-export {
-  defaultProductFilters,
-} from "./types/product-filter.types";
-
-export type {
-  ProductQueryParams,
-  ProductApiResponse,
-  ProductDetailsResponse,
-  ProductSearchResponse,
-  ProductRequestState,
-  ProductServiceResult,
-  ProductEntityMap,
-} from "./types/product-api.types";
-
-export type {
-  ProductReview,
-  ProductReviewPage,
-} from "./types/product-review.types";
+export { defaultProductFilters } from "./types/product-filter.types";
 
 export {
   getProducts,
   getProductById,
   searchProducts,
+  getRelatedProducts,
 } from "./services/product.service";
 
-export {
-  mapMockProductToSummary,
-  mapMockProductToDetails,
-} from "./services/product.mapper";
-
-export {
-  mapProductSummaryToCard,
-  mapLegacyProductToCard,
-} from "./services/product-card.mapper";
+export { mapProductSummaryToCard } from "./services/product-card.mapper";
 
 export {
   calculateDiscountedPrice,
@@ -81,6 +55,4 @@ export {
   formatProductQuantity,
 } from "./utils/product.utils";
 
-export {
-  validateProductFilters,
-} from "./utils/product-validation.utils";
+export { validateProductFilters } from "./utils/product-validation.utils";
