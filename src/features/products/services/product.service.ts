@@ -253,11 +253,13 @@ function buildProductPath(
   }
 
   if (filters.categoryId?.trim()) {
-    params.set("categoryName", filters.categoryId.trim());
+    const category = filters.categoryId.trim();
+    params.set(/^\d+$/.test(category) ? "category" : "categoryName", category);
   }
 
   if (filters.brand?.trim()) {
-    params.set("brandName", filters.brand.trim());
+    const brand = filters.brand.trim();
+    params.set(/^\d+$/.test(brand) ? "brand" : "brandName", brand);
   }
 
   if (filters.minPrice !== undefined) {
