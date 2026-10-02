@@ -32,10 +32,7 @@ export function B2CProductCard({
     (state) => state.addItem,
   );
 
-  const toggleWishlist =
-    useWishlistStore(
-      (state) => state.toggle,
-    );
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
 
   const saved =
     useWishlistStore(
@@ -161,9 +158,18 @@ export function B2CProductCard({
         <button
           type="button"
           onClick={() =>
-            toggleWishlist(
-              product.id,
-            )
+            toggleWishlist({
+              id: product.id,
+              name: product.name,
+              price: livePrice,
+              image: product.images[0]?.url,
+              brand: product.brand,
+              category: product.category,
+              originalPrice: product.originalPrice,
+              discountPercentage: product.discountPercentage,
+              rating: product.rating,
+              reviewCount: product.reviewCount,
+            })
           }
           aria-label={
             saved
