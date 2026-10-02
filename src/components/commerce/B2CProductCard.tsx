@@ -216,17 +216,13 @@ export function B2CProductCard({
 
         <div className="mt-3 flex items-center gap-2">
 
-          {available ? (
-            <span
-              className={`text-xs font-bold ${
-                !hasKnownStock
-                  ? "text-neutral-500"
-                  : "text-success-700"
-              }`}
-            >
-              {hasKnownStock
-                ? t("inStock")
-                : "Availability will be confirmed at checkout"}
+          {product.stockStatus === "unknown" ? (
+            <span className="text-xs font-bold text-neutral-500">
+              Availability will be confirmed at checkout
+            </span>
+          ) : available ? (
+            <span className="text-xs font-bold text-success-700">
+              {t("inStock")}
             </span>
           ) : (
             <span className="text-xs font-black text-danger-700">
