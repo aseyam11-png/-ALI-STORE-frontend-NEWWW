@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import {
+  useState,
+  type FormEvent,
+} from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { login } from "@/features/auth/session";
+import { HttpApiError } from "@/lib/api/http-client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// There is no authentication backend in this repository yet (verified by
-// repository-wide search) — `login()` always resolves to
-// `auth_backend_unavailable`. This form must never simulate a successful
-// sign-in: it validates real input honestly, then reports the one true
-// outcome available today instead of pretending to authenticate anyone.
 export function LoginForm() {
+  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
   const [identifierError, setIdentifierError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | undefined>();
@@ -29,7 +29,7 @@ export function LoginForm() {
     let hasError = false;
 
     if (!trimmedIdentifier) {
-      setIdentifierError("أدخل بريدك الإلكتروني أو رقم هاتفك");
+      setIdentifierError("أدخل بريدك الإلكتروني");
       hasError = true;
     } else {
       setIdentifierError(undefined);
@@ -49,14 +49,28 @@ export function LoginForm() {
     setFormError(undefined);
     setSubmitting(true);
 
-    const result = await login({ identifier: trimmedIdentifier, password });
+    try {
+      await login({
+        identifier: trimmedIdentifier,
+        password,
+      });
 
-    setSubmitting(false);
-
-    if (!result.ok) {
-      setFormError(
-        "تسجيل الدخول غير متاح حاليًا — نعمل على تفعيل هذه الخدمة قريبًا.",
-      );
+      router.replace("/buyer");
+      router.refresh();
+    } catch (error) {
+      if (error instanceof HttpApiError) {
+        if (error.status === 401) {
+          setFormError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+        } else if (error.status === 429) {
+          setFormError("محاولات كثيرة. حاول مرة أخرى بعد قليل.");
+        } else {
+          setFormError(error.message);
+        }
+      } else {
+        setFormError("تعذر تسجيل الدخول حاليًا. حاول مرة أخرى.");
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -68,10 +82,10 @@ export function LoginForm() {
     >
       <Input
         id="login-identifier"
-        name="identifier"
-        type="text"
+        name="email"
+        type="email"
         autoComplete="username"
-        label="البريد الإلكتروني أو رقم الهاتف"
+        label="البريد الإلكتروني"
         value={identifier}
         onChange={(event) => setIdentifier(event.target.value)}
         error={identifierError}
