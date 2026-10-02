@@ -1,203 +1,157 @@
 "use client";
 
-import Link from "next/link";
-import {
-  ArrowRight,
-  Package,
-  Search,
-  Truck,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { RefreshCw, Truck, PackageCheck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
-import { useOrderStore } from "@/stores/order-store";
+import {
+  getAdminOrders,
+  updateAdminOrderStatus,
+} from "@/features/admin/orders/services/admin-order-api.service";
 
-function statusClass(status: string) {
-  switch (status) {
-    case "DELIVERED":
-      return "bg-emerald-50 text-emerald-700";
+const STATUS = [
+  "PENDING",
+  "PROCESSING",
+  "SHIPPED",
+  "IN_TRANSIT",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+] as const;
 
-    case "SHIPPED":
-    case "IN_TRANSIT":
-    case "OUT_FOR_DELIVERY":
-      return "bg-blue-50 text-blue-700";
-
-    case "PACKED":
-      return "bg-purple-50 text-purple-700";
-
-    default:
-      return "bg-amber-50 text-amber-700";
-  }
-}
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: "قيد الانتظار",
+  PROCESSING: "قيد التجهيز",
+  SHIPPED: "تم الشحن",
+  IN_TRANSIT: "في الطريق",
+  OUT_FOR_DELIVERY: "خارج للتوصيل",
+  DELIVERED: "تم التوصيل",
+};
 
 export default function AdminShipmentsPage() {
-  const orders = useOrderStore(
-    (state) =>
-      state.orders,
-  );
+  const client = useQueryClient();
 
-  const [
-    search,
-    setSearch,
-  ] = useState("");
+  const query = useQuery({
+    queryKey: ["admin", "orders"],
+    queryFn: () => getAdminOrders(0, 100),
+    staleTime: 10_000,
+  });
 
-  const filtered = useMemo(
-    () =>
-      orders.filter(
-        (order) =>
-          `${order.id} ${order.trackingNumber ?? ""}`
-            .toLowerCase()
-            .includes(
-              search
-                .trim()
-                .toLowerCase(),
-            ),
-      ),
-    [orders, search],
-  );
+  const mutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      updateAdminOrderStatus(id, status),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["admin", "orders"] }),
+  });
+
+  const orders = query.data?.content ?? [];
 
   return (
     <AdminShell>
       <main className="min-h-screen bg-[#F8FAFC]">
-
         <section className="border-b border-slate-200 bg-white">
-
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-black text-blue-700">
+                  <Truck className="h-3.5 w-3.5" />
+                  Fulfillment
+                </div>
+                <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900">
+                  إدارة الشحنات
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                  حالات الشحن تُحفظ على الطلب في Backend ولا تعتمد على state محلي.
+                </p>
+              </div>
 
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
-              Administration
-            </p>
-
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">
-              Shipment control
-            </h1>
-
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Central view of every order&apos;s delivery status.
-            </p>
-
+              <button
+                type="button"
+                onClick={() => void query.refetch()}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700"
+              >
+                <RefreshCw className="h-4 w-4" />
+                تحديث
+              </button>
+            </div>
           </div>
-
         </section>
 
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          {query.isPending ? (
+            <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-24 animate-pulse rounded-2xl bg-white" />
+            ))}</div>
+          ) : query.isError ? (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-bold text-red-600">
+              تعذر تحميل الشحنات. تحقق من صلاحيات ADMIN واتصال الـBackend.
+            </div>
+          ) : (
+            <section className="space-y-4">
+              {orders.map((order) => {
+                const shipment = order.shipments[0];
+                const current = shipment?.status ?? order.status;
 
-          <div className="mb-5 flex h-11 max-w-xl items-center gap-3 rounded-xl border border-slate-200 bg-white px-3">
-
-            <Search className="h-4 w-4 text-slate-400" />
-
-            <input
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value,
-                )
-              }
-              placeholder="Search order or tracking number..."
-              aria-label="Search shipments"
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-            />
-
-          </div>
-
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-            <div className="divide-y divide-slate-100">
-
-              {filtered.map(
-                (order) => (
-                  <div
-                    key={order.id}
-                    className="p-5"
-                  >
-
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-                      <div className="flex items-start gap-3">
-
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                          <Truck className="h-5 w-5" />
+                return (
+                  <article key={order.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex min-w-0 items-start gap-4">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                          {shipment ? <Truck className="h-5 w-5" /> : <PackageCheck className="h-5 w-5" />}
                         </div>
-
-                        <div>
-
-                          <div className="flex flex-wrap items-center gap-2">
-
-                            <p className="text-sm font-black text-slate-900">
-                              {order.id}
-                            </p>
-
-                            <span
-                              className={`rounded-full px-2.5 py-1 text-[10px] font-black ${statusClass(
-                                order.shipmentStatus,
-                              )}`}
-                            >
-                              {order.shipmentStatus}
-                            </span>
-
-                          </div>
-
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-slate-900">طلب #{order.id}</p>
                           <p className="mt-1 text-xs text-slate-400">
-                            {order.carrier ?? "Carrier not assigned"}
+                            {shipment?.carrier ?? "بانتظار شركة الشحن"}
+                            {shipment?.trackingNumber ? " · " + shipment.trackingNumber : ""}
                           </p>
-
-                          <p className="mt-2 text-xs font-mono text-slate-600">
-                            {order.trackingNumber ??
-                              "Tracking not assigned"}
-                          </p>
-
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {order.items.map((item) => (
+                              <span key={item.id} className="rounded-lg bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-600">
+                                {item.productName} × {item.quantity}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-
                       </div>
 
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                        <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-black text-slate-700">
+                          {STATUS_LABEL[current] ?? current}
+                        </span>
 
-                        <div className="text-right">
-
-                          <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
-                            ETA
-                          </p>
-
-                          <p className="mt-1 text-xs font-bold text-slate-700">
-                            {order.estimatedDelivery ||
-                              "Pending"}
-                          </p>
-
-                        </div>
-
-                        <Link
-                          href={`/buyer/orders/${order.id}`}
-                          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700 hover:bg-slate-50"
+                        <select
+                          value={current}
+                          disabled={mutation.isPending}
+                          onChange={(event) =>
+                            mutation.mutate({ id: order.id, status: event.target.value })
+                          }
+                          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold"
+                          aria-label={"تحديث حالة الطلب " + order.id}
                         >
-                          View order
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-
+                          {STATUS.map((status) => (
+                            <option key={status} value={status}>
+                              {STATUS_LABEL[status]}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-
                     </div>
+                  </article>
+                );
+              })}
 
-                  </div>
-                ),
-              )}
-
-              {filtered.length ===
-                0 && (
-                <div className="p-12 text-center">
-
-                  <Package className="mx-auto h-8 w-8 text-slate-300" />
-
-                  <p className="mt-4 text-sm font-bold text-slate-600">
-                    No shipments found.
-                  </p>
-
+              {orders.length === 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
+                  لا توجد طلبات.
                 </div>
               )}
 
-            </div>
-
-          </section>
-
+              {mutation.isError && (
+                <p role="alert" className="rounded-xl bg-red-50 p-4 text-xs font-bold text-red-600">
+                  {mutation.error instanceof Error ? mutation.error.message : "فشل تحديث الحالة"}
+                </p>
+              )}
+            </section>
+          )}
         </div>
       </main>
     </AdminShell>
