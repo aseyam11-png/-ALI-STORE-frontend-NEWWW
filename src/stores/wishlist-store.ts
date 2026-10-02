@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 import type {
   WishlistProduct,
@@ -48,8 +49,8 @@ function buildProductIds(
   );
 }
 
-export const useWishlistStore =
-  create<WishlistState>(
+export const useWishlistStore = create<WishlistState>()(
+  persist(
     (set, get) => ({
       items: [],
 
@@ -125,14 +126,10 @@ export const useWishlistStore =
 
       toggle: (product) => {
         if (typeof product === "string") {
-          const exists = get().items.some(
-            (item) => item.id === product,
-          );
-
-          if (exists) {
+          const existing = get().items.find((item) => item.id === product);
+          if (existing) {
             get().removeItem(product);
           }
-
           return;
         }
 
@@ -155,4 +152,12 @@ export const useWishlistStore =
         });
       },
     }),
-  );
+    {
+      name: "alistore-wishlist",
+      partialize: (state) => ({
+        items: state.items,
+        productIds: state.productIds,
+      }),
+    },
+  ),
+);
