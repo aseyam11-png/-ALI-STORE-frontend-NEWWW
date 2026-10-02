@@ -39,6 +39,18 @@ export default function BuyerAddressesPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
+  const refreshAddresses = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setAddresses(await getMyAddresses());
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل العناوين.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const startAdd = () => {
     setEditingId(null);
     setForm({
@@ -113,7 +125,7 @@ export default function BuyerAddressesPage() {
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
-      await load();
+      await refreshAddresses();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "تعذر حفظ العنوان.");
     } finally {
