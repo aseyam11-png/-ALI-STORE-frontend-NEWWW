@@ -39,23 +39,6 @@ export default function BuyerAddressesPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
-  const load = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      setAddresses(await getMyAddresses());
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل العناوين.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, []);
-
   const startAdd = () => {
     setEditingId(null);
     setForm({
