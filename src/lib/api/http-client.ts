@@ -25,6 +25,8 @@ export class HttpClient {
   async request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
+      credentials: init?.credentials ?? "include",
+      cache: init?.cache ?? "no-store",
       headers: {
         Accept: "application/json",
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
@@ -33,7 +35,10 @@ export class HttpClient {
     });
 
     if (!response.ok) {
-      const body = await response.json().catch(() => null) as { message?: string; code?: string } | null;
+      const body = await response.json().catch(() => null) as
+        | { message?: string; code?: string }
+        | null;
+
       throw new HttpApiError({
         status: response.status,
         message: body?.message ?? response.statusText,
@@ -47,4 +52,6 @@ export class HttpClient {
   }
 }
 
-export const apiClient = new HttpClient(process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080");
+export const apiClient = new HttpClient(
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080",
+);
