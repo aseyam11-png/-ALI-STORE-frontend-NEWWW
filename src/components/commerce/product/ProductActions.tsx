@@ -11,12 +11,16 @@ import {
 } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
+import {
+  addCartItem,
+  mapCartItem,
+} from "@/features/cart/services/cart.service";
+import { useSession } from "@/features/auth/session";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import type {
   B2CProduct,
   B2CProductVariant,
 } from "@/features/products/types/b2c-product.types";
-
 import {
   getVariantPrice,
   getVariantStock,
@@ -37,12 +41,19 @@ export function ProductActions({
   const addItem = useCartStore(
     (state) => state.addItem,
   );
+  const setItems = useCartStore(
+    (state) => state.setItems,
+  );
+
+  const { status: sessionStatus } =
+    useSession();
 
   const [quantity, setQuantity] =
     useState(1);
-
   const [message, setMessage] =
     useState("");
+  const [submitting, setSubmitting] =
+    useState(false);
 
   const price =
     getVariantPrice(
@@ -64,13 +75,98 @@ export function ProductActions({
   const subtotal =
     price * quantity;
 
+  const addToCart =
+    async () => {
+      if (
+        !available ||
+        submitting
+      ) {
+        return false;
+      }
+
+      setSubmitting(true);
+      setMessage("");
+
+      const item = {
+        productId:
+          product.id,
+        name:
+          product.name,
+        price,
+        supplierPrice:
+          product.supplierPrice,
+        priceUnit:
+          "unit",
+        quantity,
+        image:
+          selectedVariant?.image ??
+          product.images[0]?.url,
+        minOrderQuantity:
+          1,
+        shippingCost:
+          product.shipping.free
+            ? 0
+            : undefined,
+        shippingMethod:
+          product.shipping.method,
+        estimatedDelivery:
+          product.shipping
+            .estimatedDelivery,
+        variantId:
+          selectedVariant?.id,
+        variantLabel:
+          getVariantLabel(
+            selectedVariant,
+          ),
+        currency:
+          product.currency,
+      };
+
+      try {
+        if (
+          sessionStatus ===
+          "authenticated"
+        ) {
+          const serverCart =
+            await addCartItem(
+              product.id,
+              quantity,
+            );
+
+          setItems(
+            serverCart.items.map(
+              mapCartItem,
+            ),
+          );
+        } else {
+          addItem(item);
+        }
+
+        setMessage(
+          "Product added to cart.",
+        );
+        return true;
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to add this product to the cart.",
+        );
+        return false;
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
   const increase = () => {
-    if (quantity < stock) {
+    if (
+      available &&
+      quantity < stock
+    ) {
       setQuantity(
         (current) =>
           current + 1,
       );
-
       setMessage("");
     }
   };
@@ -83,102 +179,38 @@ export function ProductActions({
           current - 1,
         ),
     );
-
     setMessage("");
   };
 
-  const addToCart = () => {
-    if (!available) {
-      return;
-    }
+  const handleBuyNow =
+    async () => {
+      const added =
+        await addToCart();
 
-    addItem({
-      productId:
-        product.id,
-
-      name:
-        product.name,
-
-      price,
-
-      supplierPrice:
-        product.supplierPrice,
-
-      priceUnit:
-        "unit",
-
-      quantity,
-
-      image:
-        selectedVariant?.image ??
-        product.images[0]?.url,
-
-      minOrderQuantity:
-        1,
-
-      shippingCost:
-        product.shipping.free
-          ? 0
-          : undefined,
-
-      shippingMethod:
-        product.shipping.method,
-
-      estimatedDelivery:
-        product.shipping
-          .estimatedDelivery,
-
-      variantId:
-        selectedVariant?.id,
-
-      variantLabel:
-        getVariantLabel(
-          selectedVariant,
-        ),
-    });
-  };
-
-  const handleAddToCart = () => {
-    addToCart();
-
-    setMessage(
-      "Product added to cart.",
-    );
-  };
-
-  const handleBuyNow = () => {
-    if (!available) {
-      return;
-    }
-
-    addToCart();
-    router.push("/shop/checkout");
-  };
+      if (added) {
+        router.push(
+          "/shop/checkout",
+        );
+      }
+    };
 
   return (
     <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm sm:p-6">
-
       {selectedVariant && (
         <div className="mb-5 rounded-xl bg-info-surface px-4 py-3">
           <p className="text-[10px] font-black uppercase tracking-wide text-brand">
             Selected variant
           </p>
-
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <span className="text-sm font-black text-foreground">
               {selectedVariant.name}
             </span>
-
             <span className="text-xs font-bold text-brand">
               {selectedVariant.value}
             </span>
-
             {selectedVariant.sku && (
               <span className="text-[10px] font-mono text-neutral-400">
-                SKU:{" "}
-                {
-                  selectedVariant.sku
-                }
+                SKU: {selectedVariant.sku}
               </span>
             )}
           </div>
@@ -186,37 +218,29 @@ export function ProductActions({
       )}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-
         <div>
           <p className="text-sm font-black text-foreground">
             Quantity
           </p>
-
           <p className="mt-1 text-xs text-neutral-400">
             {available
-              ? `${stock} available`
+              ? "Availability confirmed by the store"
               : "This option is currently unavailable"}
           </p>
         </div>
 
         <div className="flex w-fit items-center overflow-hidden rounded-xl border border-neutral-200">
-
           <button
             type="button"
             onClick={decrease}
-            disabled={
-              quantity <= 1
-            }
+            disabled={quantity <= 1}
             aria-label="Decrease quantity"
             className="flex h-11 w-11 items-center justify-center text-neutral-600 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Minus className="h-4 w-4" />
           </button>
 
-          <span
-            className="flex h-11 min-w-16 items-center justify-center border-x border-neutral-200 px-4 text-sm font-black"
-            aria-live="polite"
-          >
+          <span className="flex h-11 min-w-16 items-center justify-center border-x border-neutral-200 px-4 text-sm font-black">
             {quantity}
           </span>
 
@@ -232,49 +256,54 @@ export function ProductActions({
           >
             <Plus className="h-4 w-4" />
           </button>
-
         </div>
-
       </div>
 
       <div className="mt-5 flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-4">
-
         <span className="text-sm text-neutral-500">
           Estimated subtotal
         </span>
 
         <span className="text-2xl font-black text-foreground">
-          {formatCurrency(subtotal, product.currency)}
+          {formatCurrency(
+            subtotal,
+            product.currency,
+          )}
         </span>
-
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-
         <button
           type="button"
-          onClick={
-            handleAddToCart
+          onClick={() => {
+            void addToCart();
+          }}
+          disabled={
+            !available ||
+            submitting
           }
-          disabled={!available}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-surface text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <ShoppingCart className="h-4 w-4" />
-          Add to cart
+          {submitting
+            ? "Adding…"
+            : "Add to cart"}
         </button>
 
         <button
           type="button"
-          onClick={
-            handleBuyNow
+          onClick={() => {
+            void handleBuyNow();
+          }}
+          disabled={
+            !available ||
+            submitting
           }
-          disabled={!available}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <Zap className="h-4 w-4" />
           Buy now
         </button>
-
       </div>
 
       {message && (
@@ -286,7 +315,6 @@ export function ProductActions({
           {message}
         </div>
       )}
-
     </div>
   );
 }
