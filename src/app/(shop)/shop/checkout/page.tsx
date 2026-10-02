@@ -100,7 +100,7 @@ export default function CheckoutPage() {
 
   const addressSyncKey =
     selectedAddress?.id ??
-    (defaultAddress ? `default:${defaultAddress.fullName}` : null);
+    (defaultAddress ? `default:${defaultAddress.recipientName}` : null);
 
   const [syncedAddressKey, setSyncedAddressKey] =
     useState<string | null>(null);
