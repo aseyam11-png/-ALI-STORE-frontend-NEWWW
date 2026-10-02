@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
-import { formatSAR } from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useInventoryStore } from "@/stores/inventory-store";
@@ -103,9 +103,7 @@ export function B2CProductCard({
     product.originalPrice &&
     product.originalPrice >
       livePrice
-      ? formatSAR(
-          product.originalPrice,
-        )
+      ? formatCurrency(product.originalPrice, product.currency)
       : null;
 
   return (
