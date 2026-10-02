@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Package, RefreshCw } from "lucide-react";
@@ -122,7 +123,7 @@ export default function AdminProductsPage() {
                       >
                         <td className="px-4 py-4">
                           <Link
-                            href={"/admin/products/" + product.id}
+                            href={(("/admin/products/" + product.id) as Route)}
                             className="font-black hover:text-brand"
                           >
                             {product.name}
