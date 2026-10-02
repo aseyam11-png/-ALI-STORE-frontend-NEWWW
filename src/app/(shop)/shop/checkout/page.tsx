@@ -22,6 +22,7 @@ import { useAddressStore } from "@/stores/address-store";
 import { useSession } from "@/features/auth/session";
 import { listAddresses } from "@/features/addresses/services/address.service";
 import {
+  getCart,
   syncLocalCart,
 } from "@/features/cart/services/cart.service";
 import {
@@ -94,9 +95,6 @@ export default function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] =
     useState("card");
-
-  const [shippingMode, setShippingMode] =
-    useState("standard");
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
@@ -282,8 +280,20 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
-      // Backend owns cart state and validates live stock/supplier mappings.
-      await syncLocalCart(items);
+      // Authenticated checkout uses the backend cart as source of truth.
+      // A local cart is synchronized only when the server has no items yet.
+      const serverCart =
+        await getCart();
+
+      if (
+        serverCart.items.length ===
+          0 &&
+        items.length > 0
+      ) {
+        await syncLocalCart(
+          items,
+        );
+      }
 
       const shippingAddress = [
         form.fullName.trim(),
