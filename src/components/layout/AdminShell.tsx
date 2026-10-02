@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+import { useSession } from "@/features/auth/session";
 
 import {
   BarChart3,
@@ -107,6 +109,8 @@ export function AdminShell({
   children,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const session = useSession();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -118,6 +122,29 @@ export function AdminShell({
       ? pathname === "/admin"
       : pathname === href ||
         (pathname?.startsWith(`${href}/`) ?? false);
+
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.replace(`/login?next=${encodeURIComponent(pathname ?? "/admin")}`);
+    } else if (
+      session.status === "authenticated" &&
+      session.user?.role !== "ADMIN"
+    ) {
+      router.replace("/buyer");
+    }
+  }, [pathname, router, session.status, session.user?.role]);
+
+  if (session.status !== "authenticated" || session.user?.role !== "ADMIN") {
+    return (
+      <LocalizationProvider>
+        <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-6">
+          <p className="text-sm font-bold text-slate-500">
+            Checking administrator access...
+          </p>
+        </main>
+      </LocalizationProvider>
+    );
+  }
 
   // Same accessible-drawer contract already established for the customer
   // header's mobile menu (HomeHeader.tsx): initial focus, Escape-to-close,
