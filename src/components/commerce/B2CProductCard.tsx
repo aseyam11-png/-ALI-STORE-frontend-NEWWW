@@ -15,7 +15,6 @@ import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatSAR } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
-import { useInventoryStore } from "@/stores/inventory-store";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
@@ -45,22 +44,11 @@ export function B2CProductCard({
         ),
     );
 
-  const inventory =
-    useInventoryStore(
-      (state) =>
-        state.records[product.id],
-    );
-
-  const liveStock =
-    inventory?.available ??
-    product.stock;
-
-  const livePrice =
-    inventory?.price ??
-    product.price;
-
+  const livePrice = product.price;
   const available =
-    liveStock > 0;
+    product.stockStatus === "in_stock";
+  const hasKnownStock =
+    product.stockStatus !== "unknown";
 
   const handleCart = () => {
     if (!available) {
@@ -106,9 +94,7 @@ export function B2CProductCard({
     product.originalPrice &&
     product.originalPrice >
       livePrice
-      ? formatSAR(
-          product.originalPrice,
-        )
+      ? formatSAR(product.originalPrice)
       : null;
 
   return (
@@ -217,6 +203,7 @@ export function B2CProductCard({
         <div className="mt-3 flex items-end gap-2">
           <LocalizedPrice
             amountUSD={livePrice}
+            currency={product.currency}
             className="text-xl font-black text-foreground"
           />
 
@@ -232,14 +219,14 @@ export function B2CProductCard({
           {available ? (
             <span
               className={`text-xs font-bold ${
-                liveStock <= 5
-                  ? "text-warning-700"
+                !hasKnownStock
+                  ? "text-neutral-500"
                   : "text-success-700"
               }`}
             >
-              {liveStock <= 5
-                ? t("onlyXLeft", { count: liveStock })
-                : t("inStock")}
+              {hasKnownStock
+                ? t("inStock")
+                : "Availability will be confirmed at checkout"}
             </span>
           ) : (
             <span className="text-xs font-black text-danger-700">
