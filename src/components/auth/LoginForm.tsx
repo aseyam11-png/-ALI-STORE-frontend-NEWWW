@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/features/auth/session";
@@ -17,6 +18,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
   const [identifierError, setIdentifierError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
@@ -28,8 +30,8 @@ export function LoginForm() {
     const trimmedIdentifier = identifier.trim();
     let hasError = false;
 
-    if (!trimmedIdentifier) {
-      setIdentifierError("أدخل بريدك الإلكتروني أو رقم هاتفك");
+    if (!trimmedIdentifier || !trimmedIdentifier.includes("@")) {
+      setIdentifierError("أدخل بريدًا إلكترونيًا صحيحًا");
       hasError = true;
     } else {
       setIdentifierError(undefined);
@@ -53,11 +55,17 @@ export function LoginForm() {
 
     setSubmitting(false);
 
-    if (!result.ok) {
-      setFormError(
-        "تسجيل الدخول غير متاح حاليًا — نعمل على تفعيل هذه الخدمة قريبًا.",
-      );
+    if (result.ok) {
+      router.replace("/buyer");
+      router.refresh();
+      return;
     }
+
+    setFormError(
+      result.reason === "invalid_credentials"
+        ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+        : "تعذر الاتصال بخدمة تسجيل الدخول. حاول مرة أخرى.",
+    );
   };
 
   return (
@@ -71,7 +79,7 @@ export function LoginForm() {
         name="identifier"
         type="text"
         autoComplete="username"
-        label="البريد الإلكتروني أو رقم الهاتف"
+        label="البريد الإلكتروني"
         value={identifier}
         onChange={(event) => setIdentifier(event.target.value)}
         error={identifierError}
