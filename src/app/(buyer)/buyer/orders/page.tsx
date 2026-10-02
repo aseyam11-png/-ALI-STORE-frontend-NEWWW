@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Package, Truck } from "lucide-react";
@@ -86,7 +87,7 @@ export default function BuyerOrdersPage() {
               </div>
 
               <Link
-                href={"/buyer/orders/" + order.id}
+                href={(("/buyer/orders/" + order.id) as Route)}
                 className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 px-4 text-xs font-black text-foreground hover:border-primary-200 hover:text-brand"
               >
                 عرض التفاصيل
