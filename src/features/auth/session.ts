@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import type { ApiResponse } from "@/lib/api/contracts";
 import { apiClient, HttpApiError } from "@/lib/api/http-client";
 
@@ -54,7 +61,7 @@ export async function login(credentials: {
   if (!email.includes("@")) {
     return {
       ok: false,
-      message: "أدخل البريد الإلكتروني المرتبط بحسابك.",
+      message: "أدخل بريدًا إلكترونيًا صالحًا.",
     };
   }
 
@@ -99,13 +106,25 @@ export async function logout(): Promise<void> {
   });
 }
 
-export function useSession(): Session {
+interface SessionContextValue extends Session {
+  refresh: () => Promise<void>;
+}
+
+const SessionContext = createContext<SessionContextValue | null>(null);
+
+export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>({
     status: "loading",
     user: null,
   });
 
   const refresh = useCallback(async () => {
+    setSession((current) =>
+      current.status === "authenticated"
+        ? current
+        : { status: "loading", user: null },
+    );
+
     try {
       const user = await getCurrentSession();
       setSession(user ? { status: "authenticated", user } : EMPTY_SESSION);
@@ -118,5 +137,24 @@ export function useSession(): Session {
     void refresh();
   }, [refresh]);
 
-  return session;
+  return (
+    <SessionContext.Provider
+      value={{
+        ...session,
+        refresh,
+      }}
+    >
+      {children}
+    </SessionContext.Provider>
+  );
+}
+
+export function useSession(): SessionContextValue {
+  const context = useContext(SessionContext);
+
+  if (!context) {
+    throw new Error("useSession must be used inside SessionProvider");
+  }
+
+  return context;
 }
