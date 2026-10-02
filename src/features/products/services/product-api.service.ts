@@ -40,8 +40,14 @@ export async function fetchProducts(input: {
 }) {
   const params = new URLSearchParams();
   if (input.q) params.set("q", input.q);
-  if (input.category) params.set("category", input.category);
-  if (input.brand) params.set("brand", input.brand);
+  if (input.category) {
+    if (/^\d+$/.test(input.category)) params.set("category", input.category);
+    else params.set("categorySlug", input.category);
+  }
+  if (input.brand) {
+    if (/^\d+$/.test(input.brand)) params.set("brand", input.brand);
+    else params.set("brandName", input.brand);
+  }
   if (input.minPrice) params.set("minPrice", input.minPrice);
   if (input.maxPrice) params.set("maxPrice", input.maxPrice);
   if (input.availability) params.set("availability", input.availability);
@@ -57,4 +63,19 @@ export async function fetchProducts(input: {
 export async function fetchProduct(id: string) {
   if (!/^\d+$/.test(id)) return null;
   return apiClient.get<BackendProduct>(`/products/${id}`);
+}
+
+export interface BackendCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  active: boolean;
+  parentId?: number | null;
+  parentName?: string | null;
+}
+
+export function fetchCategories() {
+  return apiClient.get<BackendCategory[]>("/categories");
 }
