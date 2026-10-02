@@ -6,9 +6,16 @@ export interface BackendWishlistItem {
   userId: number;
   productId: number;
   createdAt: string;
+  productName?: string;
+  price?: number;
+  currency?: string;
+  discountPercentage?: number;
+  imageUrl?: string;
+  brandName?: string;
+  categoryName?: string;
 }
 
-export async function getServerWishlist() {
+export async function getServerWishlist(): Promise<BackendWishlistItem[]> {
   const response = await apiClient.request<ApiResponse<BackendWishlistItem[]>>(
     "/api/v1/wishlists",
   );
