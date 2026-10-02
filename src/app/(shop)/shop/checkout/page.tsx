@@ -1,361 +1,220 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
-  ArrowRight,
+  AlertCircle,
   CheckCircle2,
   CreditCard,
-  LockKeyhole,
+  Loader2,
   MapPin,
-  Package,
-  ShieldCheck,
   Truck,
 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
-import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
-import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
-import { useCustomerStore } from "@/stores/customer-store";
-import { useAddressStore } from "@/stores/address-store";
-import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
-import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
+import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
+import { useSession } from "@/features/auth/session";
+import { getShippingQuote } from "@/features/products/services/product-api.service";
+import {
+  createBackendOrder,
+  processPayment,
+} from "@/features/orders/services/order-api.service";
+import { syncCart } from "@/features/cart/services/cart-api.service";
+import { useCartStore } from "@/stores/cart-store";
 
-interface FormState {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  country: string;
-  postalCode: string;
-}
-
-const initialForm: FormState = {
-  fullName: "",
-  email: "",
-  phone: "",
-  address: "",
-  city: "",
-  country: "",
-  postalCode: "",
-};
+type PaymentMethod = "CASH_ON_DELIVERY" | "CREDIT_CARD" | "PAYPAL";
+type ShippingMethod = "STANDARD" | "EXPRESS";
 
 export default function CheckoutPage() {
-  const items = useCartStore(
-    (state) => state.items,
-  );
+  const router = useRouter();
+  const session = useSession();
+  const items = useCartStore((state) => state.items);
+  const clearLocalCart = useCartStore((state) => state.clearCart);
 
-  const shipping = useCartStore(
-    (state) =>
-      state.getShippingInfo(),
-  );
-
-  const clearCart = useCartStore(
-    (state) => state.clearCart,
-  );
-
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
-  );
-
-  const getDefaultAddress = useCustomerStore(
-    (state) => state.getDefaultAddress,
-  );
-
-  const selectedAddressId = useAddressStore(
-    (state) => state.selectedAddressId,
-  );
-
-  const addresses = useAddressStore(
-    (state) => state.addresses,
-  );
-
-  const [form, setForm] =
-    useState<FormState>(
-      initialForm,
-    );
-
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("Palestine");
+  const [shippingMethod, setShippingMethod] =
+    useState<ShippingMethod>("STANDARD");
   const [paymentMethod, setPaymentMethod] =
-    useState("card");
-
-  const [shippingMode, setShippingMode] =
-    useState("standard");
-
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-
-  const [error, setError] =
-    useState("");
-
-  const defaultAddress = getDefaultAddress();
-
-  const selectedAddress = addresses.find(
-    (address) =>
-      address.id === selectedAddressId,
-  );
-
-  const addressSyncKey =
-    selectedAddress?.id ??
-    (defaultAddress ? `default:${defaultAddress.fullName}` : null);
-
-  const [syncedAddressKey, setSyncedAddressKey] =
-    useState<string | null>(null);
-
-  if (addressSyncKey !== syncedAddressKey) {
-    setSyncedAddressKey(addressSyncKey);
-
-    if (selectedAddress) {
-      setForm((current) => ({
-        fullName:
-          selectedAddress.recipientName,
-        email:
-          current.email,
-        phone:
-          selectedAddress.phone,
-        address:
-          [
-            selectedAddress.street,
-            selectedAddress.building
-              ? `Building ${selectedAddress.building}`
-              : "",
-            selectedAddress.apartment
-              ? `Apt ${selectedAddress.apartment}`
-              : "",
-            selectedAddress.area,
-          ]
-            .filter(Boolean)
-            .join(", "),
-        city:
-          selectedAddress.city,
-        country:
-          selectedAddress.country,
-        postalCode:
-          selectedAddress.postalCode ?? "",
-      }));
-    } else if (defaultAddress) {
-      setForm((current) => ({
-        ...current,
-        fullName:
-          current.fullName ||
-          defaultAddress.fullName,
-        phone:
-          current.phone ||
-          defaultAddress.phone,
-        address:
-          current.address ||
-          defaultAddress.addressLine1,
-        city:
-          current.city ||
-          defaultAddress.city,
-        country:
-          current.country ||
-          defaultAddress.country,
-        postalCode:
-          current.postalCode ||
-          defaultAddress.postalCode ||
-          "",
-      }));
-    }
-  }
-
-  const [successOrderId, setSuccessOrderId] =
-    useState("");
+    useState<PaymentMethod>("CASH_ON_DELIVERY");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [shippingQuote, setShippingQuote] = useState<Awaited<
+    ReturnType<typeof getShippingQuote>
+  > | null>(null);
+  const [loadingQuote, setLoadingQuote] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  const [error, setError] = useState("");
 
   const subtotal = useMemo(
     () =>
       items.reduce(
-        (total, item) =>
-          total +
-          item.price *
-            item.quantity,
+        (total, item) => total + item.price * item.quantity,
         0,
       ),
     [items],
   );
 
-  const shippingCost =
-    shippingMode === "express" &&
-    items.length > 0
-      ? shipping.cost + 8
-      : shipping.cost;
+  const currency = items[0]?.currency ?? "USD";
 
-  const couponDiscount =
-    appliedCoupon?.finalDiscount ?? 0;
+  useEffect(() => {
+    if (!items.length) {
+      setShippingQuote(null);
+      return;
+    }
 
-  const total =
-    Math.max(
-      0,
-      subtotal +
-        shippingCost -
-        couponDiscount,
-    );
+    let cancelled = false;
+    setLoadingQuote(true);
 
-  const setField = (
-    key: keyof FormState,
-    value: string,
-  ) => {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
-  };
+    void getShippingQuote(
+      Math.max(0, subtotal - couponDiscount),
+      shippingMethod,
+      currency,
+    )
+      .then((quote) => {
+        if (!cancelled) setShippingQuote(quote);
+      })
+      .catch((quoteError) => {
+        if (!cancelled) {
+          setShippingQuote(null);
+          setError(
+            quoteError instanceof Error
+              ? quoteError.message
+              : "تعذر حساب تكلفة الشحن.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingQuote(false);
+      });
 
-  const validate = () => {
-    const required: Array<
-      keyof FormState
-    > = [
-      "fullName",
-      "email",
-      "phone",
-      "address",
-      "city",
-      "country",
-    ];
+    return () => {
+      cancelled = true;
+    };
+  }, [subtotal, couponDiscount, shippingMethod, currency, items.length]);
 
-    return required.every(
-      (field) =>
-        form[field].trim().length > 0,
-    );
-  };
+  const shippingAmount = shippingQuote?.amount ?? 0;
+  const estimatedTotal = Math.max(
+    0,
+    subtotal - couponDiscount + shippingAmount,
+  );
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setError("");
 
-    if (items.length === 0) {
+    if (session.status !== "authenticated") {
+      router.push("/login?next=/shop/checkout");
+      return;
+    }
+
+    if (!items.length) {
+      setError("السلة فارغة.");
+      return;
+    }
+
+    const cleanName = fullName.trim();
+    const cleanAddress = address.trim();
+    const cleanCity = city.trim();
+    const cleanCountry = country.trim() || "Palestine";
+
+    if (!cleanName || !email.trim() || !phone.trim() || !cleanAddress || !cleanCity) {
+      setError("أكمل بيانات الشحن المطلوبة.");
+      return;
+    }
+
+    const numericItems = items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    }));
+
+    if (
+      numericItems.some(
+        (item) =>
+          !Number.isInteger(Number(item.productId)) ||
+          Number(item.productId) < 1,
+      )
+    ) {
       setError(
-        "Your cart is empty.",
+        "يوجد منتج محلي غير مرتبط بمنتج حي في الكتالوج. أعد إضافة المنتج من صفحة المتجر.",
       );
       return;
     }
 
-    if (!validate()) {
-      setError(
-        "Please complete all required shipping information.",
+    setPlacing(true);
+
+    try {
+      await syncCart(numericItems);
+
+      const order = await createBackendOrder({
+        shippingAddress:
+          cleanName +
+          " | " +
+          phone.trim() +
+          " | " +
+          cleanAddress +
+          " | " +
+          cleanCity +
+          " | " +
+          cleanCountry,
+        shippingMethod,
+        couponCode: couponCode || undefined,
+      });
+
+      const payment = await processPayment(
+        order.id,
+        order.totalAmount,
+        paymentMethod,
       );
-      return;
+
+      const paymentAccepted =
+        payment.status === "COMPLETED" ||
+        (paymentMethod === "CASH_ON_DELIVERY" && payment.status === "PENDING");
+
+      if (!paymentAccepted) {
+        throw new Error(
+          "لم يتم تأكيد الدفع. لم يتم اعتبار الطلب مكتملًا.",
+        );
+      }
+
+      clearLocalCart();
+      router.replace("/buyer/orders/" + order.id + "/confirmation");
+    } catch (placeOrderError) {
+      setError(
+        placeOrderError instanceof Error
+          ? placeOrderError.message
+          : "تعذر إتمام الطلب. حاول مرة أخرى.",
+      );
+    } finally {
+      setPlacing(false);
     }
-
-    const order = createOrder({
-      customerName:
-        form.fullName,
-
-      customerEmail:
-        form.email,
-
-      address: {
-        fullName:
-          form.fullName,
-        phone:
-          form.phone,
-        address:
-          form.address,
-        city:
-          form.city,
-        country:
-          form.country,
-        postalCode:
-          form.postalCode,
-      },
-
-      paymentMethod,
-
-      items,
-
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
-
-      estimatedDelivery:
-        shipping.estimatedDelivery,
-
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
   };
 
-  if (successOrderId) {
+  if (items.length === 0) {
     return (
       <AppShell>
-        <main className="min-h-screen bg-[#F8FAFC]">
-          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
-
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                <CheckCircle2 className="h-8 w-8" />
-              </div>
-
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">
-                Order confirmed
-              </p>
-
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
-                Thank you for your order
-              </h1>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
-                information as soon as your order ships.
-              </p>
-
-              <div className="mx-auto mt-7 max-w-md rounded-2xl bg-slate-50 p-5 text-start">
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
-                    Order number
-                  </span>
-
-                  <span className="text-sm font-black text-[#0F2747]">
-                    {successOrderId}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
-                    Payment
-                  </span>
-
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                    PAID
-                  </span>
-                </div>
-
-              </div>
-
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-
-                <Link
-                  href="/buyer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
-                >
-                  View my orders
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-
-                <Link
-                  href="/shop/products"
-                  className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700"
-                >
-                  Continue shopping
-                </Link>
-
-              </div>
-
-            </section>
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-500">
+              <Truck className="h-6 w-6" />
+            </div>
+            <h1 className="mt-5 text-3xl font-black text-foreground">
+              السلة فارغة
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              أضف منتجًا واحدًا على الأقل قبل إتمام الشراء.
+            </p>
+            <Link
+              href="/shop/products"
+              className="mt-7 inline-flex h-11 items-center rounded-xl bg-brand px-6 text-sm font-black text-white"
+            >
+              متابعة التسوق
+            </Link>
           </div>
         </main>
       </AppShell>
@@ -364,581 +223,306 @@ export default function CheckoutPage() {
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-
-            <Link
-              href="/shop/cart"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              Back to cart
-            </Link>
-
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
+      <main className="min-h-screen bg-background">
+        <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <span className="text-[10px] font-black uppercase tracking-[0.16em] text-brand">
               Checkout
+            </span>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground">
+              إتمام الطلب
             </h1>
-
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              One secure payment for your order.
+            <p className="mt-2 text-sm text-muted-foreground">
+              السعر النهائي والشحن والتحقق من المخزون والدفع تُحسم على الخادم.
             </p>
-
           </div>
-        </section>
 
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-
-          {items.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-
-              <Package className="mx-auto h-8 w-8 text-slate-300" />
-
-              <h2 className="mt-5 text-xl font-black text-slate-900">
-                Your cart is empty
-              </h2>
-
-              <Link
-                href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
-              >
-                Browse products
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-
-            </section>
-          ) : (
-            <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_380px]">
-
-              <div className="space-y-6">
-
-                {/* Saved addresses */}
-                <CheckoutAddressSelector
-                  onAddressChange={(addressId) => {
-                    const selected =
-                      addresses.find(
-                        (address) =>
-                          address.id ===
-                          addressId,
-                      );
-
-                    if (!selected) {
-                      return;
-                    }
-
-                    setForm((current) => ({
-                      ...current,
-                      fullName:
-                        selected.recipientName,
-                      phone:
-                        selected.phone,
-                      address:
-                        [
-                          selected.street,
-                          selected.building
-                            ? `Building ${selected.building}`
-                            : "",
-                          selected.apartment
-                            ? `Apt ${selected.apartment}`
-                            : "",
-                          selected.area,
-                        ]
-                          .filter(Boolean)
-                          .join(", "),
-                      city:
-                        selected.city,
-                      country:
-                        selected.country,
-                      postalCode:
-                        selected.postalCode ??
-                        "",
-                    }));
-                  }}
-                />
-
-                {/* Contact */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                      <MapPin className="h-5 w-5" />
-                    </div>
-
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900">
-                        Delivery information
-                      </h2>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Where should we deliver your order?
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
-                    <div className="sm:col-span-2">
-                      <label
-                        htmlFor="full-name"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        Full name *
-                      </label>
-
-                      <input
-                        id="full-name"
-                        value={
-                          form.fullName
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "fullName",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        Email *
-                      </label>
-
-                      <input
-                        id="email"
-                        type="email"
-                        value={
-                          form.email
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "email",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        Phone *
-                      </label>
-
-                      <input
-                        id="phone"
-                        type="tel"
-                        value={
-                          form.phone
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "phone",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label
-                        htmlFor="address"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        Address *
-                      </label>
-
-                      <input
-                        id="address"
-                        value={
-                          form.address
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "address",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="city"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        City *
-                      </label>
-
-                      <input
-                        id="city"
-                        value={
-                          form.city
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "city",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="country"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        Country *
-                      </label>
-
-                      <input
-                        id="country"
-                        value={
-                          form.country
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "country",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="postal-code"
-                        className="text-xs font-black text-slate-600"
-                      >
-                        Postal code
-                      </label>
-
-                      <input
-                        id="postal-code"
-                        value={
-                          form.postalCode
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "postalCode",
-                            event.target.value,
-                          )
-                        }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-                      />
-                    </div>
-
-                  </div>
-                </section>
-
-                {/* Shipping */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
-                  <div className="flex items-center gap-3">
-                    <Truck className="h-5 w-5 text-emerald-600" />
-
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900">
-                        Delivery speed
-                      </h2>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Applied to your entire order.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "standard",
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "standard"
-                          ? "border-[#2563EB] bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <p className="text-sm font-black text-slate-900">
-                        Standard
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Best available rate
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "express",
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "express"
-                          ? "border-[#2563EB] bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <p className="text-sm font-black text-slate-900">
-                        Express
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Faster delivery — +<LocalizedPrice amountUSD={8} />
-                      </p>
-                    </button>
-
-                  </div>
-
-                </section>
-
-                {/* Payment */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-[#2563EB]" />
-
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900">
-                        Payment
-                      </h2>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Choose how you&apos;d like to pay.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-
-                    {[
-                      {
-                        value: "card",
-                        label: "Credit / Debit Card",
-                      },
-                      {
-                        value: "wallet",
-                        label: "Digital Wallet",
-                      },
-                      {
-                        value: "cod",
-                        label: "Cash on Delivery",
-                      },
-                    ].map(
-                      (option) => (
-                        <button
-                          key={
-                            option.value
-                          }
-                          type="button"
-                          onClick={() =>
-                            setPaymentMethod(
-                              option.value,
-                            )
-                          }
-                          className={`rounded-2xl border p-4 text-start transition ${
-                            paymentMethod ===
-                            option.value
-                              ? "border-[#2563EB] bg-blue-50"
-                              : "border-slate-200 hover:bg-slate-50"
-                          }`}
-                        >
-                          <p className="text-xs font-black text-slate-900">
-                            {option.label}
-                          </p>
-                        </button>
-                      ),
-                    )}
-
-                  </div>
-
-                </section>
-
-                {error && (
-                  <div
-                    role="alert"
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"
-                  >
-                    {error}
-                  </div>
-                )}
-
+          {session.status !== "authenticated" && (
+            <section className="mb-6 flex items-center gap-3 rounded-2xl border border-warning-100 bg-warning-surface p-4">
+              <AlertCircle className="h-5 w-5 shrink-0 text-warning-600" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-foreground">
+                  يلزم تسجيل الدخول
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  سيتم حفظ الطلب في حسابك وتتبع حالته من صفحة الطلبات.
+                </p>
               </div>
+              <Link
+                href="/login?next=/shop/checkout"
+                className="inline-flex h-10 items-center rounded-xl bg-brand px-4 text-xs font-black text-white"
+              >
+                تسجيل الدخول
+              </Link>
+            </section>
+          )}
 
-              {/* Summary */}
-              <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24">
-
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-[#2563EB]" />
-
-                  <h2 className="text-lg font-black text-slate-900">
-                    Your order
-                  </h2>
-                </div>
-
-                <div className="mt-6 space-y-2">
-
-                  {items.map(
-                    (item) => (
-                      <div
-                        key={`${item.productId}-${item.variantId ?? "default"}`}
-                        className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
-                      >
-                        <p className="min-w-0 truncate text-xs font-bold text-slate-700">
-                          {item.name}{" "}
-                          <span className="text-slate-400">
-                            × {item.quantity}
-                          </span>
-                        </p>
-
-                        <p className="shrink-0 text-xs font-black text-slate-900">
-                          <LocalizedPrice
-                            amountUSD={item.price * item.quantity}
-                          />
-                        </p>
-                      </div>
-                    ),
-                  )}
-
-                </div>
-
-                <div className="mt-5 rounded-xl bg-slate-50 p-3 text-[11px] text-slate-400">
-                  {shipping.method}
-                  {shipping.estimatedDelivery
-                    ? ` · ${shipping.estimatedDelivery}`
-                    : ""}
-                </div>
-
-                <div className="mt-5">
-                  <CouponInput
-                    subtotal={subtotal}
-                    shipping={shippingCost}
-                    onApply={setAppliedCoupon}
-                    onRemove={() => setAppliedCoupon(null)}
-                  />
-                </div>
-
-                <div className="mt-6 space-y-3 border-t border-slate-100 pt-5">
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">
-                      Subtotal
-                    </span>
-
-                    <LocalizedPrice
-                      amountUSD={subtotal}
-                      className="font-bold text-slate-800"
-                    />
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">
-                      Shipping
-                    </span>
-
-                    <span className="font-bold text-slate-800">
-                      {shippingCost === 0 ? (
-                        "FREE"
-                      ) : (
-                        <LocalizedPrice
-                          amountUSD={shippingCost}
-                        />
-                      )}
-                    </span>
-                  </div>
-
-                  {couponDiscount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">
-                        Discount
-                      </span>
-
-                      <span className="font-bold text-emerald-600">
-                        −<LocalizedPrice
-                          amountUSD={couponDiscount}
-                        />
-                      </span>
-                    </div>
-                  )}
-
-                </div>
-
-                <div className="mt-5 border-t border-slate-100 pt-5">
-
-                  <div className="flex items-end justify-between">
-
-                    <span className="text-sm font-bold text-slate-500">
-                      Total
-                    </span>
-
-                    <LocalizedPrice
-                      amountUSD={total}
-                      className="text-3xl font-black text-[#0F2747]"
-                    />
-
-                  </div>
-
-                </div>
-
-                <button
-                  type="button"
-                  onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
-                >
-                  <LockKeyhole className="h-4 w-4" />
-                  Place order
-                </button>
-
-                <div className="mt-4 rounded-xl bg-emerald-50 p-3">
-                  <div className="flex items-start gap-2">
-                    <ShieldCheck className="mt-0.5 h-4 w-4 text-emerald-600" />
-
-                    <p className="text-[11px] leading-5 text-emerald-700">
-                      Your payment is processed securely by ALI STORE.
-                    </p>
-                  </div>
-                </div>
-
-              </aside>
-
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 flex items-start gap-3 rounded-2xl border border-danger-100 bg-danger-surface p-4 text-sm font-bold text-danger-700"
+            >
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
+          <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <section className="space-y-6">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-brand" />
+                  <h2 className="text-lg font-black text-foreground">
+                    بيانات الشحن
+                  </h2>
+                </div>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <input
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    placeholder="الاسم الكامل *"
+                    autoComplete="name"
+                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                  />
+                  <input
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="البريد الإلكتروني *"
+                    type="email"
+                    autoComplete="email"
+                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                  />
+                  <input
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    placeholder="رقم الهاتف *"
+                    autoComplete="tel"
+                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                  />
+                  <input
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                    placeholder="المدينة *"
+                    autoComplete="address-level2"
+                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                  />
+                  <input
+                    value={address}
+                    onChange={(event) => setAddress(event.target.value)}
+                    placeholder="العنوان التفصيلي *"
+                    autoComplete="street-address"
+                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100 sm:col-span-2"
+                  />
+                  <input
+                    value={country}
+                    onChange={(event) => setCountry(event.target.value)}
+                    placeholder="الدولة"
+                    autoComplete="country-name"
+                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                  />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Truck className="h-5 w-5 text-brand" />
+                  <h2 className="text-lg font-black text-foreground">
+                    طريقة الشحن
+                  </h2>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {(["STANDARD", "EXPRESS"] as const).map((method) => {
+                    const selected = shippingMethod === method;
+                    return (
+                      <button
+                        key={method}
+                        type="button"
+                        onClick={() => setShippingMethod(method)}
+                        className={
+                          "rounded-2xl border p-4 text-start transition " +
+                          (selected
+                            ? "border-brand bg-info-surface"
+                            : "border-neutral-200 bg-surface hover:border-primary-200")
+                        }
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-black">
+                              {method === "STANDARD" ? "شحن عادي" : "شحن سريع"}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {shippingQuote && !loadingQuote
+                                ? shippingQuote.estimatedMinDays +
+                                  "-" +
+                                  shippingQuote.estimatedMaxDays +
+                                  " يوم عمل"
+                                : "جاري حساب المدة..."}
+                            </p>
+                          </div>
+                          {selected && (
+                            <CheckCircle2 className="h-5 w-5 text-brand" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-5 w-5 text-brand" />
+                  <h2 className="text-lg font-black text-foreground">
+                    الدفع
+                  </h2>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {[
+                    {
+                      value: "CASH_ON_DELIVERY",
+                      label: "الدفع عند الاستلام",
+                    },
+                    {
+                      value: "CREDIT_CARD",
+                      label: "بطاقة",
+                    },
+                    {
+                      value: "PAYPAL",
+                      label: "PayPal",
+                    },
+                  ].map((method) => {
+                    const selected = paymentMethod === method.value;
+                    return (
+                      <button
+                        key={method.value}
+                        type="button"
+                        onClick={() =>
+                          setPaymentMethod(
+                            method.value as PaymentMethod,
+                          )
+                        }
+                        className={
+                          "rounded-2xl border p-4 text-sm font-black transition " +
+                          (selected
+                            ? "border-brand bg-info-surface text-brand"
+                            : "border-neutral-200 hover:border-primary-200")
+                        }
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span>{method.label}</span>
+                          {selected && (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
+                  وسائل الدفع الإلكترونية تتطلب موفّر دفع حقيقي على بيئة الإنتاج؛
+                  بيئة التطوير تستخدم المزوّد الاختباري الموجود في الـbackend.
+                </p>
+              </section>
+
+              <CouponInput
+                subtotal={subtotal}
+                shipping={shippingAmount}
+                onApply={({ coupon, discountAmount }) => {
+                  setCouponCode(coupon.code);
+                  setCouponDiscount(discountAmount);
+                }}
+                onRemove={() => {
+                  setCouponCode("");
+                  setCouponDiscount(0);
+                }}
+              />
+            </section>
+
+            <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm lg:sticky lg:top-24">
+              <h2 className="text-lg font-black text-foreground">ملخص الطلب</h2>
+
+              <div className="mt-6 space-y-4">
+                {items.map((item) => (
+                  <div
+                    key={item.productId + ":" + (item.variantId ?? "base")}
+                    className="flex items-start justify-between gap-4 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-bold text-foreground">
+                        {item.name}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        الكمية: {item.quantity}
+                      </p>
+                    </div>
+                    <LocalizedPrice
+                      amountUSD={item.price * item.quantity}
+                      currency={item.currency}
+                      className="shrink-0 font-black"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 border-t border-neutral-100 pt-5 space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الإجمالي الفرعي</span>
+                  <LocalizedPrice amountUSD={subtotal} currency={currency} />
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الخصم</span>
+                  <LocalizedPrice
+                    amountUSD={couponDiscount}
+                    currency={currency}
+                  />
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    الشحن
+                  </span>
+                  {loadingQuote ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LocalizedPrice
+                      amountUSD={shippingAmount}
+                      currency={shippingQuote?.currency ?? currency}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-neutral-100 pt-5">
+                <div className="flex items-end justify-between gap-4">
+                  <span className="font-black text-foreground">الإجمالي</span>
+                  <LocalizedPrice
+                    amountUSD={estimatedTotal}
+                    currency={shippingQuote?.currency ?? currency}
+                    className="text-2xl font-black text-foreground"
+                  />
+                </div>
+                <p className="mt-2 text-[10px] leading-5 text-muted-foreground">
+                  القيمة المعروضة تقديرية. الخادم يعيد حساب الإجمالي من السلة
+                  والمخزون والكوبون وطريقة الشحن قبل الدفع.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void placeOrder()}
+                disabled={placing || loadingQuote || session.status === "loading"}
+                className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300"
+              >
+                {placing && <Loader2 className="h-5 w-5 animate-spin" />}
+                {placing ? "جارٍ تنفيذ الطلب..." : "تأكيد الطلب والدفع"}
+              </button>
+            </aside>
+          </div>
         </div>
       </main>
     </AppShell>
