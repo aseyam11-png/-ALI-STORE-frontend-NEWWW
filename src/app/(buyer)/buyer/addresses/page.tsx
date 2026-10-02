@@ -51,6 +51,24 @@ export default function BuyerAddressesPage() {
     }
   };
 
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      try {
+        const next = await getMyAddresses();
+        if (active) setAddresses(next);
+      } catch (caughtError) {
+        if (active) setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل العناوين.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void run();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const startAdd = () => {
     setEditingId(null);
     setForm({
