@@ -19,6 +19,10 @@ import {
   addCartItem,
   mapCartItem,
 } from "@/features/cart/services/cart.service";
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "@/features/wishlist/services/wishlist.service";
 import { useSession } from "@/features/auth/session";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
@@ -49,10 +53,10 @@ export function B2CProductCard({
   const [cartError, setCartError] =
     useState("");
 
-  const toggleWishlist =
-    useWishlistStore(
-      (state) => state.toggle,
-    );
+  const [wishlistBusy, setWishlistBusy] =
+    useState(false);
+
+
 
   const saved =
     useWishlistStore(
@@ -146,6 +150,75 @@ export function B2CProductCard({
     }
   };
 
+  const handleWishlist = async () => {
+    if (wishlistBusy) return;
+
+    setWishlistBusy(true);
+    setCartError("");
+
+    try {
+      if (
+        sessionStatus ===
+        "authenticated"
+      ) {
+        if (saved) {
+          await removeFromWishlist(
+            product.id,
+          );
+        } else {
+          await addToWishlist(
+            product.id,
+          );
+        }
+      }
+
+      const localWishlist =
+        useWishlistStore.getState();
+
+      if (saved) {
+        localWishlist.removeItem(
+          product.id,
+        );
+      } else {
+        localWishlist.addItem({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          currency: product.currency,
+          image:
+            product.images[0]?.url,
+          brand: product.brand,
+          category:
+            product.category,
+          rating: product.rating,
+          reviewCount:
+            product.reviewCount,
+        });
+      }
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        Number(
+          (
+            error as {
+              status?: unknown;
+            }
+          ).status,
+        ) !== 401
+      ) {
+        setCartError(
+          error instanceof Error
+            ? error.message
+            : "Unable to update wishlist.",
+        );
+      }
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
+
   const oldPrice =
     product.originalPrice &&
     product.originalPrice >
@@ -202,11 +275,10 @@ export function B2CProductCard({
 
         <button
           type="button"
-          onClick={() =>
-            toggleWishlist(
-              product.id,
-            )
-          }
+          onClick={() => {
+            void handleWishlist();
+          }}
+          disabled={wishlistBusy}
           aria-label={
             saved
               ? t("removeFromWishlist", { name: product.name })
