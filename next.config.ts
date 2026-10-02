@@ -14,10 +14,7 @@ const nextConfig: NextConfig = {
       ...(mediaUrl
         ? [
             {
-              protocol: mediaUrl.protocol.replace(":", ""),
-              hostname: mediaUrl.hostname,
-              port: mediaUrl.port,
-              pathname: "/**",
+              new URL(mediaBase!)
             },
           ]
         : []),
