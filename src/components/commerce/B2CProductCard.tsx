@@ -15,6 +15,8 @@ import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatSAR } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
+import { useSession } from "@/features/auth/session";
+import { addToWishlist, removeFromWishlist } from "@/features/wishlist/services/wishlist-api.service";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
@@ -43,6 +45,47 @@ export function B2CProductCard({
           product.id,
         ),
     );
+
+  const session = useSession();
+
+  const syncWishlist = async () => {
+    const wasSaved = saved;
+    toggleWishlist({
+      id: product.id,
+      name: product.name,
+      price: livePrice,
+      image: product.images[0]?.url,
+      brand: product.brand,
+      category: product.category,
+      originalPrice: product.originalPrice,
+      discountPercentage: product.discountPercentage,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+    });
+
+    if (session.status !== "authenticated") return;
+
+    try {
+      if (wasSaved) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product.id);
+      }
+    } catch (error) {
+      toggleWishlist({
+        id: product.id,
+        name: product.name,
+        price: livePrice,
+        image: product.images[0]?.url,
+        brand: product.brand,
+        category: product.category,
+        originalPrice: product.originalPrice,
+        discountPercentage: product.discountPercentage,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+      });
+    }
+  };
 
   const liveStock = product.stock;
   const livePrice = product.price;
@@ -148,20 +191,7 @@ export function B2CProductCard({
 
         <button
           type="button"
-          onClick={() =>
-            toggleWishlist({
-              id: product.id,
-              name: product.name,
-              price: livePrice,
-              image: product.images[0]?.url,
-              brand: product.brand,
-              category: product.category,
-              originalPrice: product.originalPrice,
-              discountPercentage: product.discountPercentage,
-              rating: product.rating,
-              reviewCount: product.reviewCount,
-            })
-          }
+          onClick={() => void syncWishlist()}
           aria-label={
             saved
               ? t("removeFromWishlist", { name: product.name })
