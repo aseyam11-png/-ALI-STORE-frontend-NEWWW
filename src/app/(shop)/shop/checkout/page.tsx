@@ -80,7 +80,8 @@ export default function CheckoutPage() {
         .join(", ")
     : shippingAddress.trim();
 
-  const shippingCost = shippingQuery.data?.amount ?? 0;
+  const shippingQuote = shippingQuery.data;
+  const shippingCost = shippingQuote?.amount ?? 0;
   const estimatedDelivery =
     shippingQuery.data?.estimatedDelivery ??
     "تظهر المدة بعد اختيار الشحن";
