@@ -1,38 +1,41 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// There is no authentication backend in this repository yet (verified by
-// repository-wide search) — `login()` always resolves to
-// `auth_backend_unavailable`. This form must never simulate a successful
-// sign-in: it validates real input honestly, then reports the one true
-// outcome available today instead of pretending to authenticate anyone.
 export function LoginForm() {
-  const [identifier, setIdentifier] = useState("");
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [identifierError, setIdentifierError] = useState<string | undefined>();
+  const [emailError, setEmailError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | undefined>();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedIdentifier = identifier.trim();
+    const normalizedEmail = email.trim().toLowerCase();
     let hasError = false;
 
-    if (!trimmedIdentifier) {
-      setIdentifierError("أدخل بريدك الإلكتروني أو رقم هاتفك");
+    if (!normalizedEmail) {
+      setEmailError("أدخل بريدك الإلكتروني");
+      hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setEmailError("أدخل بريدًا إلكترونيًا صحيحًا");
       hasError = true;
     } else {
-      setIdentifierError(undefined);
+      setEmailError(undefined);
     }
 
     if (!password) {
@@ -42,39 +45,44 @@ export function LoginForm() {
       setPasswordError(undefined);
     }
 
-    if (hasError) {
-      return;
-    }
+    if (hasError) return;
 
     setFormError(undefined);
     setSubmitting(true);
 
-    const result = await login({ identifier: trimmedIdentifier, password });
+    const result = await login({
+      identifier: normalizedEmail,
+      password,
+    });
 
     setSubmitting(false);
 
     if (!result.ok) {
       setFormError(
-        "تسجيل الدخول غير متاح حاليًا — نعمل على تفعيل هذه الخدمة قريبًا.",
+        result.reason === "invalid_credentials"
+          ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+          : "تعذر الاتصال بخدمة الحساب. تحقق من تشغيل الخادم وحاول مرة أخرى.",
       );
+      return;
     }
+
+    await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+    router.replace("/buyer");
+    router.refresh();
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      noValidate
-      className="space-y-5"
-    >
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       <Input
-        id="login-identifier"
-        name="identifier"
-        type="text"
-        autoComplete="username"
-        label="البريد الإلكتروني أو رقم الهاتف"
-        value={identifier}
-        onChange={(event) => setIdentifier(event.target.value)}
-        error={identifierError}
+        id="login-email"
+        name="email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        label="البريد الإلكتروني"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        error={emailError}
         disabled={submitting}
       />
 
@@ -98,13 +106,10 @@ export function LoginForm() {
             onClick={() => setShowPassword((current) => !current)}
             aria-label={showPassword ? "إخفاء كلمة المرور" : "عرض كلمة المرور"}
             aria-pressed={showPassword}
-            className="absolute end-2 top-8 flex h-9 w-9 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-200 ease-brand hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+            disabled={submitting}
+            className="absolute end-2 top-8 flex h-9 w-9 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-200 ease-brand hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
       </div>
