@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { LocalizationProvider } from "@/components/providers/LocalizationProvider";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
+import { useSupportChatStore } from "@/stores/support-chat-store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() =>
@@ -24,6 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void useCartStore.persist.rehydrate();
     void useWishlistStore.persist.rehydrate();
+    void useSupportChatStore.persist.rehydrate();
   }, []);
 
   return (
