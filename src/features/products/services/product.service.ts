@@ -10,7 +10,7 @@ import type {
 } from "../types/product.types";
 import type { ProductFilters } from "../types/product-filter.types";
 
-function slugify(value: string) {
+function mapAvailability(availability: BackendProductResponse["availability"]) {\n  if (availability === "IN_STOCK") return "in_stock";\n  if (availability === "OUT_OF_STOCK") return "out_of_stock";\n  return "unknown";\n}\n\nfunction slugify(value: string) {
   return value
     .trim()
     .toLowerCase()
