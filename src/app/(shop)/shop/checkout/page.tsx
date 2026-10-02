@@ -164,7 +164,7 @@ export default function CheckoutPage() {
   const [successOrderId, setSuccessOrderId] =
     useState("");
   const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<"PENDING" | "COMPLETED">("PENDING");
+    useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
 
   const subtotal = useMemo(
     () =>
@@ -266,9 +266,7 @@ export default function CheckoutPage() {
 
       clearCart();
       setSuccessOrderId(String(order.id));
-      setSuccessPaymentStatus(
-        payment.status === "COMPLETED" ? "COMPLETED" : "PENDING",
-      );
+      setSuccessPaymentStatus(payment.status);
     } catch (caughtError) {
       const message =
         caughtError instanceof Error
@@ -321,7 +319,11 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                    {successPaymentStatus === "COMPLETED" ? "PAID" : "PENDING"}
+                    {successPaymentStatus === "COMPLETED"
+                      ? "PAID"
+                      : successPaymentStatus === "FAILED"
+                        ? "FAILED"
+                        : "PENDING"}
                   </span>
                 </div>
 
