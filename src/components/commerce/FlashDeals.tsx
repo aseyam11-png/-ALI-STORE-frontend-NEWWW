@@ -1,18 +1,35 @@
 import Link from "next/link";
 import { ArrowLeft, Flame } from "lucide-react";
 
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 
 import { FlashDealsLazy } from "./FlashDealsLazy";
 
 // Same real discount data /shop/deals uses (featuredProducts filtered by an
 // active discount) — no separate "deals" dataset, no fabricated countdown.
-export function FlashDeals() {
-  const deals = featuredProducts
-    .filter((product) => product.discount !== undefined && product.discount > 0)
-    .sort((a, b) => (b.discount ?? 0) - (a.discount ?? 0))
-    .map(mapLegacyProductToCard);
+export async function FlashDeals() {
+  const response = await getProducts({
+    search: "",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: true,
+    inStockOnly: false,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+    sort: "discount_desc",
+    page: 1,
+    pageSize: 8,
+  });
+
+  const deals = response.items.map(mapProductSummaryToCard);
 
   if (deals.length === 0) {
     return null;
