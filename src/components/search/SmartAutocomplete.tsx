@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -115,25 +114,31 @@ export function SmartAutocomplete({
       null,
     );
 
-  const suggestions =
-    useMemo(
-      () =>
-        getAutocompleteSuggestions(
-          debouncedValue,
-          8,
-        ),
-      [debouncedValue],
-    );
+  const [suggestions, setSuggestions] =
+    useState<AutocompleteSuggestion[]>([]);
 
-  const [
-    trackedDebouncedValue,
-    setTrackedDebouncedValue,
-  ] = useState(debouncedValue);
+  useEffect(() => {
+    let active = true;
 
-  if (debouncedValue !== trackedDebouncedValue) {
-    setTrackedDebouncedValue(debouncedValue);
     setHighlighted(0);
-  }
+
+    if (debouncedValue.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    getAutocompleteSuggestions(debouncedValue, 8)
+      .then((nextSuggestions) => {
+        if (active) setSuggestions(nextSuggestions);
+      })
+      .catch(() => {
+        if (active) setSuggestions([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedValue]);
 
   useEffect(() => {
     const handleOutside =
