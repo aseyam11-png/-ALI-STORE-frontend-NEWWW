@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 export interface CartItem {
   productId: string;
+  serverItemId?: number;
   name: string;
 
   price: number;
@@ -37,6 +38,8 @@ export interface CartShippingInfo {
 interface CartState {
   items: CartItem[];
 
+  setItems: (items: CartItem[]) => void;
+
   addItem: (item: CartItem) => void;
   removeItem: (productId: string) => void;
 
@@ -60,6 +63,12 @@ interface CartState {
 export const useCartStore = create<CartState>(
   (set, get) => ({
     items: [],
+
+    setItems: (items) => {
+      set({
+        items,
+      });
+    },
 
     addItem: (item) => {
       set((state) => {
