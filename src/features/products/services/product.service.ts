@@ -18,6 +18,8 @@ interface BackendProductResponse {
   slug: string;
   description?: string | null;
   price: number;
+  originalPrice?: number | null;
+  discountPercentage?: number | null;
   currency: string;
   sku: string;
   status: BackendStatus;
@@ -117,6 +119,14 @@ function mapBackendProductToSummary(
       amount: Number(product.price),
       currency: product.currency,
       unit: "unit",
+      originalAmount:
+        product.originalPrice != null
+          ? Number(product.originalPrice)
+          : undefined,
+      discountPercentage:
+        product.discountPercentage != null
+          ? Number(product.discountPercentage)
+          : undefined,
     },
     minOrderQuantity: 1,
     rating: 0,
@@ -272,6 +282,10 @@ function buildProductPath(
 
   if (filters.inStockOnly) {
     params.set("availability", "IN_STOCK");
+  }
+
+  if (filters.discountOnly) {
+    params.set("discountOnly", "true");
   }
 
   params.set("sort", toBackendSort(filters.sort));
