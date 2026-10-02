@@ -2,25 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  CreditCard,
-  Loader2,
-  MapPin,
-  Truck,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2, CreditCard, Loader2, MapPin, Truck, AlertCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useSession } from "@/features/auth/session";
+import { createBackendOrder, processPayment } from "@/features/orders/services/order-api.service";
 import { getShippingQuote } from "@/features/products/services/product-api.service";
-import {
-  createBackendOrder,
-  processPayment,
-} from "@/features/orders/services/order-api.service";
 import { syncCart } from "@/features/cart/services/cart-api.service";
 import { useCartStore } from "@/stores/cart-store";
 
@@ -39,67 +30,39 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("Palestine");
-  const [shippingMethod, setShippingMethod] =
-    useState<ShippingMethod>("STANDARD");
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("CASH_ON_DELIVERY");
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("STANDARD");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH_ON_DELIVERY");
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [shippingQuote, setShippingQuote] = useState<Awaited<
-    ReturnType<typeof getShippingQuote>
-  > | null>(null);
-  const [loadingQuote, setLoadingQuote] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
 
   const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0,
-      ),
+    () => items.reduce((total, item) => total + item.price * item.quantity, 0),
     [items],
   );
 
   const currency = items[0]?.currency ?? "USD";
 
-  useEffect(() => {
-    if (!items.length) {
-      setShippingQuote(null);
-      return;
-    }
+  const shippingQuery = useQuery({
+    queryKey: ["checkout-shipping", subtotal, couponDiscount, shippingMethod, currency],
+    queryFn: () =>
+      getShippingQuote(
+        Math.max(0, subtotal - couponDiscount),
+        shippingMethod,
+        currency,
+      ),
+    enabled: items.length > 0,
+  });
 
-    let cancelled = false;
-    setLoadingQuote(true);
-
-    void getShippingQuote(
-      Math.max(0, subtotal - couponDiscount),
-      shippingMethod,
-      currency,
-    )
-      .then((quote) => {
-        if (!cancelled) setShippingQuote(quote);
-      })
-      .catch((quoteError) => {
-        if (!cancelled) {
-          setShippingQuote(null);
-          setError(
-            quoteError instanceof Error
-              ? quoteError.message
-              : "تعذر حساب تكلفة الشحن.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingQuote(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [subtotal, couponDiscount, shippingMethod, currency, items.length]);
-
+  const shippingQuote = shippingQuery.data;
+  const loadingQuote = shippingQuery.isPending || shippingQuery.isFetching;
   const shippingAmount = shippingQuote?.amount ?? 0;
+  const shippingError =
+    shippingQuery.error instanceof Error
+      ? shippingQuery.error.message
+      : "";
+
   const estimatedTotal = Math.max(
     0,
     subtotal - couponDiscount + shippingAmount,
@@ -123,18 +86,19 @@ export default function CheckoutPage() {
     const cleanCity = city.trim();
     const cleanCountry = country.trim() || "Palestine";
 
-    if (!cleanName || !email.trim() || !phone.trim() || !cleanAddress || !cleanCity) {
+    if (
+      !cleanName ||
+      !email.trim() ||
+      !phone.trim() ||
+      !cleanAddress ||
+      !cleanCity
+    ) {
       setError("أكمل بيانات الشحن المطلوبة.");
       return;
     }
 
-    const numericItems = items.map((item) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-    }));
-
     if (
-      numericItems.some(
+      items.some(
         (item) =>
           !Number.isInteger(Number(item.productId)) ||
           Number(item.productId) < 1,
@@ -149,7 +113,12 @@ export default function CheckoutPage() {
     setPlacing(true);
 
     try {
-      await syncCart(numericItems);
+      await syncCart(
+        items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      );
 
       const order = await createBackendOrder({
         shippingAddress:
@@ -172,14 +141,13 @@ export default function CheckoutPage() {
         paymentMethod,
       );
 
-      const paymentAccepted =
+      const accepted =
         payment.status === "COMPLETED" ||
-        (paymentMethod === "CASH_ON_DELIVERY" && payment.status === "PENDING");
+        (paymentMethod === "CASH_ON_DELIVERY" &&
+          payment.status === "PENDING");
 
-      if (!paymentAccepted) {
-        throw new Error(
-          "لم يتم تأكيد الدفع. لم يتم اعتبار الطلب مكتملًا.",
-        );
+      if (!accepted) {
+        throw new Error("لم يتم تأكيد الدفع. لم يتم اعتبار الطلب مكتملًا.");
       }
 
       clearLocalCart();
@@ -203,9 +171,7 @@ export default function CheckoutPage() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-500">
               <Truck className="h-6 w-6" />
             </div>
-            <h1 className="mt-5 text-3xl font-black text-foreground">
-              السلة فارغة
-            </h1>
+            <h1 className="mt-5 text-3xl font-black text-foreground">السلة فارغة</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               أضف منتجًا واحدًا على الأقل قبل إتمام الشراء.
             </p>
@@ -241,9 +207,7 @@ export default function CheckoutPage() {
             <section className="mb-6 flex items-center gap-3 rounded-2xl border border-warning-100 bg-warning-surface p-4">
               <AlertCircle className="h-5 w-5 shrink-0 text-warning-600" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-black text-foreground">
-                  يلزم تسجيل الدخول
-                </p>
+                <p className="text-sm font-black text-foreground">يلزم تسجيل الدخول</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   سيتم حفظ الطلب في حسابك وتتبع حالته من صفحة الطلبات.
                 </p>
@@ -257,13 +221,13 @@ export default function CheckoutPage() {
             </section>
           )}
 
-          {error && (
+          {(error || shippingError) && (
             <div
               role="alert"
               className="mb-6 flex items-start gap-3 rounded-2xl border border-danger-100 bg-danger-surface p-4 text-sm font-bold text-danger-700"
             >
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-              <span>{error}</span>
+              <span>{error || shippingError}</span>
             </div>
           )}
 
@@ -272,69 +236,29 @@ export default function CheckoutPage() {
               <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <MapPin className="h-5 w-5 text-brand" />
-                  <h2 className="text-lg font-black text-foreground">
-                    بيانات الشحن
-                  </h2>
+                  <h2 className="text-lg font-black text-foreground">بيانات الشحن</h2>
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <input
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    placeholder="الاسم الكامل *"
-                    autoComplete="name"
-                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-                  <input
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="البريد الإلكتروني *"
-                    type="email"
-                    autoComplete="email"
-                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-                  <input
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    placeholder="رقم الهاتف *"
-                    autoComplete="tel"
-                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-                  <input
-                    value={city}
-                    onChange={(event) => setCity(event.target.value)}
-                    placeholder="المدينة *"
-                    autoComplete="address-level2"
-                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-                  <input
-                    value={address}
-                    onChange={(event) => setAddress(event.target.value)}
-                    placeholder="العنوان التفصيلي *"
-                    autoComplete="street-address"
-                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100 sm:col-span-2"
-                  />
-                  <input
-                    value={country}
-                    onChange={(event) => setCountry(event.target.value)}
-                    placeholder="الدولة"
-                    autoComplete="country-name"
-                    className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
+                  <input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="الاسم الكامل *" autoComplete="name" className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100" />
+                  <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="البريد الإلكتروني *" type="email" autoComplete="email" className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100" />
+                  <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="رقم الهاتف *" autoComplete="tel" className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100" />
+                  <input value={city} onChange={(event) => setCity(event.target.value)} placeholder="المدينة *" autoComplete="address-level2" className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100" />
+                  <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="العنوان التفصيلي *" autoComplete="street-address" className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100 sm:col-span-2" />
+                  <input value={country} onChange={(event) => setCountry(event.target.value)} placeholder="الدولة" autoComplete="country-name" className="h-11 rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100" />
                 </div>
               </section>
 
               <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <Truck className="h-5 w-5 text-brand" />
-                  <h2 className="text-lg font-black text-foreground">
-                    طريقة الشحن
-                  </h2>
+                  <h2 className="text-lg font-black text-foreground">طريقة الشحن</h2>
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   {(["STANDARD", "EXPRESS"] as const).map((method) => {
                     const selected = shippingMethod === method;
+
                     return (
                       <button
                         key={method}
@@ -353,17 +277,17 @@ export default function CheckoutPage() {
                               {method === "STANDARD" ? "شحن عادي" : "شحن سريع"}
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {shippingQuote && !loadingQuote
-                                ? shippingQuote.estimatedMinDays +
+                              {shippingQuote && method === shippingMethod && !loadingQuote
+                                ? String(shippingQuote.estimatedMinDays) +
                                   "-" +
-                                  shippingQuote.estimatedMaxDays +
+                                  String(shippingQuote.estimatedMaxDays) +
                                   " يوم عمل"
-                                : "جاري حساب المدة..."}
+                                : method === shippingMethod
+                                  ? "جاري حساب المدة..."
+                                  : "سيتم الحساب عند الاختيار"}
                             </p>
                           </div>
-                          {selected && (
-                            <CheckCircle2 className="h-5 w-5 text-brand" />
-                          )}
+                          {selected && <CheckCircle2 className="h-5 w-5 text-brand" />}
                         </div>
                       </button>
                     );
@@ -374,36 +298,22 @@ export default function CheckoutPage() {
               <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <CreditCard className="h-5 w-5 text-brand" />
-                  <h2 className="text-lg font-black text-foreground">
-                    الدفع
-                  </h2>
+                  <h2 className="text-lg font-black text-foreground">الدفع</h2>
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   {[
-                    {
-                      value: "CASH_ON_DELIVERY",
-                      label: "الدفع عند الاستلام",
-                    },
-                    {
-                      value: "CREDIT_CARD",
-                      label: "بطاقة",
-                    },
-                    {
-                      value: "PAYPAL",
-                      label: "PayPal",
-                    },
+                    { value: "CASH_ON_DELIVERY", label: "الدفع عند الاستلام" },
+                    { value: "CREDIT_CARD", label: "بطاقة" },
+                    { value: "PAYPAL", label: "PayPal" },
                   ].map((method) => {
                     const selected = paymentMethod === method.value;
+
                     return (
                       <button
                         key={method.value}
                         type="button"
-                        onClick={() =>
-                          setPaymentMethod(
-                            method.value as PaymentMethod,
-                          )
-                        }
+                        onClick={() => setPaymentMethod(method.value as PaymentMethod)}
                         className={
                           "rounded-2xl border p-4 text-sm font-black transition " +
                           (selected
@@ -413,19 +323,12 @@ export default function CheckoutPage() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span>{method.label}</span>
-                          {selected && (
-                            <CheckCircle2 className="h-4 w-4" />
-                          )}
+                          {selected && <CheckCircle2 className="h-4 w-4" />}
                         </div>
                       </button>
                     );
                   })}
                 </div>
-
-                <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
-                  وسائل الدفع الإلكترونية تتطلب موفّر دفع حقيقي على بيئة الإنتاج؛
-                  بيئة التطوير تستخدم المزوّد الاختباري الموجود في الـbackend.
-                </p>
               </section>
 
               <CouponInput
@@ -452,9 +355,7 @@ export default function CheckoutPage() {
                     className="flex items-start justify-between gap-4 text-sm"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-bold text-foreground">
-                        {item.name}
-                      </p>
+                      <p className="truncate font-bold text-foreground">{item.name}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         الكمية: {item.quantity}
                       </p>
@@ -468,24 +369,17 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="mt-6 border-t border-neutral-100 pt-5 space-y-3 text-sm">
+              <div className="mt-6 space-y-3 border-t border-neutral-100 pt-5 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الإجمالي الفرعي</span>
                   <LocalizedPrice amountUSD={subtotal} currency={currency} />
                 </div>
-
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الخصم</span>
-                  <LocalizedPrice
-                    amountUSD={couponDiscount}
-                    currency={currency}
-                  />
+                  <LocalizedPrice amountUSD={couponDiscount} currency={currency} />
                 </div>
-
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    الشحن
-                  </span>
+                  <span className="text-muted-foreground">الشحن</span>
                   {loadingQuote ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -506,16 +400,17 @@ export default function CheckoutPage() {
                     className="text-2xl font-black text-foreground"
                   />
                 </div>
-                <p className="mt-2 text-[10px] leading-5 text-muted-foreground">
-                  القيمة المعروضة تقديرية. الخادم يعيد حساب الإجمالي من السلة
-                  والمخزون والكوبون وطريقة الشحن قبل الدفع.
-                </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => void placeOrder()}
-                disabled={placing || loadingQuote || session.status === "loading"}
+                disabled={
+                  placing ||
+                  loadingQuote ||
+                  session.status === "loading" ||
+                  Boolean(shippingQuery.error)
+                }
                 className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300"
               >
                 {placing && <Loader2 className="h-5 w-5 animate-spin" />}
