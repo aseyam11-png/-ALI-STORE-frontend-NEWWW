@@ -13,6 +13,8 @@ type BackendProduct = {
   slug: string;
   description?: string | null;
   price: number | string;
+  discountPercentage?: number | string | null;
+  originalPrice?: number | string | null;
   currency: string;
   sku: string;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
@@ -75,6 +77,7 @@ function mapProduct(product: BackendProduct): ProductSummary {
   const availableQuantity = Math.max(0, Math.floor(Number(product.availableQuantity ?? 0)));
   const imageUrl = product.primaryImageUrl ?? product.images?.[0];
   const categorySlug = product.categorySlug ?? "";
+  const discountPercentage = Math.max(0, Math.min(100, Number(product.discountPercentage ?? 0)));
   const brandName = product.brandName ?? "ALI STORE";
   const brandSlug = product.brandSlug ?? brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -88,6 +91,11 @@ function mapProduct(product: BackendProduct): ProductSummary {
       amount: price,
       currency: product.currency || "SAR",
       unit: "piece",
+      originalAmount:
+        discountPercentage > 0
+          ? Number((price / (1 - discountPercentage / 100)).toFixed(2))
+          : undefined,
+      discountPercentage: discountPercentage > 0 ? discountPercentage : undefined,
     },
     minOrderQuantity: 1,
     rating: Math.max(0, Math.min(5, Number(product.rating ?? 0))),
@@ -98,6 +106,7 @@ function mapProduct(product: BackendProduct): ProductSummary {
       verified: true,
     },
     shipping: "Calculated at checkout",
+    discountPercentage: discountPercentage > 0 ? discountPercentage : undefined,
     thumbnail: imageUrl
       ? {
           id: `product-${product.id}-primary`,
