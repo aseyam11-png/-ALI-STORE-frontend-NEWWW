@@ -40,25 +40,6 @@ export default function AdminPricingPage() {
   const [previewProductId, setPreviewProductId] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [rulesPage, productsPage, nextCategories] = await Promise.all([
-        getPricingRules(),
-        getAdminProducts(0, 100),
-        apiClient.request<Category[]>("/api/v1/categories"),
-      ]);
-      setRules(rulesPage.content);
-      setProducts(productsPage.content);
-      setCategories(nextCategories.filter((item) => item.active));
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل قواعد التسعير.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     let active = true;
     const run = async () => {
