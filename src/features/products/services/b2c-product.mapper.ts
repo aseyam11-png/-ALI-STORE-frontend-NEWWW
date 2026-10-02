@@ -45,18 +45,13 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
     // Never populated from real data today — there is no supplier-price
     // concept this page is allowed to read, and none is fabricated here.
     supplierPrice: undefined,
-    // Preserved as `undefined` deliberately — see the function-level
-    // comment above.
-    originalPrice: undefined,
+    originalPrice: product.price.originalAmount,
 
     currency: product.price.currency,
 
-    discountPercentage: undefined,
+    discountPercentage: product.price.discountPercentage,
 
-    // No real inventory source exists (see features/inventory/
-    // availability.ts) — this stays honestly at 0 rather than reading a
-    // field that was never real on the previous input shape either.
-    stock: 0,
+    stock: product.availableQuantity,
 
     images: product.thumbnail?.url
       ? [
