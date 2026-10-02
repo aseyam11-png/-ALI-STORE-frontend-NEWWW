@@ -13,6 +13,8 @@ import {
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
+import { useSession } from "@/features/auth/session";
+import { addWishlistProduct, removeWishlistProduct } from "@/features/wishlist/services/wishlist.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useInventoryStore } from "@/stores/inventory-store";
@@ -27,6 +29,7 @@ export function B2CProductCard({
   product,
 }: B2CProductCardProps) {
   const { t } = useTranslation();
+  const session = useSession();
 
   const addItem = useCartStore(
     (state) => state.addItem,
@@ -58,6 +61,39 @@ export function B2CProductCard({
 
   const available =
     liveStock > 0;
+
+  const wishlistItem = {
+    id: product.id,
+    name: product.name,
+    price: livePrice,
+    image: product.images[0]?.url,
+    brand: product.brand,
+    category: product.category,
+    originalPrice: product.originalPrice,
+    discountPercentage: product.discountPercentage,
+    rating: product.rating,
+    reviewCount: product.reviewCount,
+  };
+
+  const handleWishlist = async () => {
+    const wasSaved = saved;
+    toggleWishlist(wishlistItem);
+
+    if (session.status !== "authenticated") {
+      return;
+    }
+
+    try {
+      if (wasSaved) {
+        await removeWishlistProduct(product.id);
+      } else {
+        await addWishlistProduct(product.id);
+      }
+    } catch {
+      // Keep local UI consistent with server state when a remote mutation fails.
+      toggleWishlist(wishlistItem);
+    }
+  };
 
   const handleCart = () => {
     if (!available) {
@@ -155,20 +191,9 @@ export function B2CProductCard({
 
         <button
           type="button"
-          onClick={() =>
-            toggleWishlist({
-              id: product.id,
-              name: product.name,
-              price: livePrice,
-              image: product.images[0]?.url,
-              brand: product.brand,
-              category: product.category,
-              originalPrice: product.originalPrice,
-              discountPercentage: product.discountPercentage,
-              rating: product.rating,
-              reviewCount: product.reviewCount,
-            })
-          }
+          onClick={() => {
+            void handleWishlist();
+          }}
           aria-label={
             saved
               ? t("removeFromWishlist", { name: product.name })
@@ -219,10 +244,9 @@ export function B2CProductCard({
         </div>
 
         <div className="mt-3 flex items-end gap-2">
-          <LocalizedPrice
-            amountUSD={livePrice}
-            className="text-xl font-black text-foreground"
-          />
+          <span className="text-xl font-black text-foreground">
+            {formatCurrency(livePrice, product.currency)}
+          </span>
 
           {oldPrice && (
             <span className="text-xs font-semibold text-neutral-400 line-through">
