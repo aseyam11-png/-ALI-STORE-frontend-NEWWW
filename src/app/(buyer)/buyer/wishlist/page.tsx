@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -20,6 +21,12 @@ import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import {
   useCartStore,
 } from "@/stores/cart-store";
+import { useSession } from "@/features/auth/session";
+import { getProductById } from "@/features/products/services/product.service";
+import {
+  getWishlistProductIds,
+  removeWishlistProduct,
+} from "@/features/wishlist/services/wishlist.service";
 
 export default function WishlistPage() {
   const items =
@@ -35,10 +42,53 @@ export default function WishlistPage() {
     );
 
   const addItem =
-    useCartStore(
-      (state) =>
-        state.addItem,
-    );
+    useCartStore((state) => state.addItem);
+
+  const session = useSession();
+  const replaceItems = useWishlistStore((state) => state.replaceItems);
+
+  useEffect(() => {
+    if (session.status !== "authenticated") {
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      try {
+        const ids = await getWishlistProductIds();
+        const products = await Promise.all(
+          ids.map((id) => getProductById(id)),
+        );
+
+        const remoteItems = products
+          .filter((product): product is NonNullable<typeof product> => Boolean(product))
+          .map((product) => ({
+            id: product.id,
+            name: product.name,
+            price: product.price.amount,
+            image: product.thumbnail?.url,
+            brand: product.brand?.name,
+            category: product.category?.name,
+            originalPrice: product.price.originalAmount,
+            discountPercentage: product.discountPercentage,
+            rating: product.rating,
+            reviewCount: product.reviewCount,
+          }));
+
+        if (active) {
+          replaceItems(remoteItems);
+        }
+      } catch {
+        // Keep the persisted guest wishlist visible when the remote lookup
+        // fails; it must not be replaced by an empty list on a transient error.
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [replaceItems, session.status]);
 
   return (
     <AppShell>
@@ -233,11 +283,16 @@ export default function WishlistPage() {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            removeItem(
-                              product.id,
-                            )
-                          }
+                          onClick={() => {
+                            removeItem(product.id);
+
+                            if (session.status === "authenticated") {
+                              void removeWishlistProduct(product.id).catch(() => {
+                                // Roll back the local change when the server rejects it.
+                                useWishlistStore.getState().addItem(product);
+                              });
+                            }
+                          }}
                           aria-label={`Remove ${product.name} from wishlist`}
                           className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 text-red-500 hover:bg-red-50"
                         >
