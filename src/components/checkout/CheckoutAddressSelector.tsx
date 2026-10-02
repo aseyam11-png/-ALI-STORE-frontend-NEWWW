@@ -7,10 +7,7 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
-
-import {
-  useAddressStore,
-} from "@/stores/address-store";
+import type { CustomerAddress } from "@/features/addresses/types/address.types";
 
 interface CheckoutAddressSelectorProps {
   addresses: CustomerAddress[];
