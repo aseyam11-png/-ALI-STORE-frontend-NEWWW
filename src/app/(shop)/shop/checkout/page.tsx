@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,12 +17,16 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { useAddressStore } from "@/stores/address-store";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
+import { replaceBackendCart } from "@/features/cart/services/cart-api.service";
+import { createBackendOrder } from "@/features/orders/services/order-api.service";
+import { processBackendPayment } from "@/features/payments/services/payment-api.service";
+import { getShippingQuote, type ShippingQuote } from "@/features/shipping/services/shipping-api.service";
+
 
 interface FormState {
   fullName: string;
@@ -58,10 +62,6 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
-  );
-
   const getDefaultAddress = useCustomerStore(
     (state) => state.getDefaultAddress,
   );
@@ -80,10 +80,16 @@ export default function CheckoutPage() {
     );
 
   const [paymentMethod, setPaymentMethod] =
-    useState("card");
+    useState<"CREDIT_CARD" | "PAYPAL" | "CASH_ON_DELIVERY">("CREDIT_CARD");
 
   const [shippingMode, setShippingMode] =
-    useState("standard");
+    useState<"STANDARD" | "EXPRESS">("STANDARD");
+
+  const [shippingQuote, setShippingQuote] =
+    useState<ShippingQuote | null>(null);
+
+  const [quoteLoading, setQuoteLoading] =
+    useState(false);
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
@@ -176,14 +182,38 @@ export default function CheckoutPage() {
     [items],
   );
 
-  const shippingCost =
-    shippingMode === "express" &&
-    items.length > 0
-      ? shipping.cost + 8
-      : shipping.cost;
-
   const couponDiscount =
     appliedCoupon?.finalDiscount ?? 0;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (items.length === 0) {
+      setShippingQuote(null);
+      return;
+    }
+
+    setQuoteLoading(true);
+    void getShippingQuote(
+      Math.max(0, subtotal - couponDiscount),
+      shippingMode,
+    )
+      .then((quote) => {
+        if (!cancelled) setShippingQuote(quote);
+      })
+      .catch(() => {
+        if (!cancelled) setShippingQuote(null);
+      })
+      .finally(() => {
+        if (!cancelled) setQuoteLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items.length, subtotal, couponDiscount, shippingMode]);
+
+  const shippingCost = Number(shippingQuote?.amount ?? 0);
 
   const total =
     Math.max(
@@ -221,70 +251,72 @@ export default function CheckoutPage() {
     );
   };
 
-  const placeOrder = () => {
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
+
+  const placeOrder = async () => {
     setError("");
 
     if (items.length === 0) {
-      setError(
-        "Your cart is empty.",
-      );
+      setError("Your cart is empty.");
       return;
     }
 
     if (!validate()) {
-      setError(
-        "Please complete all required shipping information.",
-      );
+      setError("Please complete all required shipping information.");
       return;
     }
 
-    const order = createOrder({
-      customerName:
+    if (!shippingQuote || quoteLoading) {
+      setError("جاري تحديث تكلفة الشحن. حاول مرة أخرى بعد لحظة.");
+      return;
+    }
+
+    setPlacingOrder(true);
+
+    try {
+      const backendItems = items.map((item) => {
+        const productId = Number(item.productId);
+        if (!Number.isInteger(productId) || productId <= 0) {
+          throw new Error("يوجد منتج قديم في السلة. أعد إضافة المنتج من الكتالوج.");
+        }
+        return {
+          productId,
+          quantity: Math.max(1, Math.floor(item.quantity)),
+        };
+      });
+
+      await replaceBackendCart(backendItems);
+
+      const shippingAddress = [
         form.fullName,
+        form.phone,
+        form.address,
+        form.city,
+        form.country,
+        form.postalCode,
+      ].filter(Boolean).join(", ");
 
-      customerEmail:
-        form.email,
+      const order = await createBackendOrder({
+        shippingAddress,
+        couponCode: appliedCoupon?.coupon.code,
+        shippingMethod: shippingMode,
+      });
 
-      address: {
-        fullName:
-          form.fullName,
-        phone:
-          form.phone,
-        address:
-          form.address,
-        city:
-          form.city,
-        country:
-          form.country,
-        postalCode:
-          form.postalCode,
-      },
+      const payment = await processBackendPayment({
+        orderId: order.id,
+        amount: Number(order.totalAmount),
+        method: paymentMethod,
+      });
 
-      paymentMethod,
-
-      items,
-
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
-
-      estimatedDelivery:
-        shipping.estimatedDelivery,
-
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
+      setPaymentStatus(payment.status);
+      setSuccessOrderId(String(order.id));
+      clearCart();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "تعذر إتمام الطلب.");
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   if (successOrderId) {
@@ -308,8 +340,11 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
-                information as soon as your order ships.
+                {paymentStatus === "COMPLETED"
+                  ? "تم تأكيد الدفع. سنرسل معلومات التتبع عند بدء الشحن."
+                  : paymentStatus === "PENDING"
+                    ? "تم إنشاء الطلب، والدفع قيد المعالجة. سنحدّث الحالة فور تأكيد العملية."
+                    : "تم إنشاء الطلب، لكن الدفع لم يكتمل."}
               </p>
 
               <div className="mx-auto mt-7 max-w-md rounded-2xl bg-slate-50 p-5 text-start">
@@ -679,14 +714,9 @@ export default function CheckoutPage() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "standard",
-                        )
-                      }
+                      onClick={() => setShippingMode("STANDARD")}
                       className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "standard"
+                        shippingMode === "STANDARD"
                           ? "border-[#2563EB] bg-blue-50"
                           : "border-slate-200 hover:bg-slate-50"
                       }`}
@@ -702,14 +732,9 @@ export default function CheckoutPage() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "express",
-                        )
-                      }
+                      onClick={() => setShippingMode("EXPRESS")}
                       className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "express"
+                        shippingMode === "EXPRESS"
                           ? "border-[#2563EB] bg-blue-50"
                           : "border-slate-200 hover:bg-slate-50"
                       }`}
@@ -719,7 +744,11 @@ export default function CheckoutPage() {
                       </p>
 
                       <p className="mt-1 text-xs text-slate-400">
-                        Faster delivery — +<LocalizedPrice amountUSD={8} />
+                        أسرع توصيل — {shippingQuote
+                          ? (shippingQuote.free
+                            ? "مجاني"
+                            : "+" + shippingQuote.amount + " " + shippingQuote.currency)
+                          : "جاري الحساب…"}
                       </p>
                     </button>
 
@@ -748,15 +777,15 @@ export default function CheckoutPage() {
 
                     {[
                       {
-                        value: "card",
+                        value: "CREDIT_CARD",
                         label: "Credit / Debit Card",
                       },
                       {
-                        value: "wallet",
+                        value: "PAYPAL",
                         label: "Digital Wallet",
                       },
                       {
-                        value: "cod",
+                        value: "CASH_ON_DELIVERY",
                         label: "Cash on Delivery",
                       },
                     ].map(
@@ -917,7 +946,7 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  onClick={placeOrder}
+                  onClick={() => void placeOrder()}
                   className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
