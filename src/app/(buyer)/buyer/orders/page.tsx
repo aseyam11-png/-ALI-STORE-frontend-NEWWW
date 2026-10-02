@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import {
   ArrowLeft,
@@ -11,30 +12,51 @@ import {
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
-import { useOrderStore } from "@/stores/order-store";
+import { listMyOrders } from "@/features/orders/services/order.service";
+import type { BackendOrder } from "@/lib/api/contracts";
 
-function shipmentProgress(status: string) {
-  switch (status) {
-    case "PROCESSING":
-      return 20;
+function getShipment(order: BackendOrder) {
+  return [...order.shipments].sort(
+    (a, b) => {
+      const rank = (status: string) =>
+        ({
+          PENDING: 0,
+          SHIPPED: 2,
+          IN_TRANSIT: 3,
+          DELIVERED: 4,
+          CANCELLED: -1,
+        })[status] ?? 1;
 
-    case "PACKED":
-      return 40;
+      return rank(b.status) - rank(a.status);
+    },
+  )[0];
+}
 
+function shipmentProgress(order: BackendOrder) {
+  const shipment = getShipment(order);
+
+  switch (shipment?.status) {
     case "SHIPPED":
       return 60;
-
     case "IN_TRANSIT":
       return 75;
-
-    case "OUT_FOR_DELIVERY":
-      return 90;
-
     case "DELIVERED":
       return 100;
-
+    case "PENDING":
+      return 20;
     default:
-      return 0;
+      return order.status === "PROCESSING" ? 20 : 0;
+  }
+}
+
+function paymentLabel(order: BackendOrder) {
+  switch (order.status) {
+    case "CANCELLED":
+      return "ملغى";
+    case "PENDING":
+      return "بانتظار التأكيد";
+    default:
+      return "تم تأكيد الدفع";
   }
 }
 
@@ -62,13 +84,34 @@ const SHIPMENT_LABEL_AR: Record<string, string> = {
   DELIVERED: "تم التوصيل",
 };
 
-// Real data throughout — useOrderStore starts empty and is only ever
-// populated by a real local checkout, never seeded with fake orders. Only
-// the shell (now AccountWorkspace, was the legacy AppShell) and visual
-// language (now tokens + Arabic, matching the rest of the account
-// workspace) changed here — order data and progress logic are untouched.
 export default function BuyerOrdersPage() {
-  const orders = useOrderStore((state) => state.orders);
+  const [orders, setOrders] = useState<BackendOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void listMyOrders(0, 50)
+      .then((page) => {
+        if (!cancelled) setOrders(page.content);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "تعذر تحميل الطلبات.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <AccountWorkspace
@@ -76,7 +119,23 @@ export default function BuyerOrdersPage() {
       title="طلباتي"
       description="تابع كل طلب وحالة توصيله من مكان واحد."
     >
-      {orders.length === 0 ? (
+      {loading ? (
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
+          <p className="text-body-sm font-medium text-muted-foreground">
+            جاري تحميل الطلبات…
+          </p>
+        </div>
+      ) : error ? (
+        <div className="rounded-md border border-danger-100 bg-danger-surface p-10 text-center">
+          <Package className="mx-auto h-9 w-9 text-danger-500" />
+          <h2 className="mt-4 text-h3 font-bold text-danger-700">
+            تعذر تحميل الطلبات
+          </h2>
+          <p className="mt-2 text-body-sm text-danger-600">
+            {error}
+          </p>
+        </div>
+      ) : orders.length === 0 ? (
         <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
           <Package className="mx-auto h-9 w-9 text-neutral-300" />
 
@@ -99,7 +158,8 @@ export default function BuyerOrdersPage() {
       ) : (
         <div className="space-y-6">
           {orders.map((order) => {
-            const progress = shipmentProgress(order.shipmentStatus);
+            const shipment = getShipment(order);
+            const progress = shipmentProgress(order);
 
             return (
               <article
@@ -116,18 +176,23 @@ export default function BuyerOrdersPage() {
 
                         <span className="inline-flex items-center gap-1 rounded-full bg-success-surface px-2.5 py-1 text-label font-medium text-success">
                           <CheckCircle2 className="h-3 w-3" />
-                          {order.paymentStatus === "PAID"
-                            ? "تم تأكيد الدفع"
-                            : order.paymentStatus}
+                          {paymentLabel(order)}
                         </span>
 
                         <span
                           className={`rounded-full px-2.5 py-1 text-label font-medium ${shipmentClass(
-                            order.shipmentStatus,
+                            shipment?.status ?? order.status,
                           )}`}
                         >
-                          {SHIPMENT_LABEL_AR[order.shipmentStatus] ??
-                            order.shipmentStatus}
+                          {shipment?.status === "IN_TRANSIT"
+                            ? "في الطريق"
+                            : shipment?.status === "DELIVERED"
+                              ? "تم التوصيل"
+                              : shipment?.status === "SHIPPED"
+                                ? "تم الشحن"
+                                : order.status === "CANCELLED"
+                                  ? "ملغى"
+                                  : "قيد المعالجة"}
                         </span>
                       </div>
 
@@ -152,7 +217,8 @@ export default function BuyerOrdersPage() {
                       </p>
 
                       <LocalizedPrice
-                        amountUSD={order.grandTotal}
+                        amountUSD={order.totalAmount}
+                        currency={order.currency ?? "USD"}
                         className="mt-1 text-h4 font-bold text-foreground"
                       />
                     </div>
@@ -187,13 +253,13 @@ export default function BuyerOrdersPage() {
 
                       <div className="min-w-0">
                         <p className="text-caption text-muted-foreground">
-                          {order.carrier ?? "لم يتم تحديد شركة الشحن بعد"}
+                          {shipment?.carrier ?? "لم يتم تحديد شركة الشحن بعد"}
                         </p>
 
-                        {order.trackingNumber && (
+                        {shipment?.trackingNumber && (
                           <p className="mt-2 font-mono text-body-sm font-medium text-foreground">
                             رقم التتبع:{" "}
-                            <span dir="ltr">{order.trackingNumber}</span>
+                            <span dir="ltr">{shipment.trackingNumber}</span>
                           </p>
                         )}
                       </div>
@@ -206,7 +272,9 @@ export default function BuyerOrdersPage() {
                         </p>
 
                         <p className="mt-1 text-body-sm font-medium text-foreground">
-                          {order.estimatedDelivery}
+                          {shipment?.estimatedDeliveryDate
+                            ? new Date(shipment.estimatedDeliveryDate).toLocaleDateString("ar-SA")
+                            : "سيتم تحديد الموعد بعد الشحن"}
                         </p>
                       </div>
 
