@@ -1,16 +1,8 @@
 export type ProductId = string;
 
-export type ProductStatus =
-  | "active"
-  | "draft"
-  | "archived"
-  | "discontinued";
-
-export type ProductStockStatus =
-  | "in_stock"
-  | "low_stock"
-  | "out_of_stock"
-  | "pre_order";
+export type ProductStatus = "active" | "draft" | "archived" | "discontinued";
+export type ProductStockStatus = "in_stock" | "low_stock" | "out_of_stock" | "pre_order";
+export type ProductAvailability = "IN_STOCK" | "OUT_OF_STOCK" | "UNKNOWN";
 
 export type ProductPrice = {
   amount: number;
@@ -47,8 +39,8 @@ export type ProductVariant = {
   sku: string;
   name: string;
   price?: ProductPrice;
-  stockQuantity: number;
-  availableQuantity: number;
+  stockQuantity?: number;
+  availableQuantity?: number;
   options: ProductVariantOption[];
   image?: ProductImage;
   active: boolean;
@@ -79,12 +71,6 @@ export type ProductSupplierSummary = {
   id: string;
   name: string;
   verified: boolean;
-  rating?: number;
-  reviewCount?: number;
-  country?: string;
-  city?: string;
-  responseRate?: number;
-  responseTimeHours?: number;
 };
 
 export type ProductShippingMethod = {
@@ -146,6 +132,7 @@ export type ProductSummary = {
   stockQuantity: number;
   availableQuantity: number;
   stockStatus: ProductStockStatus;
+  availability: ProductAvailability;
   status: ProductStatus;
   featured: boolean;
   bestseller: boolean;
