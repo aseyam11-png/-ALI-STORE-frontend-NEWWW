@@ -17,7 +17,6 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useCustomerStore } from "@/stores/customer-store";
 import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import { getMyAddresses } from "@/features/addresses/services/address-api.service";
 import { useSession } from "@/features/auth/session";
@@ -175,7 +174,6 @@ export default function CheckoutPage() {
       keyof FormState
     > = [
       "fullName",
-      "email",
       "phone",
       "address",
       "city",
@@ -184,7 +182,9 @@ export default function CheckoutPage() {
 
     return required.every(
       (field) =>
-        form[field].trim().length > 0,
+        field === "email"
+          ? effectiveEmail.trim().length > 0
+          : form[field].trim().length > 0,
     );
   };
 
@@ -452,7 +452,7 @@ export default function CheckoutPage() {
                         id="email"
                         type="email"
                         value={
-                          form.email
+                          form.email || session.user?.email || ""
                         }
                         onChange={(
                           event,
