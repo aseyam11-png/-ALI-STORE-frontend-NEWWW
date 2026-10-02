@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 
 import {
   ArrowLeft,
@@ -69,6 +70,12 @@ const SHIPMENT_LABEL_AR: Record<string, string> = {
 // workspace) changed here — order data and progress logic are untouched.
 export default function BuyerOrdersPage() {
   const orders = useOrderStore((state) => state.orders);
+  const isLoading = useOrderStore((state) => state.isLoading);
+  const loadOrders = useOrderStore((state) => state.loadOrders);
+
+  useEffect(() => {
+    void loadOrders().catch(() => undefined);
+  }, [loadOrders]);
 
   return (
     <AccountWorkspace
@@ -76,7 +83,13 @@ export default function BuyerOrdersPage() {
       title="طلباتي"
       description="تابع كل طلب وحالة توصيله من مكان واحد."
     >
-      {orders.length === 0 ? (
+      {isLoading && orders.length === 0 ? (
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
+          <p className="text-body-sm font-medium text-muted-foreground">
+            جاري تحميل الطلبات...
+          </p>
+        </div>
+      ) : orders.length === 0 ? (
         <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
           <Package className="mx-auto h-9 w-9 text-neutral-300" />
 
