@@ -290,7 +290,7 @@ export default function CheckoutPage() {
         method: "POST",
         body: JSON.stringify({
           shippingAddress,
-          couponCode: appliedCoupon?.code ?? undefined,
+          couponCode: appliedCoupon?.coupon.code ?? undefined,
         }),
       });
 
