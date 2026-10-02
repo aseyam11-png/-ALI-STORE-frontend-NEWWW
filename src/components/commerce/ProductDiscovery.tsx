@@ -1,50 +1,52 @@
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+import { getProducts } from "@/features/products/services/product.service";
+import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
+import { B2CProductCard } from "./B2CProductCard";
 
-import { Tabs } from "@/components/ui/tabs";
-import { ProductCard } from "./ProductCard";
+export async function ProductDiscovery() {
+  const response = await getProducts({
+    search: "",
+    page: 1,
+    pageSize: 8,
+    sort: "newest",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: false,
+    inStockOnly: false,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+  });
 
-// One section, one dataset source, two honest views of it: "Featured" is the
-// catalog's editorial order, "Best Sellers" re-sorts the same real products
-// by rating/review count. No separate section, no invented metrics.
-export function ProductDiscovery() {
-  const featured = featuredProducts.map(mapLegacyProductToCard);
-
-  const bestSellers = [...featured].sort(
-    (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
-  );
-
-  const renderGrid = (products: typeof featured) => (
-    <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
-  );
+  const products = response.items.map(normalizeB2CProduct);
 
   return (
     <section className="bg-background">
       <div className="mx-auto max-w-[1600px] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">
-        <h2 className="text-h2 font-bold tracking-tight text-foreground lg:text-h1">
-          اكتشف المنتجات
-        </h2>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-label font-medium uppercase tracking-wide text-muted-foreground">الكتالوج</p>
+            <h2 className="mt-2 text-h2 font-bold tracking-tight text-foreground lg:text-h1">اكتشف المنتجات</h2>
+          </div>
+          <a href="/shop/products" className="text-body-sm font-medium text-brand hover:text-brand-hover">عرض الكل</a>
+        </div>
 
-        <Tabs
-          className="mt-8"
-          ariaLabel="اكتشف المنتجات"
-          items={[
-            {
-              id: "featured",
-              label: "المميزة",
-              content: renderGrid(featured),
-            },
-            {
-              id: "best-sellers",
-              label: "الأكثر مبيعًا",
-              content: renderGrid(bestSellers),
-            },
-          ]}
-        />
+        {products.length === 0 ? (
+          <div className="mt-8 rounded-lg border border-neutral-200 bg-surface p-10 text-center text-body text-muted-foreground">
+            لا توجد منتجات منشورة حاليًا.
+          </div>
+        ) : (
+          <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+            {products.map((product) => (
+              <B2CProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
