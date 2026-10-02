@@ -1,7 +1,7 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
@@ -24,45 +24,25 @@ export function SmartAutocomplete({
   placeholder = "ابحث عن منتج أو SKU...",
   className = "",
 }: SmartAutocompleteProps) {
+  const deferredValue = useDeferredValue(value);
   const [open, setOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [highlighted, setHighlighted] = useState(0);
-  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const query = value.trim();
-    if (query.length < 2) {
-      setSuggestions([]);
-      setLoading(false);
-      return;
-    }
+  const suggestionsQuery = useQuery({
+    queryKey: ["autocomplete", deferredValue.trim()],
+    queryFn: () => getAutocompleteSuggestions(deferredValue.trim(), 8),
+    enabled: deferredValue.trim().length >= 2,
+    staleTime: 15_000,
+  });
 
-    let active = true;
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      void getAutocompleteSuggestions(query, 8)
-        .then((result) => {
-          if (!active) return;
-          setSuggestions(result);
-          setHighlighted(0);
-          setOpen(result.length > 0);
-        })
-        .catch(() => {
-          if (!active) return;
-          setSuggestions([]);
-          setOpen(false);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }, 250);
-
-    return () => {
-      active = false;
-      window.clearTimeout(timer);
-    };
-  }, [value]);
+  const suggestions = suggestionsQuery.data ?? [];
+  const loading =
+    deferredValue.trim().length >= 2 && suggestionsQuery.isFetching;
+  const selectedIndex =
+    suggestions.length === 0
+      ? 0
+      : Math.min(highlighted, suggestions.length - 1);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -80,7 +60,7 @@ export function SmartAutocomplete({
     onSubmit?.();
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setOpen(true);
@@ -102,7 +82,7 @@ export function SmartAutocomplete({
     }
 
     if (event.key === "Enter") {
-      const selected = suggestions[highlighted];
+      const selected = suggestions[selectedIndex];
       if (open && selected) {
         event.preventDefault();
         onChange(selected.title);
@@ -117,10 +97,12 @@ export function SmartAutocomplete({
     <div ref={containerRef} className={"relative " + className}>
       <div className="relative flex h-full items-center">
         <Search className="pointer-events-none absolute start-4 h-5 w-5 text-neutral-400" />
+
         <input
           value={value}
           onChange={(event) => {
             onChange(event.target.value);
+            setHighlighted(0);
             setOpen(event.target.value.trim().length >= 2);
           }}
           onFocus={() => setOpen(suggestions.length > 0)}
@@ -140,7 +122,7 @@ export function SmartAutocomplete({
             type="button"
             onClick={() => {
               onChange("");
-              setSuggestions([]);
+              setHighlighted(0);
               setOpen(false);
             }}
             aria-label="مسح البحث"
@@ -176,12 +158,12 @@ export function SmartAutocomplete({
                   key={suggestion.id}
                   href={suggestion.href}
                   role="option"
-                  aria-selected={highlighted === index}
+                  aria-selected={selectedIndex === index}
                   onMouseEnter={() => setHighlighted(index)}
                   onClick={() => setOpen(false)}
                   className={
                     "flex items-center gap-3 rounded-lg px-3 py-3 " +
-                    (highlighted === index
+                    (selectedIndex === index
                       ? "bg-primary-50"
                       : "hover:bg-neutral-50")
                   }
