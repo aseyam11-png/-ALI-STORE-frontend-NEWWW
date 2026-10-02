@@ -9,6 +9,11 @@ import {
   Truck,
 } from "lucide-react";
 import { useState } from "react";
+import { useSession } from "@/features/auth/session";
+import {
+  addServerWishlistItem,
+  removeServerWishlistItem,
+} from "@/features/wishlist/services/wishlist-api.service";
 
 import type {
   B2CProduct,
@@ -46,10 +51,8 @@ interface ProductInfoProps {
 export function ProductInfo({
   product,
 }: ProductInfoProps) {
-  const toggleWishlist =
-    useWishlistStore(
-      (state) => state.toggle,
-    );
+  const session = useSession();
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
 
   const saved =
     useWishlistStore(
@@ -93,6 +96,36 @@ export function ProductInfo({
       product,
       selectedVariant,
     );
+
+  const handleWishlist = async () => {
+    const snapshot = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0]?.url,
+      brand: product.brand,
+      category: product.category,
+      originalPrice: product.originalPrice,
+      discountPercentage: product.discountPercentage,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+    };
+
+    try {
+      if (session.status === "authenticated") {
+        if (saved) {
+          await removeServerWishlistItem(product.id);
+        } else {
+          await addServerWishlistItem(product.id);
+        }
+      }
+      toggleWishlist(snapshot);
+    } catch {
+      // Preserve the last known state when a remote write fails.
+    }
+  };
+
+
 
   const galleryImages =
     activeImage
@@ -162,11 +195,7 @@ export function ProductInfo({
 
           <button
             type="button"
-            onClick={() =>
-              toggleWishlist(
-                product.id,
-              )
-            }
+            onClick={() => void handleWishlist()}
             aria-label={
               saved
                 ? "Remove from wishlist"
