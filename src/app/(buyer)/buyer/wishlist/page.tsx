@@ -55,21 +55,29 @@ export default function WishlistPage() {
 
   const loading = session.status === "authenticating" || (session.status === "authenticated" && serverLoading);
 
-  const visibleItems = useMemo(() => {
-    if (session.status !== "authenticated") {
-      return localItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        imageUrl: item.image,
-        brandName: item.brand,
-        categoryName: item.category,
-        originalPrice: item.originalPrice,
-      }));
-    }
-
-    return serverItems;
-  }, [localItems, serverItems, session.status]);
+  const visibleItems = useMemo(
+    () =>
+      session.status === "authenticated"
+        ? serverItems.map((item) => ({
+            productId: String(item.productId),
+            name: item.productName ?? "Product",
+            price: Number(item.price ?? 0),
+            imageUrl: item.imageUrl ?? undefined,
+            brandName: item.brandName ?? undefined,
+            categoryName: item.categoryName ?? undefined,
+            originalPrice: undefined,
+          }))
+        : localItems.map((item) => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            imageUrl: item.image,
+            brandName: item.brand,
+            categoryName: item.category,
+            originalPrice: item.originalPrice,
+          })),
+    [localItems, serverItems, session.status],
+  );
 
   const remove = async (productId: string) => {
     setError("");
@@ -156,10 +164,10 @@ export default function WishlistPage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {visibleItems.map((product) => {
-                const productId = String(product.productId ?? product.id);
-                const image = product.imageUrl ?? undefined;
-                const name = product.productName ?? product.name ?? "Product";
-                const price = Number(product.price ?? 0);
+                const productId = product.productId;
+                const image = product.imageUrl;
+                const name = product.name;
+                const price = product.price;
 
                 return (
                   <article key={productId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
