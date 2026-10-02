@@ -62,17 +62,14 @@ export function CouponInput({
     boolean | null
   >(null);
 
-  const apply = () => {
-    const result =
-      validateCoupon(
-        code,
-        subtotal,
-        shipping,
-      );
+  const [applying, setApplying] = useState(false);
 
-    setMessage(
-      result.message,
-    );
+  const apply = async () => {
+    setApplying(true);
+    const result = await validateCoupon(code, subtotal, shipping);
+    setApplying(false);
+
+    setMessage(result.message);
 
     setValid(
       result.valid,
@@ -208,15 +205,11 @@ export function CouponInput({
 
         <button
           type="button"
-          onClick={
-            apply
-          }
-          disabled={
-            !code.trim()
-          }
+          onClick={apply}
+          disabled={!code.trim() || applying}
           className="h-11 rounded-xl bg-[#2563EB] px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          Apply
+          {applying ? "Checking..." : "Apply"}
         </button>
 
       </div>
@@ -239,7 +232,7 @@ export function CouponInput({
       )}
 
       <div className="mt-3 text-[9px] text-slate-400">
-        Test codes: WELCOME10 · SAVE20 · FREESHIP
+        Coupon availability is checked securely with ALI STORE.
       </div>
 
     </section>
