@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -72,7 +73,7 @@ export default function CheckoutPage() {
     setError("");
 
     if (session.status !== "authenticated") {
-      router.push("/login?next=/shop/checkout");
+      router.push("/login?next=/shop/checkout" as Route);
       return;
     }
 
@@ -151,7 +152,7 @@ export default function CheckoutPage() {
       }
 
       clearLocalCart();
-      router.replace("/buyer/orders/" + order.id + "/confirmation");
+      router.replace(("/buyer/orders/" + order.id + "/confirmation") as Route);
     } catch (placeOrderError) {
       setError(
         placeOrderError instanceof Error
