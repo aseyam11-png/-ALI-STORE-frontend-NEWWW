@@ -1,775 +1,386 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
-import {
-  ChevronDown,
-  Filter,
-  Search,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Filter, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
-import { ProductPagination } from "@/components/commerce/products/ProductPagination";
-
+import { getCatalogBrands, getCatalogCategories } from "@/features/catalog/services/catalog-api.service";
+import { getProducts } from "@/features/products/services/product.service";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
-import { mapMockProductToSummary } from "@/features/products/services/product.mapper";
-
-import {
-  filterCatalogProducts,
-  sortCatalogProducts,
-  type CatalogFilterState,
-} from "@/features/catalog/services/catalog-filter.service";
-
-import { paginate } from "@/features/catalog/services/pagination.service";
-
-import { featuredProducts } from "@/mocks/products";
-
+import { defaultProductFilters } from "@/features/products/types/product-filter.types";
 
 const PAGE_SIZE = 12;
 
+function buildSearchHref(params: URLSearchParams) {
+  const query = params.toString();
+  return query ? "/shop/products?" + query : "/shop/products";
+}
+
 export default function ProductsPage() {
-  const [search, setSearch] =
-    useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // mock source → canonical ProductSummary → page-local B2CProduct view —
-  // this page no longer normalizes the raw mock array directly.
-  const allProducts =
-    featuredProducts
-      .map(mapMockProductToSummary)
-      .map(normalizeB2CProduct);
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [brand, setBrand] = useState(searchParams.get("brand") ?? "");
+  const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") ?? "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") ?? "");
+  const [sort, setSort] = useState(searchParams.get("sort") ?? "relevance");
+  const [inStockOnly, setInStockOnly] = useState(searchParams.get("availability") === "IN_STOCK");
+  const [discountOnly, setDiscountOnly] = useState(searchParams.get("discountOnly") === "true");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const brands = useMemo(
-    () => [
-      "All brands",
-      ...Array.from(
-        new Set(
-          allProducts
-            .map(
-              (product) =>
-                product.brand,
-            )
-            .filter(Boolean),
-        ),
-      ),
-    ],
-    [allProducts],
-  );
+  const { data: categories = [] } = useQuery({
+    queryKey: ["catalog-categories"],
+    queryFn: getCatalogCategories,
+    staleTime: 60_000,
+  });
 
-  // Derived from the catalog itself (same pattern as `brands` above) rather
-  // than a hardcoded list — a hardcoded department list drifts out of sync
-  // with what's actually in `allProducts` and, worse, out of sync with the
-  // store's real Fashion/Accessories/Beauty & Care taxonomy (features/
-  // catalog/data/category-tree.ts), which the current mock catalog items
-  // don't belong to yet. Every option here is guaranteed to match at least
-  // one real product.
-  const categories = useMemo(
-    () => [
-      "All",
-      ...Array.from(
-        new Set(
-          allProducts
-            .map(
-              (product) =>
-                product.category,
-            )
-            .filter(Boolean),
-        ),
-      ),
-    ],
-    [allProducts],
-  );
+  const { data: brands = [] } = useQuery({
+    queryKey: ["catalog-brands"],
+    queryFn: getCatalogBrands,
+    staleTime: 60_000,
+  });
 
-  const [category, setCategory] =
-    useState("All");
-
-  const [brand, setBrand] =
-    useState("All brands");
-
-  const [rating, setRating] =
-    useState("all");
-
-  const [minPrice, setMinPrice] =
-    useState("");
-
-  const [maxPrice, setMaxPrice] =
-    useState("");
-
-  const [freeShipping, setFreeShipping] =
-    useState(false);
-
-  const [inStock, setInStock] =
-    useState(false);
-
-  const [dealsOnly, setDealsOnly] =
-    useState(false);
-
-  const [sort, setSort] =
-    useState("featured");
-
-  const [page, setPage] =
-    useState(1);
-
-  const [filtersOpen, setFiltersOpen] =
-    useState(false);
-
-  const filterState =
-    useMemo<CatalogFilterState>(
-      () => ({
-        search,
-        brand:
-          brand === "All brands"
-            ? "all"
-            : brand,
-        rating,
-        minPrice,
-        maxPrice,
-        selected: {},
-        freeShipping,
-        inStock,
-        dealsOnly,
-      }),
-      [
-        search,
-        brand,
-        rating,
-        minPrice,
-        maxPrice,
-        freeShipping,
-        inStock,
-        dealsOnly,
-      ],
+  const categoryId = useMemo(() => {
+    if (!category) return undefined;
+    const match = categories.find(
+      (item) => String(item.id) === category || item.slug === category,
     );
+    return match ? String(match.id) : undefined;
+  }, [category, categories]);
 
-  const filteredProducts =
-    useMemo(() => {
-      let result =
-        allProducts.filter(
-          (product) => {
-            if (
-              category !==
-                "All" &&
-              !product.category
-                .toLowerCase()
-                .includes(
-                  category.toLowerCase(),
-                )
-            ) {
-              return false;
-            }
+  const brandId = useMemo(() => {
+    if (!brand) return undefined;
+    const match = brands.find(
+      (item) => String(item.id) === brand || item.name.toLowerCase() === brand.toLowerCase(),
+    );
+    return match ? String(match.id) : undefined;
+  }, [brand, brands]);
 
-            return true;
-          },
-        );
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
 
-      result =
-        filterCatalogProducts(
-          result,
-          filterState,
-        );
-
-      return sortCatalogProducts(
-        result,
-        sort,
-      );
-    }, [
-      allProducts,
-      category,
-      filterState,
+  const productsQuery = useQuery({
+    queryKey: [
+      "products",
+      search,
+      categoryId,
+      brandId,
+      minPrice,
+      maxPrice,
       sort,
-    ]);
-
-  const paginated =
-    useMemo(
-      () =>
-        paginate(
-          filteredProducts,
-          page,
-          PAGE_SIZE,
-        ),
-      [
-        filteredProducts,
+      inStockOnly,
+      discountOnly,
+      page,
+    ],
+    queryFn: () =>
+      getProducts({
+        ...defaultProductFilters,
+        search,
+        categoryId,
+        brand: brandId,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        inStockOnly,
+        discountOnly,
+        sort: sort as typeof defaultProductFilters.sort,
         page,
-      ],
-    );
+        pageSize: PAGE_SIZE,
+      }),
+    staleTime: 15_000,
+  });
 
-  const visibleProducts =
-    paginated.items;
+  const products = productsQuery.data?.items.map(normalizeB2CProduct) ?? [];
+  const pagination = productsQuery.data?.pagination;
 
-  const resetToFirstPage =
-    () => {
-      setPage(1);
-    };
+  const applyUrl = (patch: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined || value === "") params.delete(key);
+      else params.set(key, value);
+    }
+
+    params.delete("page");
+    router.replace(buildSearchHref(params));
+  };
+
+  const submitSearch = () => {
+    applyUrl({ q: search.trim() || undefined });
+  };
 
   const clearFilters = () => {
     setSearch("");
-    setCategory("All");
-    setBrand("All brands");
-    setRating("all");
+    setCategory("");
+    setBrand("");
     setMinPrice("");
     setMaxPrice("");
-    setFreeShipping(false);
-    setInStock(false);
-    setDealsOnly(false);
-    setPage(1);
+    setSort("relevance");
+    setInStockOnly(false);
+    setDiscountOnly(false);
+    applyUrl({
+      q: undefined,
+      category: undefined,
+      brand: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+      sort: undefined,
+      availability: undefined,
+      discountOnly: undefined,
+    });
   };
+
+  const hasFilters =
+    Boolean(search || category || brand || minPrice || maxPrice) ||
+    inStockOnly ||
+    discountOnly ||
+    sort !== "relevance";
 
   return (
     <AppShell>
       <main className="min-h-screen bg-background">
-
-        {/* Header */}
         <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-info-surface px-3 py-1.5 text-[11px] font-black text-brand">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  AliStore catalog
-                </div>
-
-                <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-                  Discover products
-                </h1>
-
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-                  Search, compare and filter every product AliStore sources,
-                  sells and ships directly.
+                <p className="text-label font-medium uppercase tracking-wide text-muted-foreground">ALI STORE catalog</p>
+                <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">كل المنتجات</h1>
+                <p className="mt-2 max-w-2xl text-body text-muted-foreground">
+                  النتائج المعروضة من الكتالوج المنشور في الخادم، مع توفر المنتج والتحقق من السعر عند الشراء.
                 </p>
               </div>
 
-              <div className="text-sm text-neutral-400">
-                <span className="font-black text-foreground">
-                  {filteredProducts.length}
-                </span>{" "}
-                matching products
-              </div>
-
+              <span className="text-body-sm font-medium text-muted-foreground">
+                {pagination ? pagination.totalItems : 0} منتج
+              </span>
             </div>
 
-            {/* Search */}
-            <div className="mt-7 max-w-3xl">
-
-              <div className="flex h-13 items-center rounded-2xl border border-neutral-200 bg-surface p-1.5 shadow-sm focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100">
-
-                <Search className="ms-3 h-5 w-5 shrink-0 text-neutral-400" />
-
-                <input
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(
-                      event.target.value,
-                    );
-                    resetToFirstPage();
-                  }}
-                  type="search"
-                  placeholder="Search products, brands or categories..."
-                  aria-label="Search products"
-                  className="min-w-0 flex-1 bg-transparent px-3 text-sm text-foreground outline-none placeholder:text-neutral-400"
-                />
-
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearch("");
-                      resetToFirstPage();
-                    }}
-                    aria-label="Clear search"
-                    className="me-1 flex h-9 w-9 items-center justify-center rounded-xl text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-
+            <div className="mt-7 flex items-center gap-2 rounded-2xl border border-neutral-200 bg-background p-1.5 focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100">
+              <Search className="ms-3 h-5 w-5 shrink-0 text-neutral-400" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") submitSearch();
+                }}
+                placeholder="ابحث عن منتج أو SKU..."
+                aria-label="بحث المنتجات"
+                className="min-w-0 flex-1 bg-transparent px-3 text-sm text-foreground outline-none placeholder:text-neutral-400"
+              />
+              {search && (
                 <button
                   type="button"
-                  onClick={
-                    resetToFirstPage
-                  }
-                  className="hidden h-10 rounded-xl bg-brand px-6 text-sm font-black text-white hover:bg-brand-hover sm:block"
+                  onClick={() => {
+                    setSearch("");
+                    applyUrl({ q: undefined });
+                  }}
+                  aria-label="مسح البحث"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-neutral-400 hover:bg-neutral-100"
                 >
-                  Search
+                  <X className="h-4 w-4" />
                 </button>
-
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={submitSearch}
+                className="hidden h-10 rounded-xl bg-brand px-6 text-sm font-medium text-white hover:bg-brand-hover sm:block"
+              >
+                بحث
+              </button>
             </div>
-
           </div>
         </section>
 
         <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-
-          {/* Mobile filter */}
           <div className="mb-5 flex items-center justify-between lg:hidden">
-
             <button
               type="button"
-              onClick={() =>
-                setFiltersOpen(
-                  (value) =>
-                    !value,
-                )
-              }
+              onClick={() => setFiltersOpen((current) => !current)}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-xs font-bold"
               aria-expanded={filtersOpen}
-              aria-controls="product-filters-panel"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-xs font-black text-neutral-700"
             >
               <Filter className="h-4 w-4" />
-              Filters
+              الفلاتر
             </button>
-
             <span className="text-xs font-bold text-neutral-400">
-              Page{" "}
-              {paginated.pagination.page}{" "}
-              of{" "}
-              {
-                paginated
-                  .pagination
-                  .totalPages
-              }
+              صفحة {pagination?.page ?? page} من {pagination?.totalPages ?? 0}
             </span>
-
           </div>
 
           <div className="grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
-
-            {/* Filters */}
             <aside
-              id="product-filters-panel"
-              className={`h-fit rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm ${
-                filtersOpen
-                  ? "block"
-                  : "hidden"
-              } lg:block`}
+              className={(filtersOpen ? "block" : "hidden") + " h-fit rounded-2xl border border-neutral-200 bg-surface p-5 lg:block"}
             >
-
               <div className="flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal className="h-4 w-4 text-brand" />
-
-                  <h2 className="text-sm font-black text-foreground">
-                    Filters
-                  </h2>
+                  <h2 className="text-sm font-bold text-foreground">الفلاتر</h2>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={
-                    clearFilters
-                  }
-                  className="text-[11px] font-black text-brand hover:underline"
-                >
-                  Clear
-                </button>
-
+                {hasFilters && (
+                  <button type="button" onClick={clearFilters} className="text-xs font-bold text-brand hover:underline">
+                    مسح الكل
+                  </button>
+                )}
               </div>
 
-              {/* Category */}
-              <div className="mt-6">
+              <label className="mt-6 block text-xs font-bold text-neutral-500" htmlFor="catalog-category">القسم</label>
+              <select
+                id="catalog-category"
+                value={category}
+                onChange={(event) => {
+                  setCategory(event.target.value);
+                  applyUrl({ category: event.target.value || undefined });
+                }}
+                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand"
+              >
+                <option value="">كل الأقسام</option>
+                {categories.filter((item) => !item.parentId).map((item) => (
+                  <option key={item.id} value={item.slug}>{item.name}</option>
+                ))}
+              </select>
 
-                <label
-                  htmlFor="catalog-category"
-                  className="text-xs font-black uppercase tracking-wide text-neutral-500"
-                >
-                  Category
-                </label>
+              <label className="mt-5 block text-xs font-bold text-neutral-500" htmlFor="catalog-brand">العلامة</label>
+              <select
+                id="catalog-brand"
+                value={brand}
+                onChange={(event) => {
+                  setBrand(event.target.value);
+                  applyUrl({ brand: event.target.value || undefined });
+                }}
+                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand"
+              >
+                <option value="">كل العلامات</option>
+                {brands.map((item) => (
+                  <option key={item.id} value={String(item.id)}>{item.name}</option>
+                ))}
+              </select>
 
-                <select
-                  id="catalog-category"
-                  value={category}
-                  onChange={(event) => {
-                    setCategory(
-                      event.target.value,
-                    );
-                    resetToFirstPage();
-                  }}
-                  className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                >
-                  {categories.map(
-                    (item) => (
-                      <option
-                        key={item}
-                        value={item}
-                      >
-                        {item}
-                      </option>
-                    ),
-                  )}
-                </select>
-
-              </div>
-
-              {/* Brand */}
               <div className="mt-5">
-
-                <label
-                  htmlFor="catalog-brand"
-                  className="text-xs font-black uppercase tracking-wide text-neutral-500"
-                >
-                  Brand
-                </label>
-
-                <select
-                  id="catalog-brand"
-                  value={brand}
-                  onChange={(event) => {
-                    setBrand(
-                      event.target.value,
-                    );
-                    resetToFirstPage();
-                  }}
-                  className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                >
-                  {brands.map(
-                    (item) => (
-                      <option
-                        key={item}
-                        value={item}
-                      >
-                        {item}
-                      </option>
-                    ),
-                  )}
-                </select>
-
-              </div>
-
-              {/* Rating */}
-              <div className="mt-5">
-
-                <label
-                  htmlFor="catalog-rating"
-                  className="text-xs font-black uppercase tracking-wide text-neutral-500"
-                >
-                  Rating
-                </label>
-
-                <select
-                  id="catalog-rating"
-                  value={rating}
-                  onChange={(event) => {
-                    setRating(
-                      event.target.value,
-                    );
-                    resetToFirstPage();
-                  }}
-                  className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                >
-                  <option value="all">
-                    Any rating
-                  </option>
-
-                  <option value="4">
-                    4★ & above
-                  </option>
-
-                  <option value="4.5">
-                    4.5★ & above
-                  </option>
-
-                  <option value="4.8">
-                    4.8★ & above
-                  </option>
-                </select>
-
-              </div>
-
-              {/* Price */}
-              <div className="mt-5">
-
-                <p className="text-xs font-black uppercase tracking-wide text-neutral-500">
-                  Price
-                </p>
-
+                <p className="text-xs font-bold text-neutral-500">السعر</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
-
-                  <input
-                    type="number"
-                    min="0"
-                    value={
-                      minPrice
-                    }
-                    onChange={(event) => {
-                      setMinPrice(
-                        event.target
-                          .value,
-                      );
-                      resetToFirstPage();
-                    }}
-                    placeholder="Min"
-                    aria-label="Minimum price"
-                    className="h-10 rounded-xl border border-neutral-200 px-3 text-xs outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-
-                  <input
-                    type="number"
-                    min="0"
-                    value={
-                      maxPrice
-                    }
-                    onChange={(event) => {
-                      setMaxPrice(
-                        event.target
-                          .value,
-                      );
-                      resetToFirstPage();
-                    }}
-                    placeholder="Max"
-                    aria-label="Maximum price"
-                    className="h-10 rounded-xl border border-neutral-200 px-3 text-xs outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-
+                  <input value={minPrice} onChange={(event) => setMinPrice(event.target.value)} onBlur={() => applyUrl({ minPrice: minPrice || undefined })} min="0" type="number" placeholder="من" className="h-10 rounded-xl border border-neutral-200 px-3 text-xs outline-none focus:border-brand" />
+                  <input value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} onBlur={() => applyUrl({ maxPrice: maxPrice || undefined })} min="0" type="number" placeholder="إلى" className="h-10 rounded-xl border border-neutral-200 px-3 text-xs outline-none focus:border-brand" />
                 </div>
               </div>
 
-              {/* Toggles */}
-              <div className="mt-6 border-t border-neutral-100 pt-5">
+              <label className="mt-5 flex cursor-pointer items-center justify-between gap-3 text-sm font-medium text-neutral-700">
+                <span>متوفر فقط</span>
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(event) => {
+                    setInStockOnly(event.target.checked);
+                    applyUrl({ availability: event.target.checked ? "IN_STOCK" : undefined });
+                  }}
+                  className="h-5 w-5 accent-brand"
+                />
+              </label>
 
-                <label className="flex cursor-pointer items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-neutral-700">
-                    Free shipping
-                  </span>
+              <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 text-sm font-medium text-neutral-700">
+                <span>العروض فقط</span>
+                <input
+                  type="checkbox"
+                  checked={discountOnly}
+                  onChange={(event) => {
+                    setDiscountOnly(event.target.checked);
+                    applyUrl({ discountOnly: event.target.checked ? "true" : undefined });
+                  }}
+                  className="h-5 w-5 accent-brand"
+                />
+              </label>
 
-                  <input
-                    type="checkbox"
-                    checked={
-                      freeShipping
-                    }
-                    onChange={(event) => {
-                      setFreeShipping(
-                        event.target
-                          .checked,
-                      );
-                      resetToFirstPage();
-                    }}
-                    className="h-5 w-5 accent-brand"
-                  />
-                </label>
-
-                <label className="mt-4 flex cursor-pointer items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-neutral-700">
-                    In stock
-                  </span>
-
-                  <input
-                    type="checkbox"
-                    checked={
-                      inStock
-                    }
-                    onChange={(event) => {
-                      setInStock(
-                        event.target
-                          .checked,
-                      );
-                      resetToFirstPage();
-                    }}
-                    className="h-5 w-5 accent-brand"
-                  />
-                </label>
-
-                <label className="mt-4 flex cursor-pointer items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-neutral-700">
-                    Deals only
-                  </span>
-
-                  <input
-                    type="checkbox"
-                    checked={
-                      dealsOnly
-                    }
-                    onChange={(event) => {
-                      setDealsOnly(
-                        event.target
-                          .checked,
-                      );
-                      resetToFirstPage();
-                    }}
-                    className="h-5 w-5 accent-brand"
-                  />
-                </label>
-
-              </div>
-
+              <label className="mt-5 block text-xs font-bold text-neutral-500" htmlFor="catalog-sort">الترتيب</label>
+              <select
+                id="catalog-sort"
+                value={sort}
+                onChange={(event) => {
+                  setSort(event.target.value);
+                  applyUrl({ sort: event.target.value === "relevance" ? undefined : event.target.value });
+                }}
+                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand"
+              >
+                <option value="relevance">الأكثر صلة</option>
+                <option value="newest">الأحدث</option>
+                <option value="price_asc">الأقل سعرًا</option>
+                <option value="price_desc">الأعلى سعرًا</option>
+                <option value="discount_desc">الأعلى خصمًا</option>
+              </select>
             </aside>
 
-            {/* Catalog */}
             <section className="min-w-0">
-
-              <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
-
-                <div>
-
-                  <p className="text-sm font-black text-foreground">
-                    All products
-                  </p>
-
-                  <p className="mt-1 text-xs text-neutral-400">
-                    Showing{" "}
-                    {paginated
-                      .items
-                      .length}{" "}
-                    of{" "}
-                    {
-                      paginated
-                        .pagination
-                        .totalItems
-                    }{" "}
-                    products
-                  </p>
-
+              {productsQuery.isLoading ? (
+                <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <div key={index} className="aspect-[3/5] animate-pulse rounded-2xl bg-neutral-100" />
+                  ))}
                 </div>
-
-                <div className="flex items-center gap-3">
-
-                  <label
-                    htmlFor="catalog-sort"
-                    className="text-xs font-bold text-neutral-400"
-                  >
-                    Sort
-                  </label>
-
-                  <div className="relative">
-
-                    <select
-                      id="catalog-sort"
-                      value={sort}
-                      onChange={(event) => {
-                        setSort(
-                          event.target
-                            .value,
-                        );
-                        resetToFirstPage();
-                      }}
-                      className="h-10 appearance-none rounded-xl border border-neutral-200 bg-surface py-2 ps-3 pe-9 text-sm font-bold text-neutral-700 outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                    >
-                      <option value="featured">
-                        Featured
-                      </option>
-
-                      <option value="price-low">
-                        Price: Low to High
-                      </option>
-
-                      <option value="price-high">
-                        Price: High to Low
-                      </option>
-
-                      <option value="rating">
-                        Highest Rated
-                      </option>
-
-                      <option value="reviews">
-                        Most Reviewed
-                      </option>
-
-                      <option value="discount">
-                        Biggest Discount
-                      </option>
-                    </select>
-
-                    <ChevronDown className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              {visibleProducts.length >
-              0 ? (
-                <>
-                  <div
-                    className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
-                    aria-live="polite"
-                  >
-                    {visibleProducts.map(
-                      (product) => (
-                        <B2CProductCard
-                          key={
-                            product.id
-                          }
-                          product={
-                            product
-                          }
-                        />
-                      ),
-                    )}
-                  </div>
-
-                  <ProductPagination
-                    page={
-                      paginated
-                        .pagination
-                        .page
-                    }
-                    totalPages={
-                      paginated
-                        .pagination
-                        .totalPages
-                    }
-                    onChange={
-                      (nextPage) =>
-                        setPage(
-                          nextPage,
-                        )
-                    }
-                  />
-
-                  <div className="mt-4 text-center text-[11px] font-semibold text-neutral-400">
-                    Page{" "}
-                    {
-                      paginated
-                        .pagination
-                        .page
-                    }{" "}
-                    of{" "}
-                    {
-                      paginated
-                        .pagination
-                        .totalPages
-                    }
-                  </div>
-                </>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-12 text-center">
-
-                  <Search className="mx-auto h-7 w-7 text-neutral-300" />
-
-                  <h2 className="mt-4 text-xl font-black text-foreground">
-                    No matching products
-                  </h2>
-
-                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-muted">
-                    Try a different search or clear some filters.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={
-                      clearFilters
-                    }
-                    className="mt-5 h-10 rounded-xl bg-brand px-5 text-xs font-black text-white hover:bg-brand-hover"
-                  >
-                    Clear filters
+              ) : productsQuery.isError ? (
+                <div className="rounded-2xl border border-danger-100 bg-danger-surface p-8 text-center">
+                  <h2 className="text-lg font-bold text-danger-700">تعذر تحميل الكتالوج</h2>
+                  <p className="mt-2 text-sm text-danger-600">تحقق من اتصال الـAPI وحاول مرة أخرى.</p>
+                  <button type="button" onClick={() => productsQuery.refetch()} className="mt-5 rounded-xl bg-danger-600 px-5 py-2.5 text-sm font-bold text-white">
+                    إعادة المحاولة
                   </button>
-
                 </div>
+              ) : products.length === 0 ? (
+                <div className="rounded-2xl border border-neutral-200 bg-surface p-12 text-center">
+                  <h2 className="text-xl font-bold text-foreground">لا توجد نتائج</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">جرّب إزالة بعض الفلاتر أو تغيير كلمة البحث.</p>
+                  <button type="button" onClick={clearFilters} className="mt-5 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white">
+                    مسح الفلاتر
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                    {products.map((product) => (
+                      <B2CProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {pagination && pagination.totalPages > 1 && (
+                    <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        disabled={!pagination.hasPreviousPage}
+                        onClick={() => applyUrl({ page: String(Math.max(1, pagination.page - 1)) })}
+                        className="h-10 rounded-xl border border-neutral-200 bg-surface px-4 text-sm font-bold disabled:opacity-40"
+                      >
+                        السابق
+                      </button>
+
+                      {Array.from({ length: pagination.totalPages }, (_, index) => index + 1)
+                        .slice(Math.max(0, pagination.page - 3), Math.min(pagination.totalPages, pagination.page + 2))
+                        .map((pageNumber) => (
+                          <button
+                            key={pageNumber}
+                            type="button"
+                            onClick={() => applyUrl({ page: String(pageNumber) })}
+                            className={"h-10 min-w-10 rounded-xl px-3 text-sm font-bold " + (pageNumber === pagination.page ? "bg-brand text-white" : "border border-neutral-200 bg-surface text-neutral-700")}
+                          >
+                            {pageNumber}
+                          </button>
+                        ))}
+
+                      <button
+                        type="button"
+                        disabled={!pagination.hasNextPage}
+                        onClick={() => applyUrl({ page: String(pagination.page + 1) })}
+                        className="h-10 rounded-xl border border-neutral-200 bg-surface px-4 text-sm font-bold disabled:opacity-40"
+                      >
+                        التالي
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
-
             </section>
-
           </div>
         </div>
       </main>
     </AppShell>
   );
 }
-
-
-
