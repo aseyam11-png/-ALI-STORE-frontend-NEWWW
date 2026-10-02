@@ -40,21 +40,22 @@ export default function AdminShipmentsPage() {
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const page = await getAdminOrders();
-      setOrders(page.content);
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل الشحنات.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    void load();
+    let active = true;
+    const run = async () => {
+      try {
+        const page = await getAdminOrders();
+        if (active) setOrders(page.content);
+      } catch (caughtError) {
+        if (active) setError(caughtError instanceof Error ? caughtError.message : "تعذر تحميل الشحنات.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void run();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const shipments = useMemo(
