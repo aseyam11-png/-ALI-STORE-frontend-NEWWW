@@ -14,6 +14,31 @@ export interface SessionUser {
   role: string;
 }
 
+let cachedSessionUser: SessionUser | null | undefined;
+let sessionRequest: Promise<SessionUser | null> | null = null;
+
+async function readSession(): Promise<SessionUser | null> {
+  try {
+    const user = await apiClient.request<SessionUser>("/api/v1/auth/session");
+    cachedSessionUser = user;
+    return user;
+  } catch (error) {
+    if (error instanceof HttpApiError && error.status !== 401) throw error;
+    cachedSessionUser = null;
+    return null;
+  }
+}
+
+function getSessionUser(): Promise<SessionUser | null> {
+  if (cachedSessionUser !== undefined) return Promise.resolve(cachedSessionUser);
+  sessionRequest ??= readSession().finally(() => { sessionRequest = null; });
+  return sessionRequest;
+}
+
+export function clearCachedSession() {
+  cachedSessionUser = undefined;
+  sessionRequest = null;
+}
 export interface Session {
   status: SessionStatus;
   user?: SessionUser;
@@ -25,18 +50,14 @@ export function useSession(): Session {
   useEffect(() => {
     let active = true;
 
-    apiClient
-      .request<SessionUser>("/api/v1/auth/session")
+    getSessionUser()
       .then((user) => {
-        if (active) setSession({ status: "authenticated", user });
-      })
-      .catch((error: unknown) => {
-        if (!active) return;
-        if (error instanceof HttpApiError && error.status === 401) {
-          setSession({ status: "unauthenticated" });
-          return;
+        if (active) {
+          setSession(user ? { status: "authenticated", user } : { status: "unauthenticated" });
         }
-        setSession({ status: "unauthenticated" });
+      })
+      .catch(() => {
+        if (active) setSession({ status: "unauthenticated" });
       });
 
     return () => {
@@ -78,6 +99,7 @@ export async function login(credentials: {
     });
 
     const user = await apiClient.request<SessionUser>("/api/v1/auth/session");
+    cachedSessionUser = user;
     return { ok: true, user };
   } catch (error) {
     if (error instanceof HttpApiError && (error.status === 401 || error.status === 403)) {
@@ -89,4 +111,5 @@ export async function login(credentials: {
 
 export async function logout(): Promise<void> {
   await apiClient.request<void>("/api/v1/auth/logout", { method: "POST" });
+  clearCachedSession();
 }
