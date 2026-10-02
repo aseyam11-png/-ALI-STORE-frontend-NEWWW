@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
-import { formatSAR } from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
@@ -26,7 +26,7 @@ export function ProductCard({ product }: ProductCardProps) {
     state.productIds.includes(product.id),
   );
 
-  const formattedPrice = formatSAR(product.price.amount);
+  const formattedPrice = formatCurrency(product.price.amount, product.price.currency);
 
   const originalAmount =
     product.price.originalAmount ??
@@ -36,7 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const formattedOriginalPrice =
     originalAmount !== undefined
-      ? formatSAR(originalAmount)
+      ? formatCurrency(originalAmount, product.price.currency)
       : undefined;
 
   const handleAddToCart = () => {
