@@ -134,18 +134,6 @@ export function AdminShell({
     }
   }, [pathname, router, session.status, session.user?.role]);
 
-  if (session.status !== "authenticated" || session.user?.role !== "ADMIN") {
-    return (
-      <LocalizationProvider>
-        <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-6">
-          <p className="text-sm font-bold text-slate-500">
-            Checking administrator access...
-          </p>
-        </main>
-      </LocalizationProvider>
-    );
-  }
-
   // Same accessible-drawer contract already established for the customer
   // header's mobile menu (HomeHeader.tsx): initial focus, Escape-to-close,
   // Tab-trapped focus, scroll lock, focus restored to the trigger on close.
@@ -198,6 +186,18 @@ export function AdminShell({
       trigger?.focus();
     };
   }, [mobileNavOpen]);
+
+  if (session.status !== "authenticated" || session.user?.role !== "ADMIN") {
+    return (
+      <LocalizationProvider>
+        <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-6">
+          <p className="text-sm font-bold text-slate-500">
+            Checking administrator access...
+          </p>
+        </main>
+      </LocalizationProvider>
+    );
+  }
 
   return (
     <LocalizationProvider>
