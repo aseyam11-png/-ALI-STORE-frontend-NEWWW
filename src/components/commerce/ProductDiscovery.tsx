@@ -3,7 +3,7 @@ import { mapProductSummaryToCard } from "@/features/products/services/product-ca
 import { Tabs } from "@/components/ui/tabs";
 import { ProductCard } from "./ProductCard";
 
-export default async function ProductDiscovery() {
+export async function ProductDiscovery() {
   const response = await getProducts({
     search: "",
     categoryId: undefined,
@@ -74,3 +74,5 @@ export default async function ProductDiscovery() {
     </section>
   );
 }
+
+export default ProductDiscovery;
