@@ -4,6 +4,12 @@ export type BackendWishlistItem = {
   id: number;
   userId: number;
   productId: number;
+  productName?: string | null;
+  price?: number | null;
+  currency?: string | null;
+  imageUrl?: string | null;
+  brandName?: string | null;
+  categoryName?: string | null;
   createdAt: string;
 };
 
