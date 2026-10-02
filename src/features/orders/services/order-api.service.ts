@@ -11,6 +11,7 @@ export type BackendOrder = {
   couponCode?: string | null;
   discountAmount?: number | string | null;
   paymentStatus: string;
+  paymentMethod?: string | null;
   shippingAddress: string;
   createdAt: string;
   items: Array<{
@@ -30,6 +31,15 @@ export type BackendOrder = {
   }>;
 };
 
+type BackendOrderPage = {
+  content: BackendOrder[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  isLast: boolean;
+};
+
 export async function createBackendOrder(input: {
   shippingAddress: string;
   couponCode?: string;
@@ -44,20 +54,17 @@ export async function createBackendOrder(input: {
 }
 
 export async function getBackendOrders(page = 0, size = 20) {
-  const response = await apiClient.request<ApiResponse<{
-    content: BackendOrder[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    isLast: boolean;
-  }>>("/api/v1/orders?page=" + page + "&size=" + size);
+  const response = await apiClient.request<ApiResponse<BackendOrderPage>>(
+    "/api/v1/orders?page=" + page + "&size=" + size,
+  );
   if (!response.success) throw new Error(response.message);
   return response.data;
 }
 
 export async function getBackendOrder(id: string | number) {
-  const response = await apiClient.request<ApiResponse<BackendOrder>>("/api/v1/orders/" + encodeURIComponent(String(id)));
+  const response = await apiClient.request<ApiResponse<BackendOrder>>(
+    "/api/v1/orders/" + encodeURIComponent(String(id)),
+  );
   if (!response.success) throw new Error(response.message);
   return response.data;
 }
