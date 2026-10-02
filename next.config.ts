@@ -1,8 +1,5 @@
 import type { NextConfig } from "next";
 
-const mediaBase = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;
-const mediaUrl = mediaBase ? new URL(mediaBase) : null;
-
 const nextConfig: NextConfig = {
   typedRoutes: true,
   images: {
@@ -11,12 +8,18 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      ...(mediaUrl
-        ? [
-            {
-              new URL(mediaBase!)
-            },
-          ]
+      ...(process.env.NEXT_PUBLIC_MEDIA_BASE_URL
+        ? (() => {
+            const url = new URL(process.env.NEXT_PUBLIC_MEDIA_BASE_URL!);
+            return [
+              {
+                protocol: url.protocol.replace(":", "") as "http" | "https",
+                hostname: url.hostname,
+                port: url.port,
+                pathname: "/**",
+              },
+            ];
+          })()
         : []),
     ],
   },
