@@ -10,8 +10,18 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  useEffect,
   useState,
 } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "@/features/auth/session";
+import {
+  createBackendAddress,
+  deleteBackendAddress,
+  getBackendAddresses,
+  setBackendDefaultAddress,
+  updateBackendAddress,
+} from "@/features/addresses/services/address-api.service";
 
 import { AppShell } from "@/components/layout/AppShell";
 
