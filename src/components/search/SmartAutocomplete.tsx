@@ -123,8 +123,6 @@ export function SmartAutocomplete({
     let cancelled = false;
 
     if (debouncedValue.trim().length < 2) {
-      setSuggestions([]);
-      setLoadingSuggestions(false);
       return () => {
         cancelled = true;
       };
