@@ -240,9 +240,56 @@ export default function BuyerAddressesPage() {
     }
   };
 
+  const removeAddress = async (id: string) => {
+    if (saving) return;
+    setActionError("");
+    setSaving(true);
+
+    try {
+      await deleteBackendAddress(Number(id));
+      await addressesQuery.refetch();
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "تعذر حذف العنوان.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const makeDefaultAddress = async (id: string) => {
+    if (saving) return;
+    setActionError("");
+    setSaving(true);
+
+    try {
+      await setBackendDefaultAddress(Number(id));
+      await addressesQuery.refetch();
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "تعذر تعيين العنوان الافتراضي.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
+
+        {actionError && (
+          <div
+            role="alert"
+            className="mx-auto mt-5 max-w-[1100px] rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700 sm:mx-6 lg:mx-auto"
+          >
+            {actionError}
+          </div>
+        )}
 
         <section className="border-b border-slate-200 bg-white">
 
@@ -643,7 +690,7 @@ export default function BuyerAddressesPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        deleteAddress(
+                        void removeAddress(
                           address.id,
                         )
                       }
@@ -719,7 +766,7 @@ export default function BuyerAddressesPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          setDefaultAddress(
+                          void makeDefaultAddress(
                             address.id,
                           )
                         }
