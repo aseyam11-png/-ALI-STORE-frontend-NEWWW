@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -155,7 +156,7 @@ export function SmartAutocomplete({
               {suggestions.map((suggestion, index) => (
                 <Link
                   key={suggestion.id}
-                  href={suggestion.href}
+                  href={suggestion.href as Route}
                   role="option"
                   aria-selected={selectedIndex === index}
                   onMouseEnter={() => setHighlighted(index)}
