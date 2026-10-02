@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 import type {
   CustomerAddress,
@@ -38,6 +39,10 @@ interface AddressState {
   getSelectedAddress: () =>
     | CustomerAddress
     | undefined;
+
+  replaceAddresses: (
+    addresses: CustomerAddress[],
+  ) => void;
 }
 
 const initialAddresses: CustomerAddress[] =
@@ -128,203 +133,101 @@ const initialAddresses: CustomerAddress[] =
     },
   ];
 
-export const useAddressStore =
-  create<AddressState>(
+export const useAddressStore = create<AddressState>()(
+  persist(
     (set, get) => ({
-      addresses:
-        initialAddresses,
+      addresses: [],
+      selectedAddressId: null,
 
-      selectedAddressId:
-        "ADDR-1001",
-
-      addAddress: (
-        address,
-      ) => {
+      addAddress: (address) => {
         set((state) => {
-          const id =
-            `ADDR-${Date.now()}`;
+          const id = "ADDR-" + Date.now();
+          const addresses = address.isDefault
+            ? state.addresses.map((item) => ({ ...item, isDefault: false }))
+            : state.addresses;
 
-          let addresses =
-            state.addresses;
-
-          if (
-            address.isDefault
-          ) {
-            addresses =
-              addresses.map(
-                (
-                  existing,
-                ) => ({
-                  ...existing,
-                  isDefault:
-                    false,
-                }),
-              );
-          }
-
-          const newAddress: CustomerAddress =
-            {
-              ...address,
-              id,
-            };
-
-          addresses = [
-            ...addresses,
-            newAddress,
-          ];
-
+          const next = [...addresses, { ...address, id }];
           return {
-            addresses,
-            selectedAddressId:
-              newAddress.isDefault
-                ? id
-                : state.selectedAddressId,
+            addresses: next,
+            selectedAddressId: address.isDefault ? id : state.selectedAddressId,
           };
         });
       },
 
-      updateAddress: (
-        id,
-        address,
-      ) => {
-        set((state) => {
-          let addresses =
-            state.addresses;
-
-          if (
-            address.isDefault
-          ) {
-            addresses =
-              addresses.map(
-                (
-                  existing,
-                ) => ({
-                  ...existing,
-                  isDefault:
-                    existing.id ===
-                    id,
-                }),
-              );
-          }
-
-          addresses =
-            addresses.map(
-              (existing) =>
-                existing.id === id
-                  ? {
-                      ...existing,
-                      ...address,
-                    }
-                  : existing,
-            );
-
-          return {
-            addresses,
-          };
-        });
-      },
-
-      deleteAddress: (
-        id,
-      ) => {
-        set((state) => {
-          const remaining =
-            state.addresses.filter(
-              (address) =>
-                address.id !== id,
-            );
-
-          if (
-            remaining.length === 0
-          ) {
-            return {
-              addresses: [],
-              selectedAddressId:
-                null,
-            };
-          }
-
-          const deletedWasDefault =
-            state.addresses.some(
-              (address) =>
-                address.id === id &&
-                address.isDefault,
-            );
-
-          if (
-            deletedWasDefault
-          ) {
-            remaining[0] = {
-              ...remaining[0],
-              isDefault: true,
-            };
-          }
-
-          const selectedStillExists =
-            remaining.some(
-              (address) =>
-                address.id ===
-                state.selectedAddressId,
-            );
-
-          return {
-            addresses:
-              remaining,
-
-            selectedAddressId:
-              selectedStillExists
-                ? state.selectedAddressId
-                : remaining[0].id,
-          };
-        });
-      },
-
-      setDefaultAddress: (
-        id,
-      ) => {
+      updateAddress: (id, address) => {
         set((state) => ({
-          addresses:
-            state.addresses.map(
-              (address) => ({
-                ...address,
-                isDefault:
-                  address.id === id,
-              }),
-            ),
-
-          selectedAddressId:
-            id,
+          addresses: state.addresses.map((item) =>
+            item.id === id ? { ...item, ...address } : item,
+          ),
         }));
       },
 
-      selectAddress: (
-        id,
-      ) => {
-        const exists =
-          get().addresses.some(
-            (address) =>
-              address.id === id,
+      deleteAddress: (id) => {
+        set((state) => {
+          const deleted = state.addresses.find((item) => item.id === id);
+          const remaining = state.addresses.filter((item) => item.id !== id);
+
+          if (remaining.length === 0) {
+            return { addresses: [], selectedAddressId: null };
+          }
+
+          if (deleted?.isDefault) {
+            remaining[0] = { ...remaining[0], isDefault: true };
+          }
+
+          const selectedExists = remaining.some(
+            (item) => item.id === state.selectedAddressId,
           );
 
-        if (!exists) {
-          return;
-        }
-
-        set({
-          selectedAddressId:
-            id,
+          return {
+            addresses: remaining,
+            selectedAddressId: selectedExists
+              ? state.selectedAddressId
+              : remaining[0].id,
+          };
         });
       },
 
-      getSelectedAddress: () => {
-        const state =
-          get();
+      setDefaultAddress: (id) => {
+        set((state) => ({
+          addresses: state.addresses.map((item) => ({
+            ...item,
+            isDefault: item.id === id,
+          })),
+          selectedAddressId: id,
+        }));
+      },
 
+      selectAddress: (id) => {
+        if (get().addresses.some((item) => item.id === id)) {
+          set({ selectedAddressId: id });
+        }
+      },
+
+      getSelectedAddress: () => {
+        const state = get();
         return state.addresses.find(
-          (address) =>
-            address.id ===
-            state.selectedAddressId,
+          (item) => item.id === state.selectedAddressId,
         );
       },
+
+      replaceAddresses: (addresses) => {
+        const selected =
+          addresses.find((item) => item.isDefault) ?? addresses[0];
+
+        set({
+          addresses,
+          selectedAddressId: selected?.id ?? null,
+        });
+      },
     }),
-  );
+    {
+      name: "alistore-addresses",
+      version: 2,
+      partialize: (state) => ({
+        addresses: state.addresses,
+        selectedAddressId: state.selectedAddressId,
+      }),
+    },
+  ),
+);
