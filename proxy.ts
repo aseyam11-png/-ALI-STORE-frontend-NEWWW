@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const SESSION_COOKIE = "ali_store_session";
 
-const PROTECTED_PREFIXES = ["/buyer", "/admin", "/system", "/warehouse"];
+const PROTECTED_PREFIXES = ["/buyer", "/admin", "/system", "/shop/checkout"];
 
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -24,5 +24,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/buyer/:path*", "/admin/:path*", "/system/:path*", "/warehouse/:path*"],
+  matcher: ["/buyer/:path*", "/admin/:path*", "/system/:path*", "/shop/checkout/:path*"],
 };
