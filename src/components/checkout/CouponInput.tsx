@@ -62,9 +62,16 @@ export function CouponInput({
     boolean | null
   >(null);
 
-  const apply = () => {
+  const [
+    applying,
+    setApplying,
+  ] = useState(false);
+
+  const apply = async () => {
+    setApplying(true);
+
     const result =
-      validateCoupon(
+      await validateCoupon(
         code,
         subtotal,
         shipping,
@@ -91,7 +98,10 @@ export function CouponInput({
       );
     } else {
       setApplied(null);
+      onRemove?.();
     }
+
+    setApplying(false);
   };
 
   const remove = () => {
@@ -198,7 +208,7 @@ export function CouponInput({
               "Enter"
             ) {
               event.preventDefault();
-              apply();
+              void apply();
             }
           }}
           placeholder="e.g. WELCOME10"
@@ -208,11 +218,12 @@ export function CouponInput({
 
         <button
           type="button"
-          onClick={
-            apply
-          }
+          onClick={() => {
+            void apply();
+          }}
           disabled={
-            !code.trim()
+            !code.trim() ||
+            applying
           }
           className="h-11 rounded-xl bg-[#2563EB] px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
         >
@@ -239,7 +250,7 @@ export function CouponInput({
       )}
 
       <div className="mt-3 text-[9px] text-slate-400">
-        Test codes: WELCOME10 · SAVE20 · FREESHIP
+        Coupon availability is verified against the store backend.
       </div>
 
     </section>
