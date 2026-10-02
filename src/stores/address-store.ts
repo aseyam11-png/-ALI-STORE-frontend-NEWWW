@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 import type {
   CustomerAddress,
@@ -128,203 +129,55 @@ const initialAddresses: CustomerAddress[] =
     },
   ];
 
-export const useAddressStore =
-  create<AddressState>(
+export const useAddressStore = create<AddressState>()(
+  persist(
     (set, get) => ({
-      addresses:
-        initialAddresses,
+      addresses: [],
+      selectedAddressId: undefined,
 
-      selectedAddressId:
-        "ADDR-1001",
-
-      addAddress: (
-        address,
-      ) => {
+      addAddress: (address) => {
         set((state) => {
-          const id =
-            `ADDR-${Date.now()}`;
-
-          let addresses =
-            state.addresses;
-
-          if (
-            address.isDefault
-          ) {
-            addresses =
-              addresses.map(
-                (
-                  existing,
-                ) => ({
-                  ...existing,
-                  isDefault:
-                    false,
-                }),
-              );
-          }
-
-          const newAddress: CustomerAddress =
-            {
-              ...address,
-              id,
-            };
-
-          addresses = [
-            ...addresses,
-            newAddress,
-          ];
-
-          return {
-            addresses,
-            selectedAddressId:
-              newAddress.isDefault
-                ? id
-                : state.selectedAddressId,
-          };
+          const id = `address-${Date.now()}`;
+          const makeDefault = address.isDefault || state.addresses.length === 0;
+          const addresses = state.addresses.map((item) => makeDefault ? { ...item, isDefault: false } : item);
+          addresses.push({ ...address, id, isDefault: makeDefault });
+          return { addresses, selectedAddressId: makeDefault ? id : state.selectedAddressId };
         });
       },
 
-      updateAddress: (
-        id,
-        address,
-      ) => {
+      updateAddress: (id, patch) => {
         set((state) => {
-          let addresses =
-            state.addresses;
-
-          if (
-            address.isDefault
-          ) {
-            addresses =
-              addresses.map(
-                (
-                  existing,
-                ) => ({
-                  ...existing,
-                  isDefault:
-                    existing.id ===
-                    id,
-                }),
-              );
-          }
-
-          addresses =
-            addresses.map(
-              (existing) =>
-                existing.id === id
-                  ? {
-                      ...existing,
-                      ...address,
-                    }
-                  : existing,
-            );
-
-          return {
-            addresses,
-          };
+          const makeDefault = patch.isDefault === true;
+          const addresses = state.addresses.map((item) => {
+            if (makeDefault && item.id !== id) return { ...item, isDefault: false };
+            return item.id === id ? { ...item, ...patch } : item;
+          });
+          return { addresses, selectedAddressId: makeDefault ? id : state.selectedAddressId };
         });
       },
 
-      deleteAddress: (
-        id,
-      ) => {
+      deleteAddress: (id) => {
         set((state) => {
-          const remaining =
-            state.addresses.filter(
-              (address) =>
-                address.id !== id,
-            );
-
-          if (
-            remaining.length === 0
-          ) {
-            return {
-              addresses: [],
-              selectedAddressId:
-                null,
-            };
-          }
-
-          const deletedWasDefault =
-            state.addresses.some(
-              (address) =>
-                address.id === id &&
-                address.isDefault,
-            );
-
-          if (
-            deletedWasDefault
-          ) {
-            remaining[0] = {
-              ...remaining[0],
-              isDefault: true,
-            };
-          }
-
-          const selectedStillExists =
-            remaining.some(
-              (address) =>
-                address.id ===
-                state.selectedAddressId,
-            );
-
-          return {
-            addresses:
-              remaining,
-
-            selectedAddressId:
-              selectedStillExists
-                ? state.selectedAddressId
-                : remaining[0].id,
-          };
+          const addresses = state.addresses.filter((item) => item.id !== id);
+          const selectedAddressId = state.selectedAddressId === id ? addresses[0]?.id : state.selectedAddressId;
+          return { addresses, selectedAddressId };
         });
       },
 
-      setDefaultAddress: (
-        id,
-      ) => {
+      setDefaultAddress: (id) => {
         set((state) => ({
-          addresses:
-            state.addresses.map(
-              (address) => ({
-                ...address,
-                isDefault:
-                  address.id === id,
-              }),
-            ),
-
-          selectedAddressId:
-            id,
+          addresses: state.addresses.map((item) => ({ ...item, isDefault: item.id === id })),
+          selectedAddressId: id,
         }));
       },
 
-      selectAddress: (
-        id,
-      ) => {
-        const exists =
-          get().addresses.some(
-            (address) =>
-              address.id === id,
-          );
-
-        if (!exists) {
-          return;
-        }
-
-        set({
-          selectedAddressId:
-            id,
-        });
-      },
+      selectAddress: (id) => set({ selectedAddressId: id }),
 
       getSelectedAddress: () => {
-        const state =
-          get();
-
-        return state.addresses.find(
-          (address) =>
-            address.id ===
-            state.selectedAddressId,
-        );
+        const state = get();
+        return state.addresses.find((item) => item.id === state.selectedAddressId) ?? state.addresses.find((item) => item.isDefault) ?? state.addresses[0];
       },
     }),
-  );
+    { name: "alistore-addresses", partialize: (state) => ({ addresses: state.addresses, selectedAddressId: state.selectedAddressId }) },
+  ),
+);

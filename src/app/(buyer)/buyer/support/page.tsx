@@ -11,19 +11,17 @@ import {
 import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useAuthStore } from "@/stores/auth-store";
 
 import {
   useSupportChatStore,
 } from "@/stores/support-chat-store";
 
 export default function BuyerSupportPage() {
-  const conversations =
-    useSupportChatStore(
-      (state) =>
-        state.getCustomerConversations(
-          "customer-001",
-        ),
-    );
+  const user = useAuthStore((state) => state.user);
+  const customerId = user ? String(user.id) : "public-demo";
+  const customerName = user ? `${user.firstName} ${user.lastName}`.trim() : "Customer";
+  const conversations = useSupportChatStore((state) => state.getCustomerConversations(customerId));
 
   const createConversation =
     useSupportChatStore(
@@ -62,11 +60,9 @@ export default function BuyerSupportPage() {
           shipmentId:
             "SHIP-1001",
 
-          customerId:
-            "customer-001",
+          customerId,
 
-          customerName:
-            "Customer",
+          customerName,
 
           subject:
             "Customer support request",
