@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   Filter,
@@ -9,13 +9,15 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { ProductPagination } from "@/components/commerce/products/ProductPagination";
 
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
-import { mapMockProductToSummary } from "@/features/products/services/product.mapper";
+import { getProducts } from "@/features/products/services/product.service";
+import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 
 import {
   filterCatalogProducts,
@@ -25,21 +27,70 @@ import {
 
 import { paginate } from "@/features/catalog/services/pagination.service";
 
-import { featuredProducts } from "@/mocks/products";
 
 
 const PAGE_SIZE = 12;
 
 export default function ProductsPage() {
-  const [search, setSearch] =
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [allProducts, setAllProducts] =
+    useState<B2CProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] =
+    useState(true);
+  const [catalogError, setCatalogError] =
     useState("");
 
-  // mock source → canonical ProductSummary → page-local B2CProduct view —
-  // this page no longer normalizes the raw mock array directly.
-  const allProducts =
-    featuredProducts
-      .map(mapMockProductToSummary)
-      .map(normalizeB2CProduct);
+  const [search, setSearch] =
+    useState(searchParams.get("q") ?? "");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setCatalogLoading(true);
+    setCatalogError("");
+
+    void getProducts({
+      search: searchParams.get("q") ?? "",
+      categoryId: searchParams.get("category") ?? undefined,
+      subcategoryId: undefined,
+      brand: searchParams.get("brand") ?? undefined,
+      supplierId: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+      minRating: undefined,
+      verifiedSupplierOnly: false,
+      discountOnly: false,
+      inStockOnly: false,
+      featuredOnly: false,
+      bestsellerOnly: false,
+      newArrivalOnly: false,
+      sort: "relevance",
+      page: 1,
+      pageSize: 100,
+    })
+      .then((response) => {
+        if (cancelled) return;
+        setAllProducts(response.items.map(normalizeB2CProduct));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAllProducts([]);
+        setCatalogError(
+          "تعذر تحميل المنتجات من الخادم. تأكد أن الـBackend يعمل ثم أعد المحاولة.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCatalogLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   const brands = useMemo(
     () => [
@@ -83,10 +134,10 @@ export default function ProductsPage() {
   );
 
   const [category, setCategory] =
-    useState("All");
+    useState(searchParams.get("category") ?? "All");
 
   const [brand, setBrand] =
-    useState("All brands");
+    useState(searchParams.get("brand") ?? "All brands");
 
   const [rating, setRating] =
     useState("all");
@@ -198,6 +249,41 @@ export default function ProductsPage() {
   const visibleProducts =
     paginated.items;
 
+  if (catalogLoading) {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-[1440px] px-4 py-20 text-center sm:px-6 lg:px-8">
+            <p className="text-sm font-bold text-text-muted">
+              Loading products...
+            </p>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
+
+  if (catalogError) {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-[1440px] px-4 py-20 text-center sm:px-6 lg:px-8">
+            <p className="mx-auto max-w-lg text-sm leading-6 text-danger-700">
+              {catalogError}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.refresh()}
+              className="mt-5 rounded-xl bg-brand px-5 py-3 text-sm font-black text-white hover:bg-brand-hover"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
+
   const resetToFirstPage =
     () => {
       setPage(1);
@@ -288,9 +374,23 @@ export default function ProductsPage() {
 
                 <button
                   type="button"
-                  onClick={
-                    resetToFirstPage
-                  }
+                  onClick={() => {
+                    const params = new URLSearchParams(
+                      searchParams.toString(),
+                    );
+
+                    if (search.trim()) {
+                      params.set("q", search.trim());
+                    } else {
+                      params.delete("q");
+                    }
+
+                    params.delete("page");
+                    router.push(
+                      `/shop/products?${params.toString()}`,
+                    );
+                    resetToFirstPage();
+                  }}
                   className="hidden h-10 rounded-xl bg-brand px-6 text-sm font-black text-white hover:bg-brand-hover sm:block"
                 >
                   Search
