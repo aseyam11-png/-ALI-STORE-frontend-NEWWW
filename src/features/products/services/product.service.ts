@@ -21,9 +21,9 @@ function slugify(value: string) {
 function mapAvailability(
   availability: BackendProductResponse["availability"],
 ) {
-  return availability === "IN_STOCK"
-    ? "in_stock"
-    : "out_of_stock";
+  if (availability === "IN_STOCK") return "in_stock";
+  if (availability === "OUT_OF_STOCK") return "out_of_stock";
+  return "out_of_stock";
 }
 
 function mapBackendProduct(product: BackendProductResponse): ProductSummary {
@@ -241,6 +241,7 @@ export async function getRelatedProducts(
   const response = await requestProducts({
     search: "",
     categoryId,
+    subcategoryId: undefined,
     brand: undefined,
     supplierId: undefined,
     minPrice: undefined,
