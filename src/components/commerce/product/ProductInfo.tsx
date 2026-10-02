@@ -21,7 +21,7 @@ import {
 } from "@/features/products/services/variant.utils";
 
 import { useWishlistStore } from "@/stores/wishlist-store";
-import { formatSAR } from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 
 import { ProductActions } from "./ProductActions";
 import { ProductGallery } from "./ProductGallery";
@@ -216,14 +216,14 @@ export function ProductInfo({
           <div className="flex flex-wrap items-end gap-3">
 
             <span className="text-4xl font-black text-foreground">
-              {formatSAR(activePrice)}
+              {formatCurrency(activePrice, product.currency)}
             </span>
 
             {product.originalPrice &&
               product.originalPrice >
                 activePrice && (
                 <span className="mb-1 text-sm font-semibold text-neutral-400 line-through">
-                  {formatSAR(product.originalPrice)}
+                  {formatCurrency(product.originalPrice, product.currency)}
                 </span>
               )}
 
