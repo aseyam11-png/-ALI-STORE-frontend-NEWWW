@@ -9,9 +9,15 @@ import { formatSAR } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
+import { useSession } from "@/features/auth/session";
+import {
+  addServerWishlistItem,
+  removeServerWishlistItem,
+} from "@/features/wishlist/services/wishlist-api.service";
 
 export function B2CProductCard({ product }: { product: B2CProduct }) {
   const { t } = useTranslation();
+  const session = useSession();
   const addItem = useCartStore((state) => state.addItem);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const saved = useWishlistStore((state) => state.productIds.includes(product.id));
@@ -32,8 +38,30 @@ export function B2CProductCard({ product }: { product: B2CProduct }) {
     });
   };
 
-  const handleWishlist = () => {
-    toggleWishlist({
+  const handleWishlist = async () => {
+    const snapshot = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0]?.url,
+      brand: product.brand,
+      category: product.category,
+      originalPrice: product.originalPrice,
+      discountPercentage: product.discountPercentage,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+    };
+
+    try {
+      if (session.status === "authenticated") {
+        if (saved) {
+          await removeServerWishlistItem(product.id);
+        } else {
+          await addServerWishlistItem(product.id);
+        }
+      }
+
+      toggleWishlist(snapshot);
       id: product.id,
       name: product.name,
       price: product.price,
@@ -45,6 +73,9 @@ export function B2CProductCard({ product }: { product: B2CProduct }) {
       rating: product.rating,
       reviewCount: product.reviewCount,
     });
+    } catch {
+      return;
+    }
   };
 
   const oldPrice = product.originalPrice && product.originalPrice > product.price
