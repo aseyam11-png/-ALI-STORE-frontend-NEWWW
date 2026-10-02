@@ -38,6 +38,8 @@ export type BackendProduct = {
   brandName?: string | null;
   images: string[];
   primaryImageUrl?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
 export type BackendCartItem = {
