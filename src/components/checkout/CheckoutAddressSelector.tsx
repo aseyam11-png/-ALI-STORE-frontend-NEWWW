@@ -13,31 +13,16 @@ import {
 } from "@/stores/address-store";
 
 interface CheckoutAddressSelectorProps {
-  onAddressChange?: (
-    addressId: string,
-  ) => void;
+  addresses: CustomerAddress[];
+  selectedAddressId: string | null;
+  onSelect: (address: CustomerAddress) => void;
 }
 
 export function CheckoutAddressSelector({
-  onAddressChange,
+  addresses,
+  selectedAddressId,
+  onSelect,
 }: CheckoutAddressSelectorProps) {
-  const addresses =
-    useAddressStore(
-      (state) =>
-        state.addresses,
-    );
-
-  const selectedAddressId =
-    useAddressStore(
-      (state) =>
-        state.selectedAddressId,
-    );
-
-  const selectAddress =
-    useAddressStore(
-      (state) =>
-        state.selectAddress,
-    );
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -86,15 +71,7 @@ export function CheckoutAddressSelector({
                   address.id
                 }
                 type="button"
-                onClick={() => {
-                  selectAddress(
-                    address.id,
-                  );
-
-                  onAddressChange?.(
-                    address.id,
-                  );
-                }}
+                onClick={() => onSelect(address)}
                 className={`w-full rounded-xl border p-4 text-start transition ${
                   selected
                     ? "border-blue-300 bg-blue-50"
