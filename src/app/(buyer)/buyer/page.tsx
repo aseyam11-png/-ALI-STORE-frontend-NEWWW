@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import {
+  useEffect,
+  useState,
+} from "react";
+import {
   Heart,
   LogIn,
   Package,
@@ -12,17 +16,15 @@ import {
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { useSession } from "@/features/auth/session";
+import { getCart } from "@/features/cart/services/cart.service";
+import { getWishlist } from "@/features/wishlist/services/wishlist.service";
+import { listMyOrders } from "@/features/orders/services/order.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 
-// This page previously rendered a fully fabricated account dashboard —
-// hardcoded order history, order counts, "verified customer" status — with
-// no authentication check of any kind. There is no auth backend in this
-// repository (verified by repository-wide search), so none of that could
-// ever have been real. This rebuild shows only what is actually true
-// today: the customer's real, working, backend-free wishlist/cart state,
-// and an honest "sign in to see this" boundary for anything that would
-// require a real account (orders, addresses). Nothing here is invented.
+// Account overview is intentionally driven by the authenticated backend
+// session. Guest users may still keep a local cart/wishlist, while order
+// data and saved account resources are read only after authentication.
 export default function BuyerAccountPage() {
   const session = useSession();
 
@@ -30,9 +32,78 @@ export default function BuyerAccountPage() {
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
-  const wishlistCount = useWishlistStore((state) => state.items.length);
+  const wishlistCount =
+    remoteWishlistCount ??
+    useWishlistStore(
+      (state) =>
+        state.items.length,
+    );
 
-  const isAuthenticated = session.status === "authenticated";
+  const isAuthenticated =
+    session.status ===
+    "authenticated";
+
+  const [
+    remoteCartCount,
+    setRemoteCartCount,
+  ] = useState<number | null>(null);
+
+  const [
+    remoteWishlistCount,
+    setRemoteWishlistCount,
+  ] = useState<number | null>(null);
+
+  const [
+    orderCount,
+    setOrderCount,
+  ] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setRemoteCartCount(null);
+      setRemoteWishlistCount(null);
+      setOrderCount(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    void Promise.all([
+      getCart(),
+      getWishlist(),
+      listMyOrders(0, 1),
+    ])
+      .then(
+        ([
+          cart,
+          wishlist,
+          orders,
+        ]) => {
+          if (cancelled) return;
+          setRemoteCartCount(
+            cart.items.reduce(
+              (total, item) =>
+                total +
+                item.quantity,
+              0,
+            ),
+          );
+          setRemoteWishlistCount(
+            wishlist.length,
+          );
+          setOrderCount(
+            orders.totalElements,
+          );
+        },
+      )
+      .catch(() => {
+        // Account cards still render local guest state if a secondary count call fails.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   return (
     <AccountWorkspace
@@ -89,7 +160,8 @@ export default function BuyerAccountPage() {
                 <ShoppingBag className="h-5 w-5" />
               </span>
               <p className="mt-4 text-h3 font-bold text-foreground">
-                {cartCount}
+                {remoteCartCount ??
+                  cartCount}
               </p>
               <p className="mt-1 text-body-sm text-muted-foreground">
                 عنصر في السلة
@@ -123,7 +195,11 @@ export default function BuyerAccountPage() {
                 </p>
                 <p className="mt-1 text-body-sm text-muted-foreground">
                   {isAuthenticated
-                    ? "لا توجد طلبات حتى الآن."
+                    ? orderCount === null
+                      ? "جاري تحميل عدد الطلبات..."
+                      : orderCount === 0
+                        ? "لا توجد طلبات حتى الآن."
+                        : `${orderCount} طلبات مرتبطة بحسابك.`
                     : "سجّل الدخول لعرض سجل طلباتك."}
                 </p>
               </div>
