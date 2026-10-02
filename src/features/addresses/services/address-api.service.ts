@@ -68,16 +68,13 @@ export async function createAddress(address: Omit<CustomerAddress, "id">) {
   return fromBackend(data);
 }
 
-export async function updateAddress(id: string, address: Partial<CustomerAddress>) {
+export async function updateAddress(id: string, address: Omit<CustomerAddress, "id">) {
   const numericId = Number(id);
   if (!Number.isInteger(numericId)) throw new Error("Invalid address id");
 
   const data = await apiClient.request<BackendAddress>(`/api/v1/shipping-addresses/${numericId}`, {
     method: "PUT",
-    body: JSON.stringify(toBackend({
-      ...(address as Omit<CustomerAddress, "id">),
-      id: undefined as never,
-    })),
+    body: JSON.stringify(toBackend(address)),
   });
   return fromBackend(data);
 }
