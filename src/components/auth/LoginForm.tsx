@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -41,7 +42,7 @@ export function LoginForm() {
           ? searchParams.get("next")!
           : "/buyer";
 
-      router.replace(next);
+      router.replace(next as Route);
       router.refresh();
     } catch (error) {
       setFormError(
