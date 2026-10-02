@@ -18,13 +18,6 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function mapAvailability(
-  availability: BackendProductResponse["availability"],
-) {
-  if (availability === "IN_STOCK") return "in_stock";
-  if (availability === "OUT_OF_STOCK") return "out_of_stock";
-  return "out_of_stock";
-}
 
 function mapBackendProduct(product: BackendProductResponse): ProductSummary {
   const discount = Math.max(
