@@ -10,9 +10,9 @@ interface LocalizedPriceProps {
   className?: string;
 }
 
-// Prop name kept as `amountUSD` for API stability with existing callers —
-// the value is treated as the canonical SAR amount (no currency selection,
-// no conversion). See currency.service.ts for the single formatting rule.
+// Prop name kept as `amountUSD` for API compatibility with older callers.
+// When `currency` is provided, the backend currency is rendered directly;
+// no client-side conversion or markup is performed.
 export function LocalizedPrice({
   amountUSD,
   currency = "SAR",
