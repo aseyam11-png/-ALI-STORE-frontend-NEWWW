@@ -1,372 +1,170 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  Package,
-  Search,
-  ShieldCheck,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Package, RefreshCw, Search, ShieldCheck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
-import { formatSAR } from "@/features/localization/services/currency.service";
-
 import {
-  useProductModerationStore,
-} from "@/stores/product-moderation-store";
+  getAdminProducts,
+  type AdminProduct,
+} from "@/features/admin/products/services/admin-product-api.service";
+import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 
-function statusClass(
-  status: string,
-) {
-  switch (status) {
-    case "PUBLISHED":
-      return "bg-emerald-50 text-emerald-700";
+const STATUS_LABEL: Record<AdminProduct["status"], string> = {
+  DRAFT: "مسودة",
+  ACTIVE: "منشور",
+  ARCHIVED: "مؤرشف",
+};
 
-    case "PENDING_REVIEW":
-      return "bg-blue-50 text-blue-700";
-
-    case "CHANGES_REQUESTED":
-      return "bg-amber-50 text-amber-700";
-
-    case "REJECTED":
-      return "bg-red-50 text-red-700";
-
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
+function statusClass(status: AdminProduct["status"]) {
+  if (status === "ACTIVE") return "bg-success-surface text-success";
+  if (status === "ARCHIVED") return "bg-neutral-100 text-neutral-500";
+  return "bg-warning-surface text-warning";
 }
 
 export default function AdminProductsPage() {
-  const submissions =
-    useProductModerationStore(
-      (state) =>
-        state.submissions,
-    );
+  const query = useQuery({
+    queryKey: ["admin", "products"],
+    queryFn: () => getAdminProducts(0, 100),
+    staleTime: 10_000,
+  });
 
-  const [
-    search,
-    setSearch,
-  ] = useState("");
-
-  const [
-    status,
-    setStatus,
-  ] = useState(
-    "PENDING_REVIEW",
-  );
-
-  const filtered =
-    useMemo(
-      () =>
-        submissions.filter(
-          (submission) => {
-            const matchesStatus =
-              status ===
-                "ALL" ||
-              submission.status ===
-                status;
-
-            const text = [
-              submission.id,
-              submission.productName,
-              submission.sku,
-            ]
-              .join(" ")
-              .toLowerCase();
-
-            const matchesSearch =
-              !search.trim() ||
-              text.includes(
-                search
-                  .trim()
-                  .toLowerCase(),
-              );
-
-            return (
-              matchesStatus &&
-              matchesSearch
-            );
-          },
-        ),
-      [
-        submissions,
-        search,
-        status,
-      ],
-    );
-
-  const pendingCount =
-    submissions.filter(
-      (item) =>
-        item.status ===
-        "PENDING_REVIEW",
-    ).length;
-
-  const changesCount =
-    submissions.filter(
-      (item) =>
-        item.status ===
-        "CHANGES_REQUESTED",
-    ).length;
+  const products = query.data?.content ?? [];
 
   return (
     <AdminShell>
       <main className="min-h-screen bg-[#F8FAFC]">
-
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
-              Administration
-            </p>
-
-            <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
-                  Product moderation
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-black text-blue-700">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  الكتالوج المنشور
+                </div>
+                <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                  إدارة المنتجات
                 </h1>
-
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                  Review products before they become visible to customers.
+                  المنتجات هنا هي المصدر الإداري الحقيقي، وحالة ACTIVE هي التي تسمح بعرض المنتج للعملاء.
                 </p>
               </div>
 
-              <div className="flex gap-2">
-
-                <div className="rounded-xl bg-blue-50 px-4 py-3">
-                  <p className="text-[10px] font-black text-[#2563EB]">
-                    Pending
-                  </p>
-
-                  <p className="mt-1 text-xl font-black text-slate-900">
-                    {
-                      pendingCount
-                    }
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-amber-50 px-4 py-3">
-                  <p className="text-[10px] font-black text-amber-700">
-                    Changes
-                  </p>
-
-                  <p className="mt-1 text-xl font-black text-slate-900">
-                    {
-                      changesCount
-                    }
-                  </p>
-                </div>
-
-              </div>
-
+              <button
+                type="button"
+                onClick={() => void query.refetch()}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700 hover:bg-slate-50"
+              >
+                <RefreshCw className="h-4 w-4" />
+                تحديث
+              </button>
             </div>
-
           </div>
         </section>
 
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-
-          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-
-            <div className="flex h-11 max-w-xl flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3">
-              <Search className="h-4 w-4 text-slate-400" />
-
-              <input
-                value={
-                  search
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setSearch(
-                    event
-                      .target
-                      .value,
-                  )
-                }
-                placeholder="Search product or SKU..."
-                aria-label="Search product submissions"
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-              />
+        <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          {query.isPending ? (
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-20 animate-pulse rounded-2xl bg-white" />
+              ))}
             </div>
-
-            <label
-              htmlFor="moderation-status"
-              className="sr-only"
-            >
-              Submission status
-            </label>
-
-            <select
-              id="moderation-status"
-              value={
-                status
-              }
-              onChange={(
-                event,
-              ) =>
-                setStatus(
-                  event
-                    .target
-                    .value,
-                )
-              }
-              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold outline-none"
-            >
-              <option value="PENDING_REVIEW">
-                Pending review
-              </option>
-
-              <option value="CHANGES_REQUESTED">
-                Changes requested
-              </option>
-
-              <option value="PUBLISHED">
-                Published
-              </option>
-
-              <option value="REJECTED">
-                Rejected
-              </option>
-
-              <option value="ALL">
-                All
-              </option>
-            </select>
-
-          </div>
-
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-            <div className="border-b border-slate-100 bg-slate-50/70 p-5">
-
-              <div className="flex items-center gap-3">
-
-                <ShieldCheck className="h-5 w-5 text-[#2563EB]" />
-
-                <div>
-                  <h2 className="text-lg font-black text-slate-900">
-                    Product submissions
-                  </h2>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    Only approved submissions become customer-facing products.
-                  </p>
+          ) : query.isError ? (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center">
+              <h2 className="text-lg font-black text-red-700">تعذر تحميل المنتجات</h2>
+              <button
+                type="button"
+                onClick={() => void query.refetch()}
+                className="mt-5 rounded-xl bg-[#2563EB] px-5 py-2.5 text-xs font-black text-white"
+              >
+                إعادة المحاولة
+              </button>
+            </div>
+          ) : (
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 p-4">
+                <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3">
+                  <Search className="h-4 w-4 text-slate-400" />
+                  <input
+                    aria-label="بحث المنتجات"
+                    className="h-11 flex-1 bg-transparent text-sm outline-none"
+                    placeholder="بحث سريع داخل الصفحة"
+                    onChange={(event) => {
+                      const value = event.target.value.toLocaleLowerCase();
+                      const rows = document.querySelectorAll<HTMLElement>("[data-admin-product]");
+                      rows.forEach((row) => {
+                        row.hidden = !row.dataset.adminProduct?.includes(value);
+                      });
+                    }}
+                  />
                 </div>
-
               </div>
 
-            </div>
-
-            <div className="divide-y divide-slate-100">
-
-              {filtered.length ===
-              0 ? (
-                <div className="p-12 text-center">
-
-                  <Package className="mx-auto h-8 w-8 text-slate-300" />
-
-                  <h2 className="mt-4 text-xl font-black text-slate-900">
-                    No submissions found
-                  </h2>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    There are no products matching this review queue.
-                  </p>
-
-                </div>
-              ) : (
-                filtered.map(
-                  (
-                    submission,
-                  ) => (
-                    <Link
-                      key={
-                        submission.id
-                      }
-                      href={`/admin/products/${submission.id}`}
-                      className="block p-5 transition hover:bg-slate-50"
-                    >
-
-                      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-
-                        <div className="flex min-w-0 items-start gap-4">
-
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                            <Package className="h-5 w-5" />
-                          </div>
-
-                          <div className="min-w-0">
-
-                            <div className="flex flex-wrap items-center gap-2">
-
-                              <h3 className="text-sm font-black text-slate-900">
-                                {
-                                  submission.productName
-                                }
-                              </h3>
-
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-[10px] font-black ${statusClass(
-                                  submission.status,
-                                )}`}
-                              >
-                                {submission.status.replace(
-                                  "_",
-                                  " ",
-                                )}
-                              </span>
-
-                            </div>
-
-                            <p className="mt-1 text-[10px] font-mono text-slate-400">
-                              {submission.sku} · Version{" "}
-                              {
-                                submission.version
-                              }
-                            </p>
-
-                          </div>
-
-                        </div>
-
-                        <div className="flex items-center justify-between gap-6 xl:justify-end">
-
-                          <div className="text-right">
-
-                            <p className="text-lg font-black text-[#0F2747]">
-                              {formatSAR(submission.price)}
-                            </p>
-
-                            <p className="mt-1 text-[10px] text-slate-400">
-                              Stock{" "}
-                              {
-                                submission.stock
-                              }
-                            </p>
-
-                          </div>
-
-                          <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700">
-                            Review
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </span>
-
-                        </div>
-
+              <div className="divide-y divide-slate-100">
+                {products.map((product) => (
+                  <article
+                    key={product.id}
+                    data-admin-product={(product.name + " " + product.sku).toLocaleLowerCase()}
+                    className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50">
+                        {product.primaryImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={product.primaryImageUrl} alt="" className="h-full w-full object-contain p-2" />
+                        ) : (
+                          <Package className="h-5 w-5 text-slate-300" />
+                        )}
                       </div>
 
-                    </Link>
-                  ),
-                )
-              )}
+                      <div className="min-w-0">
+                        <Link
+                          href={"/admin/products/" + product.id}
+                          className="truncate text-sm font-black text-slate-900 hover:text-blue-600"
+                        >
+                          {product.name}
+                        </Link>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                          <span dir="ltr">{product.sku}</span>
+                          <span>·</span>
+                          <span>{product.categoryName ?? "بدون قسم"}</span>
+                          <span>·</span>
+                          <span>{product.supplierName ?? "بدون مورد"}</span>
+                        </div>
+                      </div>
+                    </div>
 
-            </div>
+                    <div className="flex items-center gap-4 sm:justify-end">
+                      <div className="text-end">
+                        <LocalizedPrice amountUSD={Number(product.price)} className="text-sm font-black text-slate-900" />
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          تكلفة المصدر: {product.supplierCost == null ? "—" : Number(product.supplierCost) + " " + product.currency}
+                        </p>
+                      </div>
 
-          </section>
+                      <span className={"rounded-full px-3 py-1.5 text-[10px] font-black " + statusClass(product.status)}>
+                        {STATUS_LABEL[product.status]}
+                      </span>
 
+                      <Link
+                        href={"/admin/products/" + product.id}
+                        className="inline-flex h-10 items-center rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700 hover:bg-slate-50"
+                      >
+                        إدارة
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+
+                {products.length === 0 && (
+                  <div className="p-12 text-center text-sm text-slate-500">
+                    لا توجد منتجات.
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
         </div>
       </main>
     </AdminShell>
