@@ -1,48 +1,60 @@
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
-
-import { Tabs } from "@/components/ui/tabs";
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 import { ProductCard } from "./ProductCard";
+import { Tabs } from "@/components/ui/tabs";
 
-// One section, one dataset source, two honest views of it: "Featured" is the
-// catalog's editorial order, "Best Sellers" re-sorts the same real products
-// by rating/review count. No separate section, no invented metrics.
-export function ProductDiscovery() {
-  const featured = featuredProducts.map(mapLegacyProductToCard);
+export async function ProductDiscovery() {
+  let products = [];
+  try {
+    const response = await getProducts({
+      search: "",
+      categoryId: undefined,
+      subcategoryId: undefined,
+      brand: undefined,
+      supplierId: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+      minRating: undefined,
+      verifiedSupplierOnly: false,
+      discountOnly: false,
+      inStockOnly: true,
+      featuredOnly: false,
+      bestsellerOnly: false,
+      newArrivalOnly: false,
+      sort: "relevance",
+      page: 1,
+      pageSize: 12,
+    });
+    products = response.items.map(mapProductSummaryToCard);
+  } catch {
+    products = [];
+  }
 
-  const bestSellers = [...featured].sort(
+  if (!products.length) return null;
+
+  const bestSellers = [...products].sort(
     (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
   );
 
-  const renderGrid = (products: typeof featured) => (
+  const renderGrid = (items: typeof products) => (
     <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+      {items.map((product) => <ProductCard key={product.id} product={product} />)}
     </div>
   );
 
   return (
     <section className="bg-background">
       <div className="mx-auto max-w-[1600px] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">
-        <h2 className="text-h2 font-bold tracking-tight text-foreground lg:text-h1">
-          اكتشف المنتجات
-        </h2>
-
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="text-h2 font-bold tracking-tight text-foreground lg:text-h1">اكتشف المنتجات</h2>
+          <span className="text-xs font-medium text-muted-foreground">من الكتالوج المنشور</span>
+        </div>
         <Tabs
           className="mt-8"
           ariaLabel="اكتشف المنتجات"
           items={[
-            {
-              id: "featured",
-              label: "المميزة",
-              content: renderGrid(featured),
-            },
-            {
-              id: "best-sellers",
-              label: "الأكثر مبيعًا",
-              content: renderGrid(bestSellers),
-            },
+            { id: "featured", label: "المتاحة الآن", content: renderGrid(products) },
+            { id: "best-sellers", label: "الأعلى تقييمًا", content: renderGrid(bestSellers) },
           ]}
         />
       </div>
