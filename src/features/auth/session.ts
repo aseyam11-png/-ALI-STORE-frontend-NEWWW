@@ -1,46 +1,122 @@
 "use client";
 
-// The customer authentication boundary. No auth backend, session cookie,
-// token store, or credential service exists anywhere in this repository
-// today (verified by repository-wide search before writing this file) —
-// there is nothing real to integrate with yet. This module exists so
-// customer-facing UI (Login, Account, the Header) has ONE real seam to
-// depend on instead of each screen inventing its own "am I logged in"
-// logic or, worse, fabricating a logged-in state. Until a real backend is
-// wired in, `status` can only ever be "unauthenticated" — this is
-// intentional, not a bug: it is never allowed to silently become
-// "authenticated" without a real credential exchange behind it.
+import { useCallback, useEffect, useState } from "react";
+import type { ApiResponse } from "@/lib/api/contracts";
+import { apiClient, HttpApiError } from "@/lib/api/http-client";
 
-export type SessionStatus = "unauthenticated" | "authenticating" | "authenticated";
+export type SessionStatus = "loading" | "unauthenticated" | "authenticated";
+
+export interface SessionUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  role: string;
+}
 
 export interface Session {
   status: SessionStatus;
-}
-
-// Deliberately not a hook with internal state yet — there is no session
-// source to subscribe to. Kept as a function (not a stub returning fake
-// user data) so call sites already read it the way they will once a real
-// session provider exists, without pretending one exists now.
-export function useSession(): Session {
-  return { status: "unauthenticated" };
+  user: SessionUser | null;
 }
 
 export interface LoginResult {
-  ok: false;
-  reason: "auth_backend_unavailable";
+  ok: boolean;
+  user?: SessionUser;
+  message?: string;
 }
 
-// Always fails honestly — there is no authentication backend to call. This
-// function exists so the Login form has one real integration point to
-// call (and to replace, wholesale, the day a real auth API exists) instead
-// of the form component itself deciding what "success" would look like.
+const EMPTY_SESSION: Session = {
+  status: "unauthenticated",
+  user: null,
+};
+
+export async function getCurrentSession(): Promise<SessionUser | null> {
+  try {
+    const response = await apiClient.request<ApiResponse<SessionUser>>(
+      "/api/v1/auth/session",
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof HttpApiError && error.status === 401) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function login(credentials: {
   identifier: string;
   password: string;
 }): Promise<LoginResult> {
-  // Real input is accepted (and will be sent to a real backend once one
-  // exists) but is not usable yet — nothing here inspects or stores it.
-  void credentials;
+  const email = credentials.identifier.trim().toLowerCase();
 
-  return { ok: false, reason: "auth_backend_unavailable" };
+  if (!email.includes("@")) {
+    return {
+      ok: false,
+      message: "أدخل البريد الإلكتروني المرتبط بحسابك.",
+    };
+  }
+
+  try {
+    const response = await apiClient.request<
+      ApiResponse<{ email: string; role: string }>
+    >("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password: credentials.password,
+      }),
+    });
+
+    const user = await getCurrentSession();
+
+    return {
+      ok: true,
+      user:
+        user ?? {
+          id: 0,
+          firstName: "",
+          lastName: "",
+          email: response.data.email,
+          role: response.data.role,
+        },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof HttpApiError
+          ? error.message
+          : "تعذر تسجيل الدخول حاليًا.",
+    };
+  }
+}
+
+export async function logout(): Promise<void> {
+  await apiClient.request<ApiResponse<null>>("/api/v1/auth/logout", {
+    method: "POST",
+  });
+}
+
+export function useSession(): Session {
+  const [session, setSession] = useState<Session>({
+    status: "loading",
+    user: null,
+  });
+
+  const refresh = useCallback(async () => {
+    try {
+      const user = await getCurrentSession();
+      setSession(user ? { status: "authenticated", user } : EMPTY_SESSION);
+    } catch {
+      setSession(EMPTY_SESSION);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return session;
 }
