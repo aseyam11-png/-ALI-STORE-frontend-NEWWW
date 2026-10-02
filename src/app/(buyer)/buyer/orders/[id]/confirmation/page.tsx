@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2, Package } from "lucide-react";
@@ -80,7 +81,7 @@ export default function OrderConfirmationPage({
 
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href={"/buyer/orders/" + order.id}
+              href={(("/buyer/orders/" + order.id) as Route)}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-black text-white"
             >
               <Package className="h-4 w-4" />
