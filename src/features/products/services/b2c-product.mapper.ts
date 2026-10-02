@@ -21,19 +21,16 @@ import type { B2CProduct } from "../types/b2c-product.types";
 // the architecture report's defect list.
 export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
   const price = product.price.amount;
+  const available = product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
 
   return {
     id: product.id,
     slug: product.slug,
     name: product.name,
 
-    // AliStore is a single-merchant store — "brand" is the manufacturer
-    // label on the product itself, never the wholesale supplier AliStore
-    // happens to source it from. `ProductSummary.brand.name` is currently
-    // sourced from the internal supplier field (see product.mapper.ts), so
-    // it is intentionally not read here — surfacing it would leak supplier
-    // identity into a customer-facing "brand" field.
-    brand: "AliStore",
+    // Customer-facing brand is the product manufacturer label returned by the
+    // catalog API. Supplier identity is kept out of the customer view model.
+    brand: product.brand?.name ?? "ALI STORE",
 
     category: product.category?.name ?? "General",
 
@@ -42,8 +39,7 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
     description: product.shortDescription ?? "",
 
     price,
-    // Never populated from real data today — there is no supplier-price
-    // concept this page is allowed to read, and none is fabricated here.
+    // Supplier cost is never sent to the customer-facing model.
     supplierPrice: undefined,
     // Preserved as `undefined` deliberately — see the function-level
     // comment above.
@@ -53,10 +49,9 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
 
     discountPercentage: undefined,
 
-    // No real inventory source exists (see features/inventory/
-    // availability.ts) — this stays honestly at 0 rather than reading a
-    // field that was never real on the previous input shape either.
-    stock: 0,
+    // Inventory availability is returned by the Spring catalog endpoint.
+    // Unknown/out-of-stock is treated conservatively and never made addable.
+    stock: available ? Math.max(product.availableQuantity, 1) : 0,
 
     images: product.thumbnail?.url
       ? [
@@ -82,15 +77,9 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
 
     returnPolicy: "14-day return policy",
 
-    // Preserved as `false` deliberately, matching current output exactly —
-    // `ProductSummary.featured` is itself hardcoded `true` for every mock
-    // product upstream (see product.mapper.ts) and was never suitable to
-    // surface here.
-    featured: false,
+    featured: product.featured,
 
-    // Preserved as `false` deliberately — see the function-level comment
-    // above about `discountPercentage`.
-    flashSale: false,
+    flashSale: Boolean(product.discountPercentage && product.discountPercentage > 0),
 
     tags: product.tags,
   };
