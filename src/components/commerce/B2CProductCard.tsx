@@ -71,7 +71,7 @@ export function B2CProductCard({
       } else {
         await addToWishlist(product.id);
       }
-    } catch (error) {
+    } catch {
       toggleWishlist({
         id: product.id,
         name: product.name,
