@@ -13,3 +13,5 @@ export default defineConfig([
     "dist/**",
   ]),
 ]);
+
+// Keep CI linting deterministic across local and hosted runners.
