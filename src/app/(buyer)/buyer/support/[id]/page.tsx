@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useSession } from "@/features/auth/session";
 import { SupportConversation } from "@/components/support/SupportConversation";
 
 export default function BuyerSupportConversationPage() {
@@ -16,9 +17,8 @@ export default function BuyerSupportConversationPage() {
       id: string;
     }>();
 
-  const conversationId =
-    params?.id ??
-    "CHAT-1001";
+  const conversationId = params?.id ?? "";
+  const session = useSession();
 
   return (
     <AppShell>
@@ -57,8 +57,8 @@ export default function BuyerSupportConversationPage() {
               conversationId
             }
             currentUser={{
-              id: "customer-001",
-              name: "Customer",
+              id: session.user?.id ?? "",
+              name: session.user ? (session.user.firstName + " " + session.user.lastName).trim() : "Customer",
               role: "CUSTOMER",
             }}
           />
