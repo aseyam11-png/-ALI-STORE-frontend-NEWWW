@@ -15,7 +15,6 @@ import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatSAR } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
-import { useInventoryStore } from "@/stores/inventory-store";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
@@ -45,19 +44,8 @@ export function B2CProductCard({
         ),
     );
 
-  const inventory =
-    useInventoryStore(
-      (state) =>
-        state.records[product.id],
-    );
-
-  const liveStock =
-    inventory?.available ??
-    product.stock;
-
-  const livePrice =
-    inventory?.price ??
-    product.price;
+  const liveStock = product.stock;
+  const livePrice = product.price;
 
   const available =
     liveStock > 0;
@@ -88,17 +76,10 @@ export function B2CProductCard({
       minOrderQuantity:
         1,
 
-      shippingCost:
-        product.shipping.free
-          ? 0
-          : undefined,
-
       shippingMethod:
         product.shipping.method,
-
       estimatedDelivery:
-        product.shipping
-          .estimatedDelivery,
+        product.shipping.estimatedDelivery,
     });
   };
 
@@ -161,9 +142,18 @@ export function B2CProductCard({
         <button
           type="button"
           onClick={() =>
-            toggleWishlist(
-              product.id,
-            )
+            toggleWishlist({
+              id: product.id,
+              name: product.name,
+              price: livePrice,
+              image: product.images[0]?.url,
+              brand: product.brand,
+              category: product.category,
+              originalPrice: product.originalPrice,
+              discountPercentage: product.discountPercentage,
+              rating: product.rating,
+              reviewCount: product.reviewCount,
+            })
           }
           aria-label={
             saved
