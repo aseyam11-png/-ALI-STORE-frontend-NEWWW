@@ -1,46 +1,202 @@
 "use client";
 
-// The customer authentication boundary. No auth backend, session cookie,
-// token store, or credential service exists anywhere in this repository
-// today (verified by repository-wide search before writing this file) —
-// there is nothing real to integrate with yet. This module exists so
-// customer-facing UI (Login, Account, the Header) has ONE real seam to
-// depend on instead of each screen inventing its own "am I logged in"
-// logic or, worse, fabricating a logged-in state. Until a real backend is
-// wired in, `status` can only ever be "unauthenticated" — this is
-// intentional, not a bug: it is never allowed to silently become
-// "authenticated" without a real credential exchange behind it.
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
-export type SessionStatus = "unauthenticated" | "authenticating" | "authenticated";
+import {
+  apiClient,
+} from "@/lib/api/http-client";
+
+import type {
+  BackendUser,
+} from "@/lib/api/contracts";
+
+export type SessionStatus =
+  | "unauthenticated"
+  | "authenticating"
+  | "authenticated";
 
 export interface Session {
   status: SessionStatus;
+  user: BackendUser | null;
+  refresh: () => Promise<void>;
 }
 
-// Deliberately not a hook with internal state yet — there is no session
-// source to subscribe to. Kept as a function (not a stub returning fake
-// user data) so call sites already read it the way they will once a real
-// session provider exists, without pretending one exists now.
+let cachedUser:
+  | BackendUser
+  | null =
+  null;
+
+let sessionLoaded =
+  false;
+
+const listeners =
+  new Set<
+    () => void
+  >();
+
+function notify() {
+  listeners.forEach(
+    (listener) =>
+      listener(),
+  );
+}
+
+async function fetchSession() {
+  try {
+    const user =
+      await apiClient.request<BackendUser>(
+        "/api/v1/auth/session",
+      );
+
+    cachedUser = user;
+    sessionLoaded = true;
+    notify();
+
+    return user;
+  } catch (error) {
+    cachedUser = null;
+    sessionLoaded = true;
+    notify();
+
+    return null;
+  }
+}
+
 export function useSession(): Session {
-  return { status: "unauthenticated" };
+  const [user, setUser] =
+    useState<BackendUser | null>(
+      cachedUser,
+    );
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(
+    !sessionLoaded,
+  );
+
+  useEffect(() => {
+    const listener =
+      () => {
+        setUser(
+          cachedUser,
+        );
+      };
+
+    listeners.add(
+      listener,
+    );
+
+    if (!sessionLoaded) {
+      setLoading(true);
+
+      void fetchSession()
+        .finally(() =>
+          setLoading(
+            false,
+          ),
+        );
+    }
+
+    return () => {
+      listeners.delete(
+        listener,
+      );
+    };
+  }, []);
+
+  const refresh =
+    useCallback(
+      async () => {
+        setLoading(true);
+
+        try {
+          await fetchSession();
+        } finally {
+          setLoading(false);
+        }
+      },
+      [],
+    );
+
+  return {
+    status:
+      loading
+        ? "authenticating"
+        : user
+          ? "authenticated"
+          : "unauthenticated",
+    user,
+    refresh,
+  };
 }
 
 export interface LoginResult {
-  ok: false;
-  reason: "auth_backend_unavailable";
+  ok: true;
+  user: BackendUser;
 }
 
-// Always fails honestly — there is no authentication backend to call. This
-// function exists so the Login form has one real integration point to
-// call (and to replace, wholesale, the day a real auth API exists) instead
-// of the form component itself deciding what "success" would look like.
-export async function login(credentials: {
-  identifier: string;
-  password: string;
-}): Promise<LoginResult> {
-  // Real input is accepted (and will be sent to a real backend once one
-  // exists) but is not usable yet — nothing here inspects or stores it.
-  void credentials;
+export async function login(
+  credentials: {
+    identifier: string;
+    password: string;
+  },
+): Promise<LoginResult> {
+  const identifier =
+    credentials.identifier.trim();
 
-  return { ok: false, reason: "auth_backend_unavailable" };
+  if (!identifier) {
+    throw new Error(
+      "Email is required",
+    );
+  }
+
+  const auth =
+    await apiClient.request<{
+      email: string;
+      role: string;
+    }>(
+      "/api/v1/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: identifier,
+          password:
+            credentials.password,
+        }),
+      },
+    );
+
+  void auth;
+
+  const user =
+    await fetchSession();
+
+  if (!user) {
+    throw new Error(
+      "Login succeeded but no authenticated session was returned.",
+    );
+  }
+
+  return {
+    ok: true,
+    user,
+  };
+}
+
+export async function logout() {
+  await apiClient.request<void>(
+    "/api/v1/auth/logout",
+    {
+      method: "POST",
+    },
+  );
+
+  cachedUser = null;
+  sessionLoaded = true;
+  notify();
 }
