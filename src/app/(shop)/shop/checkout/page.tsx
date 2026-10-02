@@ -17,9 +17,9 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { useAddressStore } from "@/stores/address-store";
+import { apiClient, HttpApiError } from "@/lib/api/http-client";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
@@ -58,10 +58,6 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
-  );
-
   const getDefaultAddress = useCustomerStore(
     (state) => state.getDefaultAddress,
   );
@@ -84,6 +80,12 @@ export default function CheckoutPage() {
 
   const [shippingMode, setShippingMode] =
     useState("standard");
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [successPaymentStatus, setSuccessPaymentStatus] =
+    useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
@@ -221,70 +223,119 @@ export default function CheckoutPage() {
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setError("");
 
     if (items.length === 0) {
-      setError(
-        "Your cart is empty.",
-      );
+      setError("Your cart is empty.");
       return;
     }
 
     if (!validate()) {
+      setError("Please complete all required shipping information.");
+      return;
+    }
+
+    const backendItems = items.map((item) => ({
+      productId: Number.parseInt(item.productId, 10),
+      quantity: item.quantity,
+    }));
+
+    if (
+      backendItems.some(
+        (item) =>
+          !Number.isSafeInteger(item.productId) ||
+          item.productId < 1,
+      )
+    ) {
       setError(
-        "Please complete all required shipping information.",
+        "One or more products in your cart are no longer valid. Please refresh your cart.",
       );
       return;
     }
 
-    const order = createOrder({
-      customerName:
+    setSubmitting(true);
+
+    try {
+      // The backend is the source of truth for cart contents, product price,
+      // stock reservation and the final order total. The browser never sends
+      // a client-calculated payable amount to create the order.
+      await apiClient.requestApi<void>("/api/v1/cart", {
+        method: "DELETE",
+      });
+
+      for (const item of backendItems) {
+        await apiClient.requestApi("/api/v1/cart/items", {
+          method: "POST",
+          body: JSON.stringify(item),
+        });
+      }
+
+      const shippingAddress = [
         form.fullName,
+        form.phone,
+        form.address,
+        form.city,
+        form.country,
+        form.postalCode,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-      customerEmail:
-        form.email,
+      const order = await apiClient.requestApi<{
+        id: number;
+        status: string;
+        totalAmount: number;
+      }>("/api/v1/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          shippingAddress,
+          couponCode: appliedCoupon?.code ?? undefined,
+        }),
+      });
 
-      address: {
-        fullName:
-          form.fullName,
-        phone:
-          form.phone,
-        address:
-          form.address,
-        city:
-          form.city,
-        country:
-          form.country,
-        postalCode:
-          form.postalCode,
-      },
+      // Order creation clears the authoritative backend cart. Clear the
+      // guest cart only after the backend has accepted the order.
+      clearCart();
 
-      paymentMethod,
+      const backendPaymentMethod =
+        paymentMethod === "paypal"
+          ? "PAYPAL"
+          : paymentMethod === "cod"
+            ? "CASH_ON_DELIVERY"
+            : "CREDIT_CARD";
 
-      items,
+      const payment = await apiClient.requestApi<{
+        id: number;
+        orderId: number;
+        amount: number;
+        method: string;
+        status: "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
+        transactionId?: string;
+      }>("/api/v1/payments", {
+        method: "POST",
+        body: JSON.stringify({
+          orderId: order.id,
+          amount: order.totalAmount,
+          method: backendPaymentMethod,
+        }),
+      });
 
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
-
-      estimatedDelivery:
-        shipping.estimatedDelivery,
-
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
+      setSuccessPaymentStatus(payment.status === "COMPLETED" ? "COMPLETED" : "PENDING");
+      setSuccessOrderId(String(order.id));
+    } catch (requestError) {
+      if (requestError instanceof HttpApiError) {
+        setError(
+          requestError.status === 401
+            ? "انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى ثم حاول."
+            : requestError.message,
+        );
+      } else {
+        setError("تعذر إكمال الطلب. حاول مرة أخرى.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (successOrderId) {
@@ -308,8 +359,9 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
-                information as soon as your order ships.
+                {successPaymentStatus === "COMPLETED"
+                  ? "Payment confirmed. We&apos;ll send tracking information as soon as your order ships."
+                  : "Your order was created and payment is pending confirmation. We&apos;ll update the order when payment status changes."}
               </p>
 
               <div className="mx-auto mt-7 max-w-md rounded-2xl bg-slate-50 p-5 text-start">
@@ -330,7 +382,9 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                    PAID
+                    {successPaymentStatus === "COMPLETED"
+                      ? "PAID"
+                      : "PAYMENT PENDING"}
                   </span>
                 </div>
 
@@ -752,8 +806,8 @@ export default function CheckoutPage() {
                         label: "Credit / Debit Card",
                       },
                       {
-                        value: "wallet",
-                        label: "Digital Wallet",
+                        value: "paypal",
+                        label: "PayPal",
                       },
                       {
                         value: "cod",
@@ -918,10 +972,11 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  disabled={submitting}
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
-                  Place order
+                  {submitting ? "Processing..." : "Place order"}
                 </button>
 
                 <div className="mt-4 rounded-xl bg-emerald-50 p-3">
