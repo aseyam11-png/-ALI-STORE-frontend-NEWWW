@@ -22,7 +22,7 @@ export interface CouponValidationResult {
 export async function validateCoupon(
   code: string,
   subtotal: number,
-  shipping: number,
+  _shipping: number,
 ): Promise<CouponValidationResult> {
   const normalizedCode = code.trim().toUpperCase();
 
