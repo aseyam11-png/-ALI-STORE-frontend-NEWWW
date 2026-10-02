@@ -302,15 +302,9 @@ export default function ProductsPage() {
               {totalPages > 1 && (
                 <div className="mt-8">
                   <ProductPagination
-                    pagination={{
-                      page,
-                      pageSize: PAGE_SIZE,
-                      totalItems,
-                      totalPages,
-                      hasNextPage: page < totalPages,
-                      hasPreviousPage: page > 1,
-                    }}
-                    onPageChange={(next) => {
+                    page={page}
+                    totalPages={totalPages}
+                    onChange={(next) => {
                       setPage(next);
                       updateUrl({ page: String(next) });
                       window.scrollTo({ top: 0, behavior: "smooth" });

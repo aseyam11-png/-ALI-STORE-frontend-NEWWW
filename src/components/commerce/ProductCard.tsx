@@ -21,7 +21,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
-  const toggleWishlist = useWishlistStore((state) => state.toggle);
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const isSaved = useWishlistStore((state) =>
     state.productIds.includes(product.id),
   );
