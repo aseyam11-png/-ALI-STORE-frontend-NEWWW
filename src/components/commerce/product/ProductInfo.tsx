@@ -86,7 +86,7 @@ export function ProductInfo({
       } else {
         await addToWishlist(product.id);
       }
-    } catch (error) {
+    } catch {
       toggleWishlist({
         id: product.id,
         name: product.name,
