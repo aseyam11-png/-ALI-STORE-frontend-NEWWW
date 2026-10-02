@@ -27,6 +27,7 @@ export function ProductCard({ product }: ProductCardProps) {
   );
 
   const formattedPrice = formatCurrency(product.price.amount, product.price.currency);
+  const available = product.stockStatus !== "out_of_stock";
 
   const originalAmount =
     product.price.originalAmount ??
@@ -148,10 +149,11 @@ export function ProductCard({ product }: ProductCardProps) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+            disabled={!available}
+            className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
             <ShoppingCart className="h-4 w-4" />
-            {t("addToCart")}
+            {available ? t("addToCart") : t("outOfStock")}
           </button>
         </div>
       </div>
