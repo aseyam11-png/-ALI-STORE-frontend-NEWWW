@@ -11,6 +11,10 @@ interface AddressState {
 
   selectedAddressId: string | null;
 
+  setAddresses: (
+    addresses: CustomerAddress[],
+  ) => void;
+
   addAddress: (
     address: Omit<
       CustomerAddress,
@@ -40,93 +44,9 @@ interface AddressState {
     | undefined;
 }
 
-const initialAddresses: CustomerAddress[] =
-  [
-    {
-      id: "ADDR-1001",
+const initialAddresses: CustomerAddress[] = [];
 
-      customerId:
-        "customer-001",
 
-      label: "Home",
-
-      recipientName:
-        "Customer",
-
-      phone:
-        "+970 59 000 0000",
-
-      country:
-        "Palestine",
-
-      city:
-        "Gaza",
-
-      area:
-        "Al-Rimal",
-
-      street:
-        "Main Street",
-
-      building:
-        "12",
-
-      apartment:
-        "4",
-
-      postalCode:
-        "",
-
-      notes:
-        "Please call before delivery.",
-
-      isDefault:
-        true,
-    },
-
-    {
-      id: "ADDR-1002",
-
-      customerId:
-        "customer-001",
-
-      label:
-        "Work",
-
-      recipientName:
-        "Customer",
-
-      phone:
-        "+970 59 000 0000",
-
-      country:
-        "Palestine",
-
-      city:
-        "Gaza",
-
-      area:
-        "Al-Nasr",
-
-      street:
-        "Office Road",
-
-      building:
-        "8",
-
-      apartment:
-        "2",
-
-      postalCode:
-        "",
-
-      notes:
-        "",
-
-      isDefault:
-        false,
-    },
-  ];
 
 export const useAddressStore =
   create<AddressState>(
@@ -135,7 +55,23 @@ export const useAddressStore =
         initialAddresses,
 
       selectedAddressId:
-        "ADDR-1001",
+        null,
+
+      setAddresses: (addresses) => {
+        const defaultAddress =
+          addresses.find(
+            (address) =>
+              address.isDefault,
+          );
+
+        set({
+          addresses,
+          selectedAddressId:
+            defaultAddress?.id ??
+            addresses[0]?.id ??
+            null,
+        });
+      },
 
       addAddress: (
         address,
