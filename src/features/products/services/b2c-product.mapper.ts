@@ -53,10 +53,10 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
 
     discountPercentage: undefined,
 
-    // No real inventory source exists (see features/inventory/
-    // availability.ts) — this stays honestly at 0 rather than reading a
-    // field that was never real on the previous input shape either.
-    stock: 0,
+    // Public product responses expose availability, not an exact quantity.
+    // Keep the UI numeric stock at a safe sentinel and drive purchase
+    // eligibility from stockStatus instead of inventing an exact count.
+    stock: product.stockStatus === "in_stock" ? 1 : 0,
 
     images: product.thumbnail?.url
       ? [
