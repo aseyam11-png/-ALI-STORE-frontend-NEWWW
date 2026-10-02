@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "@/features/auth/session";
 
 import {
   BarChart3,
@@ -107,11 +108,37 @@ export function AdminShell({
   children,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const session = useSession();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    if (
+      session.status === "unauthenticated" ||
+      (session.status === "authenticated" && session.user?.role !== "ROLE_ADMIN")
+    ) {
+      router.replace("/login?next=/admin");
+    }
+  }, [router, session.status, session.user?.role]);
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuCloseRef = useRef<HTMLButtonElement | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
+
+  if (
+    session.status !== "authenticated" ||
+    session.user?.role !== "ROLE_ADMIN"
+  ) {
+    return (
+      <LocalizationProvider>
+        <div className="min-h-screen bg-[#F8FAFC]">
+          <main className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-slate-500">
+            جارٍ التحقق من صلاحيات الإدارة...
+          </main>
+        </div>
+      </LocalizationProvider>
+    );
+  }
 
   const isActive = (href: string) =>
     href === "/admin"
