@@ -1,18 +1,36 @@
-// Canonical, single-currency price formatter for the ALI STORE frontend.
-// Business decision: SAR (Saudi Riyal) only — no multi-currency selection.
-// This is the one place price amounts are turned into display strings;
-// every price-bearing component should render through this instead of
-// hand-rolling "$" / "SAR" / toFixed(2) strings, so the whole app shows one
-// consistent format. Amounts are formatted as-is (no unit conversion) —
-// they are treated as already being in SAR.
-export function formatSAR(amount: number): string {
-  const value = Number.isFinite(amount) ? amount : 0;
-  const hasFraction = Math.round(value * 100) % 100 !== 0;
+// Canonical currency formatting for customer-facing prices.
+// The backend is the source of truth for both the numeric amount and currency.
+// No conversion is performed here.
+export function formatCurrency(
+  amount: number,
+  currency: string,
+): string {
+  const value = Number.isFinite(amount)
+    ? amount
+    : 0;
 
-  const formatted = value.toLocaleString("en-US", {
-    minimumFractionDigits: hasFraction ? 2 : 0,
-    maximumFractionDigits: 2,
-  });
+  const normalized =
+    (currency || "USD").toUpperCase();
 
-  return `${formatted} ر.س`;
+  try {
+    return new Intl.NumberFormat(
+      "en-US",
+      {
+        style: "currency",
+        currency: normalized,
+        maximumFractionDigits: 2,
+      },
+    ).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${normalized}`;
+  }
+}
+
+export function formatSAR(
+  amount: number,
+): string {
+  return formatCurrency(
+    amount,
+    "SAR",
+  );
 }
