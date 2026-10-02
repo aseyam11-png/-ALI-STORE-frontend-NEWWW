@@ -113,29 +113,27 @@ interface SessionContextValue extends Session {
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session>({
-    status: "loading",
-    user: null,
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ["session"],
+    queryFn: getCurrentSession,
+    staleTime: 30_000,
+    retry: false,
   });
 
   const refresh = useCallback(async () => {
-    setSession((current) =>
-      current.status === "authenticated"
-        ? current
-        : { status: "loading", user: null },
-    );
+    await queryClient.invalidateQueries({
+      queryKey: ["session"],
+      refetchType: "active",
+    });
+  }, [queryClient]);
 
-    try {
-      const user = await getCurrentSession();
-      setSession(user ? { status: "authenticated", user } : EMPTY_SESSION);
-    } catch {
-      setSession(EMPTY_SESSION);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const session: Session =
+    query.isLoading
+      ? { status: "loading", user: null }
+      : query.data
+        ? { status: "authenticated", user: query.data }
+        : EMPTY_SESSION;
 
   return (
     <SessionContext.Provider
