@@ -90,8 +90,39 @@ interface CreateOrderInput {
   grandTotal: number;
 }
 
+interface BackendOrderItem {
+  id: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+  subTotal: number;
+}
+
+interface BackendShipment {
+  id: number;
+  status: string;
+  carrier?: string | null;
+  trackingNumber?: string | null;
+  estimatedDeliveryDate?: string | null;
+}
+
+interface BackendOrderResponse {
+  id: number;
+  status: string;
+  totalAmount: number;
+  discountAmount?: number | null;
+  shippingAddress: string;
+  createdAt: string;
+  items: BackendOrderItem[];
+  shipments: BackendShipment[];
+}
+
 interface OrderState {
   orders: Order[];
+  isLoading: boolean;
+  loadOrders: () => Promise<void>;
+  loadOrder: (orderId: string) => Promise<void>;
 
   createOrder: (
     input: CreateOrderInput,
@@ -131,9 +162,132 @@ function createOrderId() {
   return `AS-${timestamp}`;
 }
 
+function mapBackendOrder(response: BackendOrderResponse): Order {
+  const shipment = response.shipments[0];
+
+  const shipmentStatus: ShipmentStatus =
+    shipment?.status === "DELIVERED"
+      ? "DELIVERED"
+      : shipment?.status === "IN_TRANSIT"
+        ? "IN_TRANSIT"
+        : shipment?.status === "OUT_FOR_DELIVERY"
+          ? "OUT_FOR_DELIVERY"
+          : shipment?.status === "SHIPPED"
+            ? "SHIPPED"
+            : "PROCESSING";
+
+  const timestamp = response.createdAt;
+
+  return {
+    id: String(response.id),
+    createdAt: response.createdAt,
+    customerName: "",
+    customerEmail: "",
+    address: {
+      fullName: "",
+      phone: "",
+      address: response.shippingAddress,
+      city: "",
+      country: "",
+      postalCode: "",
+    },
+    paymentMethod: "UNKNOWN",
+    paymentStatus: "PENDING",
+    subtotal:
+      response.totalAmount + (response.discountAmount ?? 0),
+    shippingCost: 0,
+    grandTotal: response.totalAmount,
+    fulfillmentCost: 0,
+    estimatedProfit: 0,
+    status:
+      response.status === "PROCESSING"
+        ? "PROCESSING"
+        : response.status === "SHIPPED"
+          ? "SHIPPED"
+          : response.status === "DELIVERED"
+            ? "DELIVERED"
+            : response.status === "CANCELLED"
+              ? "CANCELLED"
+              : "PENDING_PAYMENT",
+    items: response.items.map((item) => ({
+      productId: String(item.productId),
+      name: item.productName,
+      price: item.price,
+      priceUnit: "unit",
+      quantity: item.quantity,
+      minOrderQuantity: 1,
+      image: undefined,
+    })),
+    shippingMethod:
+      shipment?.carrier ?? "Standard delivery",
+    estimatedDelivery:
+      shipment?.estimatedDeliveryDate ?? "To be confirmed",
+    shipmentStatus,
+    carrier: shipment?.carrier ?? undefined,
+    trackingNumber: shipment?.trackingNumber ?? undefined,
+    events: [
+      {
+        id: `ORDER-${response.id}-CREATED`,
+        status: shipmentStatus,
+        title: "Order received",
+        description: "Your order has been received.",
+        timestamp,
+        completed: true,
+      },
+    ],
+    updatedAt: timestamp,
+  };
+}
+
 export const useOrderStore =
   create<OrderState>((set, get) => ({
     orders: [],
+    isLoading: false,
+
+    loadOrders: async () => {
+      set({ isLoading: true });
+
+      try {
+        const { apiClient } = await import("@/lib/api/http-client");
+        const data =
+          await apiClient.requestApi<{
+            content: BackendOrderResponse[];
+          }>("/api/v1/orders?page=0&size=100");
+
+        set({
+          orders: data.content.map(mapBackendOrder),
+          isLoading: false,
+        });
+      } catch (error) {
+        set({ isLoading: false });
+        throw error;
+      }
+    },
+
+    loadOrder: async (orderId) => {
+      set({ isLoading: true });
+
+      try {
+        const { apiClient } = await import("@/lib/api/http-client");
+        const data = await apiClient.requestApi<BackendOrderResponse>(
+          `/api/v1/orders/${encodeURIComponent(orderId)}`,
+        );
+
+        const order = mapBackendOrder(data);
+
+        set((state) => ({
+          orders: [
+            order,
+            ...state.orders.filter((item) => item.id !== order.id),
+          ],
+          isLoading: false,
+        }));
+      } catch (error) {
+        set({ isLoading: false });
+        throw error;
+      }
+    },
+
 
     createOrder: (input) => {
       const orderId =
