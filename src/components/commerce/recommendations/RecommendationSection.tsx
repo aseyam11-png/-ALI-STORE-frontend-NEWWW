@@ -14,6 +14,7 @@ import type {
 
 import { getRecommendations } from "@/features/recommendations/services/recommendations.service";
 import { RecommendationCard } from "./RecommendationCard";
+import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 
 interface RecommendationSectionProps {
   type: RecommendationType;

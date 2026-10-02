@@ -9,6 +9,7 @@ import {
 
 import { AppShell } from "@/components/layout/AppShell";
 import { SupportConversation } from "@/components/support/SupportConversation";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function BuyerSupportConversationPage() {
   const params =
@@ -19,6 +20,11 @@ export default function BuyerSupportConversationPage() {
   const conversationId =
     params?.id ??
     "CHAT-1001";
+
+  const user = useAuthStore((state) => state.user);
+  const currentUser = user
+    ? { id: String(user.id), name: `${user.firstName} ${user.lastName}`.trim(), role: "CUSTOMER" as const }
+    : { id: "public-demo", name: "Customer", role: "CUSTOMER" as const };
 
   return (
     <AppShell>
@@ -56,11 +62,7 @@ export default function BuyerSupportConversationPage() {
             conversationId={
               conversationId
             }
-            currentUser={{
-              id: "customer-001",
-              name: "Customer",
-              role: "CUSTOMER",
-            }}
+            currentUser={currentUser}
           />
 
         </div>
