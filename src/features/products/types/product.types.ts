@@ -1,7 +1,7 @@
 export type ProductId = string;
 
 export type ProductStatus = "active" | "draft" | "archived" | "discontinued";
-export type ProductStockStatus = "in_stock" | "low_stock" | "out_of_stock" | "pre_order";
+export type ProductStockStatus = "in_stock" | "low_stock" | "out_of_stock" | "pre_order" | "unknown";
 export type ProductAvailability = "IN_STOCK" | "OUT_OF_STOCK" | "UNKNOWN";
 
 export type ProductPrice = {
