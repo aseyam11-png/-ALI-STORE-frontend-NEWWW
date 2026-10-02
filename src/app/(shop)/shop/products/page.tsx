@@ -48,9 +48,6 @@ export default function ProductsPage() {
   useEffect(() => {
     let cancelled = false;
 
-    setCatalogLoading(true);
-    setCatalogError("");
-
     void getProducts({
       search: searchParams.get("q") ?? "",
       categoryId: searchParams.get("category") ?? undefined,
@@ -72,6 +69,7 @@ export default function ProductsPage() {
     })
       .then((response) => {
         if (cancelled) return;
+        setCatalogError("");
         setAllProducts(response.items.map(normalizeB2CProduct));
       })
       .catch(() => {
