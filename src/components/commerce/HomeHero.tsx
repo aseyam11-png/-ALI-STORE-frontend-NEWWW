@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { getCatalogCategories } from "@/features/catalog/services/catalog-api.service";
@@ -46,10 +47,13 @@ export async function HomeHero() {
 
         <div className="pointer-events-none absolute inset-y-0 end-0 hidden w-[56%] lg:block">
           <div className="absolute inset-0 bg-gradient-to-l from-transparent via-ink-950/20 to-ink-950" />
-          <img
+          <Image
             src={HERO_IMAGE_URL}
             alt=""
-            className="h-full w-full object-cover opacity-90"
+            fill
+            sizes="56vw"
+            className="object-cover opacity-90"
+            priority
           />
         </div>
       </div>
