@@ -42,6 +42,16 @@ type Page<T> = {
   isLast: boolean;
 };
 
+export async function updateAdminProductStatus(
+  productId: number,
+  status: AdminProduct["status"],
+) {
+  return apiClient.request<AdminProduct>("/api/v1/admin/products/" + productId, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
 export async function getAdminProducts(page = 0, size = 50) {
   return apiClient.request<Page<AdminProduct>>(
     "/api/v1/admin/products?page=" + Math.max(0, page) + "&size=" + Math.min(100, Math.max(1, size)),
