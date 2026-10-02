@@ -1,475 +1,201 @@
-﻿"use client";
+"use client";
 
-import {
-  CheckCircle2,
-  Plus,
-  Trash2,
-} from "lucide-react";
-
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { BarChart3, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
-import { formatSAR } from "@/features/localization/services/currency.service";
-
 import {
-  usePricingRuleStore,
-} from "@/stores/pricing-rule-store";
-
-import type {
-  PricingRuleType,
-} from "@/features/pricing/types/pricing.types";
-
-const categories = [
-  "Electronics",
-  "Home & Garden",
-  "Fashion",
-  "Beauty",
-  "Sports & Outdoors",
-  "Furniture",
-  "Premium",
-];
+  createPricingRule,
+  deletePricingRule,
+  getPricingRules,
+  updatePricingRule,
+  type AdminPricingRule,
+} from "@/features/admin/pricing/services/pricing-rule-api.service";
 
 export default function AdminPricingPage() {
-  const rules =
-    usePricingRuleStore(
-      (state) => state.rules,
-    );
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ["admin", "pricing-rules"],
+    queryFn: getPricingRules,
+    staleTime: 10_000,
+  });
 
-  const addRule =
-    usePricingRuleStore(
-      (state) => state.addRule,
-    );
+  const [name, setName] = useState("");
+  const [type, setType] = useState<AdminPricingRule["type"]>("PERCENTAGE");
+  const [value, setValue] = useState("25");
+  const [priority, setPriority] = useState("10");
 
-  const updateRule =
-    usePricingRuleStore(
-      (state) => state.updateRule,
-    );
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createPricingRule({
+        name: name.trim(),
+        type,
+        value: Number(value),
+        active: true,
+        priority: Number(priority),
+        productId: null,
+        categoryId: null,
+      }),
+    onSuccess: async () => {
+      setName("");
+      await queryClient.invalidateQueries({ queryKey: ["admin", "pricing-rules"] });
+    },
+  });
 
-  const removeRule =
-    usePricingRuleStore(
-      (state) => state.removeRule,
-    );
+  const toggleMutation = useMutation({
+    mutationFn: (rule: AdminPricingRule) =>
+      updatePricingRule(rule.id, {
+        ...rule,
+        value: Number(rule.value),
+        active: !rule.active,
+        productId: rule.productId ?? null,
+        categoryId: rule.categoryId ?? null,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "pricing-rules"] }),
+  });
 
-  const [
-    name,
-    setName,
-  ] = useState("");
+  const deleteMutation = useMutation({
+    mutationFn: deletePricingRule,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "pricing-rules"] }),
+  });
 
-  const [
-    productId,
-    setProductId,
-  ] = useState("");
-
-  const [
-    category,
-    setCategory,
-  ] = useState(
-    "Electronics",
-  );
-
-  const [
-    type,
-    setType,
-  ] =
-    useState<PricingRuleType>(
-      "FIXED",
-    );
-
-  const [
-    value,
-    setValue,
-  ] = useState("10");
-
-  const [
-    priority,
-    setPriority,
-  ] = useState("10");
-
-  const [
-    scope,
-    setScope,
-  ] = useState<
-    "CATEGORY" | "PRODUCT"
-  >("CATEGORY");
-
-  const createRule = () => {
-    if (!name.trim()) {
-      return;
-    }
-
-    if (
-      scope === "PRODUCT" &&
-      !productId.trim()
-    ) {
-      return;
-    }
-
-    addRule({
-      name: name.trim(),
-      productId:
-        scope === "PRODUCT"
-          ? productId.trim()
-          : undefined,
-      category:
-        scope === "CATEGORY"
-          ? category
-          : undefined,
-      type,
-      value:
-        Number(value) || 0,
-      active: true,
-      priority:
-        Number(priority) || 0,
-    });
-
-    setName("");
-    setProductId("");
-    setValue("10");
-    setPriority("10");
-  };
+  const rules = useMemo(() => query.data ?? [], [query.data]);
 
   return (
     <AdminShell>
       <main className="min-h-screen bg-[#F8FAFC]">
-
         <section className="border-b border-slate-200 bg-white">
-
-          <div className="mx-auto max-w-[1300px] px-4 py-8 sm:px-6 lg:px-8">
-
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
-              Administration
-            </p>
-
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">
-              Pricing rules
-            </h1>
-
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              Configure automatic store pricing by category or product.
-              Manual product prices can override automatic rules.
-            </p>
-
-          </div>
-
-        </section>
-
-        <div className="mx-auto max-w-[1300px] px-4 py-7 sm:px-6 lg:px-8">
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
-            <div className="flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                <Plus className="h-5 w-5" />
-              </div>
-
+          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-lg font-black text-slate-900">
-                  Create pricing rule
-                </h2>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  Product rules have higher priority than category rules.
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-black text-blue-700">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Pricing engine
+                </div>
+                <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900">قواعد التسعير</h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                  السعر النهائي يُحسب في Backend انطلاقًا من تكلفة المورد وقاعدة المنتج/القسم.
                 </p>
               </div>
 
+              <button
+                type="button"
+                onClick={() => void query.refetch()}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-700"
+              >
+                <RefreshCw className="h-4 w-4" />
+                تحديث
+              </button>
             </div>
+          </div>
+        </section>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-
-              <Field
-                label="Rule name"
+        <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-black text-slate-900">إضافة قاعدة عامة</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-[1.5fr_180px_140px_120px_auto]">
+              <input
                 value={name}
-                onChange={setName}
-                placeholder="Electronics + 10 SAR"
+                onChange={(event) => setName(event.target.value)}
+                placeholder="اسم القاعدة"
+                className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
               />
-
-              <div>
-                <label className="text-xs font-black text-slate-600">
-                  Scope
-                </label>
-
-                <select
-                  value={scope}
-                  onChange={(event) =>
-                    setScope(
-                      event.target.value as
-                        | "CATEGORY"
-                        | "PRODUCT",
-                    )
-                  }
-                  className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none"
-                >
-                  <option value="CATEGORY">
-                    Category
-                  </option>
-
-                  <option value="PRODUCT">
-                    Product
-                  </option>
-                </select>
-              </div>
-
-              {scope === "PRODUCT" ? (
-                <Field
-                  label="Product ID"
-                  value={productId}
-                  onChange={setProductId}
-                  placeholder="p-001"
-                />
-              ) : (
-                <div>
-                  <label className="text-xs font-black text-slate-600">
-                    Category
-                  </label>
-
-                  <select
-                    value={category}
-                    onChange={(event) =>
-                      setCategory(
-                        event.target.value,
-                      )
-                    }
-                    className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none"
-                  >
-                    {categories.map(
-                      (item) => (
-                        <option key={item}>
-                          {item}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="text-xs font-black text-slate-600">
-                  Rule type
-                </label>
-
-                <select
-                  value={type}
-                  onChange={(event) =>
-                    setType(
-                      event.target.value as
-                        PricingRuleType,
-                    )
-                  }
-                  className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none"
-                >
-                  <option value="FIXED">
-                    Fixed amount
-                  </option>
-
-                  <option value="PERCENTAGE">
-                    Percentage
-                  </option>
-                </select>
-              </div>
-
-              <Field
-                label={
-                  type === "FIXED"
-                    ? "Markup"
-                    : "Markup %"
-                }
+              <select
+                value={type}
+                onChange={(event) => setType(event.target.value as AdminPricingRule["type"])}
+                className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+              >
+                <option value="PERCENTAGE">نسبة مئوية</option>
+                <option value="FIXED">مبلغ ثابت</option>
+              </select>
+              <input
+                type="number"
+                min="0.01"
                 value={value}
-                onChange={setValue}
-                type="number"
-                placeholder="10"
+                onChange={(event) => setValue(event.target.value)}
+                className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                aria-label="قيمة القاعدة"
               />
-
-              <Field
-                label="Priority"
+              <input
+                type="number"
+                min="0"
                 value={priority}
-                onChange={setPriority}
-                type="number"
-                placeholder="10"
+                onChange={(event) => setPriority(event.target.value)}
+                className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                aria-label="أولوية القاعدة"
               />
-
+              <button
+                type="button"
+                disabled={!name.trim() || createMutation.isPending}
+                onClick={() => void createMutation.mutate()}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                <Plus className="h-4 w-4" />
+                إضافة
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={
-                createRule
-              }
-              className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
-            >
-              <Plus className="h-4 w-4" />
-              Add rule
-            </button>
-
+            {createMutation.isError && (
+              <p role="alert" className="mt-3 text-xs font-bold text-red-600">
+                {createMutation.error instanceof Error ? createMutation.error.message : "تعذر إنشاء القاعدة"}
+              </p>
+            )}
           </section>
 
           <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-            <div className="border-b border-slate-100 p-5">
-
-              <h2 className="text-lg font-black text-slate-900">
-                Pricing rules
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Higher priority rules are selected first.
-              </p>
-
-            </div>
-
-            <div className="divide-y divide-slate-100">
-
-              {rules
-                .slice()
-                .sort(
-                  (a, b) =>
-                    b.priority -
-                    a.priority,
-                )
-                .map(
-                  (rule) => (
-                    <div
-                      key={rule.id}
-                      className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between"
-                    >
-
-                      <div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-
-                          <p className="text-sm font-black text-slate-900">
-                            {rule.name}
-                          </p>
-
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-[10px] font-black ${
-                              rule.active
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {rule.active
-                              ? "ACTIVE"
-                              : "INACTIVE"}
-                          </span>
-
-                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black text-blue-700">
-                            P{rule.priority}
-                          </span>
-
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
-
-                          <span>
-                            {rule.productId
-                              ? `Product: ${rule.productId}`
-                              : `Category: ${rule.category ?? "All"}`}
-                          </span>
-
-                          <span>
-                            ·
-                          </span>
-
-                          <span className="font-black text-slate-700">
-                            {rule.type ===
-                            "FIXED"
-                              ? `+${formatSAR(rule.value)}`
-                              : `+${rule.value}%`}
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateRule(
-                              rule.id,
-                              {
-                                active:
-                                  !rule.active,
-                              },
-                            )
-                          }
-                          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-
-                          {rule.active
-                            ? "Disable"
-                            : "Enable"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeRule(
-                              rule.id,
-                            )
-                          }
-                          className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-black text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </button>
-
-                      </div>
-
+            {query.isPending ? (
+              <div className="p-8 text-sm text-slate-400">جاري تحميل قواعد التسعير…</div>
+            ) : query.isError ? (
+              <div className="p-8 text-center">
+                <p className="text-sm font-bold text-red-600">تعذر تحميل قواعد التسعير.</p>
+                <button type="button" onClick={() => void query.refetch()} className="mt-4 rounded-xl bg-[#2563EB] px-5 py-2.5 text-xs font-black text-white">
+                  إعادة المحاولة
+                </button>
+              </div>
+            ) : rules.length === 0 ? (
+              <div className="p-12 text-center text-sm text-slate-500">لا توجد قواعد تسعير.</div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {rules.map((rule) => (
+                  <article key={rule.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-slate-900">{rule.name}</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {rule.productId ? "منتج #" + rule.productId : rule.categoryId ? "قسم #" + rule.categoryId : "قاعدة عامة"}
+                        {" · "}الأولوية {rule.priority}
+                      </p>
                     </div>
-                  ),
-                )}
 
-            </div>
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-700">
+                        {rule.type === "PERCENTAGE" ? Number(rule.value) + "%" : Number(rule.value) + " SAR"}
+                      </span>
 
+                      <button
+                        type="button"
+                        onClick={() => toggleMutation.mutate(rule)}
+                        className={"rounded-full px-3 py-1.5 text-xs font-black " + (rule.active ? "bg-success-surface text-success" : "bg-neutral-100 text-neutral-500")}
+                      >
+                        {rule.active ? "مفعّلة" : "متوقفة"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteMutation.mutate(rule.id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                        aria-label="حذف القاعدة"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
-
         </div>
       </main>
     </AdminShell>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  onChange: (
-    value: string,
-  ) => void;
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <div>
-      <label className="text-xs font-black text-slate-600">
-        {label}
-      </label>
-
-      <input
-        type={type}
-        min={
-          type === "number"
-            ? "0"
-            : undefined
-        }
-        value={value}
-        onChange={(event) =>
-          onChange(
-            event.target.value,
-          )
-        }
-        placeholder={placeholder}
-        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
-      />
-    </div>
   );
 }
