@@ -47,6 +47,7 @@ export type BackendCartItem = {
   productId: number;
   productName: string;
   productPrice: number;
+  currency: string;
   quantity: number;
   subTotal: number;
 };
@@ -55,6 +56,7 @@ export type BackendCart = {
   id: number | null;
   items: BackendCartItem[];
   totalPrice: number;
+  currency?: string | null;
 };
 
 export type BackendShipmentSummary = {
@@ -89,6 +91,7 @@ export type BackendOrder = {
     | "DELIVERED"
     | "CANCELLED";
   totalAmount: number;
+  currency?: string | null;
   couponCode?: string | null;
   discountAmount?: number | null;
   shippingAddress: string;
