@@ -5,6 +5,7 @@ import { MotionConfig } from "framer-motion";
 import { useState } from "react";
 
 import { LocalizationProvider } from "@/components/providers/LocalizationProvider";
+import { SessionProvider } from "@/features/auth/session";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() =>
@@ -22,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
-        <LocalizationProvider>{children}</LocalizationProvider>
+        <LocalizationProvider><SessionProvider>{children}</SessionProvider></LocalizationProvider>
       </MotionConfig>
     </QueryClientProvider>
   );
