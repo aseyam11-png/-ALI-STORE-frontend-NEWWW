@@ -17,7 +17,6 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useCustomerStore } from "@/stores/customer-store";
 import { useAddressStore } from "@/stores/address-store";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
@@ -62,10 +61,6 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const getDefaultAddress = useCustomerStore(
-    (state) => state.getDefaultAddress,
-  );
-
   const selectedAddressId = useAddressStore(
     (state) => state.selectedAddressId,
   );
@@ -96,7 +91,7 @@ export default function CheckoutPage() {
   const [error, setError] =
     useState("");
 
-  const defaultAddress = getDefaultAddress();
+  const defaultAddress = addresses.find((address) => address.isDefault);
 
   const selectedAddress = addresses.find(
     (address) =>
@@ -144,25 +139,17 @@ export default function CheckoutPage() {
     } else if (defaultAddress) {
       setForm((current) => ({
         ...current,
-        fullName:
-          current.fullName ||
-          defaultAddress.fullName,
-        phone:
-          current.phone ||
-          defaultAddress.phone,
-        address:
-          current.address ||
-          defaultAddress.addressLine1,
-        city:
-          current.city ||
-          defaultAddress.city,
-        country:
-          current.country ||
-          defaultAddress.country,
-        postalCode:
-          current.postalCode ||
-          defaultAddress.postalCode ||
-          "",
+        fullName: current.fullName || defaultAddress.recipientName,
+        phone: current.phone || defaultAddress.phone,
+        address: current.address || [
+          defaultAddress.street,
+          defaultAddress.building ? "Building " + defaultAddress.building : "",
+          defaultAddress.apartment ? "Apt " + defaultAddress.apartment : "",
+          defaultAddress.area,
+        ].filter(Boolean).join(", "),
+        city: current.city || defaultAddress.city,
+        country: current.country || defaultAddress.country,
+        postalCode: current.postalCode || defaultAddress.postalCode || "",
       }));
     }
   }
