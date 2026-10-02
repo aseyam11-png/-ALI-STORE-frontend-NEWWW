@@ -1,7 +1,13 @@
-import { create } from "zustand";
+"use client";
 
-export interface CartItem {
-  productId: string;
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+"use client";
+
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
   name: string;
 
   price: number;
@@ -46,6 +52,7 @@ interface CartState {
   ) => void;
 
   clearCart: () => void;
+  replaceItems: (items: CartItem[]) => void;
 
   getItemCount: () => number;
   getSubtotal: () => number;
@@ -57,7 +64,9 @@ interface CartState {
   getShippingInfo: () => CartShippingInfo;
 }
 
-export const useCartStore = create<CartState>(
+export const useCartStore = create<CartState>()(
+  persist(
+    
   (set, get) => ({
     items: [],
 
@@ -143,6 +152,10 @@ export const useCartStore = create<CartState>(
       set({ items: [] });
     },
 
+    replaceItems: (items) => {
+      set({ items });
+    },
+
     getItemCount: () => {
       return get().items.reduce(
         (total, item) =>
@@ -221,4 +234,9 @@ export const useCartStore = create<CartState>(
       };
     },
   }),
+  {
+    name: "alistore-cart",
+    partialize: (state) => ({ items: state.items }),
+  },
+),
 );
