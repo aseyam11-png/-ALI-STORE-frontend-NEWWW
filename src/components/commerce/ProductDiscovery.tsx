@@ -1,22 +1,37 @@
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
-
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 import { Tabs } from "@/components/ui/tabs";
 import { ProductCard } from "./ProductCard";
 
-// One section, one dataset source, two honest views of it: "Featured" is the
-// catalog's editorial order, "Best Sellers" re-sorts the same real products
-// by rating/review count. No separate section, no invented metrics.
-export function ProductDiscovery() {
-  const featured = featuredProducts.map(mapLegacyProductToCard);
+export default async function ProductDiscovery() {
+  const response = await getProducts({
+    search: "",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: false,
+    inStockOnly: true,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+    sort: "relevance",
+    page: 1,
+    pageSize: 8,
+  });
 
-  const bestSellers = [...featured].sort(
+  const products = response.items.map(mapProductSummaryToCard);
+  const bestSellers = products.filter((product) => product.reviewCount > 0).sort(
     (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
   );
 
-  const renderGrid = (products: typeof featured) => (
+  const renderGrid = (items: typeof products) => (
     <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
-      {products.map((product) => (
+      {items.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>
@@ -29,22 +44,32 @@ export function ProductDiscovery() {
           اكتشف المنتجات
         </h2>
 
-        <Tabs
-          className="mt-8"
-          ariaLabel="اكتشف المنتجات"
-          items={[
-            {
-              id: "featured",
-              label: "المميزة",
-              content: renderGrid(featured),
-            },
-            {
-              id: "best-sellers",
-              label: "الأكثر مبيعًا",
-              content: renderGrid(bestSellers),
-            },
-          ]}
-        />
+        {products.length === 0 ? (
+          <p className="mt-8 rounded-lg border border-dashed border-neutral-200 bg-surface p-10 text-center text-body-sm text-muted-foreground">
+            لا توجد منتجات منشورة ومتاحة حاليًا.
+          </p>
+        ) : (
+          <Tabs
+            className="mt-8"
+            ariaLabel="اكتشف المنتجات"
+            items={[
+              {
+                id: "featured",
+                label: "المميزة",
+                content: renderGrid(products),
+              },
+              ...(bestSellers.length > 0
+                ? [
+                    {
+                      id: "best-sellers",
+                      label: "الأكثر تقييمًا",
+                      content: renderGrid(bestSellers),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        )}
       </div>
     </section>
   );
