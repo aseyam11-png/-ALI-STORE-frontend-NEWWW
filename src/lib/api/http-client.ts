@@ -29,7 +29,7 @@ export class HttpClient {
       cache: init?.cache ?? "no-store",
       headers: {
         Accept: "application/json",
-        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(typeof init?.body === "string" ? { "Content-Type": "application/json" } : {}),
         ...init?.headers,
       },
     });
