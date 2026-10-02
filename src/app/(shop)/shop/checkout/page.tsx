@@ -239,7 +239,7 @@ export default function CheckoutPage() {
   };
 
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
+  const [paymentStatus, setPaymentStatus] = useState<"PENDING" | "COMPLETED" | "FAILED" | "REFUNDED">("PENDING");
 
   const placeOrder = async () => {
     setError("");
