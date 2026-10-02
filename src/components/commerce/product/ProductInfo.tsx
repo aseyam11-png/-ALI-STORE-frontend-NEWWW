@@ -48,7 +48,7 @@ export function ProductInfo({
 }: ProductInfoProps) {
   const toggleWishlist =
     useWishlistStore(
-      (state) => state.toggle,
+      (state) => state.toggleItem,
     );
 
   const saved =
@@ -163,9 +163,18 @@ export function ProductInfo({
           <button
             type="button"
             onClick={() =>
-              toggleWishlist(
-                product.id,
-              )
+              toggleWishlist({
+                id: product.id,
+                name: product.name,
+                price: activePrice,
+                image: activeImage,
+                brand: product.brand,
+                category: product.category,
+                originalPrice: product.originalPrice,
+                discountPercentage: product.discountPercentage,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+              })
             }
             aria-label={
               saved
