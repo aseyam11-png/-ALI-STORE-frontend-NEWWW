@@ -90,10 +90,12 @@ export function mapCartItem(
 ): CartItem {
   return {
     productId: String(item.productId),
+    serverItemId: item.id,
     name: item.productName,
     price: Number(item.productPrice),
     priceUnit: "unit",
     quantity: item.quantity,
+    currency: item.currency,
     minOrderQuantity: 1,
   };
 }
