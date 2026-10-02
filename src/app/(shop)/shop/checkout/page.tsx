@@ -864,6 +864,7 @@ export default function CheckoutPage() {
                         <p className="shrink-0 text-xs font-black text-slate-900">
                           <LocalizedPrice
                             amountUSD={item.price * item.quantity}
+                            currency={item.currency ?? "USD"}
                           />
                         </p>
                       </div>
@@ -897,6 +898,7 @@ export default function CheckoutPage() {
 
                     <LocalizedPrice
                       amountUSD={subtotal}
+                      currency={items[0]?.currency ?? "USD"}
                       className="font-bold text-slate-800"
                     />
                   </div>
@@ -912,6 +914,7 @@ export default function CheckoutPage() {
                       ) : (
                         <LocalizedPrice
                           amountUSD={shippingCost}
+                          currency={items[0]?.currency ?? "USD"}
                         />
                       )}
                     </span>
@@ -926,6 +929,7 @@ export default function CheckoutPage() {
                       <span className="font-bold text-emerald-600">
                         −<LocalizedPrice
                           amountUSD={couponDiscount}
+                          currency={items[0]?.currency ?? "USD"}
                         />
                       </span>
                     </div>
@@ -943,6 +947,7 @@ export default function CheckoutPage() {
 
                     <LocalizedPrice
                       amountUSD={total}
+                      currency={items[0]?.currency ?? "USD"}
                       className="text-3xl font-black text-[#0F2747]"
                     />
 
