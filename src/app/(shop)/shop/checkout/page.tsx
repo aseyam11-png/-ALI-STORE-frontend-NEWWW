@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,7 +18,9 @@ import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
 import { useCustomerStore } from "@/stores/customer-store";
-import { useAddressStore } from "@/stores/address-store";
+import type { CustomerAddress } from "@/features/addresses/types/address.types";
+import { getMyAddresses } from "@/features/addresses/services/address-api.service";
+import { useSession } from "@/features/auth/session";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
@@ -62,22 +64,47 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const getDefaultAddress = useCustomerStore(
-    (state) => state.getDefaultAddress,
-  );
-
-  const selectedAddressId = useAddressStore(
-    (state) => state.selectedAddressId,
-  );
-
-  const addresses = useAddressStore(
-    (state) => state.addresses,
-  );
+  const session = useSession();
 
   const [form, setForm] =
-    useState<FormState>(
-      initialForm,
-    );
+    useState<FormState>(initialForm);
+
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (session.status !== "authenticated") return;
+
+    setForm((current) => ({
+      ...current,
+      email: session.user?.email ?? current.email,
+    }));
+
+    getMyAddresses()
+      .then((nextAddresses) => {
+        setAddresses(nextAddresses);
+        const defaultAddress = nextAddresses.find((address) => address.isDefault) ?? nextAddresses[0];
+        if (!defaultAddress) return;
+        setSelectedAddressId(defaultAddress.id);
+        setForm((current) => ({
+          ...current,
+          fullName: defaultAddress.recipientName,
+          phone: defaultAddress.phone,
+          address: [
+            defaultAddress.street,
+            defaultAddress.building,
+            defaultAddress.apartment ? `Apt ${defaultAddress.apartment}` : "",
+            defaultAddress.area,
+          ].filter(Boolean).join(", "),
+          city: defaultAddress.city,
+          country: defaultAddress.country,
+          postalCode: defaultAddress.postalCode ?? "",
+        }));
+      })
+      .catch(() => {
+        setAddresses([]);
+      });
+  }, [session.status, session.user?.email]);
 
   const [paymentMethod, setPaymentMethod] =
     useState("card");
@@ -89,77 +116,6 @@ export default function CheckoutPage() {
 
   const [error, setError] =
     useState("");
-
-  const defaultAddress = getDefaultAddress();
-
-  const selectedAddress = addresses.find(
-    (address) =>
-      address.id === selectedAddressId,
-  );
-
-  const addressSyncKey =
-    selectedAddress?.id ??
-    (defaultAddress ? `default:${defaultAddress.fullName}` : null);
-
-  const [syncedAddressKey, setSyncedAddressKey] =
-    useState<string | null>(null);
-
-  if (addressSyncKey !== syncedAddressKey) {
-    setSyncedAddressKey(addressSyncKey);
-
-    if (selectedAddress) {
-      setForm((current) => ({
-        fullName:
-          selectedAddress.recipientName,
-        email:
-          current.email,
-        phone:
-          selectedAddress.phone,
-        address:
-          [
-            selectedAddress.street,
-            selectedAddress.building
-              ? `Building ${selectedAddress.building}`
-              : "",
-            selectedAddress.apartment
-              ? `Apt ${selectedAddress.apartment}`
-              : "",
-            selectedAddress.area,
-          ]
-            .filter(Boolean)
-            .join(", "),
-        city:
-          selectedAddress.city,
-        country:
-          selectedAddress.country,
-        postalCode:
-          selectedAddress.postalCode ?? "",
-      }));
-    } else if (defaultAddress) {
-      setForm((current) => ({
-        ...current,
-        fullName:
-          current.fullName ||
-          defaultAddress.fullName,
-        phone:
-          current.phone ||
-          defaultAddress.phone,
-        address:
-          current.address ||
-          defaultAddress.addressLine1,
-        city:
-          current.city ||
-          defaultAddress.city,
-        country:
-          current.country ||
-          defaultAddress.country,
-        postalCode:
-          current.postalCode ||
-          defaultAddress.postalCode ||
-          "",
-      }));
-    }
-  }
 
   const [successOrderId, setSuccessOrderId] =
     useState("");
@@ -407,45 +363,24 @@ export default function CheckoutPage() {
               <div className="space-y-6">
 
                 {/* Saved addresses */}
-                <CheckoutAddressSelector
-                  onAddressChange={(addressId) => {
-                    const selected =
-                      addresses.find(
-                        (address) =>
-                          address.id ===
-                          addressId,
-                      );
-
-                    if (!selected) {
-                      return;
-                    }
-
+                          <CheckoutAddressSelector
+                  addresses={addresses}
+                  selectedAddressId={selectedAddressId}
+                  onSelect={(selected) => {
+                    setSelectedAddressId(selected.id);
                     setForm((current) => ({
                       ...current,
-                      fullName:
-                        selected.recipientName,
-                      phone:
-                        selected.phone,
-                      address:
-                        [
-                          selected.street,
-                          selected.building
-                            ? `Building ${selected.building}`
-                            : "",
-                          selected.apartment
-                            ? `Apt ${selected.apartment}`
-                            : "",
-                          selected.area,
-                        ]
-                          .filter(Boolean)
-                          .join(", "),
-                      city:
-                        selected.city,
-                      country:
-                        selected.country,
-                      postalCode:
-                        selected.postalCode ??
-                        "",
+                      fullName: selected.recipientName,
+                      phone: selected.phone,
+                      address: [
+                        selected.street,
+                        selected.building,
+                        selected.apartment ? `Apt ${selected.apartment}` : "",
+                        selected.area,
+                      ].filter(Boolean).join(", "),
+                      city: selected.city,
+                      country: selected.country,
+                      postalCode: selected.postalCode ?? "",
                     }));
                   }}
                 />
