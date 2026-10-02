@@ -11,6 +11,7 @@ export interface BackendProduct {
   sku?: string | null;
   status: "ACTIVE" | "ARCHIVED" | "DRAFT" | "DISCONTINUED";
   availability: "IN_STOCK" | "OUT_OF_STOCK" | "UNKNOWN";
+  availableQuantity: number;
   categoryId: number;
   categoryName: string;
   brandId?: number | null;
@@ -41,7 +42,7 @@ export interface ProductListQuery {
 }
 
 function mapProduct(product: BackendProduct): B2CProduct {
-  const stock = product.availability === "IN_STOCK" ? 1 : 0;
+  const stock = Math.max(0, Number(product.availableQuantity ?? 0));
 
   return {
     id: String(product.id),
