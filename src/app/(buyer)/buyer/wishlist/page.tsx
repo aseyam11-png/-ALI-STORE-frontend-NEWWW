@@ -23,14 +23,13 @@ export default function WishlistPage() {
   const addItem = useCartStore((state) => state.addItem);
 
   const [serverItems, setServerItems] = useState<BackendWishlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [serverLoading, setServerLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
     if (session.status !== "authenticated") {
-      setLoading(false);
       return () => {
         active = false;
       };
@@ -46,13 +45,15 @@ export default function WishlistPage() {
         }
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) setServerLoading(false);
       });
 
     return () => {
       active = false;
     };
   }, [session.status]);
+
+  const loading = session.status === "authenticating" || (session.status === "authenticated" && serverLoading);
 
   const visibleItems = useMemo(() => {
     if (session.status !== "authenticated") {
