@@ -103,15 +103,7 @@ export function mapMockProductToSummary(
       id: `supplier-${product.id}`,
       name: product.supplier,
       verified: product.verifiedSupplier,
-      rating: 4.7,
-      reviewCount: Math.max(
-        10,
-        Math.floor(product.reviews / 2),
-      ),
-      country: "China",
-      city: "Shenzhen",
-      responseRate: 98,
-      responseTimeHours: 4,
+
     },
 
     shipping: product.shipping,
