@@ -120,11 +120,10 @@ export function SmartAutocomplete({
   useEffect(() => {
     let active = true;
 
-    setHighlighted(0);
-
     if (debouncedValue.trim().length < 2) {
-      setSuggestions([]);
-      return;
+      return () => {
+        active = false;
+      };
     }
 
     getAutocompleteSuggestions(debouncedValue, 8)
