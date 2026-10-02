@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   Filter,
@@ -27,11 +27,9 @@ import {
 
 import { paginate } from "@/features/catalog/services/pagination.service";
 
-
-
 const PAGE_SIZE = 12;
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -871,3 +869,23 @@ export default function ProductsPage() {
 
 
 
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <main className="min-h-screen bg-background">
+            <div className="mx-auto max-w-[1440px] px-4 py-20 text-center sm:px-6 lg:px-8">
+              <p className="text-sm font-bold text-text-muted">
+                Loading products...
+              </p>
+            </div>
+          </main>
+        </AppShell>
+      }
+    >
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
