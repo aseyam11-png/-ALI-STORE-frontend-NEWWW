@@ -3,6 +3,7 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import { Tabs } from "@/components/ui/tabs";
+import { ProductCard } from "@/components/commerce/ProductCard";
 import {
   getProducts,
 } from "@/features/products/services/product.service";
@@ -83,7 +84,7 @@ export function ProductDiscovery() {
     return (
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
         {products.map((product) => (
-          <mapProductSummaryToCard />
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     );
