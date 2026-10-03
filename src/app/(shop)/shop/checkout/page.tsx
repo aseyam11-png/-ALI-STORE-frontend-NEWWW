@@ -760,16 +760,13 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-slate-50 p-3 text-[11px] text-slate-400">
-                  {shipping.method}
-                  {shipping.estimatedDelivery
-                    ? ` · ${shipping.estimatedDelivery}`
-                    : ""}
+                  Shipping is calculated and confirmed by the backend when the
+                  order is created.
                 </div>
 
                 <div className="mt-5">
                   <CouponInput
                     subtotal={subtotal}
-                    shipping={shippingCost}
                     onApply={setAppliedCoupon}
                     onRemove={() => setAppliedCoupon(null)}
                   />
