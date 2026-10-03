@@ -317,8 +317,8 @@ test("admin support routes do not expose seeded conversation data", async () => 
     list + detail,
     /CHAT-1001|customer-001|AS-2026-10482|SHIP-1001|admin-001/,
   );
-  assert.match(list, /لا توجد محادثات دعم فعلية/);
-  assert.match(detail, /redirect\(["']\/admin\/support["']\)/);
+  assert.match(list, /redirect\(["\']\/admin["\']/);
+  assert.match(detail, /redirect\(["\']\/admin\/support["\']/);
 });
 
 test("search query contract exposes only backend-supported sort values", async () => {
@@ -398,19 +398,22 @@ test("product detail review UI uses the live review API and not the removed mode
   assert.doesNotMatch(reviews, /review-moderation-store/);
 });
 
-test("admin reviews no longer expose fake local moderation data", async () => {
+test("admin review routes use the consolidated dashboard", async () => {
   const page = await read("src/app/(admin)/admin/reviews/page.tsx");
   const detail = await read("src/app/(admin)/admin/reviews/[id]/page.tsx");
-  assert.doesNotMatch(page, /useReviewModerationStore|REV-1001|REV-1004/);
-  assert.match(page, /Moderation API is not available/);
+  const dashboard = await read("src/app/(admin)/admin/page.tsx");
+  assert.match(page, /redirect\(["']\/admin["']\)/);
   assert.match(detail, /redirect\(["']\/admin\/reviews["']\)/);
+  assert.match(dashboard, /Review moderation/);
+  assert.doesNotMatch(dashboard, /REV-1001|REV-1004/);
 });
 
-test("system administration does not publish fabricated uptime or latency metrics", async () => {
+test("system monitoring uses the consolidated dashboard instead of a standalone fake metrics page", async () => {
   const source = await read("src/app/(system)/system/page.tsx");
-  assert.doesNotMatch(source, /99\.98%|99\.99%|99\.95%|99\.91%|48ms|100%/);
-  assert.doesNotMatch(source, /useState\(/);
-  assert.match(source, /مراقبة التشغيل غير موصولة/);
+  const dashboard = await read("src/app/(admin)/admin/page.tsx");
+  assert.match(source, /redirect\(["']\/admin["']\)/);
+  assert.match(dashboard, /System monitoring/);
+  assert.doesNotMatch(dashboard, /99\.98%|99\.99%|99\.95%|99\.91%|48ms|100%/);
 });
 
 test("review legacy local store and summary are removed", async () => {
@@ -424,3 +427,21 @@ test("review legacy local store and summary are removed", async () => {
   );
 });
 
+
+test("shipments are consolidated into order operations while preserving the old route", async () => {
+  const orders = await read("src/app/(admin)/admin/orders/page.tsx");
+  const shipments = await read("src/app/(admin)/admin/shipments/page.tsx");
+  const dashboard = await read("src/app/(admin)/admin/page.tsx");
+  assert.match(orders, /Shipments/);
+  assert.match(orders, /order\.shipments\.map/);
+  assert.match(shipments, /redirect\(["']\/admin\/orders["']\)/);
+  assert.match(dashboard, /Orders & shipments/);
+});
+
+test("support is consolidated into the admin dashboard instead of keeping an unavailable full page", async () => {
+  const support = await read("src/app/(admin)/admin/support/page.tsx");
+  const dashboard = await read("src/app/(admin)/admin/page.tsx");
+  assert.match(support, /redirect\(["']\/admin["']\)/);
+  assert.match(dashboard, /title="Support"/);
+  assert.match(dashboard, /There is no persisted support conversation API/);
+});
