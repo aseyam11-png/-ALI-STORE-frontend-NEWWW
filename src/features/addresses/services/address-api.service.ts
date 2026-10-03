@@ -5,13 +5,14 @@ export type BackendAddress = {
   id: number;
   street: string;
   city: string;
-  state?: string | null;
-  country: string;
-  postalCode?: string | null;
   label?: string | null;
   recipientName?: string | null;
   phone?: string | null;
-  area?: string | null;
+  street: string;
+  city: string;
+  state?: string | null;
+  country: string;
+  postalCode?: string | null;
   building?: string | null;
   apartment?: string | null;
   notes?: string | null;
@@ -27,7 +28,7 @@ function fromBackend(address: BackendAddress): CustomerAddress {
     phone: address.phone ?? "",
     country: address.country,
     city: address.city,
-    area: address.area ?? "",
+    area: address.state ?? "",
     street: address.street,
     building: address.building ?? "",
     apartment: address.apartment ?? "",
@@ -44,10 +45,9 @@ function toBackend(address: Omit<CustomerAddress, "id">) {
     state: address.area.trim() || undefined,
     country: address.country.trim(),
     postalCode: address.postalCode?.trim() || undefined,
-    label: address.label.trim(),
-    recipientName: address.recipientName.trim(),
-    phone: address.phone.trim(),
-    area: address.area.trim() || undefined,
+    label: address.label.trim() || undefined,
+    recipientName: address.recipientName.trim() || undefined,
+    phone: address.phone.trim() || undefined,
     building: address.building?.trim() || undefined,
     apartment: address.apartment?.trim() || undefined,
     notes: address.notes?.trim() || undefined,
