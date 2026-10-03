@@ -1,18 +1,36 @@
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 
 import { Tabs } from "@/components/ui/tabs";
 import { ProductCard } from "./ProductCard";
 
-// One section, one dataset source, two honest views of it: "Featured" is the
-// catalog's editorial order, "Best Sellers" re-sorts the same real products
-// by rating/review count. No separate section, no invented metrics.
-export function ProductDiscovery() {
-  const featured = featuredProducts.map(mapLegacyProductToCard);
+export async function ProductDiscovery() {
+  const response = await getProducts({
+    search: "",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: false,
+    inStockOnly: true,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+    sort: "relevance",
+    page: 1,
+    pageSize: 12,
+  });
 
-  const bestSellers = [...featured].sort(
-    (a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount,
-  );
+  const featured = response.items.map(mapProductSummaryToCard);
+  const bestSellers = [...featured];
+
+  if (featured.length === 0) {
+    return null;
+  }
 
   const renderGrid = (products: typeof featured) => (
     <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
@@ -35,12 +53,12 @@ export function ProductDiscovery() {
           items={[
             {
               id: "featured",
-              label: "المميزة",
+              label: "المتاحة الآن",
               content: renderGrid(featured),
             },
             {
               id: "best-sellers",
-              label: "الأكثر مبيعًا",
+              label: "جميع المنتجات",
               content: renderGrid(bestSellers),
             },
           ]}
