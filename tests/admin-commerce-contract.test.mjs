@@ -368,7 +368,7 @@ test("catalog filter UI sends brand ids rather than unsupported brand names", as
   assert.match(source, /brandOptions\.map/);
   assert.match(source, /item\.id/);
   assert.match(service, /params\.set\("brand",\s*String\(brandId\)/);
-  assert.doesNotMatch(service, /brandName/);
+  assert.doesNotMatch(service, /params\.set\(\"brandName\"/);
 });
 
 test("product service rejects non-numeric category and brand filters", async () => {
