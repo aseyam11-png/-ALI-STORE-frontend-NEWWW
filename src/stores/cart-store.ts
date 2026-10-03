@@ -176,9 +176,6 @@ export const useCartStore = create<CartState>(
       );
     },
 
-    // One flat shipment for the whole order — ALI STORE ships as a
-    // single merchant, so shipping is a single order-level rate rather
-    // than a fee summed per supplier group.
     getShippingInfo: () => {
       const items = get().items;
 
