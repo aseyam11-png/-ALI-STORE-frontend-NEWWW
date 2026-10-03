@@ -44,3 +44,25 @@ export async function processBackendPayment(input: {
     }),
   );
 }
+
+export async function getBackendPaymentByOrderId(
+  orderId: string,
+): Promise<BackendPayment | null> {
+  const parsed = Number(orderId);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("Invalid order number");
+  }
+
+  try {
+    return unwrap(
+      await apiClient.request<ApiEnvelope<BackendPayment>>(
+        `/api/v1/payments/order/${parsed}`,
+      ),
+    );
+  } catch (error) {
+    if (error instanceof Error && "status" in error && (error as { status?: number }).status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
