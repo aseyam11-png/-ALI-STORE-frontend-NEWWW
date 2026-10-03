@@ -218,10 +218,18 @@ class PostgresConcurrencyIT {
             }
         }).toList();
 
-        List<Long> orderIds = responses.stream()
-                .filter(response -> response.contains("\"status\":200") || response.contains("\"status\":202"))
-                .map(response -> objectMapper.readTree(response).path("data").path("id").asLong())
-                .toList();
+        List<Long> orderIds = new java.util.ArrayList<>();
+        for (String response : responses) {
+            try {
+                int status = objectMapper.readTree(response).path("status").asInt();
+                long orderId = objectMapper.readTree(response).path("data").path("id").asLong();
+                if ((status == 200 || status == 202) && orderId > 0) {
+                    orderIds.add(orderId);
+                }
+            } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                throw new AssertionError("Concurrent checkout response must be valid JSON", ex);
+            }
+        }
 
         Assertions.assertEquals(2, orderIds.size(), "both concurrent retries must receive a successful response");
         Assertions.assertEquals(orderIds.get(0), orderIds.get(1),
