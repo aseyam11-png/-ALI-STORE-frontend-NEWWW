@@ -58,6 +58,7 @@ export function LoginForm() {
         const query = new URLSearchParams({
           challenge: result.challengeId,
           email: result.maskedEmail,
+          purpose: result.purpose,
         });
         window.location.assign("/verify-email?" + query.toString());
         return;
