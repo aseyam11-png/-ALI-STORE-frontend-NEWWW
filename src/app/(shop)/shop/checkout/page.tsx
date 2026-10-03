@@ -534,7 +534,7 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           id={`checkout-${field}`}
-                          type={field === "email" ? "email" : "text"}
+                          type="text"
                           value={form[field]}
                           onChange={(event) =>
                             setField(field, event.target.value)
