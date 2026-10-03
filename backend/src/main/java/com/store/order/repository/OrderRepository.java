@@ -17,6 +17,8 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
+    Optional<Order> findByUserIdAndIdempotencyKey(Long userId, String idempotencyKey);
+
     @Query("""
             select case when count(o) > 0 then true else false end
             from Order o
