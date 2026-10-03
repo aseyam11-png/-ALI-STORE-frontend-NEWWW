@@ -3,6 +3,7 @@ package com.store.order.entity;
 import com.store.common.entity.BaseEntity;
 import com.store.user.entity.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -44,6 +45,7 @@ public class Order extends BaseEntity {
     @Builder.Default
     private java.time.LocalDateTime reservationExpiresAt = java.time.LocalDateTime.now().plusMinutes(30);
 
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
