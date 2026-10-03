@@ -43,27 +43,34 @@ function statusClass(status: string) {
 }
 
 function toShipmentRows(orders: BackendOrder[]): ShipmentRow[] {
-  return orders.flatMap((order) => {
+  const rows: ShipmentRow[] = [];
+
+  for (const order of orders) {
     if (order.shipments.length === 0) {
-      return [{
+      rows.push({
         orderId: order.id,
         shipmentId: null,
         status: order.status,
         carrier: "No shipment assigned",
         trackingNumber: "Tracking not assigned",
         eta: "Pending",
-      }];
+      });
+      continue;
     }
 
-    return order.shipments.map((shipment) => ({
-      orderId: order.id,
-      shipmentId: shipment.id,
-      status: shipment.status,
-      carrier: shipment.carrier ?? "Carrier not assigned",
-      trackingNumber: shipment.trackingNumber ?? "Tracking not assigned",
-      eta: shipment.estimatedDeliveryDate ?? "Pending",
-    }));
-  });
+    for (const shipment of order.shipments) {
+      rows.push({
+        orderId: order.id,
+        shipmentId: shipment.id,
+        status: shipment.status,
+        carrier: shipment.carrier ?? "Carrier not assigned",
+        trackingNumber: shipment.trackingNumber ?? "Tracking not assigned",
+        eta: shipment.estimatedDeliveryDate ?? "Pending",
+      });
+    }
+  }
+
+  return rows;
 }
 
 export default function AdminShipmentsPage() {
