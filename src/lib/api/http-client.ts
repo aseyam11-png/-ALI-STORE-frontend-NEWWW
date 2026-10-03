@@ -85,7 +85,28 @@ export class HttpClient {
 
     const headers = new Headers(init?.headers);
     headers.set("Accept", "application/json");
-    if (init?.body && !headers.has("Content-Type")) {
+
+    const body = init?.body;
+    const isFormData =
+      typeof FormData !== "undefined" && body instanceof FormData;
+    const isBlob =
+      typeof Blob !== "undefined" && body instanceof Blob;
+    const isUrlSearchParams =
+      typeof URLSearchParams !== "undefined" &&
+      body instanceof URLSearchParams;
+    const isArrayBuffer =
+      typeof ArrayBuffer !== "undefined" &&
+      (body instanceof ArrayBuffer ||
+        ArrayBuffer.isView(body));
+
+    if (
+      body &&
+      !headers.has("Content-Type") &&
+      !isFormData &&
+      !isBlob &&
+      !isUrlSearchParams &&
+      !isArrayBuffer
+    ) {
       headers.set("Content-Type", "application/json");
     }
 
