@@ -7,6 +7,11 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
+import {
+  addBackendCartItem,
+  isUnauthorized,
+  mapBackendCart,
+} from "@/features/cart/services/cart-api.service";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
@@ -43,8 +48,8 @@ export function ProductCard({ product }: ProductCardProps) {
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
 
-  const handleAddToCart = () => {
-    addItem({
+  const handleAddToCart = async () => {
+    const item = {
       productId: product.id,
       name: product.name,
       price: product.price.amount,
@@ -52,7 +57,23 @@ export function ProductCard({ product }: ProductCardProps) {
       quantity: product.minOrderQuantity,
       image: product.image?.url,
       minOrderQuantity: product.minOrderQuantity,
-    });
+    };
+
+    if (!Number.isInteger(Number(product.id)) || Number(product.id) <= 0) {
+      addItem(item);
+      return;
+    }
+
+    try {
+      const backend = await addBackendCartItem(product.id, 1);
+      replaceItems(mapBackendCart(backend, useCartStore.getState().items));
+    } catch (error) {
+      if (isUnauthorized(error)) {
+        addItem(item);
+        return;
+      }
+      throw error;
+    }
   };
 
   return (
@@ -151,7 +172,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
           <button
             type="button"
-            onClick={handleAddToCart}
+            onClick={() => void handleAddToCart()}
             disabled={!canAddToCart}
             className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
