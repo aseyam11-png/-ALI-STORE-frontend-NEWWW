@@ -15,14 +15,9 @@ import { useSession } from "@/features/auth/session";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 
-// This page previously rendered a fully fabricated account dashboard —
-// hardcoded order history, order counts, "verified customer" status — with
-// no authentication check of any kind. There is no auth backend in this
-// repository (verified by repository-wide search), so none of that could
-// ever have been real. This rebuild shows only what is actually true
-// today: the customer's real, working, backend-free wishlist/cart state,
-// and an honest "sign in to see this" boundary for anything that would
-// require a real account (orders, addresses). Nothing here is invented.
+// The account overview is intentionally derived from the authenticated
+// session plus the real persisted wishlist/cart state. Order history is linked
+// to its backend-backed page rather than being fabricated here.
 export default function BuyerAccountPage() {
   const session = useSession();
 

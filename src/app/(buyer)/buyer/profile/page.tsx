@@ -1,53 +1,86 @@
 "use client";
 
 import Link from "next/link";
-import { LogIn, UserRound } from "lucide-react";
+import { LogIn, Mail, Phone, UserRound } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { useSession } from "@/features/auth/session";
 
-// Same honest boundary as the rest of the account workspace (see
-// buyer/page.tsx): there is no auth/profile backend in this repository, so
-// this never fabricates a name, email, or avatar. It exists so the
-// AccountWorkspace "profile" tab (src/components/commerce/account/
-// AccountWorkspace.tsx) links to a real page instead of a 404/type error,
-// and is ready to hold a real edit form the day a real account backend
-// exists.
 export default function BuyerProfilePage() {
   const session = useSession();
-  const isAuthenticated = session.status === "authenticated";
+
+  if (session.status !== "authenticated") {
+    return (
+      <AccountWorkspace
+        activeTab="profile"
+        title="الملف الشخصي"
+        description="إدارة معلومات التواصل المرتبطة بجلسة حسابك."
+      >
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
+          <UserRound className="mx-auto h-9 w-9 text-neutral-300" />
+          <h2 className="mt-4 text-h3 font-bold text-foreground">
+            سجّل الدخول للوصول إلى ملفك الشخصي
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-body-sm text-muted-foreground">
+            بيانات الاسم والبريد والهاتف تُقرأ من جلسة حسابك الحالية.
+          </p>
+          <Link
+            href="/login?next=/buyer/profile"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-md bg-brand px-6 text-body font-medium text-white"
+          >
+            <LogIn className="me-2 h-4 w-4" />
+            تسجيل الدخول
+          </Link>
+        </div>
+      </AccountWorkspace>
+    );
+  }
+
+  const user = session.user;
 
   return (
     <AccountWorkspace
       activeTab="profile"
       title="الملف الشخصي"
-      description="إدارة اسمك ومعلومات التواصل الخاصة بحسابك."
+      description="معلومات الحساب التي تم التحقق منها في جلسة ALI STORE الحالية."
     >
-      <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
-        <UserRound className="mx-auto h-9 w-9 text-neutral-300" />
+      <section className="rounded-md border border-neutral-200 bg-surface p-6 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-brand">
+            <UserRound className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-h3 font-bold text-foreground">
+              {user.firstName} {user.lastName}
+            </h2>
+            <p className="mt-1 text-body-sm text-muted-foreground">
+              الحساب النشط
+            </p>
+          </div>
+        </div>
 
-        <h2 className="mt-4 text-h3 font-bold text-foreground">
-          {isAuthenticated
-            ? "لا توجد بيانات ملف شخصي بعد"
-            : "سجّل الدخول لإدارة ملفك الشخصي"}
-        </h2>
+        <dl className="mt-7 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-md border border-neutral-200 p-4">
+            <dt className="flex items-center gap-2 text-caption font-medium text-muted-foreground">
+              <Mail className="h-4 w-4" />
+              البريد الإلكتروني
+            </dt>
+            <dd className="mt-2 break-all text-body font-medium text-foreground">
+              {user.email}
+            </dd>
+          </div>
 
-        <p className="mx-auto mt-2 max-w-md text-body-sm text-muted-foreground">
-          {isAuthenticated
-            ? "تعديل الاسم والبريد الإلكتروني ورقم الهاتف سيكون متاحًا هنا فور ربط حساب حقيقي."
-            : "بيانات الملف الشخصي مرتبطة بحسابك — سجّل الدخول أولًا للوصول إليها."}
-        </p>
-
-        {!isAuthenticated && (
-          <Link
-            href="/login"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-md bg-brand px-6 text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
-          >
-            <LogIn className="me-2 h-4 w-4" />
-            تسجيل الدخول
-          </Link>
-        )}
-      </div>
+          <div className="rounded-md border border-neutral-200 p-4">
+            <dt className="flex items-center gap-2 text-caption font-medium text-muted-foreground">
+              <Phone className="h-4 w-4" />
+              رقم الهاتف
+            </dt>
+            <dd className="mt-2 text-body font-medium text-foreground">
+              {user.phoneNumber || "غير متوفر في الجلسة الحالية"}
+            </dd>
+          </div>
+        </dl>
+      </section>
     </AccountWorkspace>
   );
 }
