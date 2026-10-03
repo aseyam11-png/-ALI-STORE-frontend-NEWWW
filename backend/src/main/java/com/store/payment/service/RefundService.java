@@ -20,6 +20,8 @@ import com.store.shipping.repository.ShipmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -35,6 +37,7 @@ public class RefundService {
     private final OrderRepository orderRepository;
     private final ShipmentRepository shipmentRepository;
     private final PaymentProvider paymentProvider;
+    private final PlatformTransactionManager transactionManager;
 
     @Transactional
     public RefundResponse prepareOrderCancellationRefund(Long orderId, String reason) {
@@ -137,13 +140,24 @@ public class RefundService {
     }
 
     @Scheduled(fixedDelayString = "${app.payment.refund-poll-ms:30000}")
-    @Transactional
     public void processPendingRefunds() {
-        List<Refund> refunds = refundRepository.findByStatusOrderByCreatedAtAsc(RefundStatus.PENDING);
-        for (Refund refund : refunds.stream().limit(20).toList()) {
-            Payment payment = paymentRepository.findByIdForUpdate(refund.getPaymentId()).orElse(null);
-            if (payment != null) process(refund, payment);
-        }
+        List<Long> refundIds = refundRepository.findByStatusOrderByCreatedAtAsc(RefundStatus.PENDING)
+                .stream()
+                .limit(20)
+                .map(Refund::getId)
+                .toList();
+
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        refundIds.forEach(id -> tx.executeWithoutResult(status -> processPendingRefund(id)));
+    }
+
+    @Transactional
+    private void processPendingRefund(Long refundId) {
+        Refund refund = refundRepository.findByIdForUpdate(refundId).orElse(null);
+        if (refund == null || refund.getStatus() != RefundStatus.PENDING) return;
+
+        Payment payment = paymentRepository.findByIdForUpdate(refund.getPaymentId()).orElse(null);
+        if (payment != null) process(refund, payment);
     }
 
     private RefundResponse prepareRefund(
