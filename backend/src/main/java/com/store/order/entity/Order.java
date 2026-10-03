@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_orders_user_idempotency_key", columnNames = {"user_id", "idempotency_key"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,6 +42,9 @@ public class Order extends BaseEntity {
 
     @Column(nullable = false)
     private String shippingAddress;
+
+    @Column(name = "idempotency_key", length = 100)
+    private String idempotencyKey;
 
     @Column(name = "reservation_expires_at", nullable = false)
     @Builder.Default
