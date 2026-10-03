@@ -445,3 +445,32 @@ test("support is consolidated into the admin dashboard instead of keeping an una
   assert.match(dashboard, /title="Support"/);
   assert.match(dashboard, /There is no persisted support conversation API/);
 });
+
+test("customer pages use one storefront shell with shared header, navigation and footer", async () => {
+  const shell = await read("src/components/commerce/CustomerShell.tsx");
+  assert.match(shell, /<TopBar \/>/);
+  assert.match(shell, /<Header \/>/);
+  assert.match(shell, /<GlobalNavigation \/>/);
+  assert.match(shell, /<Footer \/>/);
+  assert.match(shell, /<PageTransition>/);
+});
+
+test("admin navigation contains only consolidated live modules", async () => {
+  const shell = await read("src/components/layout/AdminShell.tsx");
+  assert.match(shell, /Orders & shipments/);
+  assert.match(shell, /Payments/);
+  assert.match(shell, /Fulfillment/);
+  assert.doesNotMatch(shell, /href: "\/admin\/reviews"/);
+  assert.doesNotMatch(shell, /href: "\/admin\/shipments"/);
+  assert.doesNotMatch(shell, /href: "\/admin\/support"/);
+  assert.doesNotMatch(shell, /href: "\/system"/);
+});
+
+test("shared storefront header exposes the core discovery actions without changing routes", async () => {
+  const header = await read("src/components/layout/Header.tsx");
+  assert.match(header, /\/shop\/visual-search/);
+  assert.match(header, /\/buyer\/wishlist/);
+  assert.match(header, /\/shop\/cart/);
+  assert.match(header, /NotificationBell/);
+  assert.match(header, /bg-primary-50/);
+});
