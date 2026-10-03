@@ -30,10 +30,14 @@ import { paginate } from "@/features/catalog/services/pagination.service";
 const PAGE_SIZE = 12;
 
 export default function ProductsPage() {
-  const [search, setSearch] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("q") ?? "";
-  });
+  const initialParams =
+    typeof window === "undefined"
+      ? null
+      : new URLSearchParams(window.location.search);
+
+  const [search, setSearch] = useState(
+    initialParams?.get("q") ?? "",
+  );
 
   const { data: catalogResponse, isLoading, isError } = useQuery({
     queryKey: ["catalog-products"],
@@ -107,10 +111,13 @@ export default function ProductsPage() {
   );
 
   const [category, setCategory] =
-    useState("All");
+    useState(() => {
+      const value = initialParams?.get("category");
+      return value ? value.replace(/-/g, " ") : "All";
+    });
 
   const [brand, setBrand] =
-    useState("All brands");
+    useState(() => initialParams?.get("brand") ?? "All brands");
 
   const [rating, setRating] =
     useState("all");
