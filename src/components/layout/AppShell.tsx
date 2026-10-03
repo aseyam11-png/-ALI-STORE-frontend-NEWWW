@@ -19,10 +19,6 @@ import {
 } from "../navigation/GlobalNavigation";
 
 import {
-  LocalizationProvider,
-} from "../providers/LocalizationProvider";
-
-import {
   PageTransition,
 } from "@/components/motion/PageTransition";
 
@@ -34,9 +30,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <LocalizationProvider>
-
-      <div
+    <div
         className="min-h-screen bg-background text-foreground selection:bg-primary-100 selection:text-brand-ink"
         suppressHydrationWarning
       >
@@ -47,11 +41,11 @@ export function AppShell({
 
         <GlobalNavigation />
 
-        <main className="min-w-0 overflow-x-clip">
+        <div className="min-w-0 overflow-x-clip">
           <PageTransition>
             {children}
           </PageTransition>
-        </main>
+        </div>
 
         <Footer />
 
