@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login, loginWithGoogle } from "@/features/auth/session";
@@ -8,6 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const googleError =
+    searchParams.get("error") === "google"
+      ? "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى."
+      : undefined;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,13 +23,6 @@ export function LoginForm() {
   const [emailError, setEmailError] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | undefined>();
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("error") === "google") {
-      setFormError("تعذر تسجيل الدخول عبر Google. حاول مرة أخرى.");
-    }
-  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -111,12 +111,12 @@ export function LoginForm() {
           </button>
         </div>
 
-        {formError && (
+        {(formError ?? googleError) && (
           <p
             role="alert"
             className="rounded-md border border-danger-100 bg-danger-surface px-4 py-3 text-body-sm font-medium text-danger-600"
           >
-            {formError}
+            {formError ?? googleError}
           </p>
         )}
 
