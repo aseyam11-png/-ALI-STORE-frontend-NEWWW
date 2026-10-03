@@ -2,24 +2,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { getTopLevelCategories } from "@/features/catalog/services/category.service";
+import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
 import { CATEGORY_IMAGE_URL } from "./home-imagery";
 
-// Per-department CTA copy — kept here (not in CATEGORY_LABEL_AR) because
-// it's a shopping verb for this section specifically ("shop fashion"),
-// not the category's display name, which stays a single shared source.
 const CTA_LABEL_AR: Record<string, string> = {
   fashion: "تسوق الأزياء",
   accessories: "تسوق الإكسسوارات",
   "beauty-care": "اكتشف الجمال",
 };
 
-export function CategoryGrid() {
-  // The store's whole taxonomy is exactly these three top-level departments
-  // (see category-tree.ts) — a fixed 3-column editorial grid fits that
-  // reality better than a scroll strip built for many more items.
-  const visibleCategories = getTopLevelCategories();
+export async function CategoryGrid() {
+  let categories = [];
+  try {
+    categories = await getTopLevelCategories();
+  } catch {
+    categories = [];
+  }
+
+  if (!categories.length) return null;
 
   return (
     <section className="bg-background">
@@ -29,16 +30,15 @@ export function CategoryGrid() {
         </h2>
 
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-          {visibleCategories.map((category) => {
+          {categories.map((category) => {
             const imageUrl = CATEGORY_IMAGE_URL[category.slug];
-            const label =
-              CATEGORY_LABEL_AR[category.slug] ?? category.name;
+            const label = CATEGORY_LABEL_AR[category.slug] ?? category.name;
             const cta = CTA_LABEL_AR[category.slug] ?? label;
 
             return (
               <Link
-                key={category.slug}
-                href={`/shop/categories/${category.slug}`}
+                key={category.id}
+                href={"/shop/categories/" + encodeURIComponent(category.slug)}
                 className="group relative flex aspect-[4/5] overflow-hidden rounded-lg bg-ink-900 shadow-raised transition-transform duration-200 ease-brand hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 sm:aspect-[3/4] lg:aspect-[4/5]"
               >
                 {imageUrl && (
@@ -50,13 +50,9 @@ export function CategoryGrid() {
                     className="object-cover transition duration-500 group-hover:scale-105"
                   />
                 )}
-
                 <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/10 to-transparent" />
-
                 <div className="relative mt-auto flex flex-col items-start gap-2 p-6">
-                  <span className="text-h3 font-bold text-white lg:text-h2">
-                    {label}
-                  </span>
+                  <span className="text-h3 font-bold text-white lg:text-h2">{label}</span>
                   <span className="inline-flex items-center gap-1.5 text-body-sm font-medium text-white/90">
                     {cta}
                     <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
