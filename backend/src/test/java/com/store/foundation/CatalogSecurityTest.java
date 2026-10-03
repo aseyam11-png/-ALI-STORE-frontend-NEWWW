@@ -2,6 +2,7 @@ package com.store.foundation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.auth.service.JwtService;
+import com.store.inventory.dto.UpdateStockRequest;
 import com.store.brand.entity.Brand;
 import com.store.brand.repository.BrandRepository;
 import com.store.category.entity.Category;
