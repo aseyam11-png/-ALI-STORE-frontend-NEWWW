@@ -10,7 +10,8 @@ export type ProductStockStatus =
   | "in_stock"
   | "low_stock"
   | "out_of_stock"
-  | "pre_order";
+  | "pre_order"
+  | "unknown";
 
 export type ProductPrice = {
   amount: number;
