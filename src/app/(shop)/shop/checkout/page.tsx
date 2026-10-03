@@ -217,7 +217,8 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const required: Array<
-      keyof FormState    > = [
+      keyof FormState
+    > = [
       "fullName",
       "phone",
       "address",
@@ -362,7 +363,7 @@ export default function CheckoutPage() {
 
                 <Link
                   href="/buyer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
                 >
                   View my orders
                   <ArrowRight className="h-4 w-4" />
@@ -423,7 +424,7 @@ export default function CheckoutPage() {
 
               <Link
                 href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
               >
                 Browse products
                 <ArrowRight className="h-4 w-4" />
@@ -436,7 +437,8 @@ export default function CheckoutPage() {
               <div className="space-y-6">
 
                 {/* Saved addresses */}
-                          <CheckoutAddressSelector                  addresses={addresses}
+                          <CheckoutAddressSelector
+                  addresses={addresses}
                   selectedAddressId={selectedAddressId}
                   onSelect={(selected) => {
                     setSelectedAddressId(selected.id);
@@ -499,7 +501,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
@@ -525,7 +527,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
@@ -551,7 +553,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
@@ -576,7 +578,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
@@ -601,7 +603,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
@@ -626,7 +628,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
@@ -651,11 +653,12 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
 
-                  </div>                </section>
+                  </div>
+                </section>
 
                 {/* Payment */}
                 <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
@@ -695,3 +698,177 @@ export default function CheckoutPage() {
                           key={
                             option.value
                           }
+                          type="button"
+                          onClick={() =>
+                            setPaymentMethod(
+                              option.value,
+                            )
+                          }
+                          className={`rounded-2xl border p-4 text-start transition ${
+                            paymentMethod ===
+                            option.value
+                              ? "border-[#2563EB] bg-info-surface"
+                              : "border-neutral-200 hover:bg-neutral-50"
+                          }`}
+                        >
+                          <p className="text-xs font-black text-foreground">
+                            {option.label}
+                          </p>
+                        </button>
+                      ),
+                    )}
+
+                  </div>
+
+                </section>
+
+                {error && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-danger-100 bg-danger-surface px-4 py-3 text-sm font-bold text-danger-700"
+                  >
+                    {error}
+                  </div>
+                )}
+
+              </div>
+
+              {/* Summary */}
+              <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm xl:sticky xl:top-24">
+
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-brand" />
+
+                  <h2 className="text-lg font-black text-foreground">
+                    Your order
+                  </h2>
+                </div>
+
+                <div className="mt-6 space-y-2">
+
+                  {items.map(
+                    (item) => (
+                      <div
+                        key={`${item.productId}-${item.variantId ?? "default"}`}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 p-3"
+                      >
+                        <p className="min-w-0 truncate text-xs font-bold text-neutral-700">
+                          {item.name}{" "}
+                          <span className="text-neutral-400">
+                            × {item.quantity}
+                          </span>
+                        </p>
+
+                        <p className="shrink-0 text-xs font-black text-foreground">
+                          <LocalizedPrice
+                            amountUSD={item.price * item.quantity}
+                            currency={item.currency ?? serverCartCurrency}
+                          />
+                        </p>
+                      </div>
+                    ),
+                  )}
+
+                </div>
+
+                <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
+                  Shipping is calculated and confirmed by the backend when the
+                  order is created.
+                </div>
+
+                <div className="mt-5">
+                  <CouponInput
+                    subtotal={cartSubtotal}
+                    onApply={setAppliedCoupon}
+                    onRemove={() => setAppliedCoupon(null)}
+                  />
+                </div>
+
+                <div className="mt-6 space-y-3 border-t border-neutral-100 pt-5">
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-500">
+                      Subtotal
+                    </span>
+
+                    <LocalizedPrice
+                      amountUSD={cartSubtotal}
+                      currency={serverCartCurrency}
+                      className="font-bold text-neutral-800"
+                    />
+                  </div>
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-500">
+                      Shipping
+                    </span>
+
+                    <span className="font-bold text-neutral-800">
+                      Confirmed by backend at order creation
+                    </span>
+                  </div>
+
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-500">
+                        Discount
+                      </span>
+
+                      <span className="font-bold text-success-600">
+                        −<LocalizedPrice
+                          amountUSD={couponDiscount}
+                          currency={serverCartCurrency}
+                        />
+                      </span>
+                    </div>
+                  )}
+
+                </div>
+
+                <div className="mt-5 border-t border-neutral-100 pt-5">
+
+                  <div className="flex items-end justify-between">
+
+                    <span className="text-sm font-bold text-neutral-500">
+                      Total
+                    </span>
+
+                    <LocalizedPrice
+                      amountUSD={total}
+                      currency={serverCartCurrency}
+                      className="text-3xl font-black text-brand-ink"
+                    />
+
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={placeOrder}
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                >
+                  <LockKeyhole className="h-4 w-4" />
+                  Place order
+                </button>
+
+                <div className="mt-4 rounded-xl bg-success-surface p-3">
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 text-success-600" />
+
+                    <p className="text-[11px] leading-5 text-success-700">
+                      Your payment is processed securely by ALI STORE.
+                    </p>
+                  </div>
+                </div>
+
+              </aside>
+
+            </div>
+          )}
+
+        </div>
+      </main>
+    </AppShell>
+  );
+}
