@@ -287,7 +287,7 @@ export default function CartPage() {
 
                 <Link
                   href="/shop/products"
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-6 text-sm font-black text-white"
+                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--color-primary-500)] px-6 text-sm font-black text-white"
                 >
                   Browse products
                   <ArrowRight className="h-4 w-4" />
@@ -562,7 +562,7 @@ export default function CartPage() {
 
                     <Link
                       href="/shop/checkout"
-                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white"
+                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary-500)] text-sm font-black text-white"
                     >
                       Continue to checkout
                       <ChevronRight className="h-4 w-4" />
