@@ -7,8 +7,6 @@ import {
   CreditCard,
   Globe2,
   Headphones,
-  Mail,
-  MapPin,
   ShieldCheck,
   Truck,
 } from "lucide-react";

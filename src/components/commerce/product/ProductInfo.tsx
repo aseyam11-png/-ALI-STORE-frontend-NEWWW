@@ -13,6 +13,7 @@ import { formatCurrency } from "@/features/localization/services/currency.servic
 import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { ProductActions } from "./ProductActions";
 import { ProductGallery } from "./ProductGallery";
+import { VariantSelector } from "./VariantSelector";
 
 interface ProductInfoProps {
   product: B2CProduct;
