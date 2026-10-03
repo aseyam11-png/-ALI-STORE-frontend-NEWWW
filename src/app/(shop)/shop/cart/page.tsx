@@ -217,7 +217,8 @@ export default function CartPage() {
     setError("");
 
     try {
-      const backend = await clearBackendCart();      replaceItems(
+      const backend = await clearBackendCart();
+      replaceItems(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -271,7 +272,7 @@ export default function CartPage() {
 
               <section className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-12 text-center">
 
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-neutral-500">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-500">
                   <ShoppingBag className="h-7 w-7" />
                 </div>
 
@@ -436,7 +437,8 @@ export default function CartPage() {
                                         onClick={() =>
                                           handleQuantityChange(
                                             item.productId,
-                                            item.variantId,                                            item.quantity + 1,
+                                            item.variantId,
+                                            item.quantity + 1,
                                           )
                                         }
                                         className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:bg-neutral-50"
@@ -555,3 +557,33 @@ export default function CartPage() {
                           />
                         </span>
                       </div>
+
+                    </div>
+
+                    <Link
+                      href="/shop/checkout"
+                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white"
+                    >
+                      Continue to checkout
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+
+                  </div>
+
+                  <RecommendationSection
+                    type="BASED_ON_BROWSING"
+                    title="Recommended for you"
+                    description="Suggestions based on products you may like."
+                  />
+
+                </aside>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
+    </AppShell>
+  );
+}
