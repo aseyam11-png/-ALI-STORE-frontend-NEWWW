@@ -117,6 +117,11 @@ export function AdminShell({
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.replace("/login");
+      return;
+    }
+
     if (session.status !== "authenticated") return;
     const role = session.user?.role ?? "";
     if (role !== "ROLE_ADMIN" && role !== "ADMIN") {
@@ -133,7 +138,6 @@ export function AdminShell({
   }
 
   if (session.status !== "authenticated") {
-    router.replace("/login");
     return null;
   }
 
