@@ -72,7 +72,7 @@ export async function clearBackendCart(): Promise<BackendCart> {
   return unwrap(response);
 }
 
-export function mapBackendCartItems(
+export function mapBackendCart(
   backend: BackendCart,
   localItems: CartItem[],
 ): CartItem[] {
