@@ -127,3 +127,31 @@ test("smart autocomplete handles asynchronous backend suggestions outside render
   assert.doesNotMatch(source, /useMemo\(/);
   assert.doesNotMatch(source, /setTrackedDebouncedValue/);
 });
+
+
+test("live B2C mapping preserves backend availability", async () => {
+  const source = await read("src/features/products/services/b2c-product.mapper.ts");
+  assert.match(source, /stock:\s*product\.availableQuantity/);
+  assert.doesNotMatch(source, /stock:\s*0\s*,/);
+});
+
+test("product actions format totals using product currency", async () => {
+  const source = await read("src/components/commerce/product/ProductActions.tsx");
+  assert.match(source, /formatCurrency\(subtotal,\s*product\.currency\)/);
+  assert.doesNotMatch(source, /formatSAR\(subtotal\)/);
+});
+
+test("authenticated wishlist state is hydrated globally", async () => {
+  const source = await read("src/components/providers.tsx");
+  assert.match(source, /getMyWishlist/);
+  assert.match(source, /replaceWishlist/);
+});
+
+test("product-card wishlist mutations persist for authenticated users", async () => {
+  const source = await read("src/components/commerce/ProductCard.tsx");
+  assert.match(source, /getSession/);
+  assert.match(source, /addToWishlist/);
+  assert.match(source, /removeFromWishlist/);
+  assert.match(source, /toggleWishlistLocal/);
+  assert.doesNotMatch(source, /useSession\(\)/);
+});
