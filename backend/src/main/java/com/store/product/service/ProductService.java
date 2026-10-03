@@ -23,6 +23,7 @@ import com.store.product.repository.ProductSpecifications;
 import com.store.supplier.entity.Supplier;
 import com.store.supplier.entity.SupplierStatus;
 import com.store.supplier.repository.SupplierRepository;
+import com.store.supplier.service.SupplierCredentialResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +49,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final SupplierRepository supplierRepository;
+    private final SupplierCredentialResolver supplierCredentialResolver;
     private final InventoryService inventoryService;
 
     @Transactional
@@ -254,6 +256,18 @@ public class ProductService {
                 || supplier.getStatus() != SupplierStatus.ACTIVE
                 || !Boolean.TRUE.equals(supplier.getFulfillmentEnabled())) {
             throw new BusinessException("Supplier is not active for fulfillment");
+        }
+
+        if (supplier.getApiBaseUrl() == null || supplier.getApiBaseUrl().isBlank()) {
+            throw new BusinessException("Supplier API base URL is required before publishing products");
+        }
+
+        if (!supplier.getApiBaseUrl().trim().toLowerCase().startsWith("https://")) {
+            throw new BusinessException("Supplier API base URL must use HTTPS before publishing products");
+        }
+
+        if (supplierCredentialResolver.resolveApiToken(supplier).isBlank()) {
+            throw new BusinessException("Supplier API credentials are not configured before publishing products");
         }
     }
 
