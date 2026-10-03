@@ -23,6 +23,7 @@ import { useWishlistStore } from "@/stores/wishlist-store";
 import { useInventoryStore } from "@/stores/inventory-store";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
+import { useSession } from "@/features/auth/session";
 
 interface B2CProductCardProps {
   product: B2CProduct;
@@ -32,6 +33,7 @@ export function B2CProductCard({
   product,
 }: B2CProductCardProps) {
   const { t } = useTranslation();
+  const session = useSession();
 
   const addItem = useCartStore(
     (state) => state.addItem,
@@ -112,7 +114,11 @@ export function B2CProductCard({
           .estimatedDelivery,
     };
 
-    if (!Number.isInteger(Number(product.id)) || Number(product.id) <= 0) {
+    if (
+      session.status !== "authenticated" ||
+      !Number.isInteger(Number(product.id)) ||
+      Number(product.id) <= 0
+    ) {
       addItem(item);
       return;
     }
@@ -123,9 +129,7 @@ export function B2CProductCard({
     } catch (error) {
       if (isUnauthorized(error)) {
         addItem(item);
-        return;
       }
-      throw error;
     }
   };
 
