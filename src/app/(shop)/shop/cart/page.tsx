@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -18,6 +20,13 @@ import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { FreeShippingProgress } from "@/components/commerce/cart/FreeShippingProgress";
 import { RecommendationSection } from "@/components/commerce/recommendations/RecommendationSection";
 import { useCartStore } from "@/stores/cart-store";
+import { useSession } from "@/features/auth/session";
+import {
+  mapBackendCart,
+  replaceBackendCart,
+  synchronizeCart,
+  clearBackendCart,
+} from "@/features/cart/services/cart-api.service";
 
 export default function CartPage() {
   const items = useCartStore(
@@ -52,6 +61,129 @@ export default function CartPage() {
   const grandTotal =
     subtotal + shipping.cost;
 
+  const session = useSession();
+  const replaceItems = useCartStore((state) => state.replaceItems);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (session.status !== "authenticated") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const sync = async () => {
+      setSyncing(true);
+      setError("");
+
+      try {
+        const local = useCartStore.getState().items;
+        const backend = await synchronizeCart(local);
+        if (cancelled) return;
+
+        replaceItems(mapBackendCart(backend, local));
+      } catch (syncError) {
+        if (!cancelled) {
+          setError(
+            syncError instanceof Error
+              ? syncError.message
+              : "تعذر مزامنة السلة مع الخادم.",
+          );
+        }
+      } finally {
+        if (!cancelled) setSyncing(false);
+      }
+    };
+
+    void sync();
+    return () => {
+      cancelled = true;
+    };
+  }, [session.status, replaceItems]);
+
+  const handleUpdateQuantity = async (
+    productId: string,
+    quantity: number,
+  ) => {
+    const current = useCartStore.getState().items;
+    const next = current.map((item) =>
+      item.productId === productId
+        ? { ...item, quantity: Math.max(1, Math.floor(quantity)) }
+        : item,
+    );
+
+    if (session.status !== "authenticated") {
+      replaceItems(next);
+      return;
+    }
+
+    setSyncing(true);
+    setError("");
+
+    try {
+      const backend = await replaceBackendCart(next);
+      replaceItems(mapBackendCart(backend, next));
+    } catch (updateError) {
+      setError(
+        updateError instanceof Error
+          ? updateError.message
+          : "تعذر تحديث السلة.",
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleRemove = async (productId: string) => {
+    const current = useCartStore.getState().items;
+    const next = current.filter((item) => item.productId !== productId);
+
+    if (session.status !== "authenticated") {
+      replaceItems(next);
+      return;
+    }
+
+    setSyncing(true);
+    setError("");
+
+    try {
+      const backend = await replaceBackendCart(next);
+      replaceItems(mapBackendCart(backend, next));
+    } catch (removeError) {
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : "تعذر حذف المنتج من السلة.",
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleClear = async () => {
+    if (session.status !== "authenticated") {
+      useCartStore.getState().clearCart();
+      return;
+    }
+
+    setSyncing(true);
+    setError("");
+
+    try {
+      const backend = await clearBackendCart();
+      replaceItems(mapBackendCart(backend, []));
+    } catch (clearError) {
+      setError(
+        clearError instanceof Error
+          ? clearError.message
+          : "تعذر تفريغ السلة.",
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const itemCount = items.reduce(
     (total, item) =>
       total + item.quantity,
@@ -61,9 +193,23 @@ export default function CartPage() {
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
+        {error && (
+          <div
+            role="alert"
+            className="border-b border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700"
+          >
+            {error}
+          </div>
+        )}
 
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+
+            {session.status === "authenticated" && syncing && (
+              <p className="mb-2 text-[10px] font-black text-slate-400" aria-live="polite">
+                Syncing with server…
+              </p>
+            )}
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
               Shopping cart
@@ -146,9 +292,7 @@ export default function CartPage() {
 
                     <button
                       type="button"
-                      onClick={
-                        clearCart
-                      }
+                      onClick={() => void handleClear()}
                       className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -226,13 +370,7 @@ export default function CartPage() {
 
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          updateQuantity(
-                                            item.productId,
-                                            item.quantity -
-                                              1,
-                                          )
-                                        }
+                                        onClick={() => void handleUpdateQuantity(item.productId, item.quantity - 1)}
                                         disabled={
                                           item.quantity <=
                                           1
@@ -250,13 +388,7 @@ export default function CartPage() {
 
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          updateQuantity(
-                                            item.productId,
-                                            item.quantity +
-                                              1,
-                                          )
-                                        }
+                                        onClick={() => void handleUpdateQuantity(item.productId, item.quantity + 1)}
                                         className="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50"
                                       >
                                         <Plus className="h-4 w-4" />
@@ -278,11 +410,7 @@ export default function CartPage() {
 
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      removeItem(
-                                        item.productId,
-                                      )
-                                    }
+                                    onClick={() => void handleRemove(item.productId)}
                                     className="text-xs font-bold text-red-600 hover:underline"
                                   >
                                     Remove
