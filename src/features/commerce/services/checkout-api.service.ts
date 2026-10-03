@@ -106,3 +106,26 @@ export async function processBackendPayment(input: {
     body: JSON.stringify(input),
   });
 }
+export async function getBackendPaymentByOrderId(
+  orderId: string,
+): Promise<BackendPayment | null> {
+  const numericId = Number(orderId);
+  if (!Number.isInteger(numericId) || numericId < 1) {
+    return null;
+  }
+
+  try {
+    return await apiClient.requestData<BackendPayment>(
+      `/api/v1/payments/order/${numericId}`,
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "status" in error &&
+      Number((error as { status?: unknown }).status) === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
