@@ -16,16 +16,16 @@ export function TopBar() {
 
           <span className="hidden items-center gap-1.5 sm:flex">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            Every product checked by AliStore
+            Product information from ALI STORE
           </span>
 
           <span className="hidden items-center gap-1.5 md:flex">
             <Globe2 className="h-3.5 w-3.5 text-blue-300" />
-            Global shipping
+            Shipping details confirmed at checkout
           </span>
 
           <span className="truncate text-slate-300">
-            Buyer protection & secure trade
+            Secure checkout & account protection
           </span>
 
         </div>

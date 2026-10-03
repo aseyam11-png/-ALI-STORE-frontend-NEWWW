@@ -20,7 +20,7 @@ const footerGroups = [
       ["Products", "/shop/products"],
       [
         "Categories",
-        "/shop/categories/electronics",
+        "/",
       ],
       ["Deals", "/shop/deals"],
       [
@@ -77,14 +77,14 @@ const trustItems = [
 
   {
     icon: Truck,
-    title: "Global logistics",
-    text: "Fast, tracked delivery on every order",
+    title: "Delivery details",
+    text: "Delivery cost and timing are confirmed during checkout",
   },
 
   {
     icon: Headphones,
     title: "Customer support",
-    text: "AI assistance with human escalation",
+    text: "Customer support information and account tools",
   },
 ] as const;
 
@@ -155,26 +155,25 @@ export function Footer() {
               </Link>
 
               <p className="mt-4 max-w-md text-sm leading-7 text-slate-300">
-                A global commerce platform. AliStore sources, sells and
-                ships every product directly — one catalog, one standard
-                of quality.
+                ALI STORE is a single-merchant online store. Product ordering,
+                payment and fulfillment are coordinated through one storefront.
               </p>
 
               <div className="mt-6 space-y-3">
 
                 <div className="flex items-center gap-2 text-xs text-slate-300">
                   <Globe2 className="h-4 w-4 text-blue-400" />
-                  Global shipping
+                  Delivery details at checkout
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-slate-300">
-                  <Mail className="h-4 w-4 text-blue-400" />
-                  support@alistore.local
+                  <Headphones className="h-4 w-4 text-blue-400" />
+                  Support through the Help Center
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-slate-300">
-                  <MapPin className="h-4 w-4 text-blue-400" />
-                  Global operations
+                  <ShieldCheck className="h-4 w-4 text-blue-400" />
+                  Secure account and checkout
                 </div>
 
               </div>
@@ -247,7 +246,7 @@ export function Footer() {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-slate-400">
-                Browse the catalog or chat with our AI support assistant.
+                Browse the catalog or open the support center.
               </p>
 
             </div>
