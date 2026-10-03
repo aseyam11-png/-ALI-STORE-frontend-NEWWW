@@ -142,6 +142,7 @@ export default function BuyerOrdersPage() {
 
                     <LocalizedPrice
                       amountUSD={Number(order.totalAmount)}
+                      currency={order.currency}
                       className="text-h4 font-bold text-foreground"
                     />
                   </div>
