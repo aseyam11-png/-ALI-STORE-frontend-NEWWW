@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   ChevronRight,
-  Clock3,
   Minus,
   Plus,
   ShoppingBag,
@@ -382,6 +381,7 @@ export default function CartPage() {
                         Shipping is calculated and confirmed at checkout.
                       </div>
                     </div>
+                  </section>
 
                   <RecommendationSection
                     type="FREQUENTLY_BOUGHT_TOGETHER"
