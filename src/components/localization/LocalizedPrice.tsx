@@ -1,11 +1,10 @@
 "use client";
 
-import {
-  formatSAR,
-} from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 
 interface LocalizedPriceProps {
   amountUSD: number;
+  currency?: string;
   className?: string;
 }
 
@@ -14,6 +13,7 @@ interface LocalizedPriceProps {
 // no conversion). See currency.service.ts for the single formatting rule.
 export function LocalizedPrice({
   amountUSD,
+  currency = "SAR",
   className = "",
 }: LocalizedPriceProps) {
   return (
@@ -22,7 +22,7 @@ export function LocalizedPrice({
         className
       }
     >
-      {formatSAR(amountUSD)}
+      {formatCurrency(amountUSD, currency)}
     </span>
   );
 }
