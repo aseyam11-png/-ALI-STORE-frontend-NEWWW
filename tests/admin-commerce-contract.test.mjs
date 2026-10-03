@@ -148,7 +148,8 @@ test("product cards use backend cart mutations and shared wishlist behavior", as
   assert.doesNotMatch(b2cCard, /@\/stores\/inventory-store/);
   assert.match(wishlist, /addToWishlist/);
   assert.match(wishlist, /removeFromWishlist/);
-  assert.match(wishlist, /session\.status === "authenticated"/);
+  assert.match(wishlist, /getSession\(\)/);
+  assert.doesNotMatch(wishlist, /useSession\(\)/);
 });
 
 
