@@ -178,13 +178,18 @@ public class ShipmentService {
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if (order.getStatus() == OrderStatus.DELIVERED) return;
+        if (order.getStatus() == OrderStatus.DELIVERED
+                || order.getStatus() == OrderStatus.CANCELLED
+                || order.getStatus() == OrderStatus.FULFILLMENT_FAILED) {
+            return;
+        }
 
         List<Shipment> shipments = shipmentRepository.findByOrderIdOrderByIdAsc(orderId);
         if (shipments.isEmpty()) return;
 
         boolean allDelivered = shipments.stream().allMatch(s -> s.getStatus() == ShipmentStatus.DELIVERED);
         boolean allCancelled = shipments.stream().allMatch(s -> s.getStatus() == ShipmentStatus.CANCELLED);
+        boolean anyCancelled = shipments.stream().anyMatch(s -> s.getStatus() == ShipmentStatus.CANCELLED);
         boolean anyInTransit = shipments.stream().anyMatch(s ->
                 s.getStatus() == ShipmentStatus.SHIPPED
                         || s.getStatus() == ShipmentStatus.IN_TRANSIT
@@ -194,6 +199,11 @@ public class ShipmentService {
             order.setStatus(OrderStatus.DELIVERED);
         } else if (allCancelled) {
             order.setStatus(OrderStatus.CANCELLED);
+        } else if (anyCancelled) {
+            // A multi-supplier order with at least one cancelled shipment cannot
+            // reach DELIVERED under the existing lifecycle. Preserve that fact
+            // explicitly instead of leaving the order permanently stuck in SHIPPED.
+            order.setStatus(OrderStatus.FULFILLMENT_FAILED);
         } else if (anyInTransit && order.getStatus() == OrderStatus.PROCESSING) {
             order.setStatus(OrderStatus.SHIPPED);
         }
