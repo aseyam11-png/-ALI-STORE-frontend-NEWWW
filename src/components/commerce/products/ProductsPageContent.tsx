@@ -26,7 +26,7 @@ function parsePage(value: string | null) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
-export default function ProductsPage() {
+export function ProductsPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
