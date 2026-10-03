@@ -19,8 +19,18 @@ export class HttpApiError extends Error implements ApiError {
   }
 }
 
+const SERVER_API_BASE_URL =
+  process.env.BACKEND_INTERNAL_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "http://localhost:8080";
+
+const BROWSER_API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+  typeof window === "undefined"
+    ? SERVER_API_BASE_URL.replace(/\/$/, "")
+    : BROWSER_API_BASE_URL.replace(/\/$/, "");
 
 function readCookie(name: string): string | undefined {
   if (typeof document === "undefined") return undefined;
