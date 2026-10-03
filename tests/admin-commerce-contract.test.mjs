@@ -474,3 +474,28 @@ test("shared storefront header exposes the core discovery actions without changi
   assert.match(header, /NotificationBell/);
   assert.match(header, /bg-primary-50/);
 });
+
+test("storefront purchase pages use the shared visual token system", async () => {
+  const files = [
+    "src/app/(shop)/shop/products/page.tsx",
+    "src/app/(shop)/shop/categories/[slug]/page.tsx",
+    "src/app/(shop)/shop/cart/page.tsx",
+    "src/app/(shop)/shop/checkout/page.tsx",
+    "src/app/(shop)/shop/deals/page.tsx",
+    "src/app/(shop)/shop/visual-search/page.tsx",
+    "src/components/commerce/product/ProductInfo.tsx",
+  ];
+
+  for (const path of files) {
+    const source = await read(path);
+    assert.doesNotMatch(source, /#2563EB|#0F2747|#0F172A|#F8FAFC/);
+    assert.match(source, /bg-background|bg-surface|text-brand|text-brand-ink/);
+  }
+});
+
+test("product detail does not show a fake zero rating", async () => {
+  const source = await read("src/components/commerce/product/ProductInfo.tsx");
+  assert.match(source, /product.reviewCount > 0/);
+  assert.match(source, /No reviews yet/);
+  assert.doesNotMatch(source, /<Star[^>]*>[^]*product\.rating\.toFixed\(1\)/);
+});
