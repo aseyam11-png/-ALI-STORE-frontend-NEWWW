@@ -264,6 +264,138 @@ class BackendCommerceIntegrityTest {
     }
 
     @Test
+    void inventorySync_recordsReservationShortfallExplicitly() {
+        Product product = product("SYNC-DISCREPANCY", "https://supplier.example");
+
+        Inventory inventory = inventoryRepository.save(Inventory.builder()
+                .product(product)
+                .quantity(10)
+                .reservedQuantity(2)
+                .lowStockThreshold(5)
+                .source(InventorySource.SUPPLIER_SYNC)
+                .lastSyncedAt(LocalDateTime.now().minusMinutes(1))
+                .build());
+
+        var response = inventoryService.syncSupplierStock(
+                product.getId(), 0, LocalDateTime.now());
+
+        Assertions.assertEquals(0, response.getSupplierReportedQuantity());
+        Assertions.assertTrue(response.getInventoryDiscrepancy());
+
+        Inventory persisted = inventoryRepository.findById(inventory.getId()).orElseThrow();
+        Assertions.assertEquals(0, persisted.getSupplierReportedQuantity());
+        Assertions.assertTrue(persisted.getInventoryDiscrepancy());
+
+        inventoryService.commitReservedStock(product.getId(), 2);
+
+        Inventory afterCommit = inventoryRepository.findById(inventory.getId()).orElseThrow();
+        Assertions.assertEquals(0, afterCommit.getReservedQuantity());
+        Assertions.assertFalse(afterCommit.getInventoryDiscrepancy());
+    }
+
+    @Test
+    void supplierActivation_rejectsFulfillmentReadyStatus_withoutEndpoint() {
+        Supplier supplier = supplierRepository.save(Supplier.builder()
+                .externalCode("ACTIVATE-BAD")
+                .name("Activation Bad")
+                .status(com.store.supplier.entity.SupplierStatus.INACTIVE)
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(true)
+                .build());
+
+        Assertions.assertThrows(
+                BusinessException.class,
+                () -> supplierService.updateStatus(
+                        supplier.getId(),
+                        com.store.supplier.entity.SupplierStatus.ACTIVE));
+    }
+
+    @Test
+    void nonRetryableSupplierFailure_isFailedImmediately() {
+        Order order = orderRepository.save(Order.builder()
+                .user(testUser())
+                .status(OrderStatus.PROCESSING)
+                .totalAmount(new BigDecimal("25.00"))
+                .currency("USD")
+                .shippingAddress("1 Main St")
+                .reservationExpiresAt(LocalDateTime.now().plusMinutes(30))
+                .build());
+
+        Supplier supplier = supplierRepository.save(Supplier.builder()
+                .externalCode("RETRY-PERM")
+                .name("Permanent Failure Supplier")
+                .apiBaseUrl("https://supplier.example")
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(true)
+                .build());
+
+        Product product = productRepository.save(Product.builder()
+                .name("Permanent Failure Product")
+                .slug("permanent-failure-product")
+                .price(new BigDecimal("25.00"))
+                .currency("USD")
+                .sku("RETRY-PERM-PROD")
+                .status(ProductStatus.ACTIVE)
+                .category(categoryRepository.save(Category.builder()
+                        .name("Retry Category")
+                        .slug("retry-category")
+                        .active(true)
+                        .build()))
+                .supplier(supplier)
+                .supplierSku("RETRY-PERM-SKU")
+                .supplierCost(new BigDecimal("10.00"))
+                .build());
+
+        inventoryRepository.save(Inventory.builder()
+                .product(product)
+                .quantity(5)
+                .reservedQuantity(1)
+                .lowStockThreshold(1)
+                .source(InventorySource.MANUAL)
+                .lastSyncedAt(LocalDateTime.now())
+                .build());
+
+        order.getItems().add(OrderItem.builder()
+                .order(order)
+                .product(product)
+                .supplier(supplier)
+                .supplierSku("RETRY-PERM-SKU")
+                .supplierUnitCost(new BigDecimal("10.00"))
+                .quantity(1)
+                .unitPrice(new BigDecimal("25.00"))
+                .subtotal(new BigDecimal("25.00"))
+                .build());
+        orderRepository.save(order);
+
+        Shipment shipment = shipmentRepository.save(Shipment.builder()
+                .orderId(order.getId())
+                .supplier(supplier)
+                .status(ShipmentStatus.PENDING)
+                .shippingAddressSnapshot(order.getShippingAddress())
+                .build());
+
+        FulfillmentTask task = taskRepository.save(FulfillmentTask.builder()
+                .shipment(shipment)
+                .status(FulfillmentTaskStatus.PENDING)
+                .attempts(0)
+                .nextAttemptAt(LocalDateTime.now())
+                .build());
+
+        when(supplierFulfillmentClient.submit(any(), any()))
+                .thenThrow(new com.store.fulfillment.service.SupplierFulfillmentException(
+                        "invalid SKU", false));
+
+        fulfillmentTaskProcessor.processTask(task.getId());
+
+        Assertions.assertEquals(
+                FulfillmentTaskStatus.FAILED,
+                taskRepository.findById(task.getId()).orElseThrow().getStatus());
+        Assertions.assertEquals(
+                ShipmentStatus.CANCELLED,
+                shipmentRepository.findById(shipment.getId()).orElseThrow().getStatus());
+    }
+
+    @Test
     void localFulfillmentIneligibility_cancelsShipment_andReleasesReservation() {
         Supplier supplier = supplierRepository.save(Supplier.builder()
                 .externalCode("DISABLED-SUP")
