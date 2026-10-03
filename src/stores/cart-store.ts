@@ -5,7 +5,7 @@ export interface CartItem {
   name: string;
 
   price: number;
-    priceUnit: string;
+  priceUnit: string;
   currency?: string;
 
   quantity: number;
@@ -14,8 +14,7 @@ export interface CartItem {
 
   minOrderQuantity: number;
 
-  // Internal fulfillment source — never shown to customers
-  // Shipping information
+  // Shipping metadata is an optional UI cache; backend remains authoritative.
   shippingCost?: number;
   shippingMethod?: string;
   estimatedDelivery?: string;
@@ -190,17 +189,6 @@ export const useCartStore = create<CartState>(
           estimatedDelivery: "",
         };
       }
-
-      const rated = items.map((item) => ({
-        item,
-        cost: Math.max(0, Number(item.shippingCost ?? 0)),
-      }));
-
-      const highest = rated.reduce(
-        (max, current) =>
-          current.cost > max.cost ? current : max,
-        rated[0],
-      );
 
       return {
         cost: 0,
