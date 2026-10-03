@@ -56,7 +56,7 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
     // No real inventory source exists (see features/inventory/
     // availability.ts) — this stays honestly at 0 rather than reading a
     // field that was never real on the previous input shape either.
-    stock: 0,
+    stock: product.availableQuantity,
 
     images: product.thumbnail?.url
       ? [
