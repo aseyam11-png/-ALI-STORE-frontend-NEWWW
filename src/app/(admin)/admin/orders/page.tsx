@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, Truck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
 import { getAdminOrders, updateAdminOrderStatus } from "@/features/admin/orders/services/admin-order-api.service";
@@ -104,6 +104,43 @@ export default function AdminOrdersPage() {
                           </button>
                         ))}
                       </div>
+                    </div>
+
+                    <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-slate-500" />
+                        <p className="text-xs font-black text-slate-700">Shipments</p>
+                      </div>
+
+                      {order.shipments.length === 0 ? (
+                        <p className="mt-2 text-xs text-slate-400">No shipment has been created for this order yet.</p>
+                      ) : (
+                        <div className="mt-3 space-y-3">
+                          {order.shipments.map((shipment) => (
+                            <div
+                              key={shipment.id}
+                              className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-[#2563EB]">
+                                    {shipment.status}
+                                  </span>
+                                  <span className="text-xs font-bold text-slate-700">
+                                    {shipment.carrier ?? "Carrier not assigned"}
+                                  </span>
+                                </div>
+                                <p className="mt-1 truncate font-mono text-[11px] text-slate-500">
+                                  {shipment.trackingNumber ?? "Tracking number not assigned"}
+                                </p>
+                              </div>
+                              <p className="text-[10px] text-slate-400">
+                                Updated {new Date(shipment.updatedAt ?? order.createdAt).toLocaleString()}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </article>
                 ))}
