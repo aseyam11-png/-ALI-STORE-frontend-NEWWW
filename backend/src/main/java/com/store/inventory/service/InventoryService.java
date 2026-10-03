@@ -108,12 +108,19 @@ public class InventoryService {
         if (quantity < 0) throw new BusinessException("Supplier inventory quantity cannot be negative");
         Inventory inventory = inventoryRepository.findByProductIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for product id: " + productId));
-        if (quantity < inventory.getReservedQuantity()) {
-            throw new BusinessException("Supplier quantity cannot be lower than currently reserved stock");
+        LocalDateTime effectiveSyncedAt = syncedAt != null ? syncedAt : LocalDateTime.now();
+
+        // Supplier APIs can return delayed/out-of-order snapshots. Never let an
+        // older snapshot overwrite a newer one, otherwise availability can move
+        // backward even though the supplier sent fresher stock first.
+        if (inventory.getLastSyncedAt() != null
+                && !effectiveSyncedAt.isAfter(inventory.getLastSyncedAt())) {
+            return mapToResponse(inventory);
         }
+
         inventory.setQuantity(quantity);
         inventory.setSource(InventorySource.SUPPLIER_SYNC);
-        inventory.setLastSyncedAt(syncedAt != null ? syncedAt : LocalDateTime.now());
+        inventory.setLastSyncedAt(effectiveSyncedAt);
         return mapToResponse(inventoryRepository.save(inventory));
     }
 
