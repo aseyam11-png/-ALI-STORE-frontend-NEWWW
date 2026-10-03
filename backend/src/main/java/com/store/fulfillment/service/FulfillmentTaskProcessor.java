@@ -37,6 +37,7 @@ public class FulfillmentTaskProcessor {
     private final InventoryService inventoryService;
     private final SupplierFulfillmentClient supplierFulfillmentClient;
     private final ShipmentService shipmentService;
+    private final SupplierOrderPartitioner supplierOrderPartitioner;
     private final PlatformTransactionManager transactionManager;
 
     public void processTask(Long taskId) {
@@ -81,9 +82,9 @@ public class FulfillmentTaskProcessor {
             return null;
         }
 
-        List<SupplierFulfillmentRequest.Item> items = order.getItems().stream()
-                .filter(item -> item.getSupplier() != null
-                        && item.getSupplier().getId().equals(shipment.getSupplier().getId()))
+        List<SupplierFulfillmentRequest.Item> items = supplierOrderPartitioner
+                .forSupplier(order, shipment.getSupplier().getId())
+                .stream()
                 .map(this::mapItem)
                 .toList();
 
@@ -134,9 +135,8 @@ public class FulfillmentTaskProcessor {
         shipment.setStatus(ShipmentStatus.PROCESSING);
         shipmentRepository.save(shipment);
 
-        order.getItems().stream()
-                .filter(item -> item.getSupplier() != null
-                        && item.getSupplier().getId().equals(shipment.getSupplier().getId()))
+        supplierOrderPartitioner
+                .forSupplier(order, shipment.getSupplier().getId())
                 .forEach(item -> inventoryService.commitReservedStock(
                         item.getProduct().getId(), item.getQuantity()));
 
@@ -199,9 +199,8 @@ public class FulfillmentTaskProcessor {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Order not found with id: " + shipment.getOrderId()));
 
-        order.getItems().stream()
-                .filter(item -> item.getSupplier() != null
-                        && item.getSupplier().getId().equals(shipment.getSupplier().getId()))
+        supplierOrderPartitioner
+                .forSupplier(order, shipment.getSupplier().getId())
                 .forEach(item -> inventoryService.releaseReservedStockUpTo(
                         item.getProduct().getId(), item.getQuantity()));
     }
