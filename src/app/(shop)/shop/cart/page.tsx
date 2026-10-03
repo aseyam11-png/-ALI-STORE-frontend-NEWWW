@@ -20,9 +20,12 @@ import { useCartStore } from "@/stores/cart-store";
 import { useSession } from "@/features/auth/session";
 import {
   getBackendCart,
+  updateBackendCartItem,
+  removeBackendCartItem,
+  clearBackendCart,
   mapBackendCartToLocal,
   replaceBackendCart,
-} from "@/features/commerce/services/checkout-api.service";
+} from "@/features/cart/services/cart-api.service";
 
 export default function CartPage() {
   const items = useCartStore(
@@ -89,9 +92,38 @@ export default function CartPage() {
     };
   }, [session.status, replaceItems]);
 
-  const persistCartChange = async (nextItems: typeof items) => {
+  const handleQuantityChange = async (
+    productId: string,
+    variantId: string | undefined,
+    quantity: number,
+  ) => {
+    const item = useCartStore.getState().items.find(
+      (candidate) =>
+        candidate.productId === productId &&
+        candidate.variantId === variantId,
+    );
+
+    if (!item) return;
+
+    const safeQuantity = Math.max(
+      1,
+      Math.floor(quantity),
+    );
+
     if (session.status !== "authenticated") {
+      const nextItems = useCartStore.getState().items.map(
+        (candidate) =>
+          candidate.productId === productId &&
+          candidate.variantId === variantId
+            ? { ...candidate, quantity: safeQuantity }
+            : candidate,
+      );
       replaceItems(nextItems);
+      return;
+    }
+
+    if (!item.backendItemId) {
+      setError("Cart item identity is missing. Refresh the cart and try again.");
       return;
     }
 
@@ -99,8 +131,17 @@ export default function CartPage() {
     setError("");
 
     try {
-      const backend = await replaceBackendCart(nextItems);
-      replaceItems(mapBackendCartToLocal(backend, nextItems));
+      const backend = await updateBackendCartItem(
+        item.backendItemId,
+        safeQuantity,
+        Number(productId),
+      );
+      replaceItems(
+        mapBackendCartToLocal(
+          backend,
+          useCartStore.getState().items,
+        ),
+      );
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -112,36 +153,86 @@ export default function CartPage() {
     }
   };
 
-  const handleQuantityChange = (
+  const handleRemove = async (
     productId: string,
     variantId: string | undefined,
-    quantity: number,
   ) => {
-    const nextItems = useCartStore.getState().items.map((item) =>
-      item.productId === productId &&
-      item.variantId === variantId
-        ? { ...item, quantity: Math.max(1, Math.floor(quantity)) }
-        : item,
+    const item = useCartStore.getState().items.find(
+      (candidate) =>
+        candidate.productId === productId &&
+        candidate.variantId === variantId,
     );
-    void persistCartChange(nextItems);
-  };
 
-  const handleRemove = (
-    productId: string,
-    variantId: string | undefined,
-  ) => {
-    const nextItems = useCartStore.getState().items.filter(
-      (item) =>
-        !(
-          item.productId === productId &&
-          item.variantId === variantId
+    if (!item) return;
+
+    if (session.status !== "authenticated") {
+      replaceItems(
+        useCartStore.getState().items.filter(
+          (candidate) =>
+            !(
+              candidate.productId === productId &&
+              candidate.variantId === variantId
+            ),
         ),
-    );
-    void persistCartChange(nextItems);
+      );
+      return;
+    }
+
+    if (!item.backendItemId) {
+      setError("Cart item identity is missing. Refresh the cart and try again.");
+      return;
+    }
+
+    setSyncing(true);
+    setError("");
+
+    try {
+      const backend = await removeBackendCartItem(
+        item.backendItemId,
+      );
+      replaceItems(
+        mapBackendCartToLocal(
+          backend,
+          useCartStore.getState().items,
+        ),
+      );
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "تعذر حذف المنتج من السلة.",
+      );
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleClear = async () => {
-    await persistCartChange([]);
+    if (session.status !== "authenticated") {
+      replaceItems([]);
+      return;
+    }
+
+    setSyncing(true);
+    setError("");
+
+    try {
+      const backend = await clearBackendCart();
+      replaceItems(
+        mapBackendCartToLocal(
+          backend,
+          useCartStore.getState().items,
+        ),
+      );
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "تعذر إفراغ السلة.",
+      );
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -309,6 +400,7 @@ export default function CartPage() {
                                   <p className="mt-2 text-lg font-black text-[#0F2747]">
                                     <LocalizedPrice
                                       amountUSD={item.price}
+                                      currency={item.currency}
                                     />
                                   </p>
 
@@ -365,6 +457,7 @@ export default function CartPage() {
                                   <p className="text-xl font-black text-[#0F2747]">
                                     <LocalizedPrice
                                       amountUSD={itemTotal}
+                                      currency={item.currency}
                                     />
                                   </p>
 
@@ -434,7 +527,7 @@ export default function CartPage() {
                         </span>
 
                         <span className="font-bold">
-                          <LocalizedPrice amountUSD={subtotal} />
+                          <LocalizedPrice amountUSD={subtotal} currency={items[0]?.currency} />
                         </span>
                       </div>
 

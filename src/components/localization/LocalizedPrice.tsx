@@ -3,26 +3,33 @@
 import { formatCurrency } from "@/features/localization/services/currency.service";
 
 interface LocalizedPriceProps {
-  amountUSD: number;
+  amount?: number;
+  amountUSD?: number;
   currency?: string;
   className?: string;
 }
 
-// Prop name kept as `amountUSD` for API stability with existing callers —
-// the value is treated as the canonical SAR amount (no currency selection,
-// no conversion). See currency.service.ts for the single formatting rule.
 export function LocalizedPrice({
+  amount,
   amountUSD,
-  currency = "SAR",
+  currency,
   className = "",
 }: LocalizedPriceProps) {
+  const value = amount ?? amountUSD;
+
+  if (value === undefined || !Number.isFinite(value)) {
+    return null;
+  }
+
   return (
-    <span
-      className={
-        className
-      }
-    >
-      {formatCurrency(amountUSD, currency)}
+    <span className={className}>
+      {currency
+        ? formatCurrency(value, currency)
+        : value.toLocaleString("en-US", {
+            minimumFractionDigits:
+              Number.isInteger(value) ? 0 : 2,
+            maximumFractionDigits: 2,
+          })}
     </span>
   );
 }

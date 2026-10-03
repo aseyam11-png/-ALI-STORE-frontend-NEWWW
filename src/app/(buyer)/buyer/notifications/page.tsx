@@ -1,137 +1,243 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bell, CheckCircle2, Trash2 } from "lucide-react";
+import {
+  Bell,
+  CheckCircle2,
+  LogIn,
+  Trash2,
+} from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useSession } from "@/features/auth/session";
 import {
   deleteNotification,
   getMyNotifications,
   markNotificationAsRead,
-  type BackendNotification,
 } from "@/features/notifications/services/notification-api.service";
+import { useNotificationStore } from "@/stores/notification-store";
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<BackendNotification[]>([]);
+  const session = useSession();
+  const notifications = useNotificationStore(
+    (state) => state.notifications,
+  );
+  const replaceNotifications = useNotificationStore(
+    (state) => state.replaceNotifications,
+  );
+  const markAsRead = useNotificationStore(
+    (state) => state.markAsRead,
+  );
+  const removeNotification = useNotificationStore(
+    (state) => state.removeNotification,
+  );
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (session.status !== "authenticated") {
+      return;
+    }
+
     let active = true;
-    getMyNotifications()
-      .then((nextNotifications) => {
-        if (active) setNotifications(nextNotifications);
+
+    void getMyNotifications()
+      .then((items) => {
+        if (!active) return;
+
+        replaceNotifications(
+          items.map((item) => ({
+            id: String(item.id),
+            customerId: String(item.userId),
+            type: "SYSTEM" as const,
+            title: item.title,
+            message: item.message,
+            createdAt: item.createdAt,
+            read: item.isRead,
+          })),
+        );
       })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load notifications.");
+      .catch((caughtError) => {
+        if (!active) return;
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : "تعذر تحميل الإشعارات.",
+        );
       })
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
-  }, []);
 
-  async function markRead(id: number) {
+    return () => {
+      active = false;
+    };
+  }, [replaceNotifications, session.status]);
+
+  const markRead = async (id: string) => {
     try {
-      const updated = await markNotificationAsRead(String(id));
-      setNotifications((current) =>
-        current.map((item) => (item.id === id ? updated : item)),
+      await markNotificationAsRead(id);
+      markAsRead(id);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "تعذر تحديث الإشعار.",
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update notification.");
     }
-  }
+  };
 
-  async function remove(id: number) {
+  const remove = async (id: string) => {
     try {
-      await deleteNotification(String(id));
-      setNotifications((current) => current.filter((item) => item.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to delete notification.");
+      await deleteNotification(id);
+      removeNotification(id);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "تعذر حذف الإشعار.",
+      );
     }
-  }
+  };
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1000px] px-4 py-8 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <Bell className="h-6 w-6 text-[#2563EB]" />
+      <main className="min-h-screen bg-background">
+        <section className="border-b border-neutral-200 bg-surface">
+          <div className="mx-auto max-w-[1000px] px-4 py-10 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-brand">
+                <Bell className="h-5 w-5" />
+              </span>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
+                <p className="text-label font-medium uppercase tracking-[0.16em] text-brand">
                   Account
                 </p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
-                  Notifications
+                <h1 className="mt-2 text-h1 font-bold tracking-tight text-foreground">
+                  الإشعارات
                 </h1>
               </div>
             </div>
-            <p className="mt-3 text-sm text-slate-500">
-              Live order and account notifications from ALI STORE.
+            <p className="mt-4 max-w-2xl text-body leading-7 text-muted-foreground">
+              الإشعارات المعروضة هنا تأتي من حسابك الفعلي في ALI STORE.
             </p>
           </div>
         </section>
 
-        <div className="mx-auto max-w-[1000px] px-4 py-7 sm:px-6 lg:px-8">
-          {error && (
-            <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
-              {error}
-            </div>
-          )}
-
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {loading ? (
-              <div className="p-12 text-center text-sm text-slate-500">Loading notifications...</div>
-            ) : notifications.length === 0 ? (
-              <div className="p-14 text-center">
-                <Bell className="mx-auto h-9 w-9 text-slate-300" />
-                <p className="mt-4 text-lg font-black text-slate-800">No notifications</p>
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <article
-                  key={notification.id}
-                  className={`border-b border-slate-100 p-5 last:border-0 ${
-                    notification.isRead ? "bg-white" : "bg-blue-50/40"
-                  }`}
+        <div className="mx-auto max-w-[1000px] px-4 py-8 sm:px-6 lg:px-8">
+          {session.status === "loading" ? (
+            <section
+              className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm"
+            >
+              <Bell className="mx-auto h-9 w-9 text-neutral-300" />
+              <h2 className="mt-4 text-h3 font-bold text-foreground">
+                جارٍ التحقق من الجلسة...
+              </h2>
+            </section>
+          ) : session.status !== "authenticated" ? (
+            <section className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm">
+              <LogIn className="mx-auto h-9 w-9 text-neutral-300" />
+              <h2 className="mt-4 text-h3 font-bold text-foreground">
+                سجّل الدخول لعرض إشعاراتك
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-body-sm leading-6 text-muted-foreground">
+                الإشعارات مرتبطة بحسابك ولا يتم عرض بيانات تجريبية للزائر.
+              </p>
+              <Link
+                href="/login?next=/buyer/notifications"
+                className="mt-6 inline-flex h-11 items-center rounded-md bg-brand px-6 text-body font-medium text-white hover:bg-brand-hover"
+              >
+                تسجيل الدخول
+              </Link>
+            </section>
+          ) : (
+            <>
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-5 rounded-md border border-danger-100 bg-danger-surface px-4 py-3 text-body-sm font-medium text-danger-600"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm">
-                      <Bell className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-sm font-black text-slate-900">{notification.title}</h2>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">{notification.message}</p>
-                      <p className="mt-2 text-[10px] text-slate-400">
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      {!notification.isRead && (
-                        <button
-                          type="button"
-                          onClick={() => void markRead(notification.id)}
-                          aria-label="Mark notification as read"
-                          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#2563EB] hover:bg-white"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => void remove(notification.id)}
-                        aria-label="Delete notification"
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                  {error}
+                </div>
+              )}
+
+              <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
+                {loading ? (
+                  <div className="space-y-4 p-8">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-20 animate-pulse rounded-xl bg-neutral-100"
+                      />
+                    ))}
                   </div>
-                </article>
-              ))
-            )}
-          </section>
+                ) : notifications.length === 0 ? (
+                  <div className="p-14 text-center">
+                    <Bell className="mx-auto h-9 w-9 text-neutral-300" />
+                    <h2 className="mt-4 text-h3 font-bold text-foreground">
+                      لا توجد إشعارات
+                    </h2>
+                    <p className="mt-2 text-body-sm text-muted-foreground">
+                      ستظهر هنا تحديثات الحساب والطلبات عندما ينشئها النظام.
+                    </p>
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <article
+                      key={notification.id}
+                      className={
+                        "border-b border-neutral-100 p-5 last:border-0 " +
+                        (notification.read
+                          ? "bg-surface"
+                          : "bg-primary-50/40")
+                      }
+                    >
+                      <div className="flex items-start gap-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-brand shadow-sm">
+                          <Bell className="h-4 w-4" />
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <h2 className="text-body-sm font-bold text-foreground">
+                            {notification.title}
+                          </h2>
+                          <p className="mt-1 text-body-sm leading-6 text-muted-foreground">
+                            {notification.message}
+                          </p>
+                          <p className="mt-2 text-caption text-muted-foreground">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1">
+                          {!notification.read && (
+                            <button
+                              type="button"
+                              onClick={() => void markRead(notification.id)}
+                              aria-label="تحديد كمقروء"
+                              className="flex h-9 w-9 items-center justify-center rounded-lg text-brand hover:bg-neutral-100"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => void remove(notification.id)}
+                            aria-label="حذف الإشعار"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:bg-danger-surface hover:text-danger-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </section>
+            </>
+          )}
         </div>
       </main>
     </AppShell>

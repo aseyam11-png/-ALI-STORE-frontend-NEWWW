@@ -8,6 +8,10 @@ import { ArrowLeft, Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
+import {
+  addBackendCartItem,
+  mapBackendCartToLocal,
+} from "@/features/cart/services/cart-api.service";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useSession } from "@/features/auth/session";
 import {
@@ -20,7 +24,11 @@ export default function WishlistPage() {
   const session = useSession();
   const localItems = useWishlistStore((state) => state.items);
   const removeLocalItem = useWishlistStore((state) => state.removeItem);
-  const addItem = useCartStore((state) => state.addItem);
+  const addLocalItem = useCartStore((state) => state.addItem);
+  const replaceCartItems = useCartStore(
+    (state) => state.replaceItems,
+  );
+  const [cartBusyId, setCartBusyId] = useState<string | null>(null);
 
   const [serverItems, setServerItems] = useState<BackendWishlistItem[]>([]);
   const [serverLoading, setServerLoading] = useState(true);
@@ -66,6 +74,7 @@ export default function WishlistPage() {
             brandName: item.brandName ?? undefined,
             categoryName: item.categoryName ?? undefined,
             originalPrice: undefined,
+            currency: item.currency ?? undefined,
           }))
         : localItems.map((item) => ({
             productId: item.id,
@@ -75,6 +84,7 @@ export default function WishlistPage() {
             brandName: item.brand,
             categoryName: item.category,
             originalPrice: item.originalPrice,
+            currency: item.currency,
           })),
     [localItems, serverItems, session.status],
   );
@@ -198,26 +208,69 @@ export default function WishlistPage() {
                         </h2>
                       </Link>
 
-                      <LocalizedPrice amountUSD={price} className="mt-3 text-xl font-black text-[#0F2747]" />
+                      <LocalizedPrice amountUSD={price} currency={product.currency} className="mt-3 text-xl font-black text-[#0F2747]" />
 
                       <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
                         <button
                           type="button"
-                          onClick={() =>
-                            addItem({
+                          disabled={cartBusyId === productId}
+                          onClick={async () => {
+                            if (cartBusyId === productId) return;
+
+                            setError("");
+                            setCartBusyId(productId);
+
+                            const localLine = {
                               productId,
                               name,
                               price,
+                              currency: product.currency,
                               priceUnit: "unit",
                               quantity: 1,
                               image,
                               minOrderQuantity: 1,
-                            })
-                          }
-                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-xs font-black text-white"
+                            };
+
+                            try {
+                              if (session.status === "authenticated") {
+                                const numericId = Number(productId);
+                                if (!Number.isInteger(numericId) || numericId < 1) {
+                                  throw new Error("Invalid product id.");
+                                }
+
+                                const currentItems =
+                                  useCartStore.getState().items;
+                                const backend = await addBackendCartItem(
+                                  numericId,
+                                  1,
+                                );
+
+                                replaceCartItems(
+                                  mapBackendCartToLocal(
+                                    backend,
+                                    [...currentItems, localLine],
+                                  ),
+                                );
+                              } else {
+                                addLocalItem(localLine);
+                              }
+                            } catch (caughtError) {
+                              setError(
+                                caughtError instanceof Error
+                                  ? caughtError.message
+                                  : "تعذر إضافة المنتج إلى السلة.",
+                              );
+                            } finally {
+                              setCartBusyId(null);
+                            }
+                          }}
+                          aria-busy={cartBusyId === productId}
+                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <ShoppingCart className="h-4 w-4" />
-                          Add to cart
+                          {cartBusyId === productId
+                            ? "جارٍ الإضافة..."
+                            : "Add to cart"}
                         </button>
 
                         <button

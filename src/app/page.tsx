@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 
-import { CustomerShell } from "@/components/commerce/CustomerShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { HomeHero } from "@/components/commerce/HomeHero";
 import { CategoryGrid } from "@/components/commerce/CategoryGrid";
 import { ProductDiscovery } from "@/components/commerce/ProductDiscovery";
@@ -25,13 +25,13 @@ export const metadata: Metadata = {
 // a static, real photograph (see HomeHero) — no 3D/canvas layer.
 export default function HomePage() {
   return (
-    <CustomerShell>
+    <AppShell>
       <HomeHero />
       <CategoryGrid />
       <ProductDiscovery />
       <FlashDeals />
       <TrustStrip />
-    </CustomerShell>
+    </AppShell>
   );
 }
 

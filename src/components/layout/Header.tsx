@@ -108,7 +108,7 @@ export function Header() {
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)] backdrop-blur-2xl">
+    <header className="sticky top-0 z-50 border-b border-neutral-200/80 bg-surface/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)] backdrop-blur-2xl">
 
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
 
@@ -125,12 +125,12 @@ export function Header() {
                 whileHover={{
                   scale: 1.03,
                 }}
-                className="text-xl font-black tracking-tight text-[#0F2747] sm:text-2xl"
+                className="text-xl font-black tracking-tight text-brand-ink sm:text-2xl"
               >
                 Ali
               </motion.span>
 
-              <span className="text-xl font-black tracking-tight text-[#2563EB] sm:text-2xl">
+              <span className="text-xl font-black tracking-tight text-brand sm:text-2xl">
                 Store
               </span>
 
@@ -138,9 +138,9 @@ export function Header() {
 
             <div className="mt-0.5 hidden items-center gap-2 sm:flex">
 
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
 
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-neutral-400">
                 Direct From AliStore
               </p>
 
@@ -160,7 +160,7 @@ export function Header() {
                   (value) => !value,
                 )
               }
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-blue-50 hover:text-[#2563EB] lg:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-primary-50 hover:text-brand lg:hidden"
               aria-label="Open search"
             >
               <Search className="h-5 w-5" />
@@ -168,7 +168,7 @@ export function Header() {
 
             <Link
               href="/shop/visual-search"
-              className="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-blue-50 hover:text-[#2563EB] lg:inline-flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-primary-50 hover:text-brand lg:inline-flex"
               aria-label="Search by image"
               title="Search by image"
             >
@@ -177,7 +177,7 @@ export function Header() {
 
             <Link
               href="/buyer/support"
-              className="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-blue-50 hover:text-[#2563EB] sm:inline-flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-primary-50 hover:text-brand sm:inline-flex"
               aria-label="Messages"
               title="Messages"
             >
@@ -188,7 +188,7 @@ export function Header() {
 
             <Link
               href="/buyer/wishlist"
-              className="relative hidden h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-blue-50 hover:text-[#2563EB] sm:inline-flex"
+              className="relative hidden h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-primary-50 hover:text-brand sm:inline-flex"
               aria-label="Wishlist"
               title="Wishlist"
             >
@@ -206,7 +206,7 @@ export function Header() {
                       scale: 1,
                       opacity: 1,
                     }}
-                    className="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[8px] font-black text-white"
+                    className="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-discount-500 px-1 text-[8px] font-black text-white"
                   >
                     {wishlistCount > 99
                       ? "99+"
@@ -218,7 +218,7 @@ export function Header() {
 
             <Link
               href="/shop/cart"
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-blue-50 hover:text-[#2563EB]"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-primary-50 hover:text-brand"
               aria-label={`Shopping cart with ${cartCount} items`}
               title="Shopping cart"
             >
@@ -236,7 +236,7 @@ export function Header() {
                       scale: 1,
                       opacity: 1,
                     }}
-                    className="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2563EB] px-1 text-[8px] font-black text-white"
+                    className="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[8px] font-black text-white"
                   >
                     {cartCount > 99
                       ? "99+"
@@ -248,21 +248,21 @@ export function Header() {
 
             <Link
               href="/buyer"
-              className="hidden items-center gap-2 rounded-xl px-2 py-1.5 text-slate-700 transition hover:bg-slate-100 md:flex"
+              className="hidden items-center gap-2 rounded-xl px-2 py-1.5 text-slate-700 transition hover:bg-neutral-100 md:flex"
             >
 
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 text-[#2563EB] ring-1 ring-blue-100">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-brand ring-1 ring-primary-100">
                 <User className="h-4 w-4" />
               </span>
 
               <span className="hidden xl:block">
-                <span className="block text-[10px] font-medium text-slate-400">
+                <span className="block text-[10px] font-medium text-neutral-400">
                   Welcome back
                 </span>
 
                 <span className="flex items-center gap-1 text-sm font-black">
                   Account
-                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  <ChevronDown className="h-3.5 w-3.5 text-neutral-400" />
                 </span>
               </span>
 

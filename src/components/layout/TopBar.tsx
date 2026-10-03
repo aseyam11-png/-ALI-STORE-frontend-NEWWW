@@ -9,23 +9,23 @@ import { LocaleCurrencySwitcher } from "@/components/localization/LocaleCurrency
 
 export function TopBar() {
   return (
-    <div className="bg-[#0F2747] text-slate-200">
+    <div className="bg-brand-ink text-neutral-200">
       <div className="mx-auto flex min-h-9 max-w-[1440px] items-center justify-between gap-4 px-4 text-[11px] sm:px-6 lg:px-8">
 
         <div className="flex min-w-0 items-center gap-4">
 
           <span className="hidden items-center gap-1.5 sm:flex">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            Every product checked by AliStore
+            <ShieldCheck className="h-3.5 w-3.5 text-success" />
+            Product information from ALI STORE
           </span>
 
           <span className="hidden items-center gap-1.5 md:flex">
-            <Globe2 className="h-3.5 w-3.5 text-blue-300" />
-            Global shipping
+            <Globe2 className="h-3.5 w-3.5 text-primary-300" />
+            Shipping details confirmed at checkout
           </span>
 
-          <span className="truncate text-slate-300">
-            Buyer protection & secure trade
+          <span className="truncate text-neutral-300">
+            Secure checkout & account protection
           </span>
 
         </div>
@@ -34,7 +34,7 @@ export function TopBar() {
 
           <Link
             href="/support"
-            className="hidden items-center gap-1.5 transition hover:text-white sm:flex"
+            className="hidden items-center gap-1.5 transition hover:text-neutral-0 sm:flex"
           >
             <Headphones className="h-3.5 w-3.5" />
             Help Center

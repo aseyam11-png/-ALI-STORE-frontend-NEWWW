@@ -77,8 +77,10 @@ export default function CheckoutPage() {
     useState("card");
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [serverCartTotal, setServerCartTotal] = useState<number | null>(null);
-  const [serverCartCurrency, setServerCartCurrency] = useState<string>("USD");
+  const [serverCartTotal, setServerCartTotal] =
+    useState<number | null>(null);
+  const [serverCartCurrency, setServerCartCurrency] =
+    useState<string | undefined>(undefined);
 
   const [error, setError] =
     useState("");
@@ -109,14 +111,18 @@ export default function CheckoutPage() {
           const mapped = mapBackendCartToLocal(migrated, localItems);
           replaceItems(mapped);
           setServerCartTotal(migrated.totalPrice);
-          setServerCartCurrency(migrated.currency ?? mapped[0]?.currency ?? "USD");
+          setServerCartCurrency(
+            migrated.currency ?? mapped[0]?.currency,
+          );
           return;
         }
 
         const mapped = mapBackendCartToLocal(backend, localItems);
         replaceItems(mapped);
         setServerCartTotal(backend.totalPrice);
-        setServerCartCurrency(backend.currency ?? mapped[0]?.currency ?? "USD");
+        setServerCartCurrency(
+          backend.currency ?? mapped[0]?.currency,
+        );
       } catch (caughtError) {
         if (active) {
           setError(
@@ -188,15 +194,16 @@ export default function CheckoutPage() {
     0,
   );
 
+  const cartSubtotal =
+    serverCartTotal ?? subtotal;
+
   const couponDiscount =
     appliedCoupon?.finalDiscount ?? 0;
 
-  const total =
-    Math.max(
-      0,
-      subtotal -
-        couponDiscount,
-    );
+  const total = Math.max(
+    0,
+    cartSubtotal - couponDiscount,
+  );
 
   const setField = (
     key: keyof FormState,
@@ -275,6 +282,11 @@ export default function CheckoutPage() {
           : paymentMethod === "wallet"
             ? "PAYPAL"
             : "CREDIT_CARD";
+
+      // The backend order creation consumes the persisted cart. Clear the
+      // local presentation copy immediately so a later retry cannot recreate
+      // a cart that no longer exists server-side.
+      replaceItems([]);
 
       const payment = await processBackendPayment({
         orderId: order.id,
@@ -674,7 +686,7 @@ export default function CheckoutPage() {
                       },
                       {
                         value: "wallet",
-                        label: "Digital Wallet",
+                        label: "PayPal",
                       },
                       {
                         value: "cod",
@@ -766,7 +778,7 @@ export default function CheckoutPage() {
 
                 <div className="mt-5">
                   <CouponInput
-                    subtotal={subtotal}
+                    subtotal={cartSubtotal}
                     onApply={setAppliedCoupon}
                     onRemove={() => setAppliedCoupon(null)}
                   />
@@ -780,7 +792,7 @@ export default function CheckoutPage() {
                     </span>
 
                     <LocalizedPrice
-                      amountUSD={subtotal}
+                      amountUSD={cartSubtotal}
                       currency={serverCartCurrency}
                       className="font-bold text-slate-800"
                     />
@@ -805,6 +817,7 @@ export default function CheckoutPage() {
                       <span className="font-bold text-emerald-600">
                         −<LocalizedPrice
                           amountUSD={couponDiscount}
+                          currency={serverCartCurrency}
                         />
                       </span>
                     </div>
@@ -821,7 +834,7 @@ export default function CheckoutPage() {
                     </span>
 
                     <LocalizedPrice
-                      amountUSD={serverCartTotal ?? total}
+                      amountUSD={total}
                       currency={serverCartCurrency}
                       className="text-3xl font-black text-[#0F2747]"
                     />

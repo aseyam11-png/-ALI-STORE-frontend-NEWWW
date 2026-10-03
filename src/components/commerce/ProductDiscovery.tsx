@@ -3,13 +3,11 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import { Tabs } from "@/components/ui/tabs";
-import { ProductCard } from "@/components/commerce/ProductCard";
+import { B2CProductCard } from "@/components/commerce/B2CProductCard";
+import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import {
   getProducts,
 } from "@/features/products/services/product.service";
-import {
-  mapProductSummaryToCard,
-} from "@/features/products/services/product-card.mapper";
 
 export function ProductDiscovery() {
   const query = useQuery({
@@ -38,7 +36,7 @@ export function ProductDiscovery() {
     staleTime: 60_000,
   });
 
-  const products = (query.data?.items ?? []).map(mapProductSummaryToCard);
+  const products = (query.data?.items ?? []).map(normalizeB2CProduct);
 
   const renderGrid = () => {
     if (query.isPending) {
@@ -84,7 +82,7 @@ export function ProductDiscovery() {
     return (
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <B2CProductCard key={product.id} product={product} />
         ))}
       </div>
     );

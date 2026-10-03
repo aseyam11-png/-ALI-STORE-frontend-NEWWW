@@ -1,5 +1,5 @@
 import { getProducts } from "@/features/products/services/product.service";
-import { getTopLevelCategories } from "@/features/catalog/services/category.service";
+import { getCategories, flattenCategoryTree } from "@/features/catalog/services/category-api.service";
 import type { ProductSummary } from "@/features/products/types/product.types";
 
 import type {
@@ -28,22 +28,6 @@ function productScore(product: ProductSummary, query: string) {
     scoreText(product.brand?.name ?? "", query),
     scoreText(product.category?.name ?? "", query) - 10,
   );
-}
-
-function categorySuggestions(query: string): AutocompleteSuggestion[] {
-  return getTopLevelCategories()
-    .map((category) => ({
-      id: category.slug,
-      type: "CATEGORY" as const,
-      title: category.name,
-      subtitle: category.description,
-      href: `/shop/categories/${category.slug}`,
-      score: Math.max(
-        scoreText(category.name, query),
-        scoreText(category.description, query),
-      ) + 5,
-    }))
-    .filter((suggestion) => suggestion.score > 5);
 }
 
 function productSuggestions(
@@ -98,7 +82,8 @@ export async function getAutocompleteSuggestions(
 
   if (normalizedQuery.length < 2) return [];
 
-  const response = await getProducts({
+  const [response, categories] = await Promise.all([
+    getProducts({
     search: normalizedQuery,
     categoryId: undefined,
     subcategoryId: undefined,
@@ -116,10 +101,28 @@ export async function getAutocompleteSuggestions(
     sort: "relevance",
     page: 1,
     pageSize: Math.min(24, Math.max(8, limit * 2)),
-  });
+    }),
+    getCategories(),
+  ]);
+
+  const liveCategories = flattenCategoryTree(categories);
+
+  const categoryResults = liveCategories
+    .map((category) => ({
+      id: category.slug,
+      type: "CATEGORY" as const,
+      title: category.name,
+      subtitle: category.description,
+      href: "/shop/categories/" + category.slug,
+      score: Math.max(
+        scoreText(category.name, normalizedQuery),
+        scoreText(category.description, normalizedQuery),
+      ) + 5,
+    }))
+    .filter((suggestion) => suggestion.score > 5);
 
   return [
-    ...categorySuggestions(normalizedQuery),
+    ...categoryResults,
     ...productSuggestions(response.items, normalizedQuery),
     ...brandSuggestions(response.items, normalizedQuery),
   ]

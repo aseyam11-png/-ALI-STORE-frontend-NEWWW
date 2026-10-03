@@ -7,6 +7,7 @@ export interface WishlistProduct {
 
   brand?: string;
   category?: string;
+  currency?: string;
 
   originalPrice?: number;
   discountPercentage?: number;

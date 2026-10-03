@@ -24,6 +24,10 @@ import {
 import {
   useLocalizationStore,
 } from "@/stores/localization-store";
+import {
+  markNotificationAsRead,
+} from "@/features/notifications/services/notification-api.service";
+import { useSession } from "@/features/auth/session";
 
 function notificationIcon(
   type: string,
@@ -87,6 +91,7 @@ export function NotificationBell() {
       (state) =>
         state.locale,
     );
+  const session = useSession();
 
   const containerRef =
     useRef<HTMLDivElement>(
@@ -127,6 +132,7 @@ export function NotificationBell() {
 
       <button
         type="button"
+        disabled={session.status !== "authenticated"}
         onClick={() =>
           setOpen(
             (value) =>
@@ -169,10 +175,25 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 type="button"
-                onClick={
-                  markAllAsRead
-                }
-                className="text-[10px] font-black text-[#2563EB] hover:underline"
+                disabled={session.status !== "authenticated"}
+                onClick={() => {
+                  if (session.status !== "authenticated") return;
+
+                  const unreadIds = notifications
+                    .filter((item) => !item.read)
+                    .map((item) => item.id);
+
+                  void Promise.all(
+                    unreadIds.map((id) =>
+                      markNotificationAsRead(id),
+                    ),
+                  )
+                    .then(() => {
+                      markAllAsRead();
+                    })
+                    .catch(() => undefined);
+                }}
+                className="text-[10px] font-black text-[#2563EB] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Mark all read
               </button>
@@ -232,13 +253,18 @@ export function NotificationBell() {
                               <Link
                                 href={notification.href as Route}
                                 onClick={() => {
-                                  markAsRead(
-                                    notification.id,
-                                  );
-
-                                  setOpen(
-                                    false,
-                                  );
+                                  if (
+                                    session.status === "authenticated"
+                                  ) {
+                                    void markNotificationAsRead(
+                                      notification.id,
+                                    )
+                                      .then(() =>
+                                        markAsRead(notification.id),
+                                      )
+                                      .catch(() => undefined);
+                                  }
+                                  setOpen(false);
                                 }}
                               >
                                 <p className="text-xs font-black text-slate-900">
@@ -288,11 +314,21 @@ export function NotificationBell() {
                           {!notification.read && (
                             <button
                               type="button"
-                              onClick={() =>
-                                markAsRead(
+                              onClick={() => {
+                                if (
+                                  session.status !== "authenticated"
+                                ) {
+                                  return;
+                                }
+
+                                void markNotificationAsRead(
                                   notification.id,
                                 )
-                              }
+                                  .then(() =>
+                                    markAsRead(notification.id),
+                                  )
+                                  .catch(() => undefined);
+                              }}
                               aria-label="Mark notification as read"
                               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#2563EB] hover:bg-white"
                             >

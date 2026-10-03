@@ -144,8 +144,7 @@ function mapProduct(product: BackendProduct): ProductSummary {
     status: mapStatus(product.status),
     featured: false,
     bestseller: false,
-    newArrival:
-      Date.now() - new Date(createdAt).getTime() <= 1000 * 60 * 60 * 24 * 60,
+    newArrival: false,
     tags: [],
     createdAt,
     updatedAt: product.updatedAt ?? createdAt,
@@ -168,35 +167,12 @@ function mapDetails(product: BackendProduct): ProductDetails {
         ? [summary.thumbnail]
         : [];
 
-  const primaryShippingMethod = {
-    id: `product-${product.id}-standard`,
-    name: "Standard Shipping",
-    description: "Shipping cost and delivery estimate are confirmed at checkout.",
-    price: 0,
-    currency: summary.price.currency,
-    estimatedMinDays: 7,
-    estimatedMaxDays: 15,
-    available: true,
-  };
-
   return {
     ...summary,
     description: product.description ?? "",
     images: finalImages,
     videos: [],
-    variants: [
-      {
-        id: `product-${product.id}-default`,
-        sku: product.sku,
-        name: "Standard",
-        price: summary.price,
-        stockQuantity: summary.stockQuantity,
-        availableQuantity: summary.availableQuantity,
-        options: [],
-        image: finalImages[0],
-        active: summary.stockStatus === "in_stock" || summary.stockStatus === "low_stock",
-      },
-    ],
+    variants: [],
     specifications: [
       { key: "sku", label: "SKU", value: product.sku, group: "Product" },
       {
@@ -218,14 +194,8 @@ function mapDetails(product: BackendProduct): ProductDetails {
         group: "Product",
       },
     ],
-    priceTiers: [
-      {
-        minQuantity: 1,
-        unitPrice: summary.price.amount,
-        currency: summary.price.currency,
-      },
-    ],
-    shippingMethods: [primaryShippingMethod],
+    priceTiers: [],
+    shippingMethods: [],
     reviewSummary: {
       rating: summary.rating,
       reviewCount: summary.reviewCount,

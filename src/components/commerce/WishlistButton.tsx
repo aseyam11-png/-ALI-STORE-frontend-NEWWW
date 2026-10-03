@@ -1,22 +1,19 @@
 "use client";
 
-import {
-  Heart,
-} from "lucide-react";
+import { useState } from "react";
+import { Heart } from "lucide-react";
 
+import { useWishlistStore } from "@/stores/wishlist-store";
+import type { WishlistProduct } from "@/features/wishlist/types/wishlist.types";
 import {
-  useWishlistStore,
-} from "@/stores/wishlist-store";
-
-import type {
-  WishlistProduct,
-} from "@/features/wishlist/types/wishlist.types";
+  addToWishlist,
+  removeFromWishlist,
+} from "@/features/wishlist/services/wishlist-api.service";
+import { getSession } from "@/features/auth/session";
 
 interface WishlistButtonProps {
   product: WishlistProduct;
-
   size?: "sm" | "md";
-
   className?: string;
 }
 
@@ -25,63 +22,85 @@ export function WishlistButton({
   size = "md",
   className = "",
 }: WishlistButtonProps) {
-  const toggleItem =
-    useWishlistStore(
-      (state) =>
-        state.toggleItem,
-    );
+  const toggleLocal = useWishlistStore(
+    (state) => state.toggleItem,
+  );
+  const isInWishlist = useWishlistStore(
+    (state) => state.isInWishlist(product.id),
+  );
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const isInWishlist =
-    useWishlistStore(
-      (state) =>
-        state.isInWishlist(
-          product.id,
-        ),
-    );
+  const toggle = async () => {
+    if (busy) return;
 
-  const iconSize =
-    size === "sm"
-      ? "h-4 w-4"
-      : "h-5 w-5";
+    setBusy(true);
+    setError("");
 
-  const buttonSize =
-    size === "sm"
-      ? "h-9 w-9"
-      : "h-10 w-10";
+    try {
+      const session = await getSession();
+
+      if (session) {
+        if (isInWishlist) {
+          await removeFromWishlist(product.id);
+        } else {
+          await addToWishlist(product.id);
+        }
+      }
+
+      toggleLocal(product);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to update wishlist.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const iconSize = size === "sm" ? "h-4 w-4" : "h-5 w-5";
+  const buttonSize = size === "sm" ? "h-9 w-9" : "h-10 w-10";
 
   return (
-    <button
-      type="button"
-      onClick={() =>
-        toggleItem(product)
-      }
-      aria-label={
-        isInWishlist
-          ? `Remove ${product.name} from wishlist`
-          : `Add ${product.name} to wishlist`
-      }
-      aria-pressed={
-        isInWishlist
-      }
-      title={
-        isInWishlist
-          ? "Remove from wishlist"
-          : "Add to wishlist"
-      }
-      className={`flex ${buttonSize} items-center justify-center rounded-full border bg-white/95 shadow-sm backdrop-blur transition hover:scale-105 ${
-        isInWishlist
-          ? "border-red-200 text-red-500"
-          : "border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500"
-      } ${className}`}
-    >
-      <Heart
-        className={iconSize}
-        fill={
+    <span className={"relative inline-flex " + className}>
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        disabled={busy}
+        aria-busy={busy}
+        aria-label={
           isInWishlist
-            ? "currentColor"
-            : "none"
+            ? "Remove " + product.name + " from wishlist"
+            : "Add " + product.name + " to wishlist"
         }
-      />
-    </button>
+        aria-pressed={isInWishlist}
+        title={
+          error ||
+          (isInWishlist
+            ? "Remove from wishlist"
+            : "Add to wishlist")
+        }
+        className={
+          "flex " +
+          buttonSize +
+          " items-center justify-center rounded-full border bg-white/95 shadow-sm backdrop-blur transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 " +
+          (isInWishlist
+            ? "border-red-200 text-red-500"
+            : "border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500")
+        }
+      >
+        <Heart
+          className={iconSize}
+          fill={isInWishlist ? "currentColor" : "none"}
+        />
+      </button>
+      {error && (
+        <span role="status" className="sr-only">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }

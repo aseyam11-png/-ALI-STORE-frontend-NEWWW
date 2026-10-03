@@ -6,8 +6,8 @@ import {
 } from "lucide-react";
 
 interface ProductTrustProps {
-  estimatedDelivery: string;
-  returnPolicy: string;
+  estimatedDelivery?: string;
+  returnPolicy?: string;
 }
 
 // Replaces the old SupplierCard — that component was a per-product
@@ -24,22 +24,31 @@ export function ProductTrust({
   returnPolicy,
 }: ProductTrustProps) {
   const items = [
-    {
-      icon: Truck,
-      title: "Shipped by AliStore",
-      description: estimatedDelivery,
-    },
+    ...(estimatedDelivery
+      ? [{
+          icon: Truck,
+          title: "Delivery",
+          description: estimatedDelivery,
+        }]
+      : [{
+          icon: Truck,
+          title: "Shipping",
+          description:
+            "Shipping cost and delivery timing are confirmed at checkout.",
+        }]),
     {
       icon: ShieldCheck,
       title: "Secure checkout",
       description:
         "Your payment and order details are protected end to end.",
     },
-    {
-      icon: RotateCcw,
-      title: "Easy returns",
-      description: returnPolicy,
-    },
+    ...(returnPolicy
+      ? [{
+          icon: RotateCcw,
+          title: "Returns",
+          description: returnPolicy,
+        }]
+      : []),
     {
       icon: Headphones,
       title: "AliStore support",

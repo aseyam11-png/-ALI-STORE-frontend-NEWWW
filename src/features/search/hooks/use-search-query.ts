@@ -81,15 +81,10 @@ export function useSearchQueryState() {
         ),
 
         sort:
-          (searchParams.get(
-            "sort",
-          ) as
+          (searchParams.get("sort") as
             | "featured"
             | "price-low"
             | "price-high"
-            | "rating"
-            | "reviews"
-            | "discount"
             | null) ??
           "featured",
 

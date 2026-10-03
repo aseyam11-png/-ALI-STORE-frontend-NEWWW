@@ -15,14 +15,9 @@ import { useSession } from "@/features/auth/session";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 
-// This page previously rendered a fully fabricated account dashboard —
-// hardcoded order history, order counts, "verified customer" status — with
-// no authentication check of any kind. There is no auth backend in this
-// repository (verified by repository-wide search), so none of that could
-// ever have been real. This rebuild shows only what is actually true
-// today: the customer's real, working, backend-free wishlist/cart state,
-// and an honest "sign in to see this" boundary for anything that would
-// require a real account (orders, addresses). Nothing here is invented.
+// The account overview is intentionally derived from the authenticated
+// session plus the real persisted wishlist/cart state. Order history is linked
+// to its backend-backed page rather than being fabricated here.
 export default function BuyerAccountPage() {
   const session = useSession();
 
@@ -112,7 +107,10 @@ export default function BuyerAccountPage() {
             </Link>
           </div>
 
-          <div className="mt-10 rounded-md border border-neutral-200 bg-surface p-6">
+          <Link
+            href={isAuthenticated ? "/buyer/orders" : "/login?next=/buyer/orders"}
+            className="mt-10 block rounded-md border border-neutral-200 bg-surface p-6 transition-colors duration-200 hover:border-primary-200 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          >
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-sm bg-neutral-100 text-neutral-500">
                 <Package className="h-5 w-5" />
@@ -123,12 +121,12 @@ export default function BuyerAccountPage() {
                 </p>
                 <p className="mt-1 text-body-sm text-muted-foreground">
                   {isAuthenticated
-                    ? "لا توجد طلبات حتى الآن."
+                    ? "عرض سجل الطلبات والحالات المؤكدة من الخادم."
                     : "سجّل الدخول لعرض سجل طلباتك."}
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
 
           <div className="mt-6 flex items-center gap-3 text-body-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 shrink-0 text-success" />

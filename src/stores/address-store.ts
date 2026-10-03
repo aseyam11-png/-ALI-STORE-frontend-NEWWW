@@ -40,93 +40,7 @@ interface AddressState {
     | undefined;
 }
 
-const initialAddresses: CustomerAddress[] =
-  [
-    {
-      id: "ADDR-1001",
-
-      customerId:
-        "customer-001",
-
-      label: "Home",
-
-      recipientName:
-        "Customer",
-
-      phone:
-        "+970 59 000 0000",
-
-      country:
-        "Palestine",
-
-      city:
-        "Gaza",
-
-      area:
-        "Al-Rimal",
-
-      street:
-        "Main Street",
-
-      building:
-        "12",
-
-      apartment:
-        "4",
-
-      postalCode:
-        "",
-
-      notes:
-        "Please call before delivery.",
-
-      isDefault:
-        true,
-    },
-
-    {
-      id: "ADDR-1002",
-
-      customerId:
-        "customer-001",
-
-      label:
-        "Work",
-
-      recipientName:
-        "Customer",
-
-      phone:
-        "+970 59 000 0000",
-
-      country:
-        "Palestine",
-
-      city:
-        "Gaza",
-
-      area:
-        "Al-Nasr",
-
-      street:
-        "Office Road",
-
-      building:
-        "8",
-
-      apartment:
-        "2",
-
-      postalCode:
-        "",
-
-      notes:
-        "",
-
-      isDefault:
-        false,
-    },
-  ];
+const initialAddresses: CustomerAddress[] = [];
 
 export const useAddressStore =
   create<AddressState>(
@@ -135,7 +49,7 @@ export const useAddressStore =
         initialAddresses,
 
       selectedAddressId:
-        "ADDR-1001",
+        null,
 
       addAddress: (
         address,

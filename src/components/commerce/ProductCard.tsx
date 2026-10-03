@@ -2,108 +2,94 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import type { Route } from "next";
 import { useState } from "react";
+import { ShoppingCart, Star } from "lucide-react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
-import { getSession } from "@/features/auth/session";
 import {
-  addToWishlist,
-  removeFromWishlist,
-} from "@/features/wishlist/services/wishlist-api.service";
+  addBackendCartItem,
+  mapBackendCartToLocal,
+} from "@/features/cart/services/cart-api.service";
 import { useCartStore } from "@/stores/cart-store";
-import { useWishlistStore } from "@/stores/wishlist-store";
+import { WishlistButton } from "@/components/commerce/WishlistButton";
+import { getSession } from "@/features/auth/session";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
 interface ProductCardProps {
   product: ProductCardModel;
 }
 
-// The single Product Card used across Product Discovery, Flash Deals and
-// /shop/deals — one fixed element order (image, discount badge, wishlist,
-// name, rating, review count, price, add-to-cart) so every card in the
-// product reads as the same component, never a per-section variant.
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
-  const addItem = useCartStore((state) => state.addItem);
-  const isSaved = useWishlistStore((state) =>
-    state.productIds.includes(product.id),
-  );
-  const toggleWishlistLocal = useWishlistStore((state) => state.toggleItem);
-  const [wishlistBusy, setWishlistBusy] = useState(false);
-  const [wishlistError, setWishlistError] = useState(false);
+  const addLocalItem = useCartStore((state) => state.addItem);
+  const replaceItems = useCartStore((state) => state.replaceItems);
 
-  const formattedPrice = formatCurrency(product.price.amount, product.price.currency);
-
-  const originalAmount =
-    product.price.originalAmount ??
-    (product.discountPercentage
-      ? product.price.amount / (1 - product.discountPercentage / 100)
-      : undefined);
-
-  const formattedOriginalPrice =
-    originalAmount !== undefined
-      ? formatCurrency(originalAmount, product.price.currency)
-      : undefined;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const canAddToCart =
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
 
-  const handleWishlist = async () => {
-    if (wishlistBusy) return;
+  const handleAddToCart = async () => {
+    if (!canAddToCart || busy) return;
 
-    setWishlistBusy(true);
-    setWishlistError(false);
+    setBusy(true);
+    setError("");
+
+    const localLine = {
+      productId: product.id,
+      name: product.name,
+      price: product.price.amount,
+      currency: product.price.currency,
+      priceUnit: product.price.unit,
+      quantity: product.minOrderQuantity,
+      image: product.image?.url,
+      minOrderQuantity: product.minOrderQuantity,
+    };
 
     try {
       const session = await getSession();
 
       if (session) {
-        if (isSaved) {
-          await removeFromWishlist(product.id);
-        } else {
-          await addToWishlist(product.id);
+        const numericId = Number(product.id);
+        if (!Number.isInteger(numericId) || numericId < 1) {
+          throw new Error("Invalid product id.");
         }
-      }
 
-      toggleWishlistLocal({
-        id: product.id,
-        name: product.name,
-        price: product.price.amount,
-        image: product.image?.url,
-        brand: product.brand,
-        category: product.category,
-        originalPrice: product.price.originalAmount,
-        discountPercentage: product.discountPercentage,
-        rating: product.rating,
-        reviewCount: product.reviewCount,
-      });
-    } catch {
-      setWishlistError(true);
+        const currentItems = useCartStore.getState().items;
+        const backend = await addBackendCartItem(
+          numericId,
+          product.minOrderQuantity,
+        );
+
+        replaceItems(
+          mapBackendCartToLocal(
+            backend,
+            [...currentItems, localLine],
+          ),
+        );
+      } else {
+        addLocalItem(localLine);
+      }
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to add the product to your cart.",
+      );
     } finally {
-      setWishlistBusy(false);
+      setBusy(false);
     }
   };
 
-  const handleAddToCart = () => {
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price.amount,
-      priceUnit: product.price.unit,
-      quantity: product.minOrderQuantity,
-      image: product.image?.url,
-      minOrderQuantity: product.minOrderQuantity,
-    });
-  };
-
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-surface transition-shadow duration-200 ease-brand hover:shadow-raised">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-raised">
       <div className="relative aspect-square overflow-hidden bg-neutral-50">
         <Link
-          href={`/shop/products/${encodeURIComponent(product.id)}`}
+          href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
           className="absolute inset-0"
           aria-label={product.name}
         >
@@ -113,7 +99,7 @@ export function ProductCard({ product }: ProductCardProps) {
               alt={product.image.alt}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 22vw"
-              className="object-contain p-4 transition duration-300 ease-brand group-hover:scale-[1.03]"
+              className="object-contain p-4 transition duration-300 group-hover:scale-[1.03]"
             />
           ) : (
             <div className="flex h-full items-center justify-center">
@@ -124,38 +110,33 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {product.discountPercentage !== undefined && (
           <span className="absolute start-3 top-3 rounded-sm bg-discount px-2 py-1 text-label font-medium text-white">
-            <span dir="ltr">-{product.discountPercentage}%</span>
+            -{product.discountPercentage}%
           </span>
         )}
 
-        <button
-          type="button"
-          onClick={() => void handleWishlist()}
-          disabled={wishlistBusy}
-          aria-busy={wishlistBusy}
-          title={wishlistError ? "تعذر تحديث المفضلة" : undefined}
-          aria-label={
-            isSaved
-              ? t("removeFromWishlist", { name: product.name })
-              : t("addToWishlist", { name: product.name })
-          }
-          aria-pressed={isSaved}
-          className={`absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/95 shadow-raised transition-colors duration-200 ease-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 ${
-            isSaved
-              ? "text-discount"
-              : "text-neutral-500 hover:text-discount"
-          }`}
-        >
-          <Heart className="h-4 w-4" fill={isSaved ? "currentColor" : "none"} />
-        </button>
+        <WishlistButton
+          product={{
+            id: product.id,
+            name: product.name,
+            price: product.price.amount,
+            image: product.image?.url,
+            brand: product.brand,
+            category: product.category,
+            originalPrice: product.price.originalAmount,
+            discountPercentage: product.discountPercentage,
+            rating: product.rating,
+            reviewCount: product.reviewCount,
+          }}
+          className="absolute end-3 top-3"
+        />
       </div>
 
       <div className="flex flex-1 flex-col p-5">
         <Link
-          href={`/shop/products/${encodeURIComponent(product.id)}`}
+          href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
           className="outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
-          <h3 className="line-clamp-2 min-h-[2.7em] text-h4 leading-6 text-foreground transition-colors duration-200 ease-brand group-hover:text-brand">
+          <h3 className="line-clamp-2 min-h-[2.7em] text-h4 leading-6 text-foreground transition-colors duration-200 group-hover:text-brand">
             {product.name}
           </h3>
         </Link>
@@ -166,31 +147,70 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.rating.toFixed(1)}
           </span>
           <span className="text-caption text-muted-foreground">
-            {t("reviewsCount", { count: product.reviewCount.toLocaleString("en-US") })}
+            {t("reviewsCount", {
+              count: product.reviewCount.toLocaleString("en-US"),
+            })}
           </span>
         </div>
 
         <div className="mt-auto pt-4">
           <div className="flex items-baseline gap-2">
             <span className="text-h3 font-bold text-foreground">
-              {formattedPrice}
+              {formatCurrency(
+                product.price.amount,
+                product.price.currency,
+              )}
             </span>
+            {product.price.originalAmount !== undefined &&
+              product.price.originalAmount > product.price.amount && (
+                <span className="text-body-sm text-muted-foreground line-through">
+                  {formatCurrency(
+                    product.price.originalAmount,
+                    product.price.currency,
+                  )}
+                </span>
+              )}
+          </div>
 
-            {formattedOriginalPrice && (
-              <span className="text-body-sm text-muted-foreground line-through">
-                {formattedOriginalPrice}
+          <div className="mt-3">
+            {product.stockStatus === "unknown" ? (
+              <span className="text-xs font-semibold text-neutral-500">
+                Availability is being confirmed
+              </span>
+            ) : canAddToCart ? (
+              <span className="text-xs font-semibold text-success-700">
+                {product.stockStatus === "low_stock"
+                  ? "Limited availability"
+                  : t("inStock")}
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-danger-700">
+                {t("outOfStock")}
               </span>
             )}
           </div>
 
+          {error && (
+            <p role="alert" className="mt-2 text-xs font-bold text-danger-700">
+              {error}
+            </p>
+          )}
+
           <button
             type="button"
-            onClick={handleAddToCart}
-            disabled={!canAddToCart}
-            className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+            onClick={() => void handleAddToCart()}
+            disabled={!canAddToCart || busy}
+            aria-busy={busy}
+            className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-body font-medium text-white transition-colors duration-200 hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
             <ShoppingCart className="h-4 w-4" />
-            {canAddToCart ? t("addToCart") : product.stockStatus === "unknown" ? "Checking availability" : t("outOfStock")}
+            {busy
+              ? "Adding..."
+              : product.stockStatus === "unknown"
+                ? "Checking availability"
+                : canAddToCart
+                  ? t("addToCart")
+                  : t("outOfStock")}
           </button>
         </div>
       </div>

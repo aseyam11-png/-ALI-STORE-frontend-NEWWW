@@ -1,35 +1,27 @@
-﻿export interface B2CProductVariant {
+import type { ProductStockStatus } from "./product.types";
+
+export interface B2CProductVariant {
   id: string;
-
   sku?: string;
-
   name: string;
   value: string;
-
   type:
     | "color"
     | "size"
     | "storage"
     | "material"
     | "option";
-
   available: boolean;
-
   price?: number;
   originalPrice?: number;
-
   stock?: number;
-
   image?: string;
-
-  attributes?: Record<
-    string,
-    string
-  >;
+  attributes?: Record<string, string>;
 }
 
 export interface B2CProduct {
   id: string;
+  sku: string;
   slug: string;
   name: string;
   brand: string;
@@ -46,6 +38,7 @@ export interface B2CProduct {
   discountPercentage?: number;
 
   stock: number;
+  stockStatus: ProductStockStatus;
 
   images: Array<{
     url: string;
@@ -63,7 +56,7 @@ export interface B2CProduct {
     estimatedDelivery: string;
   };
 
-  returnPolicy: string;
+  returnPolicy?: string;
 
   featured?: boolean;
   flashSale?: boolean;

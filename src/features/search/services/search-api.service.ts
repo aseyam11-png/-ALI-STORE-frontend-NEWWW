@@ -11,30 +11,8 @@ const SORT_MAP: Record<SearchQuery["sort"], ProductSort> = {
   featured: "relevance",
   "price-low": "price_asc",
   "price-high": "price_desc",
-  rating: "rating_desc",
-  reviews: "reviews_desc",
-  discount: "discount_desc",
 };
 
-/*
-  Frontend integration boundary — has zero consumers today (this function
-  was previously an unreachable stub with no callers). Rather than leave it
-  orphaned, it now runs a real local search through the same canonical
-  product service the rest of the catalog uses (mock-backed, honest, no
-  fabricated results), so this is the ONE place "search" logic lives
-  instead of a page re-implementing its own filtering. `query.category` is
-  passed straight through as `categoryId` — in the current mock catalog a
-  product's category id happens to be its slugified name (see
-  product.mapper.ts), so this coincidentally lines up, but a real backend's
-  category ids will need a real slug→id resolution here, not this shortcut.
-
-  Later this function's body becomes:
-
-    fetch(searchQueryToApiPath(query))
-
-  and reads the Spring Boot response — nothing about this function's
-  signature or its callers needs to change when that happens.
-*/
 export async function executeSearch(
   query: SearchQuery,
 ): Promise<SearchResult<ProductSummary>> {
@@ -46,9 +24,9 @@ export async function executeSearch(
     supplierId: undefined,
     minPrice: undefined,
     maxPrice: undefined,
-    minRating: query.filters.rating,
+    minRating: undefined,
     verifiedSupplierOnly: false,
-    discountOnly: query.filters.discount === "sale",
+    discountOnly: false,
     inStockOnly: query.filters.availability === "in-stock",
     featuredOnly: false,
     bestsellerOnly: false,

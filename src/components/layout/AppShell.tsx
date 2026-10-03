@@ -19,10 +19,6 @@ import {
 } from "../navigation/GlobalNavigation";
 
 import {
-  LocalizationProvider,
-} from "../providers/LocalizationProvider";
-
-import {
   PageTransition,
 } from "@/components/motion/PageTransition";
 
@@ -34,29 +30,21 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <LocalizationProvider>
+    <div
+      className="min-h-screen bg-background text-foreground selection:bg-primary-100 selection:text-brand-ink"
+      suppressHydrationWarning
+    >
+      <TopBar />
+      <Header />
+      <GlobalNavigation />
 
-      <div
-        className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-blue-100 selection:text-[#0F2747]"
-        suppressHydrationWarning
-      >
-
-        <TopBar />
-
-        <Header />
-
-        <GlobalNavigation />
-
-        <main className="min-w-0 overflow-x-clip">
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </main>
-
-        <Footer />
-
+      <div className="min-w-0 overflow-x-clip">
+        <PageTransition>
+          {children}
+        </PageTransition>
       </div>
 
-    </LocalizationProvider>
+      <Footer />
+    </div>
   );
 }

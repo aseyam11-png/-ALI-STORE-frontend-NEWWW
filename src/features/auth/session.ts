@@ -223,4 +223,10 @@ export async function logout(): Promise<void> {
   await apiClient.request<void>("/api/v1/auth/logout", {
     method: "POST",
   });
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new Event("alistore:logout"),
+    );
+  }
 }
