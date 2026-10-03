@@ -26,6 +26,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
   const addItem = useCartStore((state) => state.addItem);
+  const replaceItems = useCartStore((state) => state.replaceItems);
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const isSaved = useWishlistStore((state) =>
     state.productIds.includes(product.id),
@@ -76,7 +77,7 @@ export function ProductCard({ product }: ProductCardProps) {
         addItem(item);
         return;
       }
-      throw error;
+      addItem(item);
     }
   };
 
