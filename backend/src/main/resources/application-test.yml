@@ -30,3 +30,6 @@ app:
     allowed-origins: http://localhost:3000
   fulfillment:
     api-token: test-supplier-token
+  auth:
+    email-verification-enabled: false
+    login-email-otp-enabled: false
