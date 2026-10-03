@@ -220,13 +220,18 @@ class FoundationIntegrationTest {
         Category category = categoryRepository.save(Category.builder()
                 .name("Phones").slug("phones").active(true).build());
         Supplier supplier = supplierRepository.findByExternalCode("TEST-SUPPLIER")
+                .map(existing -> {
+                    existing.setApiBaseUrl("https://test-supplier.invalid");
+                    existing.setFulfillmentEnabled(true);
+                    return supplierRepository.save(existing);
+                })
                 .orElseGet(() -> supplierRepository.save(
                         Supplier.builder()
-                        .externalCode("TEST-SUPPLIER")
-                        .name("Test Supplier")
-                        .apiBaseUrl("https://test-supplier.invalid")
-                        .fulfillmentEnabled(true)
-                        .build()));
+                                .externalCode("TEST-SUPPLIER")
+                                .name("Test Supplier")
+                                .apiBaseUrl("https://test-supplier.invalid")
+                                .fulfillmentEnabled(true)
+                                .build()));
 
         Map<String, Object> body = Map.of(
                 "name", "Test Phone", "price", 199.99, "sku", "PHN-001",
