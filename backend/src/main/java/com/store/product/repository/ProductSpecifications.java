@@ -45,8 +45,16 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
     }
 
+    public static Specification<Product> inCategorySlug(String slug) {
+        return (root, query, cb) -> cb.equal(root.get("category").get("slug"), slug);
+    }
+
     public static Specification<Product> hasBrand(Long brandId) {
         return (root, query, cb) -> cb.equal(root.get("brand").get("id"), brandId);
+    }
+
+    public static Specification<Product> hasBrandName(String brandName) {
+        return (root, query, cb) -> cb.equal(cb.lower(root.get("brand").get("name")), brandName.toLowerCase());
     }
 
     public static Specification<Product> priceGreaterThanOrEqual(BigDecimal min) {
