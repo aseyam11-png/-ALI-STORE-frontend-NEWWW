@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
-import { formatSAR } from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 import type {
   B2CProduct,
   B2CProductVariant,
@@ -241,7 +241,7 @@ export function ProductActions({
         </span>
 
         <span className="text-2xl font-black text-foreground">
-          {formatSAR(subtotal)}
+          {formatCurrency(subtotal, product.currency)}
         </span>
 
       </div>
