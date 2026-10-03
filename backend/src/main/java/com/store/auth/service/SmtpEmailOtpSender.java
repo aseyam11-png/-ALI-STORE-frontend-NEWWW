@@ -4,7 +4,6 @@ import com.store.auth.entity.EmailOtpPurpose;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,8 @@ public class SmtpEmailOtpSender implements EmailOtpSender {
     public void send(String recipient, String code, EmailOtpPurpose purpose, Duration validFor) {
         String from = environment.getProperty("app.mail.from", "");
         if (!StringUtils.hasText(from)) {
-            throw new IllegalStateException("MAIL_FROM must be configured before sending authentication email");
+            throw new IllegalStateException(
+                    "MAIL_FROM must be configured before sending authentication email");
         }
 
         String subject = purpose == EmailOtpPurpose.LOGIN
@@ -37,7 +37,7 @@ public class SmtpEmailOtpSender implements EmailOtpSender {
         String text = """
                 مرحبًا،
 
-                استخدم الرمز التالي %s لإكمال %s في ALI STORE:
+                استخدم رمز التحقق التالي لإكمال %s في ALI STORE:
 
                 %s
 
@@ -47,7 +47,6 @@ public class SmtpEmailOtpSender implements EmailOtpSender {
                 إذا لم تطلب هذه العملية، تجاهل هذه الرسالة.
                 """.formatted(
                 action,
-                "",
                 code,
                 Math.max(1, validFor.toMinutes()));
 
