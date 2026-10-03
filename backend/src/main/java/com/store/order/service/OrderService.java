@@ -26,6 +26,7 @@ import com.store.order.repository.OrderRepository;
 import com.store.payment.entity.Payment;
 import com.store.payment.entity.PaymentMethod;
 import com.store.payment.entity.PaymentStatus;
+import com.store.payment.service.RefundService;
 import com.store.payment.repository.PaymentRepository;
 import com.store.product.entity.Product;
 import com.store.product.enums.ProductStatus;
@@ -77,6 +78,7 @@ public class OrderService {
     private final PaymentRepository paymentRepository;
     private final ShipmentRepository shipmentRepository;
     private final FulfillmentService fulfillmentService;
+    private final RefundService refundService;
 
     @Transactional
     public OrderResponse createOrder(String email, OrderRequest request) {
@@ -304,6 +306,15 @@ public class OrderService {
 
         order.setStatus(newStatus);
         Order saved = orderRepository.save(order);
+
+        if (newStatus == OrderStatus.CANCELLED) {
+            Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            if (payment != null && payment.getStatus() == PaymentStatus.COMPLETED) {
+                refundService.prepareOrderCancellationRefund(
+                        orderId, "Order cancelled before supplier fulfillment started");
+            }
+        }
+
         if (newStatus == OrderStatus.PROCESSING) fulfillmentService.enqueueForOrder(orderId);
         return mapToResponse(saved, shipmentRepository.findByOrderIdOrderByIdAsc(orderId));
     }
