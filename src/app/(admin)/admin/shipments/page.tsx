@@ -97,10 +97,7 @@ export default function AdminShipmentsPage() {
     };
   }, []);
 
-  const shipments = useMemo(
-    () => toShipmentRows(orders),
-    [orders],
-  );
+  const shipments = useMemo(() => toShipmentRows(orders), [orders]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -131,7 +128,7 @@ export default function AdminShipmentsPage() {
               Shipment control
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Live shipment state from the backend fulfillment system.
+              Live shipment state from backend order data.
             </p>
           </div>
         </section>
@@ -167,7 +164,6 @@ export default function AdminShipmentsPage() {
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
                           <Truck className="h-5 w-5" />
                         </div>
-
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-black text-slate-900">
@@ -186,7 +182,6 @@ export default function AdminShipmentsPage() {
                               {shipment.status}
                             </span>
                           </div>
-
                           <p className="mt-1 text-xs text-slate-400">
                             {shipment.carrier}
                           </p>
@@ -205,7 +200,6 @@ export default function AdminShipmentsPage() {
                             {shipment.eta}
                           </p>
                         </div>
-
                         <Link
                           href={`/buyer/orders/${shipment.orderId}`}
                           className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700 hover:bg-slate-50"
