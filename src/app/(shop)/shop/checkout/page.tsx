@@ -102,7 +102,34 @@ export default function CheckoutPage() {
     (state) => state.selectedAddressId,
   );
 
-  const [form, setForm] = useState<FormState>(initialForm);
+  const [form, setForm] = useState<FormState>(() => {
+    const state = useAddressStore.getState();
+    const initialAddress =
+      state.addresses.find((address) => address.id === state.selectedAddressId) ??
+      state.addresses.find((address) => address.isDefault) ??
+      state.addresses[0];
+
+    if (!initialAddress) {
+      return initialForm;
+    }
+
+    return {
+      ...initialForm,
+      fullName: initialAddress.recipientName,
+      phone: initialAddress.phone,
+      address: [
+        initialAddress.street,
+        initialAddress.building ? `Building ${initialAddress.building}` : "",
+        initialAddress.apartment ? `Apt ${initialAddress.apartment}` : "",
+        initialAddress.area,
+      ]
+        .filter(Boolean)
+        .join(", "),
+      city: initialAddress.city,
+      country: initialAddress.country,
+      postalCode: initialAddress.postalCode ?? "",
+    };
+  });
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentChoice>("card");
   const [appliedCoupon, setAppliedCoupon] =
@@ -122,44 +149,6 @@ export default function CheckoutPage() {
       addresses[0],
     [addresses, selectedAddressId],
   );
-
-  useEffect(() => {
-    if (session.status !== "authenticated") {
-      return;
-    }
-
-    setForm((current) => ({
-      ...current,
-      email: session.user?.email ?? current.email,
-    }));
-  }, [session.status, session.user?.email]);
-
-  useEffect(() => {
-    if (!selectedAddress) {
-      return;
-    }
-
-    setForm((current) => ({
-      ...current,
-      fullName: selectedAddress.recipientName,
-      phone: selectedAddress.phone,
-      address: [
-        selectedAddress.street,
-        selectedAddress.building
-          ? `Building ${selectedAddress.building}`
-          : "",
-        selectedAddress.apartment
-          ? `Apt ${selectedAddress.apartment}`
-          : "",
-        selectedAddress.area,
-      ]
-        .filter(Boolean)
-        .join(", "),
-      city: selectedAddress.city,
-      country: selectedAddress.country,
-      postalCode: selectedAddress.postalCode ?? "",
-    }));
-  }, [selectedAddress?.id]);
 
   useEffect(() => {
     if (session.status !== "authenticated") {
@@ -213,7 +202,7 @@ export default function CheckoutPage() {
     () =>
       [
         form.fullName,
-        form.email,
+        session.user?.email ?? form.email,
         form.phone,
         form.address,
         form.city,
@@ -536,8 +525,7 @@ export default function CheckoutPage() {
                     {(
                       [
                         ["fullName", "Full name"],
-                        ["email", "Email"],
-                        ["phone", "Phone"],
+                                        ["phone", "Phone"],
                         ["address", "Address"],
                         ["city", "City"],
                         ["country", "Country"],
@@ -558,7 +546,7 @@ export default function CheckoutPage() {
                         <input
                           id={`checkout-${field}`}
                           type={field === "email" ? "email" : "text"}
-                          value={form[field]}
+                          value={field === "email" ? session.user?.email ?? "" : form[field]}
                           onChange={(event) =>
                             setField(field, event.target.value)
                           }
