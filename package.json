@@ -6,7 +6,8 @@
         "dev": "next dev --webpack",
         "build": "next build --webpack",
         "start": "next start",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "test:contracts": "node --test tests"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.1",
