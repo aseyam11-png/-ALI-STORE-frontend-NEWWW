@@ -18,6 +18,7 @@ export function EmailOtpForm() {
 
   const challengeId = searchParams.get("challenge") ?? "";
   const maskedEmail = searchParams.get("email") ?? "";
+  const purpose = searchParams.get("purpose") === "LOGIN" ? "LOGIN" : "EMAIL_VERIFICATION";
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
