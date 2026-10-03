@@ -23,7 +23,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
-  const session = useSession();
   const addLocalItem = useCartStore((state) => state.addItem);
   const replaceItems = useCartStore((state) => state.replaceItems);
 
@@ -52,7 +51,9 @@ export function ProductCard({ product }: ProductCardProps) {
     };
 
     try {
-      if (session.status === "authenticated") {
+      const session = await getSession();
+
+      if (session) {
         const numericId = Number(product.id);
         if (!Number.isInteger(numericId) || numericId < 1) {
           throw new Error("Invalid product id.");
