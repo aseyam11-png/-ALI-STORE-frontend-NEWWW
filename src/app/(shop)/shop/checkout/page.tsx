@@ -11,7 +11,6 @@ import {
   MapPin,
   Package,
   ShieldCheck,
-  Truck,
 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -73,6 +72,22 @@ export default function CheckoutPage() {
 
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
+  const [paymentMethod, setPaymentMethod] =
+    useState("card");
+
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [serverCartTotal, setServerCartTotal] = useState<number | null>(null);
+  const [serverCartCurrency, setServerCartCurrency] = useState<string>("USD");
+
+  const [error, setError] =
+    useState("");
+
+  const [successOrderId, setSuccessOrderId] =
+    useState("");
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const [successPaymentStatus, setSuccessPaymentStatus] =
+    useState<BackendPayment["status"]>("PENDING");
 
   useEffect(() => {
     if (session.status !== "authenticated") {
@@ -153,22 +168,6 @@ export default function CheckoutPage() {
         setAddresses([]);
       });
   }, [router, session.status, session.user?.email]);
-
-  const [paymentMethod, setPaymentMethod] =
-    useState("card");
-
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [serverCartTotal, setServerCartTotal] = useState<number | null>(null);
-  const [serverCartCurrency, setServerCartCurrency] = useState<string>("USD");
-
-  const [error, setError] =
-    useState("");
-
-  const [successOrderId, setSuccessOrderId] =
-    useState("");
-  const idempotencyKeyRef = useRef<string | null>(null);
-  const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<BackendPayment["status"]>("PENDING");
 
   const effectiveEmail = form.email || session.user?.email || "";
 
