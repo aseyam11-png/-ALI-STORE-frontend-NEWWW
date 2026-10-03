@@ -42,4 +42,7 @@ public class Payment extends BaseEntity {
     @Column(name = "collection_status", nullable = false, length = 30)
     @Builder.Default
     private PaymentCollectionStatus collectionStatus = PaymentCollectionStatus.NOT_REQUIRED;
+
+    @Column(name = "provider_error", length = 1000)
+    private String providerError;
 }
