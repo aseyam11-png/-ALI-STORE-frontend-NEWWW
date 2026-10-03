@@ -13,6 +13,15 @@ import {
 import { AdminShell } from "@/components/layout/AdminShell";
 import { getAdminBackendOrders } from "@/features/orders/services/order-api.service";
 
+type AdminShipmentRow = {
+  orderId: number;
+  shipmentId: number | null;
+  status: string;
+  carrier: string;
+  trackingNumber: string;
+  eta: string;
+};
+
 function statusClass(status: string) {
   switch (status) {
     case "DELIVERED":
@@ -40,7 +49,7 @@ export default function AdminShipmentsPage() {
     staleTime: 15_000,
   });
 
-  const shipments = useMemo(() => {
+  const shipments = useMemo<AdminShipmentRow[]>(() => {
     const orders = query.data?.content ?? [];
 
     return orders.flatMap((order) =>
