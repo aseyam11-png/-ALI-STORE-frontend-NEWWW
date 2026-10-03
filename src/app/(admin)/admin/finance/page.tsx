@@ -6,7 +6,7 @@ import { CheckCircle2, Clock3, DollarSign, RefreshCcw, Wallet } from "lucide-rea
 import { AdminShell } from "@/components/layout/AdminShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { collectCashOnDelivery, reconcilePayment } from "@/features/admin/payments/services/admin-payment-api.service";
-import { apiClient } from "@/lib/api/http-client";
+import { getAdminPayments, type AdminPayment } from "@/features/admin/finance/services/admin-finance-api.service";
 
 type Payment = {
   id: number;
