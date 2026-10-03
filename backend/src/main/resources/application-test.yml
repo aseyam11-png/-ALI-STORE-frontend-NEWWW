@@ -31,5 +31,5 @@ app:
   fulfillment:
     api-token: test-supplier-token
   auth:
-    email-verification-enabled: false
-    login-email-otp-enabled: false
+    email-verification-enabled: true
+    login-email-otp-enabled: true
