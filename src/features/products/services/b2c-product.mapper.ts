@@ -38,14 +38,16 @@ export function normalizeB2CProduct(
     stockStatus:
       product.stockStatus,
 
-    images:
-      product.thumbnail?.url
+    images: "images" in product && Array.isArray(product.images)
+      ? product.images.map((image) => ({
+          url: image.url,
+          alt: image.alt,
+        }))
+      : product.thumbnail?.url
         ? [
             {
-              url:
-                product.thumbnail.url,
-              alt:
-                product.thumbnail.alt,
+              url: product.thumbnail.url,
+              alt: product.thumbnail.alt,
             },
           ]
         : [],
