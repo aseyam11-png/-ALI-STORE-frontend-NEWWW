@@ -1,260 +1,138 @@
 "use client";
 
-import type { Route } from "next";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  Bell,
-  CheckCircle2,
-  Clock3,
-  MessageCircle,
-  Tag,
-  Trash2,
-  Truck,
-  Zap,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bell, CheckCircle2, Trash2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
-
 import {
-  useNotificationStore,
-} from "@/stores/notification-store";
-
-function getIcon(
-  type: string,
-) {
-  switch (type) {
-    case "PRICE_DROP":
-      return Tag;
-
-    case "BACK_IN_STOCK":
-      return Zap;
-
-    case "SHIPMENT_UPDATE":
-      return Truck;
-
-    case "SUPPORT_MESSAGE":
-      return MessageCircle;
-
-    case "PROMOTION":
-      return Zap;
-
-    default:
-      return Bell;
-  }
-}
+  deleteNotification,
+  getMyNotifications,
+  markNotificationAsRead,
+  type BackendNotification,
+} from "@/features/notifications/services/notification-api.service";
 
 export default function NotificationsPage() {
-  const notifications =
-    useNotificationStore(
-      (state) =>
-        state.notifications,
-    );
+  const [notifications, setNotifications] = useState<BackendNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const markAsRead =
-    useNotificationStore(
-      (state) =>
-        state.markAsRead,
-    );
+  async function refresh() {
+    setLoading(true);
+    setError("");
+    try {
+      setNotifications(await getMyNotifications());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load notifications.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const removeNotification =
-    useNotificationStore(
-      (state) =>
-        state.removeNotification,
-    );
+  useEffect(() => {
+    void refresh();
+  }, []);
 
-  const markAllAsRead =
-    useNotificationStore(
-      (state) =>
-        state.markAllAsRead,
-    );
+  async function markRead(id: number) {
+    try {
+      const updated = await markNotificationAsRead(String(id));
+      setNotifications((current) =>
+        current.map((item) => (item.id === id ? updated : item)),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update notification.");
+    }
+  }
+
+  async function remove(id: number) {
+    try {
+      await deleteNotification(String(id));
+      setNotifications((current) => current.filter((item) => item.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to delete notification.");
+    }
+  }
 
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
-
         <section className="border-b border-slate-200 bg-white">
-
           <div className="mx-auto max-w-[1000px] px-4 py-8 sm:px-6 lg:px-8">
-
-            <Link
-              href="/buyer"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              Account
-            </Link>
-
-            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-
+            <div className="flex items-center gap-3">
+              <Bell className="h-6 w-6 text-[#2563EB]" />
               <div>
-
-                <div className="flex items-center gap-2">
-
-                  <Bell className="h-6 w-6 text-[#2563EB]" />
-
-                  <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">
-                    Notifications
-                  </h1>
-
-                </div>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Order, shipping, wishlist and promotional updates.
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
+                  Account
                 </p>
-
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
+                  Notifications
+                </h1>
               </div>
-
-              <button
-                type="button"
-                onClick={
-                  markAllAsRead
-                }
-                className="text-xs font-black text-[#2563EB] hover:underline"
-              >
-                Mark all as read
-              </button>
-
             </div>
-
+            <p className="mt-3 text-sm text-slate-500">
+              Live order and account notifications from ALI STORE.
+            </p>
           </div>
         </section>
 
         <div className="mx-auto max-w-[1000px] px-4 py-7 sm:px-6 lg:px-8">
+          {error && (
+            <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+              {error}
+            </div>
+          )}
 
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-            {notifications.length ===
-            0 ? (
+            {loading ? (
+              <div className="p-12 text-center text-sm text-slate-500">Loading notifications...</div>
+            ) : notifications.length === 0 ? (
               <div className="p-14 text-center">
-
                 <Bell className="mx-auto h-9 w-9 text-slate-300" />
-
-                <p className="mt-4 text-lg font-black text-slate-800">
-                  No notifications
-                </p>
-
+                <p className="mt-4 text-lg font-black text-slate-800">No notifications</p>
               </div>
             ) : (
-              notifications.map(
-                (notification) => {
-                  const Icon =
-                    getIcon(
-                      notification.type,
-                    );
-
-                  return (
-                    <div
-                      key={
-                        notification.id
-                      }
-                      className={`border-b border-slate-100 p-5 ${
-                        notification.read
-                          ? "bg-white"
-                          : "bg-blue-50/40"
-                      }`}
-                    >
-
-                      <div className="flex gap-4">
-
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm">
-                          <Icon className="h-4 w-4" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-
-                          {notification.href ? (
-                            <Link
-                              href={notification.href as Route}
-                              onClick={() =>
-                                markAsRead(
-                                  notification.id,
-                                )
-                              }
-                              className="block"
-                            >
-                              <p className="text-sm font-black text-slate-900">
-                                {
-                                  notification.title
-                                }
-                              </p>
-
-                              <p className="mt-1 text-sm leading-6 text-slate-500">
-                                {
-                                  notification.message
-                                }
-                              </p>
-                            </Link>
-                          ) : (
-                            <>
-                              <p className="text-sm font-black text-slate-900">
-                                {
-                                  notification.title
-                                }
-                              </p>
-
-                              <p className="mt-1 text-sm leading-6 text-slate-500">
-                                {
-                                  notification.message
-                                }
-                              </p>
-                            </>
-                          )}
-
-                          <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-400">
-                            <Clock3 className="h-3 w-3" />
-
-                            {new Date(
-                              notification.createdAt,
-                            ).toLocaleString(
-                              "en-US",
-                            )}
-                          </div>
-
-                        </div>
-
-                        <div className="flex shrink-0 gap-1">
-
-                          {!notification.read && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                markAsRead(
-                                  notification.id,
-                                )
-                              }
-                              aria-label="Mark as read"
-                              className="flex h-9 w-9 items-center justify-center rounded-lg text-[#2563EB] hover:bg-white"
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              removeNotification(
-                                notification.id,
-                              )
-                            }
-                            aria-label="Delete notification"
-                            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-
-                        </div>
-
-                      </div>
-
+              notifications.map((notification) => (
+                <article
+                  key={notification.id}
+                  className={`border-b border-slate-100 p-5 last:border-0 ${
+                    notification.isRead ? "bg-white" : "bg-blue-50/40"
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm">
+                      <Bell className="h-4 w-4" />
                     </div>
-                  );
-                },
-              )
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-sm font-black text-slate-900">{notification.title}</h2>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">{notification.message}</p>
+                      <p className="mt-2 text-[10px] text-slate-400">
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      {!notification.isRead && (
+                        <button
+                          type="button"
+                          onClick={() => void markRead(notification.id)}
+                          aria-label="Mark notification as read"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#2563EB] hover:bg-white"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void remove(notification.id)}
+                        aria-label="Delete notification"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))
             )}
-
           </section>
-
         </div>
       </main>
     </AppShell>
