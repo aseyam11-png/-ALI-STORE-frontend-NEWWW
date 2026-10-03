@@ -4,8 +4,6 @@ spring:
   application:
     name: store-ecommerce-backend
 
-  main:
-    allow-bean-definition-overriding: true
 
   jpa:
     open-in-view: false
