@@ -14,7 +14,7 @@ import {
 } from "@/features/cart/services/cart-api.service";
 import { useCartStore } from "@/stores/cart-store";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
-import { useSession } from "@/features/auth/session";
+import { getSession } from "@/features/auth/session";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
 interface ProductCardProps {
