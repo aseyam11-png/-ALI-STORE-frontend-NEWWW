@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { CategoryNode } from "@/features/catalog/types/category.types";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
@@ -7,7 +8,8 @@ import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar
 import { HERO_IMAGE_URL } from "./home-imagery";
 
 export async function HomeHero() {
-  let categories = [];
+  let categories: CategoryNode[] = [];
+
   try {
     categories = await getTopLevelCategories();
   } catch {
@@ -46,7 +48,7 @@ export async function HomeHero() {
               {categories.map((category) => (
                 <Link
                   key={category.id}
-                  href={"/shop/categories/" + encodeURIComponent(category.slug)}
+                  href={("/shop/categories/" + encodeURIComponent(category.slug)) as import("next").Route}
                   className="inline-flex h-10 items-center rounded-md border border-white/15 px-4 text-body-sm font-medium text-white/85 transition-colors duration-200 ease-brand hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100/30"
                 >
                   {CATEGORY_LABEL_AR[category.slug] ?? category.name}
