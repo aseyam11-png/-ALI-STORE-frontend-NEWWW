@@ -30,7 +30,9 @@ jobs:
           cache: maven
 
       - name: Run tests
+        working-directory: backend
         run: bash ./mvnw -B test
 
       - name: Run PostgreSQL integration test
+        working-directory: backend
         run: bash ./mvnw -B -Dtest=PostgresConcurrencyIT test
