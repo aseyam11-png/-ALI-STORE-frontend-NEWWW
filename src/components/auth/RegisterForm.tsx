@@ -48,6 +48,7 @@ export function RegisterForm() {
         const query = new URLSearchParams({
           challenge: result.challengeId,
           email: result.maskedEmail,
+          purpose: result.purpose,
         });
         router.replace("/verify-email?" + query.toString());
         return;
