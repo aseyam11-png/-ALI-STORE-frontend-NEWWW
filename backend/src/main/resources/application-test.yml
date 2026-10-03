@@ -33,3 +33,7 @@ app:
   auth:
     email-verification-enabled: true
     login-email-otp-enabled: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
