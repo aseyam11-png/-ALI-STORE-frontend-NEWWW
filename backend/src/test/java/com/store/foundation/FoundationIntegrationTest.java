@@ -169,6 +169,8 @@ class FoundationIntegrationTest {
         Assertions.assertTrue(sessionCookie.getValue().startsWith("v1."));
         Assertions.assertFalse(sessionCookie.getValue().contains(".ey"));
         mockMvc.perform(get("/api/v1/auth/session").cookie(sessionCookie))
+                .andDo(result -> System.out.println("SESSION_DEBUG status=" + result.getResponse().getStatus()
+                        + " body=" + result.getResponse().getContentAsString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.email").value("ali@example.com"));
 
