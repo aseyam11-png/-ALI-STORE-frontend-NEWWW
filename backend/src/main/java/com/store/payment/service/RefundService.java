@@ -39,6 +39,7 @@ public class RefundService {
     @Transactional
     public RefundResponse prepareOrderCancellationRefund(Long orderId, String reason) {
         Payment payment = paymentRepository.findByOrderId(orderId)
+                .flatMap(p -> paymentRepository.findByIdForUpdate(p.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found for order id: " + orderId));
 
         if (payment.getMethod() == PaymentMethod.CASH_ON_DELIVERY) {
@@ -72,7 +73,9 @@ public class RefundService {
 
         Order order = orderRepository.findById(shipment.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found for id: " + shipment.getOrderId()));
-        Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+        Payment payment = paymentRepository.findByOrderId(order.getId())
+                .flatMap(p -> paymentRepository.findByIdForUpdate(p.getId()))
+                .orElse(null);
 
         if (payment == null
                 || payment.getMethod() == PaymentMethod.CASH_ON_DELIVERY
