@@ -121,8 +121,9 @@ export default function CheckoutPage() {
 
   const [successOrderId, setSuccessOrderId] =
     useState("");
+  const idempotencyKeyRef = useRef<string | null>(null);
   const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<"PENDING" | "COMPLETED" | "FAILED">("PENDING");
+    useState<BackendPayment["status"]>("PENDING");
 
   const effectiveEmail = form.email || session.user?.email || "";
 
