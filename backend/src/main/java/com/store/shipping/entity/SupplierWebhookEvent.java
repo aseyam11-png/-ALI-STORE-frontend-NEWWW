@@ -1,6 +1,8 @@
 package com.store.shipping.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -24,6 +26,7 @@ public class SupplierWebhookEvent {
     @Column(name = "event_id", nullable = false, length = 150)
     private String eventId;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "received_at", nullable = false)
     private LocalDateTime receivedAt;
 }
