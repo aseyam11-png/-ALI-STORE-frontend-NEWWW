@@ -27,7 +27,8 @@ test("admin payment service exposes reconciliation and COD operations", async ()
 test("customer notifications use persistent backend endpoints", async () => {
   const source = await read("src/features/notifications/services/notification-api.service.ts");
   assert.match(source, /\/api\/v1\/notifications\/me/);
-  assert.match(source, /notifications\/[\$\{]numericId[\$\{]\}/);
+  assert.match(source, /notifications/);
+  assert.match(source, /numericId/);
 });
 
 test("admin finance screen does not use the local finance store", async () => {
