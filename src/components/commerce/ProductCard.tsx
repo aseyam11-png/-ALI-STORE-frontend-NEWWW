@@ -6,6 +6,11 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
+import { useSession } from "@/features/auth/session";
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "@/features/wishlist/services/wishlist-api.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
@@ -20,11 +25,14 @@ interface ProductCardProps {
 // product reads as the same component, never a per-section variant.
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
+  const session = useSession();
   const addItem = useCartStore((state) => state.addItem);
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const isSaved = useWishlistStore((state) =>
     state.productIds.includes(product.id),
   );
+  const toggleWishlistLocal = useWishlistStore((state) => state.toggleItem);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
 
   const formattedPrice = formatCurrency(product.price.amount, product.price.currency);
 
@@ -42,6 +50,36 @@ export function ProductCard({ product }: ProductCardProps) {
   const canAddToCart =
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
+
+  const handleWishlist = async () => {
+    if (wishlistBusy) return;
+
+    setWishlistBusy(true);
+    try {
+      if (session.status === "authenticated") {
+        if (isSaved) {
+          await removeFromWishlist(product.id);
+        } else {
+          await addToWishlist(product.id);
+        }
+      }
+
+      toggleWishlistLocal({
+        id: product.id,
+        name: product.name,
+        price: product.price.amount,
+        image: product.image?.url,
+        brand: product.brand,
+        category: product.category,
+        originalPrice: product.price.originalAmount,
+        discountPercentage: product.discountPercentage,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+      });
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
 
   const handleAddToCart = () => {
     addItem({
@@ -86,20 +124,9 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <button
           type="button"
-          onClick={() =>
-            toggleWishlist({
-              id: product.id,
-              name: product.name,
-              price: product.price.amount,
-              image: product.image?.url,
-              brand: product.brand,
-              category: product.category,
-              originalPrice: product.price.originalAmount,
-              discountPercentage: product.discountPercentage,
-              rating: product.rating,
-              reviewCount: product.reviewCount,
-            })
-          }
+          onClick={() => void handleWishlist()}
+          disabled={wishlistBusy}
+          aria-busy={wishlistBusy}
           aria-label={
             isSaved
               ? t("removeFromWishlist", { name: product.name })
