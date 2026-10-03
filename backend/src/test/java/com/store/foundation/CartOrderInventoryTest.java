@@ -17,6 +17,9 @@ import com.store.order.entity.OrderStatus;
 import com.store.order.repository.OrderRepository;
 import com.store.shipping.entity.Shipment;
 import com.store.shipping.entity.ShipmentStatus;
+import com.store.fulfillment.entity.FulfillmentTask;
+import com.store.fulfillment.entity.FulfillmentTaskStatus;
+import com.store.fulfillment.repository.FulfillmentTaskRepository;
 import com.store.shipping.repository.ShipmentRepository;
 import com.store.supplier.entity.Supplier;
 import com.store.supplier.repository.SupplierRepository;
@@ -74,6 +77,7 @@ class CartOrderInventoryTest {
     @Autowired private CouponRepository couponRepository;
     @Autowired private OrderRepository orderRepository;
     @Autowired private ShipmentRepository shipmentRepository;
+    @Autowired private FulfillmentTaskRepository fulfillmentTaskRepository;
 
     private Role userRole;
     private Role adminRole;
@@ -418,10 +422,17 @@ class CartOrderInventoryTest {
                         .param("status", "DELIVERED"))
                 .andExpect(status().isForbidden());
 
-        // Supplier acceptance is what moves PENDING -> PROCESSING.
+        // This test is exercising admin shipment status management after supplier acceptance.
+        // The acceptance invariant is represented by the persisted supplier order id and
+        // successful fulfillment task; the API must reject advancement without both.
         Shipment shipment = shipmentRepository.findById(shipmentId).orElseThrow();
+        shipment.setSupplierOrderId("SUP-ORDER-" + shipmentId);
         shipment.setStatus(ShipmentStatus.PROCESSING);
         shipmentRepository.saveAndFlush(shipment);
+        FulfillmentTask task = fulfillmentTaskRepository.findByShipmentId(shipmentId).orElseThrow();
+        task.setStatus(FulfillmentTaskStatus.SUCCEEDED);
+        task.setLastError(null);
+        fulfillmentTaskRepository.saveAndFlush(task);
 
         mockMvc.perform(patch("/api/v1/shipments/" + shipmentId + "/status")
                         .header("Authorization", "Bearer " + tokenFor(admin))
