@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -28,8 +29,8 @@ function HeaderSearch({ mobile = false }: { mobile?: boolean }) {
     const query = value.trim();
     router.push(
       query
-        ? "/shop/products?q=" + encodeURIComponent(query)
-        : "/shop/products",
+        ? ("/shop/products?q=" + encodeURIComponent(query)) as Route
+        : ("/shop/products" as Route),
     );
   };
 
@@ -55,7 +56,7 @@ function ActionButton({
   label,
   children,
 }: {
-  href: string;
+  href: Route;
   label: string;
   children: ReactNode;
 }) {
