@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
 
 import { CustomerShell } from "@/components/commerce/CustomerShell";
@@ -30,7 +31,13 @@ export default function VerifyEmailPage() {
             </p>
 
             <div className="mt-8">
-              <EmailOtpForm />
+              <Suspense
+                fallback={
+                  <div className="h-64 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
+                }
+              >
+                <EmailOtpForm />
+              </Suspense>
             </div>
 
             <p className="mt-8 text-center text-body-sm text-muted-foreground">
