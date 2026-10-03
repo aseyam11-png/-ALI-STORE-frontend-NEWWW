@@ -4,6 +4,7 @@ import com.store.payment.entity.Payment;
 import com.store.payment.entity.PaymentMethod;
 import com.store.payment.entity.PaymentStatus;
 import com.store.payment.repository.PaymentRepository;
+import com.store.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -49,5 +50,13 @@ public class PaymentReservationService {
                 .idempotencyKey(idempotencyKey)
                 .collectionStatus(com.store.payment.entity.PaymentCollectionStatus.NOT_REQUIRED)
                 .build());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markRequiresReconciliation(Long paymentId, String message) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for reconciliation"));
+        payment.setStatus(PaymentStatus.REQUIRES_RECONCILIATION);
+        paymentRepository.save(payment);
     }
 }
