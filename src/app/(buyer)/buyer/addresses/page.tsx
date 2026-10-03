@@ -208,8 +208,8 @@ export default function BuyerAddressesPage() {
         <div role="alert" className="mb-6 rounded-md border border-danger-100 bg-danger-surface px-4 py-3 text-body-sm font-medium text-danger-600">
           {error}
         </div>
-      )}
-
+      ) : (
+        <>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-caption text-muted-foreground">
