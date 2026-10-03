@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SupplierService {
 
     private final SupplierRepository supplierRepository;
+    private final SupplierCredentialResolver supplierCredentialResolver;
 
     public PageResponse<SupplierResponse> getAll(Pageable pageable) {
         Pageable safe = org.springframework.data.domain.PageRequest.of(
@@ -96,6 +97,16 @@ public class SupplierService {
     @Transactional
     public SupplierResponse updateStatus(Long id, SupplierStatus status) {
         Supplier supplier = getEntity(id);
+
+        if (status == SupplierStatus.ACTIVE
+                && Boolean.TRUE.equals(supplier.getFulfillmentEnabled())) {
+            validateFulfillmentConfiguration(supplier.getApiBaseUrl(), true);
+            if (supplierCredentialResolver.resolveApiToken(supplier).isBlank()) {
+                throw new BusinessException(
+                        "Supplier API credentials must be configured before activating fulfillment");
+            }
+        }
+
         supplier.setStatus(status);
         return map(supplierRepository.save(supplier));
     }
