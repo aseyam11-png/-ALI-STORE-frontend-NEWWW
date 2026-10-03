@@ -132,7 +132,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="flex flex-1 flex-col p-5">
         <Link
-          href={"/shop/products/" + encodeURIComponent(product.id)}
+          href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
           className="outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <h3 className="line-clamp-2 min-h-[2.7em] text-h4 leading-6 text-foreground transition-colors duration-200 group-hover:text-brand">

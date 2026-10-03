@@ -135,7 +135,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
       </div>
 
       <div className="p-4">
-        <Link href={"/shop/products/" + encodeURIComponent(product.id)}>
+        <Link href={("/shop/products/" + encodeURIComponent(product.id)) as import("next").Route}>
           {product.brand && (
             <p className="text-xs font-black text-brand">{product.brand}</p>
           )}

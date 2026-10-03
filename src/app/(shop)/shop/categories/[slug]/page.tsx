@@ -135,7 +135,7 @@ export default async function CategoryPage({
                     {category.children.map((child) => (
                       <Link
                         key={child.id}
-                        href={"/shop/categories/" + encodeURIComponent(child.slug)}
+                        href={("/shop/categories/" + encodeURIComponent(child.slug)) as Route}
                         className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
                       >
                         <div className="flex items-start justify-between gap-4">
@@ -177,7 +177,7 @@ export default async function CategoryPage({
                   </p>
 
                   <Link
-                    href={"/shop/products?category=" + encodeURIComponent(category.slug)}
+                    href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
                     className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
                   >
                     View products

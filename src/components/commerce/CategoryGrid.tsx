@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CategoryNode } from "@/features/catalog/types/category.types";
+import type { Route } from "next";
 import { ArrowLeft } from "lucide-react";
 
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
@@ -39,7 +40,7 @@ export async function CategoryGrid() {
             return (
               <Link
                 key={category.id}
-                href={"/shop/categories/" + encodeURIComponent(category.slug)}
+                href={("/shop/categories/" + encodeURIComponent(category.slug)) as Route}
                 className="group relative flex aspect-[4/5] overflow-hidden rounded-lg bg-ink-900 shadow-raised transition-transform duration-200 ease-brand hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 sm:aspect-[3/4] lg:aspect-[4/5]"
               >
                 {imageUrl && (

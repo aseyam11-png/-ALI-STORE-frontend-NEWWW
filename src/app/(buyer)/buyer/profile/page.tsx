@@ -37,6 +37,19 @@ export default function BuyerProfilePage() {
   }
 
   const user = session.user;
+  if (!user) {
+    return (
+      <AccountWorkspace
+        activeTab="profile"
+        title="الملف الشخصي"
+        description="تعذر قراءة بيانات الجلسة الحالية."
+      >
+        <div className="rounded-md border border-neutral-200 bg-surface p-8 text-center text-body-sm text-muted-foreground">
+          أعد تحميل الصفحة لمحاولة استعادة الجلسة.
+        </div>
+      </AccountWorkspace>
+    );
+  }
 
   return (
     <AccountWorkspace
