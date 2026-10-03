@@ -81,6 +81,7 @@ export function EmailOtpForm() {
     const query = new URLSearchParams({
       challenge: nextChallenge.challengeId,
       email: nextChallenge.maskedEmail,
+      purpose: nextChallenge.purpose,
     });
 
     window.history.replaceState(null, "", "/verify-email?" + query.toString());
@@ -104,7 +105,9 @@ export function EmailOtpForm() {
         </div>
         <div>
           <p className="text-body-sm font-semibold text-foreground">
-            تم إرسال رمز تحقق إلى بريدك
+            {purpose === "LOGIN"
+              ? "أرسلنا رمز أمان لإكمال تسجيل الدخول"
+              : "أرسلنا رمزًا لتأكيد بريدك الإلكتروني"}
           </p>
           <p className="mt-1 text-body-sm text-muted-foreground">
             {maskedEmail || "بريدك الإلكتروني"}
