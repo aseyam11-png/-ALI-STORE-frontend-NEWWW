@@ -1,23 +1,7 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Flame,
-  ShieldCheck,
-  Tag,
-  Timer,
-} from "lucide-react";
+import { ArrowRight, Flame, ShieldCheck, Tag, Timer } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
-import { ProductCard } from "@/components/commerce/ProductCard";
-import Link from "next/link";
-import {
-  ArrowRight,
-  Flame,
-  ShieldCheck,
-  Tag,
-  Timer,
-} from "lucide-react";
-
 export default function DealsPage() {
   return (
     <AppShell>
