@@ -42,4 +42,27 @@ class AuthSessionCookieServiceTest {
 
         assertThrows(SecurityException.class, () -> cookieService.decrypt(tampered));
     }
+
+    @Test
+    void encrypt_usesFreshNonceForEachCookie() {
+        String first = cookieService.encrypt("same-jwt");
+        String second = cookieService.encrypt("same-jwt");
+
+        assertNotEquals(first, second);
+        assertNotEquals(
+                first.split("\\.", -1)[1],
+                second.split("\\.", -1)[1],
+                "GCM must use a fresh IV for each encryption");
+    }
+
+    @Test
+    void clearCookie_isHttpOnlyScopedAndImmediatelyExpired() {
+        ResponseCookie cookie = cookieService.clearCookie();
+
+        assertEquals("", cookie.getValue());
+        assertEquals(0, cookie.getMaxAge().getSeconds());
+        assertTrue(cookie.isHttpOnly());
+        assertEquals("/", cookie.getPath());
+        assertEquals("Lax", cookie.getSameSite());
+    }
 }
