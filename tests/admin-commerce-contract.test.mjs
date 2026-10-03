@@ -36,3 +36,29 @@ test("admin finance screen does not use the local finance store", async () => {
   assert.doesNotMatch(source, /useStoreFinanceStore/);
   assert.match(source, /getAdminPayments/);
 });
+
+test("warehouse route does not contain fake inventory and forwards to canonical admin fulfillment", async () => {
+  const source = await read("src/app/(warehouse)/warehouse/page.tsx");
+  assert.match(source, /redirect\(["']\/admin\/shipments["']\)/);
+  assert.doesNotMatch(source, /94,700|Primary Fulfillment Center|LOW STOCK|Recent movements/);
+  assert.doesNotMatch(source, /useState|useMemo/);
+});
+
+test("recommendations are sourced from the live catalog and do not expose supplier pricing", async () => {
+  const source = await read("src/features/recommendations/services/recommendations.service.ts");
+  assert.match(source, /getProducts/);
+  assert.match(source, /inStockOnly:\s*true/);
+  assert.doesNotMatch(source, /MOCK_RECOMMENDATIONS|supplierPrice|@\/mocks\/products/);
+});
+
+test("Next image configuration supports the configured media backend", async () => {
+  const source = await read("next.config.ts");
+  assert.match(source, /NEXT_PUBLIC_MEDIA_BASE_URL/);
+  assert.match(source, /pathname:\s*["']\/\*\*["']/);
+});
+
+test("frontend environment contract documents the optional media backend", async () => {
+  const source = await read(".env.example");
+  assert.match(source, /NEXT_PUBLIC_API_BASE_URL/);
+  assert.match(source, /NEXT_PUBLIC_MEDIA_BASE_URL/);
+});
