@@ -11,7 +11,6 @@ import {
   MapPin,
   Package,
   ShieldCheck,
-  Truck,
 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -26,6 +25,8 @@ import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
   createBackendOrder,
+  getBackendCart,
+  mapBackendCartToLocal,
   processBackendPayment,
   replaceBackendCart,
   type BackendPayment,
@@ -56,13 +57,11 @@ export default function CheckoutPage() {
     (state) => state.items,
   );
 
-  const shipping = useCartStore(
-    (state) =>
-      state.getShippingInfo(),
-  );
-
   const clearCart = useCartStore(
     (state) => state.clearCart,
+  );
+  const replaceItems = useCartStore(
+    (state) => state.replaceItems,
   );
 
   const session = useSession();
@@ -73,6 +72,68 @@ export default function CheckoutPage() {
 
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
+  const [paymentMethod, setPaymentMethod] =
+    useState("card");
+
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [serverCartTotal, setServerCartTotal] = useState<number | null>(null);
+  const [serverCartCurrency, setServerCartCurrency] = useState<string>("USD");
+
+  const [error, setError] =
+    useState("");
+
+  const [successOrderId, setSuccessOrderId] =
+    useState("");
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const [successPaymentStatus, setSuccessPaymentStatus] =
+    useState<BackendPayment["status"]>("PENDING");
+
+  useEffect(() => {
+    if (session.status !== "authenticated") {
+      return;
+    }
+
+    let active = true;
+
+    const syncBackendCart = async () => {
+      try {
+        const localItems = useCartStore.getState().items;
+        const backend = await getBackendCart();
+
+        if (!active) return;
+
+        if (backend.items.length === 0 && localItems.length > 0) {
+          const migrated = await replaceBackendCart(localItems);
+          if (!active) return;
+          const mapped = mapBackendCartToLocal(migrated, localItems);
+          replaceItems(mapped);
+          setServerCartTotal(migrated.totalPrice);
+          setServerCartCurrency(migrated.currency ?? mapped[0]?.currency ?? "USD");
+          return;
+        }
+
+        const mapped = mapBackendCartToLocal(backend, localItems);
+        replaceItems(mapped);
+        setServerCartTotal(backend.totalPrice);
+        setServerCartCurrency(backend.currency ?? mapped[0]?.currency ?? "USD");
+      } catch (caughtError) {
+        if (active) {
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "تعذر مزامنة السلة مع الخادم.",
+          );
+        }
+      }
+    };
+
+    void syncBackendCart();
+
+    return () => {
+      active = false;
+    };
+  }, [session.status, replaceItems]);
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -108,23 +169,6 @@ export default function CheckoutPage() {
       });
   }, [router, session.status, session.user?.email]);
 
-  const [paymentMethod, setPaymentMethod] =
-    useState("card");
-
-  const [shippingMode, setShippingMode] =
-    useState("standard");
-
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-
-  const [error, setError] =
-    useState("");
-
-  const [successOrderId, setSuccessOrderId] =
-    useState("");
-  const idempotencyKeyRef = useRef<string | null>(null);
-  const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<BackendPayment["status"]>("PENDING");
-
   const effectiveEmail = form.email || session.user?.email || "";
 
   if (session.status !== "authenticated") {
@@ -144,20 +188,13 @@ export default function CheckoutPage() {
     0,
   );
 
-  const shippingCost =
-    shippingMode === "express" &&
-    items.length > 0
-      ? shipping.cost + 8
-      : shipping.cost;
-
   const couponDiscount =
     appliedCoupon?.finalDiscount ?? 0;
 
   const total =
     Math.max(
       0,
-      subtotal +
-        shippingCost -
+      subtotal -
         couponDiscount,
     );
 
@@ -204,7 +241,18 @@ export default function CheckoutPage() {
     }
 
     try {
-      await replaceBackendCart(items);
+      const synchronizedCart = await replaceBackendCart(items);
+      const synchronizedItems = mapBackendCartToLocal(
+        synchronizedCart,
+        items,
+      );
+      replaceItems(synchronizedItems);
+      setServerCartTotal(synchronizedCart.totalPrice);
+      setServerCartCurrency(
+        synchronizedCart.currency ??
+          synchronizedItems[0]?.currency ??
+          "USD",
+      );
 
       idempotencyKeyRef.current ??= crypto.randomUUID();
 
@@ -267,8 +315,8 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your order has been created successfully. We&apos;ll send tracking
-                information as soon as your order ships.
+                Your order has been created and the payment status below comes directly
+                from the payment service. Tracking appears after fulfillment begins.
               </p>
 
               <div className="mx-auto mt-7 max-w-md rounded-2xl bg-slate-50 p-5 text-start">
@@ -600,75 +648,6 @@ export default function CheckoutPage() {
                   </div>
                 </section>
 
-                {/* Shipping */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
-                  <div className="flex items-center gap-3">
-                    <Truck className="h-5 w-5 text-emerald-600" />
-
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900">
-                        Delivery speed
-                      </h2>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Applied to your entire order.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "standard",
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "standard"
-                          ? "border-[#2563EB] bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <p className="text-sm font-black text-slate-900">
-                        Standard
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Best available rate
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShippingMode(
-                          "express",
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-start transition ${
-                        shippingMode ===
-                        "express"
-                          ? "border-[#2563EB] bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <p className="text-sm font-black text-slate-900">
-                        Express
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        Faster delivery — +<LocalizedPrice amountUSD={8} />
-                      </p>
-                    </button>
-
-                  </div>
-
-                </section>
-
                 {/* Payment */}
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -771,6 +750,7 @@ export default function CheckoutPage() {
                         <p className="shrink-0 text-xs font-black text-slate-900">
                           <LocalizedPrice
                             amountUSD={item.price * item.quantity}
+                            currency={item.currency ?? serverCartCurrency}
                           />
                         </p>
                       </div>
@@ -780,16 +760,13 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-slate-50 p-3 text-[11px] text-slate-400">
-                  {shipping.method}
-                  {shipping.estimatedDelivery
-                    ? ` · ${shipping.estimatedDelivery}`
-                    : ""}
+                  Shipping is calculated and confirmed by the backend when the
+                  order is created.
                 </div>
 
                 <div className="mt-5">
                   <CouponInput
                     subtotal={subtotal}
-                    shipping={shippingCost}
                     onApply={setAppliedCoupon}
                     onRemove={() => setAppliedCoupon(null)}
                   />
@@ -804,6 +781,7 @@ export default function CheckoutPage() {
 
                     <LocalizedPrice
                       amountUSD={subtotal}
+                      currency={serverCartCurrency}
                       className="font-bold text-slate-800"
                     />
                   </div>
@@ -814,13 +792,7 @@ export default function CheckoutPage() {
                     </span>
 
                     <span className="font-bold text-slate-800">
-                      {shippingCost === 0 ? (
-                        "FREE"
-                      ) : (
-                        <LocalizedPrice
-                          amountUSD={shippingCost}
-                        />
-                      )}
+                      Confirmed by backend at order creation
                     </span>
                   </div>
 
@@ -849,7 +821,8 @@ export default function CheckoutPage() {
                     </span>
 
                     <LocalizedPrice
-                      amountUSD={total}
+                      amountUSD={serverCartTotal ?? total}
+                      currency={serverCartCurrency}
                       className="text-3xl font-black text-[#0F2747]"
                     />
 
