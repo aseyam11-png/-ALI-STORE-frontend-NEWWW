@@ -30,22 +30,6 @@ function productScore(product: ProductSummary, query: string) {
   );
 }
 
-function categorySuggestions(query: string): AutocompleteSuggestion[] {
-  return getTopLevelCategories()
-    .map((category) => ({
-      id: category.slug,
-      type: "CATEGORY" as const,
-      title: category.name,
-      subtitle: category.description,
-      href: `/shop/categories/${category.slug}`,
-      score: Math.max(
-        scoreText(category.name, query),
-        scoreText(category.description, query),
-      ) + 5,
-    }))
-    .filter((suggestion) => suggestion.score > 5);
-}
-
 function productSuggestions(
   products: ProductSummary[],
   query: string,
