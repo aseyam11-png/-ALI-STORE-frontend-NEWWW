@@ -1,7 +1,6 @@
 package com.store.payment.dto;
 
 import com.store.payment.entity.PaymentCollectionStatus;
-import com.store.payment.entity.PaymentCollectionStatus;
 import com.store.payment.entity.PaymentMethod;
 import com.store.payment.entity.PaymentStatus;
 import lombok.Builder;
