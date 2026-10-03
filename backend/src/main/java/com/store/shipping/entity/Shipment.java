@@ -4,6 +4,8 @@ import com.store.common.entity.BaseEntity;
 import com.store.shipping.entity.ShipmentStatus;
 import com.store.supplier.entity.Supplier;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -48,12 +50,15 @@ public class Shipment extends BaseEntity {
     @Builder.Default
     private ShipmentStatus status = ShipmentStatus.PENDING;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "estimated_delivery_date")
     private LocalDateTime estimatedDeliveryDate;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "shipped_at")
     private LocalDateTime shippedAt;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "delivered_at")
     private LocalDateTime deliveredAt;
 }
