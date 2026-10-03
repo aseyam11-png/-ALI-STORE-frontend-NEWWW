@@ -4,7 +4,11 @@ import com.store.common.exception.BusinessException;
 import com.store.fulfillment.entity.FulfillmentTask;
 import com.store.fulfillment.entity.FulfillmentTaskStatus;
 import com.store.fulfillment.repository.FulfillmentTaskRepository;
+import com.store.fulfillment.dto.SupplierFulfillmentRequest;
+import com.store.fulfillment.dto.SupplierFulfillmentResponse;
+import com.store.fulfillment.service.FulfillmentService;
 import com.store.fulfillment.service.FulfillmentTaskProcessor;
+import com.store.fulfillment.service.SupplierFulfillmentClient;
 import com.store.inventory.entity.Inventory;
 import com.store.inventory.enums.InventorySource;
 import com.store.inventory.enums.PublicAvailability;
@@ -36,6 +40,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.mock.mockito.MockBean;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -59,6 +71,8 @@ class BackendCommerceIntegrityTest {
     @Autowired private ShipmentRepository shipmentRepository;
     @Autowired private FulfillmentTaskRepository taskRepository;
     @Autowired private FulfillmentTaskProcessor fulfillmentTaskProcessor;
+    @Autowired private FulfillmentService fulfillmentService;
+    @MockBean private SupplierFulfillmentClient supplierFulfillmentClient;
     @Autowired private ShipmentService shipmentService;
 
     @Test
@@ -107,6 +121,146 @@ class BackendCommerceIntegrityTest {
         Inventory afterCommit = inventoryRepository.findByProductId(product.getId()).orElseThrow();
         Assertions.assertEquals(0, afterCommit.getQuantity());
         Assertions.assertEquals(0, afterCommit.getReservedQuantity());
+    }
+
+    @Test
+    void multiSupplierOrder_sendsEachSupplierOnlyItsOwnItems() {
+        Category category = categoryRepository.save(Category.builder()
+                .name("Supplier Split")
+                .slug("supplier-split")
+                .active(true)
+                .build());
+
+        Supplier supplierA = supplierRepository.save(Supplier.builder()
+                .externalCode("SPLIT-A")
+                .name("Split Supplier A")
+                .apiBaseUrl("https://supplier-a.example")
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(true)
+                .build());
+
+        Supplier supplierB = supplierRepository.save(Supplier.builder()
+                .externalCode("SPLIT-B")
+                .name("Split Supplier B")
+                .apiBaseUrl("https://supplier-b.example")
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(true)
+                .build());
+
+        Product productA = productRepository.save(Product.builder()
+                .name("Supplier A Product")
+                .slug("supplier-a-product")
+                .price(new BigDecimal("25.00"))
+                .currency("USD")
+                .sku("SPLIT-PROD-A")
+                .status(ProductStatus.ACTIVE)
+                .category(category)
+                .supplier(supplierA)
+                .supplierSku("SKU-A")
+                .supplierCost(new BigDecimal("10.00"))
+                .build());
+
+        Product productB = productRepository.save(Product.builder()
+                .name("Supplier B Product")
+                .slug("supplier-b-product")
+                .price(new BigDecimal("25.00"))
+                .currency("USD")
+                .sku("SPLIT-PROD-B")
+                .status(ProductStatus.ACTIVE)
+                .category(category)
+                .supplier(supplierB)
+                .supplierSku("SKU-B")
+                .supplierCost(new BigDecimal("11.00"))
+                .build());
+
+        inventoryRepository.save(Inventory.builder()
+                .product(productA)
+                .quantity(5)
+                .reservedQuantity(1)
+                .lowStockThreshold(1)
+                .source(InventorySource.MANUAL)
+                .lastSyncedAt(LocalDateTime.now())
+                .build());
+
+        inventoryRepository.save(Inventory.builder()
+                .product(productB)
+                .quantity(5)
+                .reservedQuantity(1)
+                .lowStockThreshold(1)
+                .source(InventorySource.MANUAL)
+                .lastSyncedAt(LocalDateTime.now())
+                .build());
+
+        Order order = orderRepository.save(Order.builder()
+                .user(testUser())
+                .status(OrderStatus.PROCESSING)
+                .totalAmount(new BigDecimal("50.00"))
+                .currency("USD")
+                .shippingAddress("1 Main St")
+                .reservationExpiresAt(LocalDateTime.now().plusMinutes(30))
+                .build());
+
+        order.getItems().add(OrderItem.builder()
+                .order(order)
+                .product(productA)
+                .supplier(supplierA)
+                .supplierSku("SKU-A")
+                .supplierUnitCost(new BigDecimal("10.00"))
+                .quantity(1)
+                .unitPrice(new BigDecimal("25.00"))
+                .subtotal(new BigDecimal("25.00"))
+                .build());
+
+        order.getItems().add(OrderItem.builder()
+                .order(order)
+                .product(productB)
+                .supplier(supplierB)
+                .supplierSku("SKU-B")
+                .supplierUnitCost(new BigDecimal("11.00"))
+                .quantity(1)
+                .unitPrice(new BigDecimal("25.00"))
+                .subtotal(new BigDecimal("25.00"))
+                .build());
+
+        orderRepository.save(order);
+        fulfillmentService.enqueueForOrder(order.getId());
+
+        List<FulfillmentTask> tasks = taskRepository.findByShipmentOrderId(order.getId());
+        Assertions.assertEquals(2, tasks.size(), "A multi-supplier order must create one fulfillment task per supplier");
+
+        when(supplierFulfillmentClient.submit(any(), any()))
+                .thenAnswer(invocation -> {
+                    SupplierFulfillmentRequest request = invocation.getArgument(1);
+                    SupplierFulfillmentResponse response = new SupplierFulfillmentResponse();
+                    response.setAccepted(true);
+                    response.setSupplierOrderId("EXT-" + request.getShipmentId());
+                    return response;
+                });
+
+        tasks.forEach(task -> fulfillmentTaskProcessor.processTask(task.getId()));
+
+        var supplierCaptor = org.mockito.ArgumentCaptor.forClass(com.store.supplier.entity.Supplier.class);
+        var requestCaptor = org.mockito.ArgumentCaptor.forClass(SupplierFulfillmentRequest.class);
+        verify(supplierFulfillmentClient, org.mockito.Mockito.times(2))
+                .submit(supplierCaptor.capture(), requestCaptor.capture());
+
+        Map<String, String> expectedSkuBySupplier = Map.of(
+                "SPLIT-A", "SKU-A",
+                "SPLIT-B", "SKU-B");
+
+        for (int i = 0; i < requestCaptor.getAllValues().size(); i++) {
+            SupplierFulfillmentRequest request = requestCaptor.getAllValues().get(i);
+            String supplierCode = supplierCaptor.getAllValues().get(i).getExternalCode();
+
+            Assertions.assertEquals(supplierCode, request.getSupplierCode());
+            Assertions.assertEquals(1, request.getItems().size());
+            Assertions.assertEquals(expectedSkuBySupplier.get(supplierCode),
+                    request.getItems().get(0).getSupplierSku());
+
+            Shipment shipment = shipmentRepository.findById(request.getShipmentId()).orElseThrow();
+            Assertions.assertEquals(supplierCode, shipment.getSupplier().getExternalCode());
+            Assertions.assertEquals(ShipmentStatus.PROCESSING, shipment.getStatus());
+        }
     }
 
     @Test
