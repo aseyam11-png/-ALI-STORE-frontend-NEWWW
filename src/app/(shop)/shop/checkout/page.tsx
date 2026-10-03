@@ -39,7 +39,6 @@ import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 
 interface FormState {
   fullName: string;
-  email: string;
   phone: string;
   address: string;
   city: string;
@@ -49,7 +48,6 @@ interface FormState {
 
 const initialForm: FormState = {
   fullName: "",
-  email: "",
   phone: "",
   address: "",
   city: "",
@@ -142,15 +140,7 @@ export default function CheckoutPage() {
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [payment, setPayment] = useState<BackendPayment | null>(null);
 
-  const selectedAddress = useMemo(
-    () =>
-      addresses.find((address) => address.id === selectedAddressId) ??
-      addresses.find((address) => address.isDefault) ??
-      addresses[0],
-    [addresses, selectedAddressId],
-  );
-
-  useEffect(() => {
+undefined  useEffect(() => {
     if (session.status !== "authenticated") {
       return;
     }
@@ -546,7 +536,7 @@ export default function CheckoutPage() {
                         <input
                           id={`checkout-${field}`}
                           type={field === "email" ? "email" : "text"}
-                          value={field === "email" ? session.user?.email ?? "" : form[field]}
+                          value={form[field]}
                           onChange={(event) =>
                             setField(field, event.target.value)
                           }
