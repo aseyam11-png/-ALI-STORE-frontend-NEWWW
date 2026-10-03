@@ -244,7 +244,7 @@ export default function CheckoutPage() {
         method: "POST",
         body: JSON.stringify({
           shippingAddress: [form.fullName, form.phone, form.address, form.city, form.country, form.postalCode].filter(Boolean).join(", "),
-          ...(appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {}),
+          ...(appliedCoupon?.coupon.code ? { couponCode: appliedCoupon.code } : {}),
         }),
       });
       const paymentMap: Record<string, "CREDIT_CARD" | "PAYPAL" | "CASH_ON_DELIVERY"> = {
