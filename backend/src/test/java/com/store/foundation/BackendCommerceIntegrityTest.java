@@ -102,6 +102,11 @@ class BackendCommerceIntegrityTest {
         Assertions.assertEquals(2, response.getReservedQuantity());
         Assertions.assertEquals(0, response.getAvailableQuantity());
         Assertions.assertEquals(PublicAvailability.OUT_OF_STOCK, response.getAvailability());
+
+        inventoryService.commitReservedStock(product.getId(), 2);
+        Inventory afterCommit = inventoryRepository.findByProductId(product.getId()).orElseThrow();
+        Assertions.assertEquals(0, afterCommit.getQuantity());
+        Assertions.assertEquals(0, afterCommit.getReservedQuantity());
     }
 
     @Test
