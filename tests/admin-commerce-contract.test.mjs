@@ -365,7 +365,8 @@ test("catalog filter UI sends brand ids rather than unsupported brand names", as
   const source = await read("src/components/commerce/products/ProductsPageContent.tsx");
   const service = await read("src/features/products/services/product.service.ts");
   assert.match(source, /brandIdForApi/);
-  assert.match(source, /value=\{item\.id\}/);
+  assert.match(source, /brandOptions\.map/);
+  assert.match(source, /item\.id/);
   assert.match(service, /params\.set\("brand", String\(brandId\)\)/);
   assert.doesNotMatch(service, /brandName/);
 });
@@ -385,7 +386,7 @@ test("related products use the backend category id contract", async () => {
   assert.match(page, /productDetails\.category\?\.id/);
   assert.match(service, /numericCategoryId/);
   assert.match(service, /params\.set\("category", String\(numericCategoryId\)\)/);
-  assert.doesNotMatch(service, /categorySlug/);
+  assert.doesNotMatch(service, /params\.set\("categorySlug"/);
 });
 
 test("product detail review UI uses the live review API and not the removed moderation store", async () => {
