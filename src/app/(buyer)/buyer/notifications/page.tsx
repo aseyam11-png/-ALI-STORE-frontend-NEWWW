@@ -29,7 +29,18 @@ export default function NotificationsPage() {
   }
 
   useEffect(() => {
-    void refresh();
+    let active = true;
+    getMyNotifications()
+      .then((nextNotifications) => {
+        if (active) setNotifications(nextNotifications);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : "Unable to load notifications.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   async function markRead(id: number) {
