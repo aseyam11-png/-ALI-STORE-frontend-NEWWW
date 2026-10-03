@@ -67,6 +67,7 @@ export default function WishlistPage() {
             categoryName: item.categoryName ?? undefined,
             originalPrice: undefined,
             currency: item.currency ?? undefined,
+            currency: item.currency ?? undefined,
           }))
         : localItems.map((item) => ({
             productId: item.id,
@@ -76,6 +77,7 @@ export default function WishlistPage() {
             brandName: item.brand,
             categoryName: item.category,
             originalPrice: item.originalPrice,
+            currency: item.currency,
             currency: item.currency,
           })),
     [localItems, serverItems, session.status],
