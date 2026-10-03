@@ -38,6 +38,7 @@ public class FulfillmentTaskProcessor {
     private final SupplierFulfillmentClient supplierFulfillmentClient;
     private final ShipmentService shipmentService;
     private final SupplierOrderPartitioner supplierOrderPartitioner;
+    private final RefundService refundService;
     private final PlatformTransactionManager transactionManager;
 
     public void processTask(Long taskId) {
@@ -178,6 +179,7 @@ public class FulfillmentTaskProcessor {
 
         releaseSupplierReservations(shipment);
         shipmentService.synchronizeOrderStatus(shipment.getOrderId());
+        refundService.prepareCancelledShipmentRefund(shipment.getId());
     }
 
     private void cancelTask(FulfillmentTask task, String reason) {
