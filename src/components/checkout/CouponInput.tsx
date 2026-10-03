@@ -9,9 +9,7 @@ import {
   useState,
 } from "react";
 
-import {
-  validateCoupon,
-} from "@/features/coupons/services/coupon.service";
+import { validateBackendCoupon } from "@/features/coupons/services/coupon.service";
 
 import type {
   AppliedCoupon,
@@ -62,35 +60,22 @@ export function CouponInput({
     boolean | null
   >(null);
 
-  const apply = () => {
-    const result =
-      validateCoupon(
-        code,
-        subtotal,
-        shipping,
-      );
+  const apply = async () => {
+    setMessage("");
+    setValid(null);
 
-    setMessage(
-      result.message,
-    );
-
-    setValid(
-      result.valid,
-    );
-
-    if (
-      result.valid &&
-      result.applied
-    ) {
-      setApplied(
-        result.applied,
-      );
-
-      onApply?.(
-        result.applied,
-      );
-    } else {
+    try {
+      const result = await validateBackendCoupon(code, subtotal);
+      setApplied(result);
+      setValid(true);
+      setMessage("Coupon validated by ALI STORE.");
+      onApply?.(result);
+    } catch (error) {
       setApplied(null);
+      setValid(false);
+      setMessage(
+        error instanceof Error ? error.message : "Invalid coupon code.",
+      );
     }
   };
 
@@ -193,12 +178,9 @@ export function CouponInput({
           onKeyDown={(
             event,
           ) => {
-            if (
-              event.key ===
-              "Enter"
-            ) {
+            if (event.key === "Enter") {
               event.preventDefault();
-              apply();
+              void apply();
             }
           }}
           placeholder="e.g. WELCOME10"
@@ -208,9 +190,7 @@ export function CouponInput({
 
         <button
           type="button"
-          onClick={
-            apply
-          }
+          onClick={() => void apply()}
           disabled={
             !code.trim()
           }
@@ -238,9 +218,7 @@ export function CouponInput({
         </p>
       )}
 
-      <div className="mt-3 text-[9px] text-slate-400">
-        Test codes: WELCOME10 · SAVE20 · FREESHIP
-      </div>
+
 
     </section>
   );
