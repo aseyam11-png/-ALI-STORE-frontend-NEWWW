@@ -28,25 +28,57 @@ export type BackendPayment = {
 };
 
 export async function replaceBackendCart(items: CartItem[]): Promise<BackendCart> {
-  await apiClient.requestData<BackendCart>("/api/v1/cart", { method: "DELETE" });
-
-  let cart = await apiClient.requestData<BackendCart>("/api/v1/cart");
-  for (const item of items) {
+  const requestItems = items.map((item) => {
     const productId = Number(item.productId);
+
     if (!Number.isInteger(productId) || productId < 1) {
       throw new Error(`Invalid backend product id: ${item.productId}`);
     }
+
     if (!Number.isInteger(item.quantity) || item.quantity < 1) {
       throw new Error("Cart quantity must be a positive integer.");
     }
 
-    cart = await apiClient.requestData<BackendCart>("/api/v1/cart/items", {
-      method: "POST",
-      body: JSON.stringify({ productId, quantity: item.quantity }),
-    });
-  }
+    return {
+      productId,
+      quantity: item.quantity,
+    };
+  });
 
-  return cart;
+  return apiClient.requestData<BackendCart>("/api/v1/cart", {
+    method: "PUT",
+    body: JSON.stringify(requestItems),
+  });
+}
+
+export async function getBackendCart(): Promise<BackendCart> {
+  return apiClient.requestData<BackendCart>("/api/v1/cart");
+}
+
+export function mapBackendCartToLocal(
+  backend: BackendCart,
+  localItems: CartItem[],
+): CartItem[] {
+  const cachedByProduct = new Map(
+    localItems.map((item) => [item.productId, item]),
+  );
+
+  return backend.items.map((item) => {
+    const cached = cachedByProduct.get(String(item.productId));
+
+    return {
+      productId: String(item.productId),
+      name: item.productName,
+      price: Number(item.productPrice),
+      currency: item.currency ?? cached?.currency,
+      priceUnit: "unit",
+      quantity: item.quantity,
+      image: cached?.image,
+      minOrderQuantity: cached?.minOrderQuantity ?? 1,
+      variantId: cached?.variantId,
+      variantLabel: cached?.variantLabel,
+    };
+  });
 }
 
 export async function createBackendOrder(input: {
