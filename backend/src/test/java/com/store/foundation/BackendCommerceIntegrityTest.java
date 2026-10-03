@@ -197,6 +197,7 @@ class BackendCommerceIntegrityTest {
     @Test
     void multiSupplierOrder_entersExplicitFulfillmentFailure_insteadOfStuckShipped() {
         Order order = orderRepository.save(Order.builder()
+                .user(testUser())
                 .status(OrderStatus.PROCESSING)
                 .totalAmount(new BigDecimal("50.00"))
                 .currency("USD")
@@ -244,6 +245,7 @@ class BackendCommerceIntegrityTest {
     @Test
     void shipmentCannotAdvance_withoutConfirmedSupplierAcceptance() {
         Order order = orderRepository.save(Order.builder()
+                .user(testUser())
                 .status(OrderStatus.PROCESSING)
                 .totalAmount(new BigDecimal("25.00"))
                 .currency("USD")
