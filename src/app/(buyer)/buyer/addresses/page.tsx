@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
+import { useSession } from "@/features/auth/session";
 import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import {
   createAddress,
@@ -31,6 +32,7 @@ const emptyForm: Omit<CustomerAddress, "id"> = {
 };
 
 export default function BuyerAddressesPage() {
+  const session = useSession();
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,6 +54,11 @@ export default function BuyerAddressesPage() {
   };
 
   useEffect(() => {
+    if (session.status !== "authenticated") {
+      setLoading(false);
+      return;
+    }
+
     let active = true;
     const run = async () => {
       try {
@@ -67,7 +74,7 @@ export default function BuyerAddressesPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [session.status]);
 
   const startAdd = () => {
     setEditingId(null);
@@ -177,7 +184,27 @@ export default function BuyerAddressesPage() {
       title="العناوين"
       description="احفظ عناوين التوصيل لتسريع إتمام الطلب."
     >
-      {error && (
+      {session.status === "loading" ? (
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center text-body-sm text-muted-foreground">
+          جارٍ التحقق من الجلسة...
+        </div>
+      ) : session.status !== "authenticated" ? (
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
+          <MapPin className="mx-auto h-9 w-9 text-neutral-300" />
+          <h2 className="mt-4 text-h3 font-bold text-foreground">
+            سجّل الدخول لإدارة عناوينك
+          </h2>
+          <p className="mt-2 text-body-sm text-muted-foreground">
+            عناوين التوصيل محفوظة داخل حسابك ولا تُعرض لغير صاحب الحساب.
+          </p>
+          <Link
+            href="/login?next=/buyer/addresses"
+            className="mt-6 inline-flex h-11 items-center rounded-md bg-brand px-6 text-body font-medium text-white hover:bg-brand-hover"
+          >
+            تسجيل الدخول
+          </Link>
+        </div>
+      ) : error ? (
         <div role="alert" className="mb-6 rounded-md border border-danger-100 bg-danger-surface px-4 py-3 text-body-sm font-medium text-danger-600">
           {error}
         </div>
