@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { CategoryNode } from "@/features/catalog/types/category.types";
 import { ArrowLeft } from "lucide-react";
 
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
@@ -13,7 +14,7 @@ const CTA_LABEL_AR: Record<string, string> = {
 };
 
 export async function CategoryGrid() {
-  let categories = [];
+  let categories: CategoryNode[] = [];
   try {
     categories = await getTopLevelCategories();
   } catch {
