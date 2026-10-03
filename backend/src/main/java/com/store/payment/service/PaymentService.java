@@ -124,6 +124,18 @@ public class PaymentService {
     }
 
     @Transactional
+    public PaymentResponse confirmCodCollectionByPaymentId(Long paymentId) {
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+
+        if (payment.getMethod() != PaymentMethod.CASH_ON_DELIVERY) {
+            throw new ConflictException("This payment is not cash on delivery");
+        }
+
+        return confirmCodCollection(payment.getOrderId());
+    }
+
+    @Transactional
     public PaymentResponse confirmCodCollection(Long orderId) {
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
