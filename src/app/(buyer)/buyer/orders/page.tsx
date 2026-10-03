@@ -55,7 +55,6 @@ export default function BuyerOrdersPage() {
 
   useEffect(() => {
     if (session.status !== "authenticated") {
-      setLoading(false);
       return;
     }
 
