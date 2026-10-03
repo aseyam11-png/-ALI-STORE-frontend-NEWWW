@@ -175,10 +175,25 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 type="button"
-                onClick={
-                  markAllAsRead
-                }
-                className="text-[10px] font-black text-[#2563EB] hover:underline"
+                disabled={session.status !== "authenticated"}
+                onClick={() => {
+                  if (session.status !== "authenticated") return;
+
+                  const unreadIds = notifications
+                    .filter((item) => !item.read)
+                    .map((item) => item.id);
+
+                  void Promise.all(
+                    unreadIds.map((id) =>
+                      markNotificationAsRead(id),
+                    ),
+                  )
+                    .then(() => {
+                      markAllAsRead();
+                    })
+                    .catch(() => undefined);
+                }}
+                className="text-[10px] font-black text-[#2563EB] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Mark all read
               </button>
