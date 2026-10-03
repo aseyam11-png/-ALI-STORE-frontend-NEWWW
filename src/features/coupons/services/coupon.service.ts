@@ -36,7 +36,6 @@ export interface CouponValidationResult {
 export async function validateCoupon(
   code: string,
   subtotal: number,
-  shipping = 0,
 ): Promise<CouponValidationResult> {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return { valid: false, message: "Enter a coupon code." };
