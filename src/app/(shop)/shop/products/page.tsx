@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { Filter, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -115,7 +116,7 @@ export default function ProductsPage() {
       if (requested <= 1) next.delete("page");
     }
 
-    router.push(next.toString() ? pathname + "?" + next.toString() : pathname);
+    router.push((next.toString() ? pathname + "?" + next.toString() : pathname) as Route);
   };
 
   const submitSearch = () => {
@@ -146,7 +147,7 @@ export default function ProductsPage() {
     setSearchDraft("");
     setMinPriceDraft("");
     setMaxPriceDraft("");
-    router.push(pathname);
+    router.push(pathname as Route);
   };
 
   const activeFilterCount = [
