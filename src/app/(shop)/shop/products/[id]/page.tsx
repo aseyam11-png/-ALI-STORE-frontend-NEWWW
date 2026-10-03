@@ -72,7 +72,9 @@ export default async function ProductDetailPage({
     productDetails.shippingMethods[0];
 
   const estimatedDelivery =
-    primaryShippingMethod
+    primaryShippingMethod &&
+    primaryShippingMethod.estimatedMinDays > 0 &&
+    primaryShippingMethod.estimatedMaxDays > 0
       ? `${primaryShippingMethod.estimatedMinDays}-${primaryShippingMethod.estimatedMaxDays} business days`
       : "Delivery estimate available at checkout";
 
