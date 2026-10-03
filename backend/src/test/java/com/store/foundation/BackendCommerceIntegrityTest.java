@@ -27,6 +27,10 @@ import com.store.shipping.service.ShipmentService;
 import com.store.supplier.entity.Supplier;
 import com.store.supplier.repository.SupplierRepository;
 import com.store.supplier.service.SupplierService;
+import com.store.user.entity.Role;
+import com.store.user.entity.User;
+import com.store.user.repository.RoleRepository;
+import com.store.user.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +53,8 @@ class BackendCommerceIntegrityTest {
     @Autowired private SupplierRepository supplierRepository;
     @Autowired private SupplierService supplierService;
     @Autowired private ProductService productService;
+    @Autowired private RoleRepository roleRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private OrderRepository orderRepository;
     @Autowired private ShipmentRepository shipmentRepository;
     @Autowired private FulfillmentTaskRepository taskRepository;
@@ -89,7 +95,6 @@ class BackendCommerceIntegrityTest {
                 .lastSyncedAt(LocalDateTime.now().minusMinutes(1))
                 .build());
 
-        InventoryService.class.getName(); // keep the test focused on the service contract
         var response = inventoryService.syncSupplierStock(
                 product.getId(), 0, LocalDateTime.now());
 
@@ -138,6 +143,7 @@ class BackendCommerceIntegrityTest {
                 .build());
 
         Order order = orderRepository.save(Order.builder()
+                .user(testUser())
                 .status(OrderStatus.PROCESSING)
                 .totalAmount(new BigDecimal("50.00"))
                 .currency("USD")
@@ -369,6 +375,24 @@ class BackendCommerceIntegrityTest {
         Assertions.assertEquals(
                 ProductStatus.ACTIVE,
                 productRepository.findById(product.getId()).orElseThrow().getStatus());
+    }
+
+    private User testUser() {
+        Role role = roleRepository.findByName("ROLE_USER")
+                .orElseGet(() -> roleRepository.save(
+                        Role.builder()
+                                .name("ROLE_USER")
+                                .description("Standard customer role")
+                                .build()));
+
+        return userRepository.save(User.builder()
+                .firstName("Integrity")
+                .lastName("Test")
+                .email("integrity-" + System.nanoTime() + "@example.com")
+                .password("test-password")
+                .isEnabled(true)
+                .role(role)
+                .build());
     }
 
     private Product product(String sku, String apiBaseUrl) {
