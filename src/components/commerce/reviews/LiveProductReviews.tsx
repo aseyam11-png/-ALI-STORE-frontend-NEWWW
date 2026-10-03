@@ -32,8 +32,23 @@ export function LiveProductReviews({ productId }: { productId: string }) {
   }, [productId]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let active = true;
+    getProductReviews(productId)
+      .then((nextReviews) => {
+        if (active) setReviews(nextReviews);
+      })
+      .catch((error) => {
+        if (active) {
+          setError(error instanceof Error ? error.message : "تعذر تحميل التقييمات.");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [productId]);
 
   const average = useMemo(
     () =>
