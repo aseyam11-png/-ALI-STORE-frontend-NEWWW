@@ -231,7 +231,7 @@ public class ShipmentService {
             String carrier,
             LocalDateTime estimatedDeliveryDate) {
 
-        Shipment shipment = shipmentRepository.findBySupplierOrderIdForUpdate(supplierOrderId)
+        Shipment shipment = shipmentRepository.findBySupplierOrderId(supplierOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Shipment not found for supplier order id: " + supplierOrderId));
 
