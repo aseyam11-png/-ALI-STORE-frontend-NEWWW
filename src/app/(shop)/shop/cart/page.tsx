@@ -33,33 +33,12 @@ export default function CartPage() {
     (state) => state.items,
   );
 
-  const shipping =
-    useCartStore
-      .getState()
-      .getShippingInfo();
-
-  const removeItem = useCartStore(
-    (state) => state.removeItem,
-  );
-
-  const updateQuantity =
-    useCartStore(
-      (state) => state.updateQuantity,
-    );
-
-  const clearCart = useCartStore(
-    (state) => state.clearCart,
-  );
-
   const subtotal = items.reduce(
     (total, item) =>
       total +
       item.price * item.quantity,
     0,
   );
-
-  const grandTotal =
-    subtotal + shipping.cost;
 
   const session = useSession();
   const replaceItems = useCartStore((state) => state.replaceItems);
@@ -427,7 +406,7 @@ export default function CartPage() {
 
                     </div>
 
-                    {shipping.cost >= 0 && (
+                    {items.length > 0 && (
                       <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -454,14 +433,7 @@ export default function CartPage() {
 
                           <p className="text-sm font-black text-slate-900">
                             Shipping:{" "}
-                            {shipping.cost === 0 ? (
-                              "Free"
-                            ) : (
-                              <LocalizedPrice
-                                amountUSD={shipping.cost}
-                                className="font-black text-slate-900"
-                              />
-                            )}
+                            Confirmed at checkout
                           </p>
 
                         </div>
@@ -515,11 +487,7 @@ export default function CartPage() {
                         </span>
 
                         <span className="font-bold">
-                          {shipping.cost === 0 ? (
-                            "FREE"
-                          ) : (
-                            <LocalizedPrice amountUSD={shipping.cost} />
-                          )}
+                          Confirmed at checkout
                         </span>
                       </div>
 
