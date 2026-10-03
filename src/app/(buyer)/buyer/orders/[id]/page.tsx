@@ -27,10 +27,8 @@ function aggregateShipmentStatus(order: BackendOrder): string {
   const statuses = order.shipments.map((shipment) => shipment.status);
   if (statuses.length === 0) return order.status;
   if (statuses.every((status) => status === "DELIVERED")) return "DELIVERED";
-  if (statuses.some((status) => status === "OUT_FOR_DELIVERY")) return "OUT_FOR_DELIVERY";
   if (statuses.some((status) => status === "IN_TRANSIT")) return "IN_TRANSIT";
   if (statuses.some((status) => status === "SHIPPED")) return "SHIPPED";
-  if (statuses.some((status) => status === "PACKED")) return "PACKED";
   return "PROCESSING";
 }
 
