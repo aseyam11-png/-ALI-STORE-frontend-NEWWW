@@ -7,6 +7,7 @@ export interface CartItem {
   price: number;
   supplierPrice?: number;
   priceUnit: string;
+  currency?: string;
 
   quantity: number;
 
@@ -51,6 +52,8 @@ interface CartState {
   getSubtotal: () => number;
   getShippingTotal: () => number;
   getGrandTotal: () => number;
+
+  replaceItems: (items: CartItem[]) => void;
 
   getEstimatedProfit: () => number;
 
@@ -143,6 +146,15 @@ export const useCartStore = create<CartState>(
       set({ items: [] });
     },
 
+    replaceItems: (items) => {
+      set({
+        items: items.map((item) => ({
+          ...item,
+          quantity: Math.max(1, Math.floor(item.quantity)),
+        })),
+      });
+    },
+
     getItemCount: () => {
       return get().items.reduce(
         (total, item) =>
@@ -168,20 +180,6 @@ export const useCartStore = create<CartState>(
       return (
         get().getSubtotal() +
         get().getShippingTotal()
-      );
-    },
-
-    getEstimatedProfit: () => {
-      return get().items.reduce(
-        (total, item) =>
-          total +
-          Math.max(
-            0,
-            (item.price -
-              (item.supplierPrice ?? item.price)) *
-              item.quantity,
-          ),
-        0,
       );
     },
 
@@ -211,13 +209,9 @@ export const useCartStore = create<CartState>(
       );
 
       return {
-        cost: highest.cost,
-        method:
-          highest.item.shippingMethod ??
-          "Standard shipping",
-        estimatedDelivery:
-          highest.item.estimatedDelivery ??
-          "Delivery date will be confirmed at checkout",
+        cost: 0,
+        method: "Calculated at checkout",
+        estimatedDelivery: "",
       };
     },
   }),
