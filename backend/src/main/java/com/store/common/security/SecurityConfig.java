@@ -6,6 +6,7 @@ import com.store.auth.service.GoogleOAuth2FailureHandler;
 import com.store.auth.service.GoogleOAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
