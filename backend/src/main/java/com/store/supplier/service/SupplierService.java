@@ -8,6 +8,8 @@ import com.store.supplier.dto.SupplierResponse;
 import com.store.supplier.entity.Supplier;
 import com.store.supplier.entity.SupplierStatus;
 import com.store.supplier.repository.SupplierRepository;
+import java.net.URI;
+import java.net.URISyntaxException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,11 +44,16 @@ public class SupplierService {
             throw new ConflictException("Supplier external code already exists");
         }
 
+        String apiBaseUrl = normalizeUrl(request.getApiBaseUrl());
+        boolean fulfillmentEnabled =
+                request.getFulfillmentEnabled() != null ? request.getFulfillmentEnabled() : true;
+        validateFulfillmentConfiguration(apiBaseUrl, fulfillmentEnabled);
+
         Supplier supplier = Supplier.builder()
                 .externalCode(code)
                 .name(request.getName().trim())
-                .apiBaseUrl(normalizeUrl(request.getApiBaseUrl()))
-                .fulfillmentEnabled(request.getFulfillmentEnabled() != null ? request.getFulfillmentEnabled() : true)
+                .apiBaseUrl(apiBaseUrl)
+                .fulfillmentEnabled(fulfillmentEnabled)
                 .inventorySyncEnabled(request.getInventorySyncEnabled() != null ? request.getInventorySyncEnabled() : true)
                 .status(SupplierStatus.ACTIVE)
                 .build();
@@ -65,10 +72,17 @@ public class SupplierService {
                     throw new ConflictException("Supplier external code already exists");
                 });
 
+        String apiBaseUrl = normalizeUrl(request.getApiBaseUrl());
+        boolean fulfillmentEnabled =
+                request.getFulfillmentEnabled() != null
+                        ? request.getFulfillmentEnabled()
+                        : Boolean.TRUE.equals(supplier.getFulfillmentEnabled());
+        validateFulfillmentConfiguration(apiBaseUrl, fulfillmentEnabled);
+
         supplier.setExternalCode(code);
         supplier.setName(request.getName().trim());
-        supplier.setApiBaseUrl(normalizeUrl(request.getApiBaseUrl()));
-        if (request.getFulfillmentEnabled() != null) supplier.setFulfillmentEnabled(request.getFulfillmentEnabled());
+        supplier.setApiBaseUrl(apiBaseUrl);
+        supplier.setFulfillmentEnabled(fulfillmentEnabled);
         if (request.getInventorySyncEnabled() != null) supplier.setInventorySyncEnabled(request.getInventorySyncEnabled());
 
         return map(supplierRepository.save(supplier));
@@ -89,6 +103,25 @@ public class SupplierService {
     private String normalizeUrl(String value) {
         if (value == null || value.isBlank()) return null;
         return value.trim().replaceAll("/+$", "");
+    }
+
+    private void validateFulfillmentConfiguration(String apiBaseUrl, boolean fulfillmentEnabled) {
+        if (!fulfillmentEnabled) return;
+
+        if (apiBaseUrl == null) {
+            throw new BusinessException("Supplier API base URL is required when fulfillment is enabled");
+        }
+
+        try {
+            URI uri = new URI(apiBaseUrl);
+            if (!"https".equalsIgnoreCase(uri.getScheme())
+                    || uri.getHost() == null
+                    || uri.getHost().isBlank()) {
+                throw new BusinessException("Supplier API base URL must be a valid HTTPS URL");
+            }
+        } catch (URISyntaxException ex) {
+            throw new BusinessException("Supplier API base URL must be a valid HTTPS URL");
+        }
     }
 
     private SupplierResponse map(Supplier supplier) {
