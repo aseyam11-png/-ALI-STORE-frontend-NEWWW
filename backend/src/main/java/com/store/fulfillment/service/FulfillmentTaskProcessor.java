@@ -177,9 +177,19 @@ public class FulfillmentTaskProcessor {
     }
 
     private void cancelTask(FulfillmentTask task, String reason) {
+        Shipment shipment = task.getShipment();
+
         task.setStatus(FulfillmentTaskStatus.CANCELLED);
         task.setLastError(reason);
         taskRepository.save(task);
+
+        if (shipment.getStatus() == ShipmentStatus.PENDING) {
+            shipment.setStatus(ShipmentStatus.CANCELLED);
+            shipmentRepository.save(shipment);
+        }
+
+        releaseSupplierReservations(shipment);
+        shipmentService.synchronizeOrderStatus(shipment.getOrderId());
     }
 
     private void releaseSupplierReservations(Shipment shipment) {
