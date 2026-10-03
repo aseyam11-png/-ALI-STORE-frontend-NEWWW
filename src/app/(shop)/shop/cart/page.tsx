@@ -20,7 +20,6 @@ import { useCartStore } from "@/stores/cart-store";
 import { useSession } from "@/features/auth/session";
 import {
   getBackendCart,
-  addBackendCartItem,
   updateBackendCartItem,
   removeBackendCartItem,
   clearBackendCart,
