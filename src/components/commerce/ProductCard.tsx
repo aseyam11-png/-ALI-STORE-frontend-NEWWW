@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useState } from "react";
 import { ShoppingCart, Star } from "lucide-react";
 
@@ -87,7 +88,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-raised">
       <div className="relative aspect-square overflow-hidden bg-neutral-50">
         <Link
-          href={"/shop/products/" + encodeURIComponent(product.id)}
+          href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
           className="absolute inset-0"
           aria-label={product.name}
         >
