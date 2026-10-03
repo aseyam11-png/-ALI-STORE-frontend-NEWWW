@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingCart, Star } from "lucide-react";
+import { useState } from "react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
@@ -27,12 +28,12 @@ export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
   const session = useSession();
   const addItem = useCartStore((state) => state.addItem);
-  const toggleWishlist = useWishlistStore((state) => state.toggle);
   const isSaved = useWishlistStore((state) =>
     state.productIds.includes(product.id),
   );
   const toggleWishlistLocal = useWishlistStore((state) => state.toggleItem);
   const [wishlistBusy, setWishlistBusy] = useState(false);
+  const [wishlistError, setWishlistError] = useState(false);
 
   const formattedPrice = formatCurrency(product.price.amount, product.price.currency);
 
@@ -52,9 +53,11 @@ export function ProductCard({ product }: ProductCardProps) {
     product.stockStatus === "low_stock";
 
   const handleWishlist = async () => {
-    if (wishlistBusy) return;
+    if (wishlistBusy || session.status === "loading") return;
 
     setWishlistBusy(true);
+    setWishlistError(false);
+
     try {
       if (session.status === "authenticated") {
         if (isSaved) {
@@ -76,6 +79,8 @@ export function ProductCard({ product }: ProductCardProps) {
         rating: product.rating,
         reviewCount: product.reviewCount,
       });
+    } catch {
+      setWishlistError(true);
     } finally {
       setWishlistBusy(false);
     }
@@ -127,6 +132,7 @@ export function ProductCard({ product }: ProductCardProps) {
           onClick={() => void handleWishlist()}
           disabled={wishlistBusy}
           aria-busy={wishlistBusy}
+          title={wishlistError ? "تعذر تحديث المفضلة" : undefined}
           aria-label={
             isSaved
               ? t("removeFromWishlist", { name: product.name })
