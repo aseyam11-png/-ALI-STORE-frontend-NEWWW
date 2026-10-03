@@ -12,27 +12,6 @@ type BackendCategory = {
   parentName?: string | null;
 };
 
-type ApiEnvelope<T> = {
-  success?: boolean;
-  message?: string;
-  data: T;
-};
-
-function unwrap<T>(response: T | ApiEnvelope<T>): T {
-  if (
-    typeof response === "object" &&
-    response !== null &&
-    "data" in response
-  ) {
-    const envelope = response as ApiEnvelope<T>;
-    if (envelope.success === false) {
-      throw new Error(envelope.message || "Category request failed");
-    }
-    return envelope.data;
-  }
-  return response as T;
-}
-
 function buildTree(categories: BackendCategory[]): CategoryNode[] {
   const nodes = new Map<number, CategoryNode>();
 
@@ -77,11 +56,12 @@ function buildTree(categories: BackendCategory[]): CategoryNode[] {
 }
 
 export async function getCategories(): Promise<CategoryNode[]> {
-  const response = await apiClient.request<
-    BackendCategory[] | ApiEnvelope<BackendCategory[]>
-  >("/api/v1/categories");
+  const categories =
+    await apiClient.requestData<BackendCategory[]>(
+      "/api/v1/categories",
+    );
 
-  return buildTree(unwrap(response));
+  return buildTree(categories);
 }
 
 export async function getCategoryBySlug(
