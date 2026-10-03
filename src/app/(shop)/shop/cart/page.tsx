@@ -217,8 +217,7 @@ export default function CartPage() {
     setError("");
 
     try {
-      const backend = await clearBackendCart();
-      replaceItems(
+      const backend = await clearBackendCart();      replaceItems(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -237,28 +236,28 @@ export default function CartPage() {
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-background">
         {error && (
           <div
             role="alert"
-            className="border-b border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700"
+            className="border-b border-danger-100 bg-danger-surface px-4 py-3 text-center text-sm font-bold text-danger-700"
           >
             {error}
           </div>
         )}
 
-        <section className="border-b border-slate-200 bg-white">
+        <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
 
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand">
               Shopping cart
             </p>
 
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
               Your cart
             </h1>
 
-            <p className="mt-2 text-sm leading-6 text-slate-500">
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
               Review your items and continue to checkout when you&apos;re ready.
             </p>
 
@@ -270,17 +269,17 @@ export default function CartPage() {
           {items.length === 0 ? (
             <div className="space-y-6">
 
-              <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <section className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-12 text-center">
 
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-neutral-500">
                   <ShoppingBag className="h-7 w-7" />
                 </div>
 
-                <h2 className="mt-5 text-2xl font-black text-slate-900">
+                <h2 className="mt-5 text-2xl font-black text-foreground">
                   Your cart is empty
                 </h2>
 
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
                   Discover products from our catalog and add them to your
                   cart.
                 </p>
@@ -305,7 +304,7 @@ export default function CartPage() {
           ) : (
             <div className="space-y-7">
 
-              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-800">
+              <div className="rounded-xl border border-primary-100 bg-info-surface px-4 py-3 text-xs font-semibold text-primary-800">
                 السلة متزامنة مع الخادم. تكلفة الشحن النهائية تؤكد عند إنشاء الطلب.
               </div>
 
@@ -313,17 +312,17 @@ export default function CartPage() {
 
                 <section className="space-y-5">
 
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
 
                     <div>
-                      <p className="text-sm font-black text-slate-900">
+                      <p className="text-sm font-black text-foreground">
                         {itemCount} item
                         {itemCount !== 1
                           ? "s"
                           : ""}
                       </p>
 
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-neutral-400">
                         In your cart
                       </p>
                     </div>
@@ -332,7 +331,7 @@ export default function CartPage() {
                       type="button"
                       onClick={() => void handleClear()}
                       disabled={syncing}
-                      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-50"
+                      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-danger transition hover:bg-danger-surface"
                     >
                       <Trash2 className="h-4 w-4" />
                       Clear cart
@@ -340,7 +339,7 @@ export default function CartPage() {
 
                   </div>
 
-                  <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
 
                     <div className="divide-y divide-slate-100">
 
@@ -358,7 +357,7 @@ export default function CartPage() {
 
                               <div className="flex flex-col gap-4 sm:flex-row">
 
-                                <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50">
+                                <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-50">
 
                                   {item.image ? (
                                     <Image
@@ -373,7 +372,7 @@ export default function CartPage() {
                                       className="object-contain p-3"
                                     />
                                   ) : (
-                                    <ShoppingBag className="h-7 w-7 text-slate-300" />
+                                    <ShoppingBag className="h-7 w-7 text-neutral-300" />
                                   )}
 
                                 </div>
@@ -382,7 +381,7 @@ export default function CartPage() {
 
                                   <Link
                                     href={`/shop/products/${encodeURIComponent(item.productId)}`}
-                                    className="text-sm font-black text-slate-900 hover:text-[#2563EB]"
+                                    className="text-sm font-black text-foreground hover:text-brand"
                                   >
                                     {
                                       item.name
@@ -390,14 +389,14 @@ export default function CartPage() {
                                   </Link>
 
                                   {item.variantLabel && (
-                                    <p className="mt-1 text-xs font-semibold text-[#2563EB]">
+                                    <p className="mt-1 text-xs font-semibold text-brand">
                                       {
                                         item.variantLabel
                                       }
                                     </p>
                                   )}
 
-                                  <p className="mt-2 text-lg font-black text-[#0F2747]">
+                                  <p className="mt-2 text-lg font-black text-brand-ink">
                                     <LocalizedPrice
                                       amountUSD={item.price}
                                       currency={item.currency}
@@ -406,7 +405,7 @@ export default function CartPage() {
 
                                   <div className="mt-4 flex items-center gap-3">
 
-                                    <div className="flex items-center overflow-hidden rounded-xl border border-slate-200">
+                                    <div className="flex items-center overflow-hidden rounded-xl border border-neutral-200">
 
                                       <button
                                         type="button"
@@ -421,12 +420,12 @@ export default function CartPage() {
                                           item.quantity <=
                                           1
                                         }
-                                        className="flex h-10 w-10 items-center justify-center text-slate-600 disabled:opacity-40"
+                                        className="flex h-10 w-10 items-center justify-center text-neutral-600 disabled:opacity-40"
                                       >
                                         <Minus className="h-4 w-4" />
                                       </button>
 
-                                      <span className="flex h-10 min-w-12 items-center justify-center border-x border-slate-200 px-3 text-sm font-black">
+                                      <span className="flex h-10 min-w-12 items-center justify-center border-x border-neutral-200 px-3 text-sm font-black">
                                         {
                                           item.quantity
                                         }
@@ -437,11 +436,10 @@ export default function CartPage() {
                                         onClick={() =>
                                           handleQuantityChange(
                                             item.productId,
-                                            item.variantId,
-                                            item.quantity + 1,
+                                            item.variantId,                                            item.quantity + 1,
                                           )
                                         }
-                                        className="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50"
+                                        className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:bg-neutral-50"
                                       >
                                         <Plus className="h-4 w-4" />
                                       </button>
@@ -454,7 +452,7 @@ export default function CartPage() {
 
                                 <div className="flex items-end justify-between gap-5 sm:flex-col sm:items-end">
 
-                                  <p className="text-xl font-black text-[#0F2747]">
+                                  <p className="text-xl font-black text-brand-ink">
                                     <LocalizedPrice
                                       amountUSD={itemTotal}
                                       currency={item.currency}
@@ -469,7 +467,7 @@ export default function CartPage() {
                                         item.variantId,
                                       )
                                     }
-                                    className="text-xs font-bold text-red-600 hover:underline"
+                                    className="text-xs font-bold text-danger hover:underline"
                                   >
                                     Remove
                                   </button>
@@ -485,9 +483,9 @@ export default function CartPage() {
 
                     </div>
 
-                    <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                        <Truck className="h-4 w-4 text-emerald-600" />
+                    <div className="border-t border-neutral-100 bg-neutral-50 px-5 py-4">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
+                        <Truck className="h-4 w-4 text-success-600" />
                         Shipping is calculated and confirmed at checkout.
                       </div>
                     </div>
@@ -503,16 +501,16 @@ export default function CartPage() {
 
                 <aside className="h-fit space-y-5 xl:sticky xl:top-24">
 
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
-                    <h2 className="text-lg font-black text-slate-900">
+                    <h2 className="text-lg font-black text-foreground">
                       Order summary
                     </h2>
 
                     <div className="mt-6 space-y-4">
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">
+                        <span className="text-neutral-500">
                           Items
                         </span>
 
@@ -522,7 +520,7 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">
+                        <span className="text-neutral-500">
                           Subtotal
                         </span>
 
@@ -532,7 +530,7 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">
+                        <span className="text-neutral-500">
                           Shipping
                         </span>
 
@@ -543,47 +541,17 @@ export default function CartPage() {
 
                     </div>
 
-                    <div className="mt-6 border-t border-slate-100 pt-5">
+                    <div className="mt-6 border-t border-neutral-100 pt-5">
 
                       <div className="flex items-end justify-between">
-                        <span className="font-bold text-slate-500">
+                        <span className="font-bold text-neutral-500">
                           Total
                         </span>
 
-                        <span className="text-3xl font-black text-[#0F2747]">
+                        <span className="text-3xl font-black text-brand-ink">
                           <LocalizedPrice
                             amountUSD={subtotal}
                             currency={items[0]?.currency}
                           />
                         </span>
                       </div>
-
-                    </div>
-
-                    <Link
-                      href="/shop/checkout"
-                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white"
-                    >
-                      Continue to checkout
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-
-                  </div>
-
-                  <RecommendationSection
-                    type="BASED_ON_BROWSING"
-                    title="Recommended for you"
-                    description="Suggestions based on products you may like."
-                  />
-
-                </aside>
-
-              </div>
-            </div>
-          )}
-
-        </div>
-      </main>
-    </AppShell>
-  );
-}
