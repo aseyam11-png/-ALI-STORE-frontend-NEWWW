@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronDown,
   Filter,
@@ -15,7 +16,7 @@ import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { ProductPagination } from "@/components/commerce/products/ProductPagination";
 
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
-import { mapMockProductToSummary } from "@/features/products/services/product.mapper";
+import { getProducts } from "@/features/products/services/product.service";
 
 import {
   filterCatalogProducts,
@@ -25,21 +26,44 @@ import {
 
 import { paginate } from "@/features/catalog/services/pagination.service";
 
-import { featuredProducts } from "@/mocks/products";
-
 
 const PAGE_SIZE = 12;
 
 export default function ProductsPage() {
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("q") ?? "";
+  });
 
-  // mock source → canonical ProductSummary → page-local B2CProduct view —
-  // this page no longer normalizes the raw mock array directly.
-  const allProducts =
-    featuredProducts
-      .map(mapMockProductToSummary)
-      .map(normalizeB2CProduct);
+  const { data: catalogResponse, isLoading, isError } = useQuery({
+    queryKey: ["catalog-products"],
+    queryFn: () =>
+      getProducts({
+        search: "",
+        categoryId: undefined,
+        subcategoryId: undefined,
+        brand: undefined,
+        supplierId: undefined,
+        minPrice: undefined,
+        maxPrice: undefined,
+        minRating: undefined,
+        verifiedSupplierOnly: false,
+        discountOnly: false,
+        inStockOnly: false,
+        featuredOnly: false,
+        bestsellerOnly: false,
+        newArrivalOnly: false,
+        sort: "relevance",
+        page: 1,
+        pageSize: 100,
+      }),
+    staleTime: 30_000,
+  });
+
+  const allProducts = useMemo(
+    () => (catalogResponse?.items ?? []).map(normalizeB2CProduct),
+    [catalogResponse],
+  );
 
   const brands = useMemo(
     () => [
@@ -336,6 +360,19 @@ export default function ProductsPage() {
 
           </div>
 
+          {isLoading && (
+            <div className="rounded-2xl border border-neutral-200 bg-surface p-8 text-center text-sm font-bold text-neutral-500">
+              Loading the live catalog…
+            </div>
+          )}
+
+          {isError && (
+            <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm font-bold text-red-700">
+              The live catalog could not be loaded. Please try again.
+            </div>
+          )}
+
+          {!isLoading && !isError && (
           <div className="grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
 
             {/* Filters */}
@@ -765,6 +802,7 @@ export default function ProductsPage() {
             </section>
 
           </div>
+          )}
         </div>
       </main>
     </AppShell>
