@@ -1,0 +1,262 @@
+package com.store.payment;
+
+import com.store.category.entity.Category;
+import com.store.category.repository.CategoryRepository;
+import com.store.common.exception.ConflictException;
+import com.store.inventory.entity.Inventory;
+import com.store.inventory.enums.InventorySource;
+import com.store.inventory.repository.InventoryRepository;
+import com.store.order.entity.Order;
+import com.store.order.entity.OrderItem;
+import com.store.order.entity.OrderStatus;
+import com.store.order.repository.OrderRepository;
+import com.store.order.service.OrderService;
+import com.store.payment.dto.PaymentRequest;
+import com.store.payment.entity.Payment;
+import com.store.payment.entity.PaymentCollectionStatus;
+import com.store.payment.entity.PaymentMethod;
+import com.store.payment.entity.PaymentStatus;
+import com.store.payment.entity.RefundStatus;
+import com.store.payment.provider.PaymentProvider;
+import com.store.payment.repository.PaymentRepository;
+import com.store.payment.repository.RefundRepository;
+import com.store.payment.service.PaymentService;
+import com.store.payment.service.RefundService;
+import com.store.product.entity.Product;
+import com.store.product.enums.ProductStatus;
+import com.store.product.repository.ProductRepository;
+import com.store.shipping.entity.Shipment;
+import com.store.shipping.entity.ShipmentStatus;
+import com.store.shipping.repository.ShipmentRepository;
+import com.store.supplier.entity.Supplier;
+import com.store.supplier.repository.SupplierRepository;
+import com.store.user.entity.Role;
+import com.store.user.entity.User;
+import com.store.user.repository.RoleRepository;
+import com.store.user.repository.UserRepository;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class PaymentFinancialIntegrityTest {
+
+    @Autowired private PaymentService paymentService;
+    @Autowired private RefundService refundService;
+    @Autowired private OrderService orderService;
+    @Autowired private PaymentRepository paymentRepository;
+    @Autowired private RefundRepository refundRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private SupplierRepository supplierRepository;
+    @Autowired private InventoryRepository inventoryRepository;
+    @Autowired private ShipmentRepository shipmentRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private RoleRepository roleRepository;
+    @MockBean private PaymentProvider paymentProvider;
+
+    @Test
+    void providerException_persistsReconciliationState() {
+        User user = user();
+        Product product = product("FIN-RECON", "FIN-RECON-SUP");
+        Order order = order(user, product, new BigDecimal("25.00"));
+
+        when(paymentProvider.charge(any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("gateway timeout"));
+
+        PaymentRequest request = new PaymentRequest();
+        request.setOrderId(order.getId());
+        request.setAmount(new BigDecimal("25.00"));
+        request.setMethod(PaymentMethod.CREDIT_CARD);
+
+        Assertions.assertThrows(
+                ConflictException.class,
+                () -> paymentService.processPayment(user.getEmail(), request));
+
+        Payment payment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+        Assertions.assertEquals(PaymentStatus.REQUIRES_RECONCILIATION, payment.getStatus());
+        Assertions.assertEquals("order-" + order.getId(), payment.getIdempotencyKey());
+        Assertions.assertTrue(payment.getProviderError().contains("gateway timeout"));
+    }
+
+    @Test
+    void codCollection_requiresDeliveredOrder() {
+        User user = user();
+        Order order = orderRepository.save(Order.builder()
+                .user(user).status(OrderStatus.PROCESSING)
+                .totalAmount(new BigDecimal("40.00")).currency("USD")
+                .shippingAddress("1 Main St")
+                .reservationExpiresAt(LocalDateTime.now().plusMinutes(30)).build());
+
+        Payment payment = paymentRepository.save(Payment.builder()
+                .orderId(order.getId()).amount(new BigDecimal("40.00"))
+                .method(PaymentMethod.CASH_ON_DELIVERY)
+                .status(PaymentStatus.PENDING)
+                .idempotencyKey("order-" + order.getId())
+                .collectionStatus(PaymentCollectionStatus.PENDING).build());
+
+        Assertions.assertThrows(
+                ConflictException.class,
+                () -> paymentService.confirmCodCollectionByPaymentId(payment.getId()));
+
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
+
+        var response = paymentService.confirmCodCollectionByPaymentId(payment.getId());
+        Assertions.assertEquals(PaymentStatus.COMPLETED, response.getStatus());
+        Assertions.assertEquals(PaymentCollectionStatus.COLLECTED, response.getCollectionStatus());
+    }
+
+    @Test
+    void paidCancellation_createsRefundPending() {
+        User user = user();
+        Product product = product("FIN-CANCEL", "FIN-CANCEL-SUP");
+        Order order = order(user, product, new BigDecimal("25.00"));
+
+        paymentRepository.save(Payment.builder()
+                .orderId(order.getId()).amount(new BigDecimal("25.00"))
+                .method(PaymentMethod.CREDIT_CARD).status(PaymentStatus.COMPLETED)
+                .transactionId("TXN-CANCEL-1")
+                .idempotencyKey("order-" + order.getId())
+                .collectionStatus(PaymentCollectionStatus.NOT_REQUIRED).build());
+
+        orderService.updateOrderStatus(order.getId(), OrderStatus.CANCELLED);
+
+        Payment payment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+        Assertions.assertEquals(PaymentStatus.REFUND_PENDING, payment.getStatus());
+
+        var refund = refundRepository.findByIdempotencyKey(
+                "order:" + order.getId() + ":cancellation").orElseThrow();
+        Assertions.assertEquals(RefundStatus.PENDING, refund.getStatus());
+        Assertions.assertEquals(new BigDecimal("25.00"), refund.getAmount());
+    }
+
+    @Test
+    void cancelledSupplierShipment_createsPartitionRefundOnly() {
+        User user = user();
+
+        Supplier supplierA = supplier("FIN-SUP-A");
+        Supplier supplierB = supplier("FIN-SUP-B");
+        Category category = category();
+
+        Product productA = product(category, supplierA, "FIN-A", new BigDecimal("60.00"));
+        Product productB = product(category, supplierB, "FIN-B", new BigDecimal("40.00"));
+
+        Order order = orderWithTwoItems(user, productA, supplierA, productB, supplierB);
+
+        paymentRepository.save(Payment.builder()
+                .orderId(order.getId()).amount(new BigDecimal("100.00"))
+                .method(PaymentMethod.CREDIT_CARD).status(PaymentStatus.COMPLETED)
+                .transactionId("TXN-PARTIAL-1")
+                .idempotencyKey("order-" + order.getId())
+                .collectionStatus(PaymentCollectionStatus.NOT_REQUIRED).build());
+
+        Shipment failedShipment = shipmentRepository.save(Shipment.builder()
+                .orderId(order.getId()).supplier(supplierA)
+                .status(ShipmentStatus.CANCELLED)
+                .shippingAddressSnapshot(order.getShippingAddress()).build());
+
+        var refund = refundService.prepareCancelledShipmentRefund(failedShipment.getId());
+
+        Assertions.assertNotNull(refund);
+        Assertions.assertEquals(new BigDecimal("60.00"), refund.getAmount());
+        Assertions.assertEquals(RefundStatus.PENDING, refund.getStatus());
+
+        Payment payment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+        Assertions.assertEquals(PaymentStatus.REFUND_PENDING, payment.getStatus());
+    }
+
+    private User user() {
+        Role role = roleRepository.findByName("ROLE_USER")
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .name("ROLE_USER").description("Test role").build()));
+        return userRepository.save(User.builder()
+                .firstName("Finance").lastName("Test")
+                .email("finance-" + System.nanoTime() + "@example.com")
+                .password("test-password").isEnabled(true).role(role).build());
+    }
+
+    private Category category() {
+        return categoryRepository.save(Category.builder()
+                .name("Finance Category " + System.nanoTime())
+                .slug("finance-" + System.nanoTime())
+                .active(true).build());
+    }
+
+    private Supplier supplier(String code) {
+        return supplierRepository.save(Supplier.builder()
+                .externalCode(code)
+                .name(code)
+                .apiBaseUrl("https://supplier.example")
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(true)
+                .build());
+    }
+
+    private Product product(String sku, String supplierCode) {
+        Category category = category();
+        Supplier supplier = supplier(supplierCode);
+        return product(category, supplier, sku, new BigDecimal("25.00"));
+    }
+
+    private Product product(Category category, Supplier supplier, String sku, BigDecimal price) {
+        Product product = productRepository.save(Product.builder()
+                .name("Product " + sku)
+                .slug("product-" + sku.toLowerCase())
+                .price(price).currency("USD").sku(sku)
+                .status(ProductStatus.ACTIVE).category(category)
+                .supplier(supplier).supplierSku("SUP-" + sku)
+                .supplierCost(new BigDecimal("10.00")).build());
+
+        inventoryRepository.save(Inventory.builder()
+                .product(product).quantity(10).reservedQuantity(0)
+                .lowStockThreshold(1).source(InventorySource.MANUAL)
+                .lastSyncedAt(LocalDateTime.now()).build());
+        return product;
+    }
+
+    private Order order(User user, Product product, BigDecimal amount) {
+        Order order = orderRepository.save(Order.builder()
+                .user(user).status(OrderStatus.PENDING)
+                .totalAmount(amount).currency("USD")
+                .shippingAddress("1 Main St")
+                .reservationExpiresAt(LocalDateTime.now().plusMinutes(30)).build());
+        order.getItems().add(OrderItem.builder()
+                .order(order).product(product).supplier(product.getSupplier())
+                .supplierSku(product.getSupplierSku()).supplierUnitCost(product.getSupplierCost())
+                .quantity(1).unitPrice(amount).subtotal(amount).build());
+        return orderRepository.save(order);
+    }
+
+    private Order orderWithTwoItems(
+            User user, Product a, Supplier supplierA, Product b, Supplier supplierB) {
+        Order order = orderRepository.save(Order.builder()
+                .user(user).status(OrderStatus.PROCESSING)
+                .totalAmount(new BigDecimal("100.00")).currency("USD")
+                .shippingAddress("1 Main St")
+                .reservationExpiresAt(LocalDateTime.now().plusMinutes(30)).build());
+
+        order.getItems().add(OrderItem.builder()
+                .order(order).product(a).supplier(supplierA).supplierSku(a.getSupplierSku())
+                .supplierUnitCost(a.getSupplierCost()).quantity(1).unitPrice(new BigDecimal("60.00"))
+                .subtotal(new BigDecimal("60.00")).build());
+        order.getItems().add(OrderItem.builder()
+                .order(order).product(b).supplier(supplierB).supplierSku(b.getSupplierSku())
+                .supplierUnitCost(b.getSupplierCost()).quantity(1).unitPrice(new BigDecimal("40.00"))
+                .subtotal(new BigDecimal("40.00")).build());
+        return orderRepository.save(order);
+    }
+}
