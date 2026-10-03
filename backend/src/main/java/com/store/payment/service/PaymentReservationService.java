@@ -40,12 +40,14 @@ public class PaymentReservationService {
     private final PaymentRepository paymentRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Payment reserve(Long orderId, BigDecimal amount, PaymentMethod method) {
+    public Payment reserve(Long orderId, BigDecimal amount, PaymentMethod method, String idempotencyKey) {
         return paymentRepository.saveAndFlush(Payment.builder()
                 .orderId(orderId)
                 .amount(amount)
                 .method(method)
                 .status(PaymentStatus.PENDING)
+                .idempotencyKey(idempotencyKey)
+                .collectionStatus(com.store.payment.entity.PaymentCollectionStatus.NOT_REQUIRED)
                 .build());
     }
 }
