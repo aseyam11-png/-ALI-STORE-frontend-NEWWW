@@ -8,16 +8,34 @@ import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { getOrders, type BackendOrder } from "@/features/orders/services/order.service";
 
+function aggregateShipmentStatus(order: BackendOrder): string {
+  if (order.status === "CANCELLED") return "CANCELLED";
+  if (order.status === "FULFILLMENT_FAILED") return "FULFILLMENT_FAILED";
+
+  const statuses = order.shipments.map((shipment) => shipment.status);
+  if (statuses.length === 0) return order.status;
+  if (statuses.every((status) => status === "DELIVERED")) return "DELIVERED";
+  if (statuses.some((status) => status === "OUT_FOR_DELIVERY")) return "OUT_FOR_DELIVERY";
+  if (statuses.some((status) => status === "IN_TRANSIT")) return "IN_TRANSIT";
+  if (statuses.some((status) => status === "SHIPPED")) return "SHIPPED";
+  if (statuses.some((status) => status === "PACKED")) return "PACKED";
+  return "PROCESSING";
+}
+
 function progressFor(order: BackendOrder) {
-  switch (order.status) {
+  switch (aggregateShipmentStatus(order)) {
     case "PROCESSING":
       return 20;
+    case "PACKED":
+      return 40;
     case "SHIPPED":
       return 60;
+    case "IN_TRANSIT":
+      return 75;
+    case "OUT_FOR_DELIVERY":
+      return 90;
     case "DELIVERED":
       return 100;
-    case "CANCELLED":
-      return 0;
     default:
       return 0;
   }
@@ -98,7 +116,7 @@ export default function BuyerOrdersPage() {
       ) : (
         <div className="space-y-6">
           {orders.map((order) => {
-            const shipment = order.shipments[0];
+            const shipmentStatus = aggregateShipmentStatus(order);
             const progress = progressFor(order);
 
             return (
@@ -115,6 +133,9 @@ export default function BuyerOrdersPage() {
                         </p>
                         <span className="rounded-full bg-info-surface px-2.5 py-1 text-label font-medium text-brand">
                           {statusLabel(order.status)}
+                        </span>
+                        <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-label font-medium text-muted-foreground">
+                          {shipmentStatus}
                         </span>
                       </div>
                       <p className="mt-2 text-caption text-muted-foreground">
@@ -154,11 +175,13 @@ export default function BuyerOrdersPage() {
                       </span>
                       <div className="min-w-0">
                         <p className="text-caption text-muted-foreground">
-                          {shipment?.carrier ?? "لم يتم تحديد شركة الشحن بعد"}
+                          {order.shipments.length === 0
+                            ? "لم يتم إنشاء شحنة بعد"
+                            : `${order.shipments.length} شحنة مرتبطة بالطلب`}
                         </p>
-                        {shipment?.trackingNumber && (
+                        {order.shipments.some((shipment) => shipment.trackingNumber) && (
                           <p className="mt-2 font-mono text-body-sm font-medium text-foreground">
-                            رقم التتبع: <span dir="ltr">{shipment.trackingNumber}</span>
+                            يوجد رقم تتبع محدث لشحنة أو أكثر
                           </p>
                         )}
                       </div>
