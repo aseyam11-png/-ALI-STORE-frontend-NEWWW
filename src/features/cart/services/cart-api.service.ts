@@ -115,3 +115,20 @@ export async function synchronizeCart(
 export function isUnauthorized(error: unknown): boolean {
   return error instanceof HttpApiError && error.status === 401;
 }
+
+export async function addBackendCartItem(
+  productId: string,
+  quantity: number,
+): Promise<BackendCart> {
+  const id = toProductId(productId);
+
+  return unwrap(
+    await apiClient.request<ApiEnvelope<BackendCart>>("/api/v1/cart/items", {
+      method: "POST",
+      body: JSON.stringify({
+        productId: id,
+        quantity: Math.max(1, Math.floor(quantity)),
+      }),
+    }),
+  );
+}
