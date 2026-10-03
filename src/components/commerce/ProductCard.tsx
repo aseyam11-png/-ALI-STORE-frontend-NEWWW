@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
-import { formatSAR } from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
@@ -26,7 +26,7 @@ export function ProductCard({ product }: ProductCardProps) {
     state.productIds.includes(product.id),
   );
 
-  const formattedPrice = formatSAR(product.price.amount);
+  const formattedPrice = formatCurrency(product.price.amount, product.price.currency);
 
   const originalAmount =
     product.price.originalAmount ??
@@ -36,8 +36,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const formattedOriginalPrice =
     originalAmount !== undefined
-      ? formatSAR(originalAmount)
+      ? formatCurrency(originalAmount, product.price.currency)
       : undefined;
+
+  const canAddToCart =
+    product.stockStatus === "in_stock" ||
+    product.stockStatus === "low_stock";
 
   const handleAddToCart = () => {
     addItem({
@@ -151,7 +155,7 @@ export function ProductCard({ product }: ProductCardProps) {
             className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
             <ShoppingCart className="h-4 w-4" />
-            {t("addToCart")}
+            {canAddToCart ? t("addToCart") : product.stockStatus === "unknown" ? "Checking availability" : t("outOfStock")}
           </button>
         </div>
       </div>
