@@ -1,6 +1,8 @@
 package com.store.auth.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -22,9 +24,11 @@ public class RevokedToken {
     @Column(name = "token_hash", nullable = false, length = 64)
     private String tokenHash;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(nullable = false)
     private LocalDateTime revokedAt;
 }
