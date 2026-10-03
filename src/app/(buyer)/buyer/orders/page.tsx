@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Package, Truck } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
+import { useSession } from "@/features/auth/session";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { getOrders, type BackendOrder } from "@/features/orders/services/order.service";
 
@@ -47,11 +48,17 @@ function statusLabel(status: BackendOrder["status"]) {
 }
 
 export default function BuyerOrdersPage() {
+  const session = useSession();
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (session.status !== "authenticated") {
+      setLoading(false);
+      return;
+    }
+
     let active = true;
 
     getOrders()
@@ -74,7 +81,7 @@ export default function BuyerOrdersPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [session.status]);
 
   return (
     <AccountWorkspace
@@ -82,7 +89,27 @@ export default function BuyerOrdersPage() {
       title="طلباتي"
       description="تابع كل طلب وحالة توصيله من مكان واحد."
     >
-      {loading ? (
+      {session.status === "loading" ? (
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center text-body-sm text-muted-foreground">
+          جارٍ التحقق من الجلسة...
+        </div>
+      ) : session.status !== "authenticated" ? (
+        <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center">
+          <Package className="mx-auto h-9 w-9 text-neutral-300" />
+          <h2 className="mt-4 text-h3 font-bold text-foreground">
+            سجّل الدخول لعرض طلباتك
+          </h2>
+          <p className="mt-2 text-body-sm text-muted-foreground">
+            سجل الطلبات مرتبط بحسابك ولا يمكن عرضه قبل تسجيل الدخول.
+          </p>
+          <Link
+            href="/login?next=/buyer/orders"
+            className="mt-6 inline-flex h-11 items-center rounded-md bg-brand px-6 text-body font-medium text-white hover:bg-brand-hover"
+          >
+            تسجيل الدخول
+          </Link>
+        </div>
+      ) : loading ? (
         <div className="rounded-md border border-neutral-200 bg-surface p-10 text-center text-body-sm text-muted-foreground">
           جارٍ تحميل الطلبات...
         </div>
