@@ -2,6 +2,8 @@ package com.store.coupon.entity;
 
 import com.store.common.entity.BaseEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -22,6 +24,7 @@ public class Coupon extends BaseEntity {
     @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal discountPercentage;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "expiration_date", nullable = false)
     private LocalDateTime expirationDate;
 
