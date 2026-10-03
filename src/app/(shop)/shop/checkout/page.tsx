@@ -24,7 +24,6 @@ import { useSession } from "@/features/auth/session";
 import {
   getBackendCart,
   mapBackendCart,
-  replaceBackendCart,
   synchronizeCart,
 } from "@/features/cart/services/cart-api.service";
 import {
@@ -32,6 +31,7 @@ import {
   type BackendOrder,
 } from "@/features/orders/services/order-api.service";
 import {
+  getBackendPaymentByOrderId,
   processBackendPayment,
   type BackendPayment,
 } from "@/features/payments/services/payment-api.service";
@@ -275,25 +275,49 @@ export default function CheckoutPage() {
         couponCode: appliedCoupon?.coupon.code,
       });
 
-      const processedPayment = await processBackendPayment({
-        orderId: createdOrder.id,
-        amount: Number(createdOrder.totalAmount),
-        method: mapPaymentMethod(paymentMethod),
-      });
-
       setOrder(createdOrder);
-      setPayment(processedPayment);
 
-      const paymentAccepted =
-        processedPayment.status === "COMPLETED" ||
-        processedPayment.method === "CASH_ON_DELIVERY";
+      try {
+        const processedPayment = await processBackendPayment({
+          orderId: createdOrder.id,
+          amount: Number(createdOrder.totalAmount),
+          method: mapPaymentMethod(paymentMethod),
+        });
 
-      if (paymentAccepted) {
-        clearCart();
-        const freshCart = await getBackendCart().catch(() => null);
-        if (freshCart) {
-          setServerCartTotal(Number(freshCart.totalPrice ?? 0));
+        setPayment(processedPayment);
+
+        const paymentAccepted =
+          processedPayment.status === "COMPLETED" ||
+          processedPayment.method === "CASH_ON_DELIVERY";
+
+        if (paymentAccepted) {
+          clearCart();
+          const freshCart = await getBackendCart().catch(() => null);
+          if (freshCart) {
+            setServerCartTotal(Number(freshCart.totalPrice ?? 0));
+          }
         }
+      } catch (paymentError) {
+        // A provider timeout can leave a durable PENDING/REQUIRES_RECONCILIATION
+        // record. Never recreate the order/cart until that server state is known.
+        const recordedPayment = await getBackendPaymentByOrderId(
+          String(createdOrder.id),
+        ).catch(() => null);
+
+        if (recordedPayment) {
+          setPayment(recordedPayment);
+          if (
+            recordedPayment.status === "REQUIRES_RECONCILIATION" ||
+            recordedPayment.status === "PENDING"
+          ) {
+            setError(
+              "تم إنشاء الطلب، لكن نتيجة الدفع لم تُحسم بعد. لا تعِد المحاولة حتى تتم تسوية الدفعة.",
+            );
+            return;
+          }
+        }
+
+        throw paymentError;
       }
     } catch (orderError) {
       setError(mapOrderError(orderError));
