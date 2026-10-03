@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { MailCheck, RefreshCw, ShieldCheck } from "lucide-react";
+import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -96,7 +97,9 @@ export function EmailOtpForm() {
       purpose: nextChallenge.purpose,
     });
 
-    router.replace("/verify-email?" + query.toString(), { scroll: false });
+    router.replace(("/verify-email?" + query.toString()) as Route, {
+      scroll: false,
+    });
     setCode("");
     setResendAvailableAt(Date.now() + 60_000);
   };
