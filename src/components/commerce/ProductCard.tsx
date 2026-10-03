@@ -152,6 +152,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <button
             type="button"
             onClick={handleAddToCart}
+            disabled={!canAddToCart}
             className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-brand text-body font-medium text-white transition-colors duration-200 ease-brand hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
             <ShoppingCart className="h-4 w-4" />
