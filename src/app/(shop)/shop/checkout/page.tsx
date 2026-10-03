@@ -707,7 +707,7 @@ export default function CheckoutPage() {
                           className={`rounded-2xl border p-4 text-start transition ${
                             paymentMethod ===
                             option.value
-                              ? "border-[#2563EB] bg-info-surface"
+                              ? "border-brand bg-info-surface"
                               : "border-neutral-200 hover:bg-neutral-50"
                           }`}
                         >
