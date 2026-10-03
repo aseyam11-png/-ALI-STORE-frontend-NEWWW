@@ -62,7 +62,7 @@ public class ShipmentService {
 
     @Transactional
     public ShipmentResponse createShipment(ShipmentRequest request) {
-        Order order = orderRepository.findById(request.getOrderId())
+        Order order = orderRepository.findByIdForUpdate(request.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + request.getOrderId()));
 
         if (order.getStatus() != OrderStatus.PROCESSING) {
