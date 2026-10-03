@@ -53,6 +53,17 @@ public class PaymentReservationService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markFailed(Long paymentId, String message) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+        payment.setStatus(PaymentStatus.FAILED);
+        payment.setProviderError(message == null || message.isBlank()
+                ? "Payment provider reported failure"
+                : message.substring(0, Math.min(message.length(), 1000)));
+        paymentRepository.save(payment);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markRequiresReconciliation(Long paymentId, String message) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found for reconciliation"));
