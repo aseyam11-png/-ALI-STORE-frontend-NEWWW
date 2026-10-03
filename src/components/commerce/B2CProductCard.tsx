@@ -14,6 +14,11 @@ import {
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatSAR } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
+import {
+  addBackendCartItem,
+  isUnauthorized,
+  mapBackendCart,
+} from "@/features/cart/services/cart-api.service";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useInventoryStore } from "@/stores/inventory-store";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
@@ -30,6 +35,9 @@ export function B2CProductCard({
 
   const addItem = useCartStore(
     (state) => state.addItem,
+  );
+  const replaceItems = useCartStore(
+    (state) => state.replaceItems,
   );
 
   const toggleWishlist =
@@ -62,12 +70,12 @@ export function B2CProductCard({
   const available =
     liveStock > 0;
 
-  const handleCart = () => {
+  const handleCart = async () => {
     if (!available) {
       return;
     }
 
-    addItem({
+    const item = {
       productId:
         product.id,
 
@@ -99,7 +107,23 @@ export function B2CProductCard({
       estimatedDelivery:
         product.shipping
           .estimatedDelivery,
-    });
+    };
+
+    if (!Number.isInteger(Number(product.id)) || Number(product.id) <= 0) {
+      addItem(item);
+      return;
+    }
+
+    try {
+      const backend = await addBackendCartItem(product.id, 1);
+      replaceItems(mapBackendCart(backend, useCartStore.getState().items));
+    } catch (error) {
+      if (isUnauthorized(error)) {
+        addItem(item);
+        return;
+      }
+      throw error;
+    }
   };
 
   const oldPrice =
@@ -271,7 +295,7 @@ export function B2CProductCard({
 
         <button
           type="button"
-          onClick={handleCart}
+          onClick={() => void handleCart()}
           disabled={!available}
           className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
