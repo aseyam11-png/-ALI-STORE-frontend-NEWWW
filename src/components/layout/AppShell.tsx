@@ -37,7 +37,7 @@ export function AppShell({
     <LocalizationProvider>
 
       <div
-        className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-blue-100 selection:text-[#0F2747]"
+        className="min-h-screen bg-background text-foreground selection:bg-primary-100 selection:text-brand-ink"
         suppressHydrationWarning
       >
 
