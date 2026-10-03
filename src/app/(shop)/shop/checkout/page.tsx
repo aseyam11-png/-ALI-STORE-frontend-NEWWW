@@ -751,7 +751,6 @@ export default function CheckoutPage() {
                           <LocalizedPrice
                             amountUSD={item.price * item.quantity}
                             currency={item.currency ?? serverCartCurrency}
-                            currency={item.currency ?? serverCartCurrency}
                           />
                         </p>
                       </div>
@@ -782,7 +781,6 @@ export default function CheckoutPage() {
 
                     <LocalizedPrice
                       amountUSD={subtotal}
-                      currency={serverCartCurrency}
                       currency={serverCartCurrency}
                       className="font-bold text-slate-800"
                     />
@@ -825,7 +823,6 @@ export default function CheckoutPage() {
 
                     <LocalizedPrice
                       amountUSD={serverCartTotal ?? total}
-                      currency={serverCartCurrency}
                       currency={serverCartCurrency}
                       className="text-3xl font-black text-[#0F2747]"
                     />
