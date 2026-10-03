@@ -22,6 +22,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const replaceCart = useCartStore((state) => state.replaceItems);
 
   useEffect(() => {
+    const handleLogout = () => {
+      replaceCart([]);
+      replaceWishlist([]);
+      replaceNotifications([]);
+    };
+
+    window.addEventListener("alistore:logout", handleLogout);
+
+    return () => {
+      window.removeEventListener("alistore:logout", handleLogout);
+    };
+  }, [
+    replaceCart,
+    replaceNotifications,
+    replaceWishlist,
+  ]);
+
+  useEffect(() => {
     if (session.status !== "authenticated") {
       replaceNotifications([]);
       return;
