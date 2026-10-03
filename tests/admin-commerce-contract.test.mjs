@@ -265,3 +265,22 @@ test("protected buyer order and address pages do not request APIs before authent
   assert.match(orders, /\/login\?next=\/buyer\/orders/);
   assert.match(addresses, /\/login\?next=\/buyer\/addresses/);
 });
+
+
+test("checkout displays the authoritative cart subtotal before coupon and applies the coupon to that subtotal", async () => {
+  const source = await read("src/app/(shop)/shop/checkout/page.tsx");
+  assert.match(source, /const cartSubtotal\s*=\s*serverCartTotal\s*\?\?\s*subtotal/);
+  assert.match(source, /amountUSD=\{cartSubtotal\}/);
+  assert.match(source, /amountUSD=\{total\}/);
+  assert.doesNotMatch(source, /amountUSD=\{serverCartTotal \?\? total\}/);
+});
+
+test("checkout clears the local cart after successful order creation before payment processing", async () => {
+  const source = await read("src/app/(shop)/shop/checkout/page.tsx");
+  const orderIndex = source.indexOf("createBackendOrder(");
+  const clearIndex = source.indexOf("replaceItems([]);", orderIndex);
+  const paymentIndex = source.indexOf("processBackendPayment(", orderIndex);
+  assert.ok(orderIndex >= 0);
+  assert.ok(clearIndex > orderIndex);
+  assert.ok(paymentIndex > clearIndex);
+});
