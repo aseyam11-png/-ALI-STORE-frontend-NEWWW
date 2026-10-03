@@ -140,7 +140,7 @@ export default function CheckoutPage() {
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [payment, setPayment] = useState<BackendPayment | null>(null);
 
-undefined  useEffect(() => {
+  useEffect(() => {
     if (session.status !== "authenticated") {
       return;
     }
@@ -192,7 +192,6 @@ undefined  useEffect(() => {
     () =>
       [
         form.fullName,
-        session.user?.email ?? form.email,
         form.phone,
         form.address,
         form.city,
