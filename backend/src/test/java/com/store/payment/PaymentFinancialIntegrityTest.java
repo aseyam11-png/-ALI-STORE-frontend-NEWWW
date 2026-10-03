@@ -21,6 +21,7 @@ import com.store.payment.provider.PaymentProvider;
 import com.store.payment.repository.PaymentRepository;
 import com.store.payment.repository.RefundRepository;
 import com.store.payment.service.PaymentService;
+import com.store.payment.service.PaymentReconciliationService;
 import com.store.payment.service.RefundService;
 import com.store.product.entity.Product;
 import com.store.product.enums.ProductStatus;
@@ -54,6 +55,7 @@ import static org.mockito.Mockito.when;
 class PaymentFinancialIntegrityTest {
 
     @Autowired private PaymentService paymentService;
+    @Autowired private PaymentReconciliationService paymentReconciliationService;
     @Autowired private RefundService refundService;
     @Autowired private OrderService orderService;
     @Autowired private PaymentRepository paymentRepository;
@@ -67,6 +69,41 @@ class PaymentFinancialIntegrityTest {
     @Autowired private UserRepository userRepository;
     @Autowired private RoleRepository roleRepository;
     @MockBean private PaymentProvider paymentProvider;
+
+    @Test
+    void reconciliation_doesNotCompletePaymentWithoutProviderTransactionId() {
+        User user = user();
+        Product product = product("FIN-RECON-NO-TXN", "FIN-RECON-NO-TXN-SUP");
+        Order order = order(user, product, new BigDecimal("25.00"));
+
+        Payment payment = paymentRepository.save(Payment.builder()
+                .orderId(order.getId())
+                .amount(new BigDecimal("25.00"))
+                .method(PaymentMethod.CREDIT_CARD)
+                .status(PaymentStatus.REQUIRES_RECONCILIATION)
+                .idempotencyKey("order-" + order.getId())
+                .collectionStatus(PaymentCollectionStatus.NOT_REQUIRED)
+                .build());
+
+        when(paymentProvider.getChargeStatus(order.getId(), payment.getTransactionId()))
+                .thenReturn(new PaymentProvider.ChargeStatusResult(
+                        true,
+                        false,
+                        "",
+                        "gateway reported completion without a transaction id"));
+
+        var response = paymentReconciliationService.reconcile(payment.getId());
+
+        Assertions.assertEquals(PaymentStatus.REQUIRES_RECONCILIATION, response.getStatus());
+        Assertions.assertTrue(response.getTransactionId() == null || response.getTransactionId().isBlank());
+        Assertions.assertTrue(
+                paymentRepository.findById(payment.getId()).orElseThrow()
+                        .getProviderError()
+                        .contains("transaction id"));
+        Assertions.assertEquals(
+                OrderStatus.PENDING,
+                orderRepository.findById(order.getId()).orElseThrow().getStatus());
+    }
 
     @Test
     void providerException_persistsReconciliationState() {
