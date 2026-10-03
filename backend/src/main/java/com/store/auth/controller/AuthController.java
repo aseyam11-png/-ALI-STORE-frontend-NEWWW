@@ -17,7 +17,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +32,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final Environment environment;
     private final TokenRevocationService tokenRevocationService;
+    private final AuthSessionCookieService cookieService;
 
     @org.springframework.beans.factory.annotation.Value("${jwt.expiration:86400000}")
     private long jwtExpirationMs;
@@ -53,6 +53,13 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         writeSessionCookie(servletResponse, response.getToken());
         return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
+    }
+
+    @GetMapping("/google")
+    public ResponseEntity<Void> googleLogin() {
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("/oauth2/authorization/google"))
+                .build();
     }
 
     @GetMapping("/csrf")
@@ -87,11 +94,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout(
             HttpServletRequest request,
             HttpServletResponse servletResponse) {
-        String token = extractCookieToken(request);
+        String token = extractDecryptedCookieToken(request);
         if (token == null) token = extractBearerToken(request);
         tokenRevocationService.revoke(token);
 
-        servletResponse.addHeader("Set-Cookie", buildCookie("", 0).toString());
+        servletResponse.addHeader("Set-Cookie", cookieService.clearCookie().toString());
         return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully"));
     }
 
@@ -100,7 +107,7 @@ public class AuthController {
         return value != null && value.startsWith("Bearer ") ? value.substring(7) : null;
     }
 
-    private String extractCookieToken(HttpServletRequest request) {
+    private String extractDecryptedCookieToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) return null;
 
