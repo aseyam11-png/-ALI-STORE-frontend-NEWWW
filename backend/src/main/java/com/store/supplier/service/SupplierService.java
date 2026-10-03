@@ -1,5 +1,6 @@
 package com.store.supplier.service;
 
+import com.store.common.exception.BusinessException;
 import com.store.common.exception.ConflictException;
 import com.store.common.exception.ResourceNotFoundException;
 import com.store.common.response.PageResponse;
