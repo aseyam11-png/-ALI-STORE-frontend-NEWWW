@@ -401,6 +401,7 @@ export default function CartPage() {
                                   <p className="mt-2 text-lg font-black text-[#0F2747]">
                                     <LocalizedPrice
                                       amountUSD={item.price}
+                                      currency={item.currency}
                                     />
                                   </p>
 
@@ -457,6 +458,7 @@ export default function CartPage() {
                                   <p className="text-xl font-black text-[#0F2747]">
                                     <LocalizedPrice
                                       amountUSD={itemTotal}
+                                      currency={item.currency}
                                     />
                                   </p>
 
@@ -526,7 +528,7 @@ export default function CartPage() {
                         </span>
 
                         <span className="font-bold">
-                          <LocalizedPrice amountUSD={subtotal} />
+                          <LocalizedPrice amountUSD={subtotal} currency={items[0]?.currency} />
                         </span>
                       </div>
 
