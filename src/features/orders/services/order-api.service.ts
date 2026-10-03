@@ -36,6 +36,16 @@ export interface BackendOrder {
   shipments: BackendShipment[];
 }
 
+
+export interface BackendOrderPage {
+  content: BackendOrder[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
 function unwrap<T>(response: ApiEnvelope<T>): T {
   if (response.success === false) {
     throw new Error(response.message || "Order request failed");
@@ -55,5 +65,29 @@ export async function createBackendOrder(input: {
         couponCode: input.couponCode?.trim() || undefined,
       }),
     }),
+  );
+}
+
+export async function getBackendOrders(
+  page = 0,
+  size = 20,
+): Promise<BackendOrderPage> {
+  return unwrap(
+    await apiClient.request<ApiEnvelope<BackendOrderPage>>(
+      `/api/v1/orders?page=${Math.max(0, page)}&size=${Math.min(100, Math.max(1, size))}`,
+    ),
+  );
+}
+
+export async function getBackendOrder(orderId: string): Promise<BackendOrder> {
+  const parsed = Number(orderId);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("Invalid order number");
+  }
+
+  return unwrap(
+    await apiClient.request<ApiEnvelope<BackendOrder>>(
+      `/api/v1/orders/${parsed}`,
+    ),
   );
 }
