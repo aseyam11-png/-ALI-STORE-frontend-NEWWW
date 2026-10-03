@@ -338,3 +338,16 @@ test("product detail retains the complete backend image gallery", async () => {
   assert.match(source, /Array\.isArray\(product\.images\)/);
   assert.match(source, /product\.images\.map/);
 });
+
+
+test("logout clears customer-only client state after the backend session is terminated", async () => {
+  const session = await read("src/features/auth/session.ts");
+  const provider = await read("src/components/providers.tsx");
+
+  assert.match(session, /api\/v1\/auth\/logout/);
+  assert.match(session, /alistore:logout/);
+  assert.match(provider, /window\.addEventListener\("alistore:logout"/);
+  assert.match(provider, /replaceCart\(\[\]\)/);
+  assert.match(provider, /replaceWishlist\(\[\]\)/);
+  assert.match(provider, /replaceNotifications\(\[\]\)/);
+});
