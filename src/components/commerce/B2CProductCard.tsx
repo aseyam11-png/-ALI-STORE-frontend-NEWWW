@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
-import { formatSAR } from "@/features/localization/services/currency.service";
+import { formatCurrency } from "@/features/localization/services/currency.service";
 import { useCartStore } from "@/stores/cart-store";
 import {
   addBackendCartItem,
@@ -88,6 +88,9 @@ export function B2CProductCard({
       priceUnit:
         "unit",
 
+      currency:
+        product.currency,
+
       quantity: 1,
 
       image:
@@ -130,8 +133,9 @@ export function B2CProductCard({
     product.originalPrice &&
     product.originalPrice >
       livePrice
-      ? formatSAR(
+      ? formatCurrency(
           product.originalPrice,
+          product.currency,
         )
       : null;
 
@@ -241,6 +245,7 @@ export function B2CProductCard({
         <div className="mt-3 flex items-end gap-2">
           <LocalizedPrice
             amountUSD={livePrice}
+            currency={product.currency}
             className="text-xl font-black text-foreground"
           />
 
