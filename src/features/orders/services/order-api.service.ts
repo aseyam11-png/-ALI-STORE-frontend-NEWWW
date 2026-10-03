@@ -91,3 +91,14 @@ export async function getBackendOrder(orderId: string): Promise<BackendOrder> {
     ),
   );
 }
+
+export async function getAdminBackendOrders(
+  page = 0,
+  size = 100,
+): Promise<BackendOrderPage> {
+  return unwrap(
+    await apiClient.request<ApiEnvelope<BackendOrderPage>>(
+      `/api/v1/admin/orders?page=${Math.max(0, page)}&size=${Math.min(100, Math.max(1, size))}`,
+    ),
+  );
+}
