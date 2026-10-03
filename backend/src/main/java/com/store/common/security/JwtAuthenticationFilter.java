@@ -1,5 +1,6 @@
 package com.store.common.security;
 
+import com.store.auth.service.AuthSessionCookieService;
 import com.store.auth.service.CustomUserDetailsService;
 import com.store.auth.service.JwtService;
 import com.store.auth.service.TokenRevocationService;
@@ -30,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService userDetailsService;
     private final Environment environment;
     private final TokenRevocationService tokenRevocationService;
+    private final AuthSessionCookieService cookieService;
 
     @Override
     protected void doFilterInternal(
@@ -38,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         String jwt = extractBearerToken(request);
-        if (jwt == null) jwt = extractCookieToken(request);
+        if (jwt == null) jwt = extractDecryptedCookieToken(request);
 
         if (jwt != null) {
             try {
@@ -74,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 : null;
     }
 
-    private String extractCookieToken(HttpServletRequest request) {
+    private String extractDecryptedCookieToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) return null;
 
@@ -83,7 +85,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 environment.getProperty("AUTH_COOKIE_NAME", "ali_store_session"));
 
         for (Cookie cookie : cookies) {
-            if (cookieName.equals(cookie.getName())) return cookie.getValue();
+            if (cookieName.equals(cookie.getName())) {
+                try {
+                    return cookieService.decrypt(cookie.getValue());
+                } catch (SecurityException ignored) {
+                    return null;
+                }
+            }
         }
 
         return null;
