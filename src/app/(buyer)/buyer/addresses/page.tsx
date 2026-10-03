@@ -165,7 +165,7 @@ export default function BuyerAddressesPage() {
     setError("");
     try {
       await deleteAddress(id);
-      await load();
+      await refreshAddresses();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "تعذر حذف العنوان.");
     }
