@@ -31,26 +31,20 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div
-        className="min-h-screen bg-background text-foreground selection:bg-primary-100 selection:text-brand-ink"
-        suppressHydrationWarning
-      >
+      className="min-h-screen bg-background text-foreground selection:bg-primary-100 selection:text-brand-ink"
+      suppressHydrationWarning
+    >
+      <TopBar />
+      <Header />
+      <GlobalNavigation />
 
-        <TopBar />
-
-        <Header />
-
-        <GlobalNavigation />
-
-        <div className="min-w-0 overflow-x-clip">
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </div>
-
-        <Footer />
-
+      <div className="min-w-0 overflow-x-clip">
+        <PageTransition>
+          {children}
+        </PageTransition>
       </div>
 
-    </LocalizationProvider>
+      <Footer />
+    </div>
   );
 }
