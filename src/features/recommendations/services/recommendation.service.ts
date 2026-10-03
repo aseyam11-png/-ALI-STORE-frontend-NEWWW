@@ -6,15 +6,19 @@ import type { RecommendationItem } from "../types/recommendation.types";
  * arbitrary catalog products as behaviorally derived recommendations.
  */
 export function getSimilarProducts(
-  _productId: string,
-  _limit = 4,
+  productId: string,
+  limit = 4,
 ): RecommendationItem[] {
+  void productId;
+  void limit;
   return [];
 }
 
 export function getFrequentlyBoughtProducts(
-  _productId: string,
-  _limit = 3,
+  productId: string,
+  limit = 3,
 ): RecommendationItem[] {
+  void productId;
+  void limit;
   return [];
 }
