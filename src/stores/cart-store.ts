@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 export interface CartItem {
   productId: string;
+  backendItemId?: number;
   name: string;
 
   price: number;
@@ -14,13 +15,10 @@ export interface CartItem {
 
   minOrderQuantity: number;
 
-  // Internal fulfillment source — never shown to customers
-  // Shipping information
   shippingCost?: number;
   shippingMethod?: string;
   estimatedDelivery?: string;
 
-  // Optional product information
   variantId?: string;
   variantLabel?: string;
 }
@@ -35,17 +33,8 @@ interface CartState {
   items: CartItem[];
 
   addItem: (item: CartItem) => void;
-  removeItem: (
-    productId: string,
-    variantId?: string,
-  ) => void;
-
-  updateQuantity: (
-    productId: string,
-    quantity: number,
-    variantId?: string,
-  ) => void;
-
+  removeItem: (productId: string, variantId?: string) => void;
+  updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
   clearCart: () => void;
   replaceItems: (items: CartItem[]) => void;
 
@@ -53,187 +42,98 @@ interface CartState {
   getSubtotal: () => number;
   getShippingTotal: () => number;
   getGrandTotal: () => number;
-
   getShippingInfo: () => CartShippingInfo;
 }
 
-function isSameCartLine(
-  item: CartItem,
-  productId: string,
-  variantId?: string,
-) {
-  return (
-    item.productId === productId &&
-    item.variantId === variantId
-  );
+function isSameCartLine(item: CartItem, productId: string, variantId?: string) {
+  return item.productId === productId && item.variantId === variantId;
 }
 
-export const useCartStore = create<CartState>(
-  (set, get) => ({
-    items: [],
+export const useCartStore = create<CartState>((set, get) => ({
+  items: [],
 
-    addItem: (item) => {
-      set((state) => {
-        const existingItem =
-          state.items.find((cartItem) =>
-            isSameCartLine(
-              cartItem,
-              item.productId,
-              item.variantId,
-            ),
-          );
+  addItem: (item) => {
+    set((state) => {
+      const existingItem = state.items.find((cartItem) =>
+        isSameCartLine(cartItem, item.productId, item.variantId),
+      );
 
-        if (existingItem) {
-          return {
-            items: state.items.map(
-              (cartItem) =>
-                isSameCartLine(
-                cartItem,
-                item.productId,
-                item.variantId,
-              )
-                  ? {
-                      ...cartItem,
-                      quantity:
-                        cartItem.quantity +
-                        item.quantity,
-                    }
-                  : cartItem,
-            ),
-          };
-        }
-
+      if (existingItem) {
         return {
-          items: [
-            ...state.items,
-            {
-              ...item,
-              quantity: Math.max(
-                1,
-                item.quantity,
-              ),
-            },
-          ],
-        };
-      });
-    },
-
-    removeItem: (productId, variantId) => {
-      set((state) => ({
-        items: state.items.filter(
-          (item) =>
-            !isSameCartLine(
-              item,
-              productId,
-              variantId,
-            ),
-        ),
-      }));
-    },
-
-    updateQuantity: (
-      productId,
-      quantity,
-      variantId,
-    ) => {
-      set((state) => ({
-        items: state.items.map(
-          (item) =>
-            isSameCartLine(
-              item,
-              productId,
-              variantId,
-            )
+          items: state.items.map((cartItem) =>
+            isSameCartLine(cartItem, item.productId, item.variantId)
               ? {
-                  ...item,
-                  quantity:
-                    Math.max(
-                      1,
-                      Math.floor(
-                        quantity,
-                      ),
-                    ),
+                  ...cartItem,
+                  quantity: cartItem.quantity + item.quantity,
                 }
-              : item,
-        ),
-      }));
-    },
-
-    clearCart: () => {
-      set({ items: [] });
-    },
-
-    replaceItems: (items) => {
-      set({
-        items: items.map((item) => ({
-          ...item,
-          quantity: Math.max(1, Math.floor(item.quantity)),
-        })),
-      });
-    },
-
-    getItemCount: () => {
-      return get().items.reduce(
-        (total, item) =>
-          total + item.quantity,
-        0,
-      );
-    },
-
-    getSubtotal: () => {
-      return get().items.reduce(
-        (total, item) =>
-          total +
-          item.price * item.quantity,
-        0,
-      );
-    },
-
-    getShippingTotal: () => {
-      return get().getShippingInfo().cost;
-    },
-
-    getGrandTotal: () => {
-      return (
-        get().getSubtotal() +
-        get().getShippingTotal()
-      );
-    },
-
-    // One flat shipment for the whole order — ALI STORE ships as a
-    // single merchant, so shipping is a single order-level rate rather
-    // than a fee summed per supplier group.
-    getShippingInfo: () => {
-      const items = get().items;
-
-      if (items.length === 0) {
-        return {
-          cost: 0,
-          method: "Standard shipping",
-          estimatedDelivery: "",
+              : cartItem,
+          ),
         };
       }
 
-      const rated = items.map((item) => ({
-        item,
-        cost: Math.max(0, Number(item.shippingCost ?? 0)),
-      }));
-
-      const highest = rated.reduce(
-        (max, current) =>
-          current.cost > max.cost ? current : max,
-        rated[0],
-      );
-
       return {
-        cost: highest.cost,
-        method:
-          highest.item.shippingMethod ??
-          "Standard shipping",
-        estimatedDelivery:
-          highest.item.estimatedDelivery ??
-          "Delivery date will be confirmed at checkout",
+        items: [
+          ...state.items,
+          {
+            ...item,
+            quantity: Math.max(1, item.quantity),
+          },
+        ],
       };
-    },
+    });
+  },
+
+  removeItem: (productId, variantId) => {
+    set((state) => ({
+      items: state.items.filter(
+        (item) => !isSameCartLine(item, productId, variantId),
+      ),
+    }));
+  },
+
+  updateQuantity: (productId, quantity, variantId) => {
+    set((state) => ({
+      items: state.items.map((item) =>
+        isSameCartLine(item, productId, variantId)
+          ? {
+              ...item,
+              quantity: Math.max(1, Math.floor(quantity)),
+            }
+          : item,
+      ),
+    }));
+  },
+
+  clearCart: () => {
+    set({ items: [] });
+  },
+
+  replaceItems: (items) => {
+    set({
+      items: items.map((item) => ({
+        ...item,
+        quantity: Math.max(1, Math.floor(item.quantity)),
+      })),
+    });
+  },
+
+  getItemCount: () =>
+    get().items.reduce((total, item) => total + item.quantity, 0),
+
+  getSubtotal: () =>
+    get().items.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    ),
+
+  getShippingTotal: () => get().getShippingInfo().cost,
+
+  getGrandTotal: () =>
+    get().getSubtotal() + get().getShippingTotal(),
+
+  getShippingInfo: () => ({
+    cost: 0,
+    method: "Calculated at checkout",
+    estimatedDelivery: "Calculated at checkout",
   }),
-);
+}));
