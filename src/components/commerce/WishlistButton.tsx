@@ -9,7 +9,7 @@ import {
   addToWishlist,
   removeFromWishlist,
 } from "@/features/wishlist/services/wishlist-api.service";
-import { useSession } from "@/features/auth/session";
+import { getSession } from "@/features/auth/session";
 
 interface WishlistButtonProps {
   product: WishlistProduct;
@@ -22,7 +22,6 @@ export function WishlistButton({
   size = "md",
   className = "",
 }: WishlistButtonProps) {
-  const session = useSession();
   const toggleLocal = useWishlistStore(
     (state) => state.toggleItem,
   );
@@ -33,13 +32,15 @@ export function WishlistButton({
   const [error, setError] = useState("");
 
   const toggle = async () => {
-    if (busy || session.status === "loading") return;
+    if (busy) return;
 
     setBusy(true);
     setError("");
 
     try {
-      if (session.status === "authenticated") {
+      const session = await getSession();
+
+      if (session) {
         if (isInWishlist) {
           await removeFromWishlist(product.id);
         } else {
@@ -67,7 +68,7 @@ export function WishlistButton({
       <button
         type="button"
         onClick={() => void toggle()}
-        disabled={busy || session.status === "loading"}
+        disabled={busy}
         aria-busy={busy}
         aria-label={
           isInWishlist
