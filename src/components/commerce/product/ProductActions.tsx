@@ -101,9 +101,6 @@ export function ProductActions({
 
       price,
 
-      supplierPrice:
-        product.supplierPrice,
-
       priceUnit:
         "unit",
 
