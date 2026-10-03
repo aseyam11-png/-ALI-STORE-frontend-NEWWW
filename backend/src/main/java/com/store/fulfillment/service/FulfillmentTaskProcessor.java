@@ -197,6 +197,7 @@ public class FulfillmentTaskProcessor {
 
         releaseSupplierReservations(shipment);
         shipmentService.synchronizeOrderStatus(shipment.getOrderId());
+        refundService.prepareCancelledShipmentRefund(shipment.getId());
     }
 
     private void releaseSupplierReservations(Shipment shipment) {
