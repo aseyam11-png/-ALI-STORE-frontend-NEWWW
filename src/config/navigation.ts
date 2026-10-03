@@ -34,9 +34,9 @@ export const platformNavigation: NavigationItem[] = [
     description: "Buyer portal",
   },
   {
-    label: "Warehouse",
+    label: "Fulfillment",
     href: "/warehouse",
-    description: "Warehouse operations",
+    description: "External supplier fulfillment operations",
   },
   {
     label: "Finance",
