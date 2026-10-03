@@ -35,11 +35,15 @@ interface CartState {
   items: CartItem[];
 
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
+  removeItem: (
+    productId: string,
+    variantId?: string,
+  ) => void;
 
   updateQuantity: (
     productId: string,
     quantity: number,
+    variantId?: string,
   ) => void;
 
   clearCart: () => void;
@@ -53,6 +57,17 @@ interface CartState {
   getShippingInfo: () => CartShippingInfo;
 }
 
+function isSameCartLine(
+  item: CartItem,
+  productId: string,
+  variantId?: string,
+) {
+  return (
+    item.productId === productId &&
+    item.variantId === variantId
+  );
+}
+
 export const useCartStore = create<CartState>(
   (set, get) => ({
     items: [],
@@ -60,22 +75,23 @@ export const useCartStore = create<CartState>(
     addItem: (item) => {
       set((state) => {
         const existingItem =
-          state.items.find(
-            (cartItem) =>
-              cartItem.productId ===
-                item.productId &&
-              cartItem.variantId ===
-                item.variantId,
+          state.items.find((cartItem) =>
+            isSameCartLine(
+              cartItem,
+              item.productId,
+              item.variantId,
+            ),
           );
 
         if (existingItem) {
           return {
             items: state.items.map(
               (cartItem) =>
-                cartItem.productId ===
-                  item.productId &&
-                cartItem.variantId ===
-                  item.variantId
+                isSameCartLine(
+                cartItem,
+                item.productId,
+                item.variantId,
+              )
                   ? {
                       ...cartItem,
                       quantity:
@@ -102,12 +118,15 @@ export const useCartStore = create<CartState>(
       });
     },
 
-    removeItem: (productId) => {
+    removeItem: (productId, variantId) => {
       set((state) => ({
         items: state.items.filter(
           (item) =>
-            item.productId !==
-            productId,
+            !isSameCartLine(
+              item,
+              productId,
+              variantId,
+            ),
         ),
       }));
     },
@@ -115,11 +134,16 @@ export const useCartStore = create<CartState>(
     updateQuantity: (
       productId,
       quantity,
+      variantId,
     ) => {
       set((state) => ({
         items: state.items.map(
           (item) =>
-            item.productId === productId
+            isSameCartLine(
+              item,
+              productId,
+              variantId,
+            )
               ? {
                   ...item,
                   quantity:

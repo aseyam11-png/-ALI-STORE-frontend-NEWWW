@@ -33,6 +33,8 @@ interface WishlistState {
     product: WishlistProduct | string,
   ) => void;
 
+  replaceItems: (products: WishlistProduct[]) => void;
+
   isInWishlist: (
     productId: string,
   ) => boolean;
@@ -54,6 +56,13 @@ export const useWishlistStore =
       items: [],
 
       productIds: [],
+
+      replaceItems: (products) => {
+        set({
+          items: products,
+          productIds: buildProductIds(products),
+        });
+      },
 
       addItem: (product) => {
         set((state) => {

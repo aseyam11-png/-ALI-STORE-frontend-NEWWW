@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -115,25 +114,40 @@ export function SmartAutocomplete({
       null,
     );
 
-  const suggestions =
-    useMemo(
-      () =>
-        getAutocompleteSuggestions(
-          debouncedValue,
-          8,
-        ),
-      [debouncedValue],
-    );
+  const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(
+    () => value.trim().length >= 2,
+  );
+  const [suggestionsError, setSuggestionsError] = useState(false);
 
-  const [
-    trackedDebouncedValue,
-    setTrackedDebouncedValue,
-  ] = useState(debouncedValue);
+  useEffect(() => {
+    let active = true;
+    const query = debouncedValue.trim();
 
-  if (debouncedValue !== trackedDebouncedValue) {
-    setTrackedDebouncedValue(debouncedValue);
-    setHighlighted(0);
-  }
+    if (query.length < 2) {
+      return () => {
+        active = false;
+      };
+    }
+
+    void getAutocompleteSuggestions(query, 8)
+      .then((nextSuggestions) => {
+        if (!active) return;
+        setSuggestions(nextSuggestions);
+      })
+      .catch(() => {
+        if (!active) return;
+        setSuggestions([]);
+        setSuggestionsError(true);
+      })
+      .finally(() => {
+        if (active) setSuggestionsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedValue]);
 
   useEffect(() => {
     const handleOutside =
@@ -273,17 +287,20 @@ export function SmartAutocomplete({
           onChange={(
             event,
           ) => {
-            onChange(
-              event.target
-                .value,
-            );
+            const nextValue =
+              event.target.value;
+            const hasQuery =
+              nextValue.trim().length >= 2;
 
-            setOpen(
-              event.target
-                .value.trim()
-                .length >=
-                2,
-            );
+            onChange(nextValue);
+            setHighlighted(0);
+            setSuggestionsError(false);
+            setOpen(hasQuery);
+            setSuggestionsLoading(hasQuery);
+
+            if (!hasQuery) {
+              setSuggestions([]);
+            }
           }}
           onFocus={() => {
             if (
@@ -318,9 +335,14 @@ export function SmartAutocomplete({
         {value && (
           <button
             type="button"
-            onClick={() =>
-              onChange("")
-            }
+            onClick={() => {
+              onChange("");
+              setHighlighted(0);
+              setSuggestions([]);
+              setSuggestionsLoading(false);
+              setSuggestionsError(false);
+              setOpen(false);
+            }}
             aria-label="مسح البحث"
             className="absolute end-[88px] top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-sm text-neutral-400 hover:bg-neutral-100"
           >
@@ -339,6 +361,18 @@ export function SmartAutocomplete({
         </button>
 
       </div>
+
+      {open &&
+        value.trim().length >= 2 &&
+        suggestionsLoading && (
+          <div
+            className="absolute start-0 end-0 top-[calc(100%+8px)] z-[80] rounded-lg border border-neutral-200 bg-surface p-5 shadow-floating"
+          >
+            <p className="text-body-sm font-medium text-neutral-500">
+              جارٍ البحث...
+            </p>
+          </div>
+        )}
 
       {open &&
         suggestions.length >
@@ -484,6 +518,7 @@ export function SmartAutocomplete({
       {open &&
         value.trim()
           .length >= 2 &&
+        !suggestionsLoading &&
         suggestions.length ===
           0 && (
           <div className="absolute start-0 end-0 top-[calc(100%+8px)] z-[80] rounded-lg border border-neutral-200 bg-surface p-5 shadow-floating">
@@ -496,11 +531,15 @@ export function SmartAutocomplete({
 
               <div>
                 <p className="text-body-sm font-medium text-neutral-800">
-                  لا توجد اقتراحات فورية
+                  {suggestionsError
+                    ? "تعذر تحميل الاقتراحات الآن"
+                    : "لا توجد اقتراحات فورية"}
                 </p>
 
                 <p className="mt-1 text-caption text-neutral-400">
-                  اضغط Enter لعرض كل النتائج المطابقة.
+                  {suggestionsError
+                    ? "اضغط Enter لعرض النتائج من الكتالوج."
+                    : "اضغط Enter لعرض كل النتائج المطابقة."}
                 </p>
               </div>
 

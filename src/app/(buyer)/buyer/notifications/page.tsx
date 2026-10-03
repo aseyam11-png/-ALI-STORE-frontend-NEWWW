@@ -16,18 +16,6 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function refresh() {
-    setLoading(true);
-    setError("");
-    try {
-      setNotifications(await getMyNotifications());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load notifications.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     let active = true;
     getMyNotifications()

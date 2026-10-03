@@ -32,11 +32,17 @@ public class ShippingAddressService {
 
         ShippingAddress address = ShippingAddress.builder()
                 .user(user)
-                .street(request.getStreet().trim())
-                .city(request.getCity().trim())
+                .label(requiredTrim(request.getLabel()))
+                .recipientName(requiredTrim(request.getRecipientName()))
+                .phone(requiredTrim(request.getPhone()))
+                .street(requiredTrim(request.getStreet()))
+                .city(requiredTrim(request.getCity()))
                 .state(blankToNull(request.getState()))
-                .country(request.getCountry().trim())
+                .country(requiredTrim(request.getCountry()))
                 .postalCode(blankToNull(request.getPostalCode()))
+                .building(blankToNull(request.getBuilding()))
+                .apartment(blankToNull(request.getApartment()))
+                .notes(blankToNull(request.getNotes()))
                 .isDefault(Boolean.TRUE.equals(request.getIsDefault()))
                 .build();
 
@@ -70,11 +76,17 @@ public class ShippingAddressService {
             address.setIsDefault(false);
         }
 
-        address.setStreet(request.getStreet().trim());
-        address.setCity(request.getCity().trim());
+        address.setLabel(requiredTrim(request.getLabel()));
+        address.setRecipientName(requiredTrim(request.getRecipientName()));
+        address.setPhone(requiredTrim(request.getPhone()));
+        address.setStreet(requiredTrim(request.getStreet()));
+        address.setCity(requiredTrim(request.getCity()));
         address.setState(blankToNull(request.getState()));
-        address.setCountry(request.getCountry().trim());
+        address.setCountry(requiredTrim(request.getCountry()));
         address.setPostalCode(blankToNull(request.getPostalCode()));
+        address.setBuilding(blankToNull(request.getBuilding()));
+        address.setApartment(blankToNull(request.getApartment()));
+        address.setNotes(blankToNull(request.getNotes()));
 
         return mapToResponse(shippingAddressRepository.save(address));
     }
@@ -107,6 +119,10 @@ public class ShippingAddressService {
                 .orElseThrow(() -> new ForbiddenException("You do not have access to this shipping address"));
     }
 
+    private String requiredTrim(String value) {
+        return value == null ? null : value.trim();
+    }
+
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
@@ -114,12 +130,18 @@ public class ShippingAddressService {
     private ShippingAddressResponse mapToResponse(ShippingAddress address) {
         return ShippingAddressResponse.builder()
                 .id(address.getId())
+                .label(address.getLabel())
+                .recipientName(address.getRecipientName())
+                .phone(address.getPhone())
                 .street(address.getStreet())
                 .city(address.getCity())
                 .state(address.getState())
                 .country(address.getCountry())
                 .postalCode(address.getPostalCode())
-                .isDefault(address.getIsDefault())
+                .building(address.getBuilding())
+                .apartment(address.getApartment())
+                .notes(address.getNotes())
+                .isDefault(Boolean.TRUE.equals(address.getIsDefault()))
                 .build();
     }
 }

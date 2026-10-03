@@ -112,18 +112,30 @@ export default function CartPage() {
     }
   };
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
+  const handleQuantityChange = (
+    productId: string,
+    variantId: string | undefined,
+    quantity: number,
+  ) => {
     const nextItems = useCartStore.getState().items.map((item) =>
-      item.productId === productId
+      item.productId === productId &&
+      item.variantId === variantId
         ? { ...item, quantity: Math.max(1, Math.floor(quantity)) }
         : item,
     );
     void persistCartChange(nextItems);
   };
 
-  const handleRemove = (productId: string) => {
+  const handleRemove = (
+    productId: string,
+    variantId: string | undefined,
+  ) => {
     const nextItems = useCartStore.getState().items.filter(
-      (item) => item.productId !== productId,
+      (item) =>
+        !(
+          item.productId === productId &&
+          item.variantId === variantId
+        ),
     );
     void persistCartChange(nextItems);
   };
@@ -309,6 +321,7 @@ export default function CartPage() {
                                         onClick={() =>
                                           handleQuantityChange(
                                             item.productId,
+                                            item.variantId,
                                             item.quantity - 1,
                                           )
                                         }
@@ -332,6 +345,7 @@ export default function CartPage() {
                                         onClick={() =>
                                           handleQuantityChange(
                                             item.productId,
+                                            item.variantId,
                                             item.quantity + 1,
                                           )
                                         }
@@ -357,7 +371,10 @@ export default function CartPage() {
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      handleRemove(item.productId)
+                                      handleRemove(
+                                        item.productId,
+                                        item.variantId,
+                                      )
                                     }
                                     className="text-xs font-bold text-red-600 hover:underline"
                                   >

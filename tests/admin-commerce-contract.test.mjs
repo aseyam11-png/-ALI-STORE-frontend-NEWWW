@@ -62,3 +62,96 @@ test("frontend environment contract documents the optional media backend", async
   assert.match(source, /NEXT_PUBLIC_API_BASE_URL/);
   assert.match(source, /NEXT_PUBLIC_MEDIA_BASE_URL/);
 });
+
+
+test("cart replacement is atomic and uses the backend PUT contract", async () => {
+  const source = await read("src/features/commerce/services/checkout-api.service.ts");
+  assert.match(source, /requestData<BackendCart>\("\/api\/v1\/cart",\s*\{\s*method:\s*"PUT"/s);
+  assert.doesNotMatch(source, /clearBackendCart\(\)/);
+  assert.doesNotMatch(source, /addBackendCartItem\(/);
+  assert.match(source, /seenProductIds/);
+});
+
+test("direct cart replacement rejects duplicate product lines", async () => {
+  const source = await read("src/features/cart/services/cart-api.service.ts");
+  assert.match(source, /method:\s*"PUT"/);
+  assert.match(source, /seenProductIds/);
+  assert.match(source, /appears more than once/);
+  assert.doesNotMatch(source, /await clearBackendCart\(\)/);
+});
+
+test("cart UI mutates an exact product + variant line", async () => {
+  const source = await read("src/app/(shop)/shop/cart/page.tsx");
+  assert.match(source, /handleQuantityChange\([\s\S]*item\.productId[\s\S]*item\.variantId/);
+  assert.match(source, /handleRemove\([\s\S]*item\.productId[\s\S]*item\.variantId/);
+});
+
+test("shipping address frontend contract matches persisted backend fields", async () => {
+  const source = await read("src/features/addresses/services/address-api.service.ts");
+  assert.match(source, /recipientName/);
+  assert.match(source, /phone/);
+  assert.match(source, /building/);
+  assert.match(source, /apartment/);
+  assert.match(source, /notes/);
+  assert.match(source, /area:\s*address\.state/);
+});
+
+test("shipping address backend persists storefront checkout fields and enforces one default", async () => {
+  const entity = await read("backend/src/main/java/com/store/shipping/entity/ShippingAddress.java");
+  const response = await read("backend/src/main/java/com/store/shipping/dto/ShippingAddressResponse.java");
+  const migration = await read("backend/src/main/resources/db/migration/V16__shipping_address_contract.sql");
+  assert.match(entity, /recipient_name/);
+  assert.match(entity, /private String building/);
+  assert.match(entity, /private String apartment/);
+  assert.match(response, /recipientName/);
+  assert.match(response, /phone/);
+  assert.match(migration, /ux_shipping_addresses_one_default_per_user/);
+  assert.match(migration, /WHERE is_default = TRUE/);
+});
+
+test("autocomplete and search suggestions use the live catalog instead of mock products", async () => {
+  const autocomplete = await read("src/features/search/services/autocomplete.service.ts");
+  const search = await read("src/features/search/services/search.service.ts");
+  assert.match(autocomplete, /getProducts/);
+  assert.match(search, /getProducts/);
+  assert.doesNotMatch(autocomplete, /@\/mocks\/products/);
+  assert.doesNotMatch(search, /@\/mocks\/products/);
+});
+
+test("smart autocomplete handles asynchronous backend suggestions outside render", async () => {
+  const source = await read("src/components/search/SmartAutocomplete.tsx");
+  assert.match(source, /useEffect\(\(\) => \{/);
+  assert.match(source, /getAutocompleteSuggestions\(query, 8\)/);
+  assert.match(source, /suggestionsLoading/);
+  assert.match(source, /suggestionsError/);
+  assert.doesNotMatch(source, /useMemo\(/);
+  assert.doesNotMatch(source, /setTrackedDebouncedValue/);
+});
+
+
+test("live B2C mapping preserves backend availability", async () => {
+  const source = await read("src/features/products/services/b2c-product.mapper.ts");
+  assert.match(source, /stock:\s*product\.availableQuantity/);
+  assert.doesNotMatch(source, /stock:\s*0\s*,/);
+});
+
+test("product actions format totals using product currency", async () => {
+  const source = await read("src/components/commerce/product/ProductActions.tsx");
+  assert.match(source, /formatCurrency\(subtotal,\s*product\.currency\)/);
+  assert.doesNotMatch(source, /formatSAR\(subtotal\)/);
+});
+
+test("authenticated wishlist state is hydrated globally", async () => {
+  const source = await read("src/components/providers.tsx");
+  assert.match(source, /getMyWishlist/);
+  assert.match(source, /replaceWishlist/);
+});
+
+test("product-card wishlist mutations persist for authenticated users", async () => {
+  const source = await read("src/components/commerce/ProductCard.tsx");
+  assert.match(source, /getSession/);
+  assert.match(source, /addToWishlist/);
+  assert.match(source, /removeFromWishlist/);
+  assert.match(source, /toggleWishlistLocal/);
+  assert.doesNotMatch(source, /useSession\(\)/);
+});

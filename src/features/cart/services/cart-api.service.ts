@@ -57,19 +57,35 @@ export async function clearBackendCart(): Promise<BackendCart> {
 export async function replaceBackendCart(
   items: Array<{ productId: string; quantity: number }>,
 ): Promise<BackendCart> {
-  await clearBackendCart();
-  let cart = await getBackendCart();
+  const seenProductIds = new Set<number>();
 
-  for (const item of items) {
+  const requestItems = items.map((item) => {
     const productId = Number(item.productId);
+
     if (!Number.isInteger(productId) || productId < 1) {
       throw new Error(`Invalid backend product id: ${item.productId}`);
     }
+
     if (!Number.isInteger(item.quantity) || item.quantity < 1) {
       throw new Error("Cart quantity must be a positive integer.");
     }
-    cart = await addBackendCartItem(productId, item.quantity);
-  }
 
-  return cart;
+    if (seenProductIds.has(productId)) {
+      throw new Error(
+        `Product ${productId} appears more than once in the backend cart contract.`,
+      );
+    }
+
+    seenProductIds.add(productId);
+
+    return {
+      productId,
+      quantity: item.quantity,
+    };
+  });
+
+  return apiClient.requestData<BackendCart>("/api/v1/cart", {
+    method: "PUT",
+    body: JSON.stringify(requestItems),
+  });
 }
