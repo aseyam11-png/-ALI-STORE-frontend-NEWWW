@@ -363,7 +363,7 @@ export default function CheckoutPage() {
 
                 <Link
                   href="/buyer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
                 >
                   View my orders
                   <ArrowRight className="h-4 w-4" />
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
 
               <Link
                 href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
               >
                 Browse products
                 <ArrowRight className="h-4 w-4" />
@@ -501,7 +501,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -527,7 +527,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -553,7 +553,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -578,7 +578,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -603,7 +603,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -628,7 +628,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -653,7 +653,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -846,7 +846,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
                   Place order
