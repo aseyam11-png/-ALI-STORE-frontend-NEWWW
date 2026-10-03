@@ -251,6 +251,22 @@ function toLong(value: string | undefined): number | undefined {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+function requireFilterId(
+  field: "categoryId" | "brand",
+  value: string | undefined,
+): number | undefined {
+  if (!value?.trim()) return undefined;
+
+  const parsed = toLong(value);
+  if (parsed === undefined) {
+    throw new Error(
+      `${field} must use the backend numeric identifier.`,
+    );
+  }
+
+  return parsed;
+}
+
 export async function getProducts(
   filters: ProductFilters,
 ): Promise<ProductListResponse> {
@@ -258,18 +274,20 @@ export async function getProducts(
 
   if (filters.search.trim()) params.set("q", filters.search.trim());
 
-  const categoryId = toLong(filters.categoryId);
+  const categoryId = requireFilterId(
+    "categoryId",
+    filters.categoryId,
+  );
   if (categoryId !== undefined) {
     params.set("category", String(categoryId));
-  } else if (filters.categoryId?.trim()) {
-    params.set("categorySlug", filters.categoryId.trim());
   }
 
-  const brandId = toLong(filters.brand);
+  const brandId = requireFilterId(
+    "brand",
+    filters.brand,
+  );
   if (brandId !== undefined) {
     params.set("brand", String(brandId));
-  } else if (filters.brand?.trim()) {
-    params.set("brandName", filters.brand.trim());
   }
 
   if (filters.minPrice !== undefined) {
@@ -317,11 +335,18 @@ export async function getProductById(
 
 export async function getRelatedProducts(
   productId: string,
-  categorySlug?: string,
+  categoryId?: string,
   limit = 4,
 ): Promise<ProductSummary[]> {
   const params = new URLSearchParams();
-  if (categorySlug) params.set("categorySlug", categorySlug);
+
+  const numericCategoryId = requireFilterId(
+    "categoryId",
+    categoryId,
+  );
+  if (numericCategoryId !== undefined) {
+    params.set("category", String(numericCategoryId));
+  }
   params.set("page", "0");
   params.set("pageSize", String(Math.min(100, Math.max(8, limit))));
   params.set("sort", "relevance");
