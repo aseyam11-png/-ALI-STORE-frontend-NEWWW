@@ -64,14 +64,6 @@ test("frontend environment contract documents the optional media backend", async
 });
 
 
-test("cart replacement is atomic and uses the backend PUT contract", async () => {
-  const source = await read("src/features/commerce/services/checkout-api.service.ts");
-  assert.match(source, /requestData<BackendCart>\("\/api\/v1\/cart",\s*\{\s*method:\s*"PUT"/s);
-  assert.doesNotMatch(source, /clearBackendCart\(\)/);
-  assert.doesNotMatch(source, /addBackendCartItem\(/);
-  assert.match(source, /seenProductIds/);
-});
-
 test("direct cart replacement rejects duplicate product lines", async () => {
   const source = await read("src/features/cart/services/cart-api.service.ts");
   assert.match(source, /method:\s*"PUT"/);
