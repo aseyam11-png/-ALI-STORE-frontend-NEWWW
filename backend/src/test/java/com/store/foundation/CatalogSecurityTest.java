@@ -190,6 +190,7 @@ class CatalogSecurityTest {
                 .supplierCost(new BigDecimal("20.00"))
                 .build());
 
+        inventoryService.initializeForProduct(product);
         UpdateStockRequest stockRequest = new UpdateStockRequest();
         stockRequest.setQuantity(12);
         inventoryService.updateStock(product.getId(), stockRequest);
