@@ -54,6 +54,7 @@ export function ProductCard({ product }: ProductCardProps) {
       name: product.name,
       price: product.price.amount,
       priceUnit: product.price.unit,
+      currency: product.price.currency,
       quantity: product.minOrderQuantity,
       image: product.image?.url,
       minOrderQuantity: product.minOrderQuantity,
@@ -65,7 +66,10 @@ export function ProductCard({ product }: ProductCardProps) {
     }
 
     try {
-      const backend = await addBackendCartItem(product.id, 1);
+      const backend = await addBackendCartItem(
+        product.id,
+        product.minOrderQuantity,
+      );
       replaceItems(mapBackendCart(backend, useCartStore.getState().items));
     } catch (error) {
       if (isUnauthorized(error)) {
