@@ -284,3 +284,57 @@ test("checkout clears the local cart after successful order creation before paym
   assert.ok(clearIndex > orderIndex);
   assert.ok(paymentIndex > clearIndex);
 });
+
+
+test("customer notification state has no seeded data and is hydrated from backend", async () => {
+  const store = await read("src/stores/notification-store.ts");
+  const provider = await read("src/components/providers.tsx");
+  const bell = await read("src/components/notifications/NotificationBell.tsx");
+
+  assert.match(store, /notifications:\s*\[\]/);
+  assert.doesNotMatch(
+    store,
+    /NOTIF-1001|customer-001|AS-2026-10482|CHAT-1001/,
+  );
+  assert.match(provider, /getMyNotifications/);
+  assert.match(provider, /replaceNotifications/);
+  assert.match(bell, /markNotificationAsRead/);
+});
+
+test("buyer notifications use the canonical notification store rather than a parallel local truth", async () => {
+  const source = await read("src/app/(buyer)/buyer/notifications/page.tsx");
+  assert.match(source, /useNotificationStore/);
+  assert.match(source, /getMyNotifications/);
+  assert.match(source, /markNotificationAsRead/);
+  assert.match(source, /deleteNotification/);
+  assert.doesNotMatch(source, /useState<BackendNotification\[\]>/);
+});
+
+test("admin support routes do not expose seeded conversation data", async () => {
+  const list = await read("src/app/(admin)/admin/support/page.tsx");
+  const detail = await read("src/app/(admin)/admin/support/[id]/page.tsx");
+  assert.doesNotMatch(
+    list + detail,
+    /CHAT-1001|customer-001|AS-2026-10482|SHIP-1001|admin-001/,
+  );
+  assert.match(list, /لا توجد محادثات دعم فعلية/);
+  assert.match(detail, /redirect\(["']\/admin\/support["']\)/);
+});
+
+test("search query contract exposes only backend-supported sort values", async () => {
+  const types = await read("src/features/search/types/search-query.types.ts");
+  const query = await read("src/features/search/services/search-query.service.ts");
+  const api = await read("src/features/search/services/search-api.service.ts");
+
+  assert.doesNotMatch(types, /\| "rating"\| "reviews"\| "discount"/);
+  assert.doesNotMatch(query, /"rating"|"reviews"|"discount"/);
+  assert.doesNotMatch(api, /rating_desc|reviews_desc|discount_desc/);
+  assert.match(api, /price_asc/);
+  assert.match(api, /price_desc/);
+});
+
+test("product detail retains the complete backend image gallery", async () => {
+  const source = await read("src/features/products/services/b2c-product.mapper.ts");
+  assert.match(source, /Array\.isArray\(product\.images\)/);
+  assert.match(source, /product\.images\.map/);
+});
