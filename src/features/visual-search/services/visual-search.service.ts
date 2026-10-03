@@ -1,131 +1,51 @@
-import {
-  featuredProducts,
-} from "@/mocks/products";
+import { apiClient } from "@/lib/api/http-client";
 
-import {
-  normalizeB2CProduct,
-} from "@/features/products/services/b2c-product.mapper";
+import type { VisualSearchResult } from "../types/visual-search.types";
 
-import {
-  mapMockProductToSummary,
-} from "@/features/products/services/product.mapper";
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-import type {
-  VisualSearchResult,
-} from "../types/visual-search.types";
+type BackendVisualSearchResult = {
+  productId: number;
+  productName: string;
+  image?: string;
+  similarity: number;
+  price: number;
+  brand: string;
+  category: string;
+};
 
-const products =
-  featuredProducts
-    .map(mapMockProductToSummary)
-    .map(normalizeB2CProduct);
-
-function calculateSimilarity(
-  sourceName: string,
-  sourceCategory: string,
-  product: (typeof products)[number],
-) {
-  const sourceTokens =
-    `${sourceName} ${sourceCategory}`
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean);
-
-  const targetText =
-    `${product.name} ${product.category} ${product.brand}`
-      .toLowerCase();
-
-  const matches =
-    sourceTokens.filter(
-      (token) =>
-        token.length > 2 &&
-        targetText.includes(token),
-    ).length;
-
-  return Math.min(
-    98,
-    58 +
-      matches * 8 +
-      Math.round(
-        product.rating,
-      ),
-  );
+function validateImage(file: File) {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Please choose a JPG, PNG or WEBP image.");
+  }
+  if (file.size <= 0) {
+    throw new Error("The selected image is empty.");
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new Error("Image must be 10 MB or less.");
+  }
 }
 
-/*
-  FRONTEND MOCK ONLY.
+export async function searchByImage(file: File): Promise<VisualSearchResult[]> {
+  validateImage(file);
 
-  In production this function will send the image
-  to the Spring Boot visual-search endpoint, which
-  can then call an image/embedding/search service.
-*/
-export async function searchByImage(
-  file: File,
-): Promise<VisualSearchResult[]> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error(
-      "Please select an image file.",
-    );
-  }
+  const formData = new FormData();
+  formData.append("image", file, file.name);
 
-  if (
-    file.size >
-    10 * 1024 * 1024
-  ) {
-    throw new Error(
-      "Image size must be 10 MB or less.",
-    );
-  }
-
-  await new Promise(
-    (resolve) =>
-      window.setTimeout(
-        resolve,
-        700,
-      ),
+  const results = await apiClient.requestData<BackendVisualSearchResult[]>(
+    "/api/v1/visual-search",
+    { method: "POST", body: formData },
   );
 
-  const fileName =
-    file.name
-      .replace(
-        /\.[^/.]+$/,
-        "",
-      )
-      .replace(
-        /[-_]+/g,
-        " ",
-      );
-
-  return products
-    .map(
-      (product) => ({
-        id: `visual-${product.id}`,
-        productId:
-          product.id,
-        productName:
-          product.name,
-        image:
-          product.images[0]?.url,
-        similarity:
-          calculateSimilarity(
-            fileName,
-            product.category,
-            product,
-          ),
-        price:
-          product.price,
-        brand:
-          product.brand,
-        category:
-          product.category,
-      }),
-    )
-    .sort(
-      (a, b) =>
-        b.similarity -
-        a.similarity,
-    )
-    .slice(
-      0,
-      6,
-    );
+  return results.map((result) => ({
+    id: "visual-" + result.productId,
+    productId: String(result.productId),
+    productName: result.productName,
+    image: result.image,
+    similarity: result.similarity,
+    price: result.price,
+    brand: result.brand,
+    category: result.category,
+  }));
 }
