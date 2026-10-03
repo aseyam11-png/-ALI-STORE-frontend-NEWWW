@@ -426,6 +426,7 @@ class BackendCommerceIntegrityTest {
                 .status(ShipmentStatus.PROCESSING)
                 .shippingAddressSnapshot(order.getShippingAddress())
                 .build());
+        final Long shipmentId = shipment.getId();
 
         FulfillmentTask task = taskRepository.save(FulfillmentTask.builder()
                 .shipment(shipment)
@@ -436,22 +437,22 @@ class BackendCommerceIntegrityTest {
 
         Assertions.assertThrows(
                 BusinessException.class,
-                () -> shipmentService.updateStatus(shipment.getId(), ShipmentStatus.SHIPPED));
+                () -> shipmentService.updateStatus(shipmentId, ShipmentStatus.SHIPPED));
 
-        shipment = shipmentRepository.findById(shipment.getId()).orElseThrow();
+        shipment = shipmentRepository.findById(shipmentId).orElseThrow();
         shipment.setSupplierOrderId("SUP-ACCEPTED-1");
         shipmentRepository.save(shipment);
 
         Assertions.assertThrows(
                 BusinessException.class,
-                () -> shipmentService.updateStatus(shipment.getId(), ShipmentStatus.SHIPPED));
+                () -> shipmentService.updateStatus(shipmentId, ShipmentStatus.SHIPPED));
 
         task = taskRepository.findById(task.getId()).orElseThrow();
         task.setStatus(FulfillmentTaskStatus.SUCCEEDED);
         taskRepository.save(task);
 
         Assertions.assertDoesNotThrow(
-                () -> shipmentService.updateStatus(shipment.getId(), ShipmentStatus.SHIPPED));
+                () -> shipmentService.updateStatus(shipmentId, ShipmentStatus.SHIPPED));
     }
 
     @Test
