@@ -151,13 +151,17 @@ public class FulfillmentTaskProcessor {
 
         if (task.getStatus() != FulfillmentTaskStatus.PROCESSING) return;
 
-        task.setLastError(safeMessage(ex));
-        if (task.getAttempts() >= MAX_ATTEMPTS) {
-            Shipment shipment = task.getShipment();
-            permanentlyFail(task, shipment, safeMessage(ex));
+        String reason = safeMessage(ex);
+        task.setLastError(reason);
+        if (ex instanceof SupplierFulfillmentException supplierException
+                && !supplierException.isRetryable()) {
+            permanentlyFail(task, task.getShipment(), reason);
+        } else if (task.getAttempts() >= MAX_ATTEMPTS) {
+            permanentlyFail(task, task.getShipment(), reason);
         } else {
             task.setStatus(FulfillmentTaskStatus.PENDING);
-            task.setNextAttemptAt(LocalDateTime.now().plusMinutes(Math.min(30, task.getAttempts() * 2L)));
+            task.setNextAttemptAt(LocalDateTime.now()
+                    .plusMinutes(Math.min(30, task.getAttempts() * 2L)));
             taskRepository.save(task);
         }
     }
