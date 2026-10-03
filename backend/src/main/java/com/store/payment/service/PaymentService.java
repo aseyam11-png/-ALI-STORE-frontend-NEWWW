@@ -95,12 +95,19 @@ public class PaymentService {
         Payment reserved = paymentReservationService.reserve(
                 request.getOrderId(), request.getAmount(), request.getMethod(), idempotencyKey);
 
+        PaymentProvider.PaymentResult result;
         try {
-            PaymentProvider.PaymentResult result =
-                    paymentProvider.charge(
-                            order.getId(), request.getAmount(),
-                            request.getMethod(), idempotencyKey);
+            result = paymentProvider.charge(
+                    order.getId(), request.getAmount(),
+                    request.getMethod(), idempotencyKey);
+        } catch (RuntimeException ex) {
+            paymentReservationService.markRequiresReconciliation(
+                    reserved.getId(), ex.getMessage());
+            throw new ConflictException(
+                    "Payment outcome could not be confirmed; reconciliation is required");
+        }
 
+        try {
             reserved.setStatus(result.success()
                     ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
             reserved.setTransactionId(result.transactionId());
@@ -116,10 +123,17 @@ public class PaymentService {
 
             return mapToResponse(saved);
         } catch (RuntimeException ex) {
-            paymentReservationService.markRequiresReconciliation(
+            if (result.success()) {
+                paymentReservationService.markRequiresReconciliation(
+                        reserved.getId(), ex.getMessage());
+                throw new ConflictException(
+                        "Payment was accepted by the provider but local settlement failed; reconciliation is required");
+            }
+
+            paymentReservationService.markFailed(
                     reserved.getId(), ex.getMessage());
             throw new ConflictException(
-                    "Payment outcome could not be confirmed; reconciliation is required");
+                    "Payment was declined by the provider and could not be finalized locally");
         }
     }
 
