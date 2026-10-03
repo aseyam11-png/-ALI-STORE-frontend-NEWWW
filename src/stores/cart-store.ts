@@ -43,6 +43,7 @@ interface CartState {
   ) => void;
 
   clearCart: () => void;
+  replaceItems: (items: CartItem[]) => void;
 
   getItemCount: () => number;
   getSubtotal: () => number;
@@ -136,6 +137,15 @@ export const useCartStore = create<CartState>(
 
     clearCart: () => {
       set({ items: [] });
+    },
+
+    replaceItems: (items) => {
+      set({
+        items: items.map((item) => ({
+          ...item,
+          quantity: Math.max(1, Math.floor(item.quantity)),
+        })),
+      });
     },
 
     getItemCount: () => {
