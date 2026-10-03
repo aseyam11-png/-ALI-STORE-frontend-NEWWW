@@ -53,8 +53,8 @@ function AdminNavLinks({
             onClick={onNavigate}
             className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold transition ${
               active
-                ? "bg-blue-50 text-[#2563EB]"
-                : "text-slate-600 hover:bg-slate-50 hover:text-[#2563EB]"
+                ? "bg-primary-50 text-brand"
+                : "text-slate-600 hover:bg-neutral-50 hover:text-brand"
             }`}
             aria-current={active ? "page" : undefined}
           >
@@ -160,15 +160,15 @@ export function AdminShell({
               className="flex items-center gap-2 text-sm font-black"
             >
               <ShieldCheck className="h-4 w-4 text-primary-300" />
-              Ali<span className="text-blue-400">Store</span>
-              <span className="ms-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-200">
+              Ali<span className="text-primary-300">Store</span>
+              <span className="ms-1 rounded-full bg-primary-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-200">
                 Admin
               </span>
             </Link>
 
             <Link
               href="/"
-              className="text-xs font-bold text-blue-200 transition hover:text-white"
+              className="rounded-lg px-3 py-2 text-xs font-bold text-primary-200 transition hover:bg-white/5 hover:text-white"
             >
               Exit to store
             </Link>
@@ -208,9 +208,9 @@ export function AdminShell({
               aria-label="قائمة الإدارة"
               className="absolute inset-y-0 start-0 flex w-[min(84vw,320px)] flex-col overflow-y-auto bg-white shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
-                <span className="flex items-center gap-2 text-sm font-black text-[#0F172A]">
-                  <ShieldCheck className="h-4 w-4 text-[#2563EB]" />
+              <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-4">
+                <span className="flex items-center gap-2 text-sm font-black text-brand-ink">
+                  <ShieldCheck className="h-4 w-4 text-brand" />
                   Admin
                 </span>
 
