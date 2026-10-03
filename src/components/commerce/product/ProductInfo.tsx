@@ -46,10 +46,9 @@ interface ProductInfoProps {
 export function ProductInfo({
   product,
 }: ProductInfoProps) {
-  const toggleWishlist =
-    useWishlistStore(
-      (state) => state.toggle,
-    );
+  const toggleWishlist = useWishlistStore(
+    (state) => state.toggleItem,
+  );
 
   const saved =
     useWishlistStore(
@@ -163,9 +162,18 @@ export function ProductInfo({
           <button
             type="button"
             onClick={() =>
-              toggleWishlist(
-                product.id,
-              )
+              toggleWishlist({
+                id: product.id,
+                name: product.name,
+                price: activePrice,
+                image: activeImage ?? product.images[0]?.url,
+                brand: product.brand,
+                category: product.category,
+                originalPrice: product.originalPrice,
+                discountPercentage: product.discountPercentage,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+              })
             }
             aria-label={
               saved
