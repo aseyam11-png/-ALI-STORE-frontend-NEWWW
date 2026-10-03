@@ -343,15 +343,13 @@ class BackendCommerceIntegrityTest {
         freshItem.setCurrency("USD");
         freshPayload.getItems().add(freshItem);
 
-        org.mockito.Mockito.when(supplierInventoryClient.pull(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(freshPayload);
+        when(supplierInventoryClient.pull(any())).thenReturn(freshPayload);
 
         supplierInventorySyncService.syncSupplier(supplier.getId());
 
         Product afterFresh = productRepository.findById(product.getId()).orElseThrow();
         Assertions.assertEquals(new BigDecimal("12.00"), afterFresh.getSupplierCost());
-        Assertions.assertEquals(ProductStatus.DRAFT, afterFresh.getStatus(),
-                "an active product whose supplier cost exceeds its selling price must leave the customer-visible ACTIVE state");
+        Assertions.assertEquals(ProductStatus.DRAFT, afterFresh.getStatus());
 
         LocalDateTime stale = fresh.minusMinutes(10);
         var stalePayload = new com.store.inventory.dto.SupplierInventoryResponse();
@@ -363,17 +361,14 @@ class BackendCommerceIntegrityTest {
         staleItem.setCurrency("USD");
         stalePayload.getItems().add(staleItem);
 
-        org.mockito.Mockito.when(supplierInventoryClient.pull(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(stalePayload);
+        when(supplierInventoryClient.pull(any())).thenReturn(stalePayload);
 
         supplierInventorySyncService.syncSupplier(supplier.getId());
 
         Product afterStale = productRepository.findById(product.getId()).orElseThrow();
         Inventory afterStaleInventory = inventoryRepository.findByProductId(product.getId()).orElseThrow();
-        Assertions.assertEquals(new BigDecimal("12.00"), afterStale.getSupplierCost(),
-                "a stale supplier snapshot must not overwrite the newer supplier cost");
-        Assertions.assertEquals(5, afterStaleInventory.getQuantity(),
-                "a stale supplier snapshot must not overwrite newer inventory");
+        Assertions.assertEquals(new BigDecimal("12.00"), afterStale.getSupplierCost());
+        Assertions.assertEquals(5, afterStaleInventory.getQuantity());
         Assertions.assertEquals(ProductStatus.DRAFT, afterStale.getStatus());
     }
 
@@ -782,3 +777,114 @@ class BackendCommerceIntegrityTest {
                 .externalCode("PUBLISH-SUP")
                 .name("Publish Supplier")
                 .fulfillmentEnabled(true)
+                .inventorySyncEnabled(false)
+                .build());
+
+        Product product = productRepository.save(Product.builder()
+                .name("Publish Product")
+                .slug("publish-product")
+                .price(new BigDecimal("25.00"))
+                .currency("USD")
+                .sku("PUBLISH-1")
+                .status(ProductStatus.DRAFT)
+                .category(category)
+                .supplier(supplier)
+                .supplierSku("SUP-PUBLISH-1")
+                .supplierCost(new BigDecimal("10.00"))
+                .build());
+
+        Assertions.assertThrows(
+                BusinessException.class,
+                () -> productService.updateProduct(product.getId(),
+                        statusRequest(ProductStatus.ACTIVE)));
+    }
+
+    @Test
+    void activeProduct_isAllowed_whenSupplierEndpoint_andCredentialAreConfigured() {
+        Category category = categoryRepository.save(Category.builder()
+                .name("Configured Publish Test")
+                .slug("configured-publish-test")
+                .active(true)
+                .build());
+
+        Supplier supplier = supplierRepository.save(Supplier.builder()
+                .externalCode("PUBLISH-READY")
+                .name("Ready Supplier")
+                .apiBaseUrl("https://ready-supplier.example")
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(false)
+                .build());
+
+        Product product = productRepository.save(Product.builder()
+                .name("Ready Publish Product")
+                .slug("ready-publish-product")
+                .price(new BigDecimal("25.00"))
+                .currency("USD")
+                .sku("PUBLISH-READY-1")
+                .status(ProductStatus.DRAFT)
+                .category(category)
+                .supplier(supplier)
+                .supplierSku("SUP-PUBLISH-READY-1")
+                .supplierCost(new BigDecimal("10.00"))
+                .build());
+
+        Assertions.assertDoesNotThrow(
+                () -> productService.updateProduct(product.getId(),
+                        statusRequest(ProductStatus.ACTIVE)));
+
+        Assertions.assertEquals(
+                ProductStatus.ACTIVE,
+                productRepository.findById(product.getId()).orElseThrow().getStatus());
+    }
+
+    private User testUser() {
+        Role role = roleRepository.findByName("ROLE_USER")
+                .orElseGet(() -> roleRepository.save(
+                        Role.builder()
+                                .name("ROLE_USER")
+                                .description("Standard customer role")
+                                .build()));
+
+        return userRepository.save(User.builder()
+                .firstName("Integrity")
+                .lastName("Test")
+                .email("integrity-" + System.nanoTime() + "@example.com")
+                .password("test-password")
+                .isEnabled(true)
+                .role(role)
+                .build());
+    }
+
+    private Product product(String sku, String apiBaseUrl) {
+        Category category = categoryRepository.save(Category.builder()
+                .name("Inventory " + sku)
+                .slug("inventory-" + sku.toLowerCase())
+                .active(true)
+                .build());
+        Supplier supplier = supplierRepository.save(Supplier.builder()
+                .externalCode("SUP-" + sku)
+                .name("Supplier " + sku)
+                .apiBaseUrl(apiBaseUrl)
+                .fulfillmentEnabled(true)
+                .inventorySyncEnabled(true)
+                .build());
+        return productRepository.save(Product.builder()
+                .name("Product " + sku)
+                .slug("product-" + sku.toLowerCase())
+                .price(new BigDecimal("25.00"))
+                .currency("USD")
+                .sku(sku)
+                .status(ProductStatus.DRAFT)
+                .category(category)
+                .supplier(supplier)
+                .supplierSku("SUP-" + sku)
+                .supplierCost(new BigDecimal("10.00"))
+                .build());
+    }
+
+    private com.store.product.dto.ProductUpdateRequest statusRequest(ProductStatus status) {
+        var request = new com.store.product.dto.ProductUpdateRequest();
+        request.setStatus(status);
+        return request;
+    }
+}
