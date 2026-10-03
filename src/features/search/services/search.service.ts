@@ -1,5 +1,5 @@
 import { getProducts } from "@/features/products/services/product.service";
-import { getTopLevelCategories } from "@/features/catalog/services/category.service";
+import { getCategories, flattenCategoryTree } from "@/features/catalog/services/category-api.service";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import type { SearchSuggestion } from "../types/search.types";
 
@@ -76,7 +76,9 @@ export async function searchSuggestions(
       href: `/shop/products?brand=${encodeURIComponent(brand)}`,
     }));
 
-  const categories: SearchSuggestion[] = getTopLevelCategories()
+  const categories = flattenCategoryTree(
+    await getCategories(),
+  )
     .filter(
       (category) =>
         scoreText(category.name, cleanQuery) > 0 ||
@@ -84,11 +86,11 @@ export async function searchSuggestions(
     )
     .slice(0, 3)
     .map((category) => ({
-      id: `cat-${category.slug}`,
+      id: "cat-" + category.slug,
       label: category.name,
       subtitle: category.description,
       type: "CATEGORY" as const,
-      href: `/shop/categories/${category.slug}`,
+      href: "/shop/categories/" + category.slug,
     }));
 
   return [
