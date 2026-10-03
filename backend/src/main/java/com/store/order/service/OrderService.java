@@ -232,6 +232,15 @@ public class OrderService {
                     "Cannot transition order from " + order.getStatus() + " to " + newStatus);
         }
 
+        if (newStatus == OrderStatus.FULFILLMENT_FAILED) {
+            var shipments = shipmentRepository.findByOrderIdOrderByIdAsc(orderId);
+            if (shipments.isEmpty() || shipments.stream().noneMatch(
+                    shipment -> shipment.getStatus() == ShipmentStatus.CANCELLED)) {
+                throw new BusinessException(
+                        "Order cannot be marked FULFILLMENT_FAILED without a cancelled shipment");
+            }
+        }
+
         if (newStatus == OrderStatus.PROCESSING) {
             if (order.getItems().stream().anyMatch(item ->
                     item.getProduct().getStatus() != ProductStatus.ACTIVE
