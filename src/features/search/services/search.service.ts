@@ -99,7 +99,7 @@ export async function searchSuggestions(
       id: `query-${cleanQuery}`,
       label: cleanQuery,
       subtitle: "Search all products",
-      type: "QUERY",
+      type: "QUERY" as const,
       href: `/shop/products?q=${encodeURIComponent(cleanQuery)}`,
     },
   ].slice(0, 12);
