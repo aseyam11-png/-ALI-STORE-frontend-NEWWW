@@ -32,7 +32,7 @@ export function WishlistButton({
   const [error, setError] = useState("");
 
   const toggle = async () => {
-    if (busy) return;
+    if (busy || session.status === "loading") return;
 
     setBusy(true);
     setError("");
@@ -68,7 +68,7 @@ export function WishlistButton({
       <button
         type="button"
         onClick={() => void toggle()}
-        disabled={busy}
+        disabled={busy || session.status === "loading"}
         aria-busy={busy}
         aria-label={
           isInWishlist
