@@ -27,8 +27,6 @@ export function RecommendationCard({
       productId: product.id,
       name: product.name,
       price: product.price,
-      supplierPrice:
-        product.supplierPrice,
       priceUnit: "unit",
       quantity: 1,
       image: product.image,
