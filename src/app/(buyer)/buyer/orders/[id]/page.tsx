@@ -20,6 +20,20 @@ function statusLabel(status: BackendOrder["status"]) {
   }[status];
 }
 
+function aggregateShipmentStatus(order: BackendOrder): string {
+  if (order.status === "CANCELLED") return "CANCELLED";
+  if (order.status === "FULFILLMENT_FAILED") return "FULFILLMENT_FAILED";
+
+  const statuses = order.shipments.map((shipment) => shipment.status);
+  if (statuses.length === 0) return order.status;
+  if (statuses.every((status) => status === "DELIVERED")) return "DELIVERED";
+  if (statuses.some((status) => status === "OUT_FOR_DELIVERY")) return "OUT_FOR_DELIVERY";
+  if (statuses.some((status) => status === "IN_TRANSIT")) return "IN_TRANSIT";
+  if (statuses.some((status) => status === "SHIPPED")) return "SHIPPED";
+  if (statuses.some((status) => status === "PACKED")) return "PACKED";
+  return "PROCESSING";
+}
+
 export default function BuyerOrderTrackingPage() {
   const params = useParams<{ id: string }>();
   const orderId = params?.id ?? "";
@@ -87,8 +101,6 @@ export default function BuyerOrderTrackingPage() {
     );
   }
 
-  const shipment = order.shipments[0];
-
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
@@ -127,39 +139,63 @@ export default function BuyerOrderTrackingPage() {
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
               <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <Truck className="h-5 w-5 text-[#2563EB]" />
-                  <h2 className="text-lg font-black text-slate-900">Shipping</h2>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Truck className="h-5 w-5 text-[#2563EB]" />
+                    <h2 className="text-lg font-black text-slate-900">Shipping</h2>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black text-[#2563EB]">
+                    {aggregateShipmentStatus(order)}
+                  </span>
                 </div>
 
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Status</p>
-                    <p className="mt-1 text-sm font-bold text-slate-700">
-                      {shipment ? statusLabel(order.status) : "بانتظار إنشاء الشحنة"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Carrier</p>
-                    <p className="mt-1 text-sm font-bold text-slate-700">
-                      {shipment?.carrier ?? "لم يتم التحديد بعد"}
-                    </p>
-                  </div>
-                  {shipment?.trackingNumber && (
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Tracking</p>
-                      <p className="mt-1 font-mono text-sm font-bold text-slate-700" dir="ltr">
-                        {shipment.trackingNumber}
-                      </p>
+                <div className="mt-5 space-y-4">
+                  {order.shipments.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
+                      لم يتم إنشاء شحنة بعد.
                     </div>
-                  )}
-                  {shipment?.estimatedDeliveryDate && (
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Estimated delivery</p>
-                      <p className="mt-1 text-sm font-bold text-slate-700">
-                        {new Date(shipment.estimatedDeliveryDate).toLocaleDateString("ar-SA")}
-                      </p>
-                    </div>
+                  ) : (
+                    order.shipments.map((shipment) => (
+                      <article
+                        key={shipment.id}
+                        className="rounded-xl border border-slate-200 p-4"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-xs font-black text-slate-900">
+                              Shipment #{shipment.id}
+                            </p>
+                            <p className="mt-1 text-xs font-bold text-slate-500">
+                              {shipment.status}
+                            </p>
+                          </div>
+                          <p className="font-mono text-[10px] text-slate-500" dir="ltr">
+                            {shipment.trackingNumber ?? "Tracking pending"}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                              Carrier
+                            </p>
+                            <p className="mt-1 text-xs font-bold text-slate-700">
+                              {shipment.carrier ?? "لم يتم التحديد بعد"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                              Estimated delivery
+                            </p>
+                            <p className="mt-1 text-xs font-bold text-slate-700">
+                              {shipment.estimatedDeliveryDate
+                                ? new Date(shipment.estimatedDeliveryDate).toLocaleDateString("ar-SA")
+                                : "Pending"}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    ))
                   )}
                 </div>
               </section>
