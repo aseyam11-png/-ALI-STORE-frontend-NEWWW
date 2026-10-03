@@ -33,7 +33,7 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
     // sourced from the internal supplier field (see product.mapper.ts), so
     // it is intentionally not read here — surfacing it would leak supplier
     // identity into a customer-facing "brand" field.
-    brand: "AliStore",
+    brand: product.brand?.name ?? "ALI STORE",
 
     category: product.category?.name ?? "General",
 
@@ -47,11 +47,11 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
     supplierPrice: undefined,
     // Preserved as `undefined` deliberately — see the function-level
     // comment above.
-    originalPrice: undefined,
+    originalPrice: product.price.originalAmount,
 
     currency: product.price.currency,
 
-    discountPercentage: undefined,
+    discountPercentage: product.price.discountPercentage,
 
     // No real inventory source exists (see features/inventory/
     // availability.ts) — this stays honestly at 0 rather than reading a
