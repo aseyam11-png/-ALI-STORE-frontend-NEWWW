@@ -12,6 +12,7 @@ import { CategoryTree } from "@/components/commerce/category/CategoryTree";
 import {
   getCategories,
   getCategoryPathFromTree,
+  flattenCategoryTree,
 } from "@/features/catalog/services/category-api.service";
 
 export default async function CategoryPage({
@@ -21,11 +22,9 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const categories = await getCategories();
-  const category = categories
-    .flatMap(function flatten(node): typeof categories {
-      return [node, ...node.children.flatMap(flatten)];
-    })
-    .find((item) => item.slug === slug);
+  const category = flattenCategoryTree(categories).find(
+    (item) => item.slug === slug,
+  );
 
   if (!category) {
     notFound();
