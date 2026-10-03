@@ -115,25 +115,20 @@ export function SmartAutocomplete({
     );
 
   const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(
+    () => value.trim().length >= 2,
+  );
   const [suggestionsError, setSuggestionsError] = useState(false);
 
   useEffect(() => {
     let active = true;
     const query = debouncedValue.trim();
 
-    setHighlighted(0);
-    setSuggestionsError(false);
-
     if (query.length < 2) {
-      setSuggestions([]);
-      setSuggestionsLoading(false);
       return () => {
         active = false;
       };
     }
-
-    setSuggestionsLoading(true);
 
     void getAutocompleteSuggestions(query, 8)
       .then((nextSuggestions) => {
@@ -292,17 +287,20 @@ export function SmartAutocomplete({
           onChange={(
             event,
           ) => {
-            onChange(
-              event.target
-                .value,
-            );
+            const nextValue =
+              event.target.value;
+            const hasQuery =
+              nextValue.trim().length >= 2;
 
-            setOpen(
-              event.target
-                .value.trim()
-                .length >=
-                2,
-            );
+            onChange(nextValue);
+            setHighlighted(0);
+            setSuggestionsError(false);
+            setOpen(hasQuery);
+            setSuggestionsLoading(hasQuery);
+
+            if (!hasQuery) {
+              setSuggestions([]);
+            }
           }}
           onFocus={() => {
             if (
@@ -337,9 +335,14 @@ export function SmartAutocomplete({
         {value && (
           <button
             type="button"
-            onClick={() =>
-              onChange("")
-            }
+            onClick={() => {
+              onChange("");
+              setHighlighted(0);
+              setSuggestions([]);
+              setSuggestionsLoading(false);
+              setSuggestionsError(false);
+              setOpen(false);
+            }}
             aria-label="مسح البحث"
             className="absolute end-[88px] top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-sm text-neutral-400 hover:bg-neutral-100"
           >
