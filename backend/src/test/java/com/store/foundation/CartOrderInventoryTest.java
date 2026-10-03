@@ -128,6 +128,39 @@ class CartOrderInventoryTest {
     }
 
     @Test
+    void replaceCart_isAtomicWhenOneItemIsInvalid() throws Exception {
+        User user = createUser("atomicreplace@example.com");
+        Product valid = productWithStock("ATOMIC-1", 10);
+        Product limited = productWithStock("ATOMIC-2", 1);
+
+        String token = tokenFor(user);
+
+        mockMvc.perform(post("/api/v1/cart/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("productId", valid.getId(), "quantity", 2))))
+                .andExpect(status().isOk());
+
+        String replacement = objectMapper.writeValueAsString(List.of(
+                Map.of("productId", valid.getId(), "quantity", 3),
+                Map.of("productId", limited.getId(), "quantity", 5)));
+
+        mockMvc.perform(put("/api/v1/cart")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(replacement))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/v1/cart")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].productId").value(valid.getId()))
+                .andExpect(jsonPath("$.data.items[0].quantity").value(2));
+    }
+
+    @Test
     void addToCart_rejectsInsufficientStock() throws Exception {
         User user = createUser("stockcheck@example.com");
         Product product = productWithStock("STOCK-1", 2);

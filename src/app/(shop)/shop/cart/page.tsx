@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   ArrowRight,
   ChevronRight,
-  Clock3,
   Minus,
   Plus,
   ShoppingBag,
@@ -15,31 +15,18 @@ import {
 
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
-import { FreeShippingProgress } from "@/components/commerce/cart/FreeShippingProgress";
 import { RecommendationSection } from "@/components/commerce/recommendations/RecommendationSection";
 import { useCartStore } from "@/stores/cart-store";
+import { useSession } from "@/features/auth/session";
+import {
+  getBackendCart,
+  mapBackendCartToLocal,
+  replaceBackendCart,
+} from "@/features/commerce/services/checkout-api.service";
 
 export default function CartPage() {
   const items = useCartStore(
     (state) => state.items,
-  );
-
-  const shipping =
-    useCartStore
-      .getState()
-      .getShippingInfo();
-
-  const removeItem = useCartStore(
-    (state) => state.removeItem,
-  );
-
-  const updateQuantity =
-    useCartStore(
-      (state) => state.updateQuantity,
-    );
-
-  const clearCart = useCartStore(
-    (state) => state.clearCart,
   );
 
   const subtotal = items.reduce(
@@ -49,18 +36,113 @@ export default function CartPage() {
     0,
   );
 
-  const grandTotal =
-    subtotal + shipping.cost;
-
   const itemCount = items.reduce(
     (total, item) =>
       total + item.quantity,
     0,
   );
 
+  const session = useSession();
+  const replaceItems = useCartStore((state) => state.replaceItems);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (session.status !== "authenticated") return;
+
+    let active = true;
+
+    const syncCart = async () => {
+      setSyncing(true);
+      setError("");
+
+      try {
+        const localItems = useCartStore.getState().items;
+        const backend = await getBackendCart();
+
+        if (!active) return;
+
+        if (backend.items.length === 0 && localItems.length > 0) {
+          const migrated = await replaceBackendCart(localItems);
+          if (!active) return;
+          replaceItems(mapBackendCartToLocal(migrated, localItems));
+        } else {
+          replaceItems(mapBackendCartToLocal(backend, localItems));
+        }
+      } catch (caughtError) {
+        if (active) {
+          setError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "تعذر مزامنة السلة مع الخادم.",
+          );
+        }
+      } finally {
+        if (active) setSyncing(false);
+      }
+    };
+
+    void syncCart();
+
+    return () => {
+      active = false;
+    };
+  }, [session.status, replaceItems]);
+
+  const persistCartChange = async (nextItems: typeof items) => {
+    if (session.status !== "authenticated") {
+      replaceItems(nextItems);
+      return;
+    }
+
+    setSyncing(true);
+    setError("");
+
+    try {
+      const backend = await replaceBackendCart(nextItems);
+      replaceItems(mapBackendCartToLocal(backend, nextItems));
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "تعذر تحديث السلة.",
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleQuantityChange = (productId: string, quantity: number) => {
+    const nextItems = useCartStore.getState().items.map((item) =>
+      item.productId === productId
+        ? { ...item, quantity: Math.max(1, Math.floor(quantity)) }
+        : item,
+    );
+    void persistCartChange(nextItems);
+  };
+
+  const handleRemove = (productId: string) => {
+    const nextItems = useCartStore.getState().items.filter(
+      (item) => item.productId !== productId,
+    );
+    void persistCartChange(nextItems);
+  };
+
+  const handleClear = async () => {
+    await persistCartChange([]);
+  };
+
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
+        {error && (
+          <div
+            role="alert"
+            className="border-b border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700"
+          >
+            {error}
+          </div>
+        )}
 
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
@@ -120,10 +202,9 @@ export default function CartPage() {
           ) : (
             <div className="space-y-7">
 
-              <FreeShippingProgress
-                subtotal={subtotal}
-                threshold={75}
-              />
+              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-800">
+                السلة متزامنة مع الخادم. تكلفة الشحن النهائية تؤكد عند إنشاء الطلب.
+              </div>
 
               <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
 
@@ -146,9 +227,8 @@ export default function CartPage() {
 
                     <button
                       type="button"
-                      onClick={
-                        clearCart
-                      }
+                      onClick={() => void handleClear()}
+                      disabled={syncing}
                       className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -227,10 +307,9 @@ export default function CartPage() {
                                       <button
                                         type="button"
                                         onClick={() =>
-                                          updateQuantity(
+                                          handleQuantityChange(
                                             item.productId,
-                                            item.quantity -
-                                              1,
+                                            item.quantity - 1,
                                           )
                                         }
                                         disabled={
@@ -251,10 +330,9 @@ export default function CartPage() {
                                       <button
                                         type="button"
                                         onClick={() =>
-                                          updateQuantity(
+                                          handleQuantityChange(
                                             item.productId,
-                                            item.quantity +
-                                              1,
+                                            item.quantity + 1,
                                           )
                                         }
                                         className="flex h-10 w-10 items-center justify-center text-slate-600 hover:bg-slate-50"
@@ -279,9 +357,7 @@ export default function CartPage() {
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      removeItem(
-                                        item.productId,
-                                      )
+                                      handleRemove(item.productId)
                                     }
                                     className="text-xs font-bold text-red-600 hover:underline"
                                   >
@@ -299,48 +375,12 @@ export default function CartPage() {
 
                     </div>
 
-                    {shipping.cost >= 0 && (
-                      <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
-
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <Truck className="h-4 w-4 text-emerald-600" />
-
-                            {shipping.method}
-
-                            {shipping.estimatedDelivery && (
-                              <>
-                                <span className="text-slate-300">
-                                  ·
-                                </span>
-
-                                <Clock3 className="h-4 w-4 text-[#2563EB]" />
-
-                                {
-                                  shipping.estimatedDelivery
-                                }
-                              </>
-                            )}
-                          </div>
-
-                          <p className="text-sm font-black text-slate-900">
-                            Shipping:{" "}
-                            {shipping.cost === 0 ? (
-                              "Free"
-                            ) : (
-                              <LocalizedPrice
-                                amountUSD={shipping.cost}
-                                className="font-black text-slate-900"
-                              />
-                            )}
-                          </p>
-
-                        </div>
-
+                    <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                        <Truck className="h-4 w-4 text-emerald-600" />
+                        Shipping is calculated and confirmed at checkout.
                       </div>
-                    )}
-
+                    </div>
                   </section>
 
                   <RecommendationSection
@@ -387,11 +427,7 @@ export default function CartPage() {
                         </span>
 
                         <span className="font-bold">
-                          {shipping.cost === 0 ? (
-                            "FREE"
-                          ) : (
-                            <LocalizedPrice amountUSD={shipping.cost} />
-                          )}
+                          Confirmed at checkout
                         </span>
                       </div>
 
@@ -405,7 +441,10 @@ export default function CartPage() {
                         </span>
 
                         <span className="text-3xl font-black text-[#0F2747]">
-                          <LocalizedPrice amountUSD={grandTotal} />
+                          <LocalizedPrice
+                            amountUSD={subtotal}
+                            currency={items[0]?.currency}
+                          />
                         </span>
                       </div>
 

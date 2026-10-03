@@ -56,3 +56,11 @@ export async function getOrder(id: string): Promise<BackendOrder | null> {
     throw error;
   }
 }
+export async function getAdminOrders(
+  page = 0,
+  pageSize = 100,
+): Promise<BackendPage<BackendOrder>> {
+  return apiClient.requestData<BackendPage<BackendOrder>>(
+    `/api/v1/admin/orders?page=${Math.max(0, page)}&size=${Math.min(100, Math.max(1, pageSize))}`,
+  );
+}

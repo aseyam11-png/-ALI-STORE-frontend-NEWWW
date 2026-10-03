@@ -5,8 +5,8 @@ export interface CartItem {
   name: string;
 
   price: number;
-  supplierPrice?: number;
   priceUnit: string;
+  currency?: string;
 
   quantity: number;
 
@@ -15,9 +15,6 @@ export interface CartItem {
   minOrderQuantity: number;
 
   // Internal fulfillment source — never shown to customers
-  supplierId?: string;
-  supplier?: string;
-
   // Shipping information
   shippingCost?: number;
   shippingMethod?: string;
@@ -46,13 +43,12 @@ interface CartState {
   ) => void;
 
   clearCart: () => void;
+  replaceItems: (items: CartItem[]) => void;
 
   getItemCount: () => number;
   getSubtotal: () => number;
   getShippingTotal: () => number;
   getGrandTotal: () => number;
-
-  getEstimatedProfit: () => number;
 
   getShippingInfo: () => CartShippingInfo;
 }
@@ -143,6 +139,15 @@ export const useCartStore = create<CartState>(
       set({ items: [] });
     },
 
+    replaceItems: (items) => {
+      set({
+        items: items.map((item) => ({
+          ...item,
+          quantity: Math.max(1, Math.floor(item.quantity)),
+        })),
+      });
+    },
+
     getItemCount: () => {
       return get().items.reduce(
         (total, item) =>
@@ -168,20 +173,6 @@ export const useCartStore = create<CartState>(
       return (
         get().getSubtotal() +
         get().getShippingTotal()
-      );
-    },
-
-    getEstimatedProfit: () => {
-      return get().items.reduce(
-        (total, item) =>
-          total +
-          Math.max(
-            0,
-            (item.price -
-              (item.supplierPrice ?? item.price)) *
-              item.quantity,
-          ),
-        0,
       );
     },
 
