@@ -81,7 +81,7 @@ export default async function CategoryPage({
                   Category
                 </div>
 
-                <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
+                <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
                   {category.name}
                 </h1>
 
@@ -178,7 +178,7 @@ export default async function CategoryPage({
 
                   <Link
                     href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
-                    className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                    className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
                   >
                     View products
                     <ArrowRight className="h-4 w-4" />
