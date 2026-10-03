@@ -39,9 +39,17 @@ public class PaymentReconciliationService {
                     paymentProvider.getChargeStatus(payment.getOrderId(), payment.getTransactionId());
 
             if (result != null && result.completed()) {
-                if (result.transactionId() != null && !result.transactionId().isBlank()) {
-                    payment.setTransactionId(result.transactionId());
+                if (result.transactionId() == null || result.transactionId().isBlank()) {
+                    payment.setStatus(PaymentStatus.REQUIRES_RECONCILIATION);
+                    payment.setProviderError(
+                            result.message() == null || result.message().isBlank()
+                                    ? "Provider reported a completed charge without a transaction id"
+                                    : result.message());
+                    paymentRepository.save(payment);
+                    return map(payment);
                 }
+
+                payment.setTransactionId(result.transactionId());
                 payment.setStatus(PaymentStatus.COMPLETED);
                 payment.setCollectionStatus(PaymentCollectionStatus.NOT_REQUIRED);
                 payment.setProviderError(null);
