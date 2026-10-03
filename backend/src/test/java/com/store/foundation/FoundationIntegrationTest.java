@@ -221,7 +221,12 @@ class FoundationIntegrationTest {
                 .name("Phones").slug("phones").active(true).build());
         Supplier supplier = supplierRepository.findByExternalCode("TEST-SUPPLIER")
                 .orElseGet(() -> supplierRepository.save(
-                        Supplier.builder().externalCode("TEST-SUPPLIER").name("Test Supplier").build()));
+                        Supplier.builder()
+                        .externalCode("TEST-SUPPLIER")
+                        .name("Test Supplier")
+                        .apiBaseUrl("https://test-supplier.invalid")
+                        .fulfillmentEnabled(true)
+                        .build()));
 
         Map<String, Object> body = Map.of(
                 "name", "Test Phone", "price", 199.99, "sku", "PHN-001",
