@@ -17,12 +17,13 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { useAddressStore } from "@/stores/address-store";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
+import { apiClient } from "@/lib/api/http-client";
+import { useSession } from "@/features/auth/session";
 
 interface FormState {
   fullName: string;
@@ -58,10 +59,6 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
-  );
-
   const getDefaultAddress = useCustomerStore(
     (state) => state.getDefaultAddress,
   );
@@ -87,8 +84,9 @@ export default function CheckoutPage() {
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const session = useSession();
 
   const defaultAddress = getDefaultAddress();
 
@@ -221,70 +219,52 @@ export default function CheckoutPage() {
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setError("");
-
-    if (items.length === 0) {
-      setError(
-        "Your cart is empty.",
-      );
+    if (items.length === 0) { setError("Your cart is empty."); return; }
+    if (session.status !== "authenticated") { setError("Please sign in before placing an order."); return; }
+    if (!items.every((item) => /^\d+$/.test(item.productId))) {
+      setError("Your cart contains a legacy product reference. Remove it and add the product again from the live catalog.");
       return;
     }
-
-    if (!validate()) {
-      setError(
-        "Please complete all required shipping information.",
-      );
-      return;
+    if (!validate()) { setError("Please complete all required shipping information."); return; }
+    setSubmitting(true);
+    try {
+      for (const item of items) {
+        await apiClient.request("/api/v1/cart/items", {
+          method: "POST",
+          body: JSON.stringify({ productId: Number(item.productId), quantity: item.quantity }),
+        });
+      }
+      const orderResponse = await apiClient.request<{
+        success: boolean;
+        message: string;
+        data: { id: number; status: string; totalAmount: number };
+      }>("/api/v1/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          shippingAddress: [form.fullName, form.phone, form.address, form.city, form.country, form.postalCode].filter(Boolean).join(", "),
+          ...(appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {}),
+        }),
+      });
+      const paymentMap: Record<string, "CREDIT_CARD" | "PAYPAL" | "CASH_ON_DELIVERY"> = {
+        card: "CREDIT_CARD", paypal: "PAYPAL", cod: "CASH_ON_DELIVERY",
+      };
+      await apiClient.request("/api/v1/payments", {
+        method: "POST",
+        body: JSON.stringify({
+          orderId: orderResponse.data.id,
+          amount: orderResponse.data.totalAmount,
+          method: paymentMap[paymentMethod] ?? "CREDIT_CARD",
+        }),
+      });
+      clearCart();
+      setSuccessOrderId(String(orderResponse.data.id));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to place the order right now.");
+    } finally {
+      setSubmitting(false);
     }
-
-    const order = createOrder({
-      customerName:
-        form.fullName,
-
-      customerEmail:
-        form.email,
-
-      address: {
-        fullName:
-          form.fullName,
-        phone:
-          form.phone,
-        address:
-          form.address,
-        city:
-          form.city,
-        country:
-          form.country,
-        postalCode:
-          form.postalCode,
-      },
-
-      paymentMethod,
-
-      items,
-
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
-
-      estimatedDelivery:
-        shipping.estimatedDelivery,
-
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
   };
 
   if (successOrderId) {
@@ -308,7 +288,7 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
+                Your order is being processed securely. We&apos;ll send tracking
                 information as soon as your order ships.
               </p>
 
@@ -752,8 +732,8 @@ export default function CheckoutPage() {
                         label: "Credit / Debit Card",
                       },
                       {
-                        value: "wallet",
-                        label: "Digital Wallet",
+                        value: "paypal",
+                        label: "PayPal",
                       },
                       {
                         value: "cod",
@@ -921,7 +901,7 @@ export default function CheckoutPage() {
                   className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
-                  Place order
+                  {submitting ? "Placing order…" : "Place order"}
                 </button>
 
                 <div className="mt-4 rounded-xl bg-emerald-50 p-3">
