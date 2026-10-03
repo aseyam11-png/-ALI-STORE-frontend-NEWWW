@@ -5,9 +5,6 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  CheckCircle2,
-  Clock3,
-  MapPin,
   Package,
   Truck,
 } from "lucide-react";
