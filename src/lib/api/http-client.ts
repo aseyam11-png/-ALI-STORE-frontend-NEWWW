@@ -60,14 +60,16 @@ export class HttpClient {
       }
     }
 
+    const headers = new Headers(init?.headers);
+    headers.set("Accept", "application/json");
+    if (init?.body && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+
     const response = await fetch(this.baseUrl + path, {
       ...init,
       credentials: "include",
-      headers: {
-        Accept: "application/json",
-        ...(init?.body ? { "Content-Type": "application/json" } : {}),
-        ...init?.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {
