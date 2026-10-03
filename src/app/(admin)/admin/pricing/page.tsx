@@ -36,7 +36,18 @@ export default function AdminPricingPage() {
   }
 
   useEffect(() => {
-    void refresh();
+    let active = true;
+    getPricingRules()
+      .then((nextRules) => {
+        if (active) setRules(nextRules);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : "Unable to load pricing rules.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   async function create() {
