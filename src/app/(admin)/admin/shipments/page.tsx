@@ -9,11 +9,14 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { getAdminOrders } from "@/features/admin/orders/services/admin-order-api.service";
 import type { BackendOrder, BackendShipment } from "@/features/orders/services/order.service";
 
+const shipmentStatusOptions: BackendShipment["status"][] = ["PROCESSING", "SHIPPED", "IN_TRANSIT", "DELIVERED", "CANCELLED"];
+
 export default function AdminShipmentsPage() {
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busyShipmentId, setBusyShipmentId] = useState<number | null>(null);
 
   async function refresh() {
     setLoading(true);
