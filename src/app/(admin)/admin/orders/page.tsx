@@ -32,7 +32,20 @@ export default function AdminOrdersPage() {
     }
   }
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    let active = true;
+    getAdminOrders(0, 100)
+      .then((page) => {
+        if (active) setOrders(page.content);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : "Unable to load orders.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   async function changeStatus(orderId: number, status: BackendOrder["status"]) {
     setError("");
