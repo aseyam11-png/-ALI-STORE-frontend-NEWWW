@@ -16,9 +16,15 @@ export function EmailOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const challengeId = searchParams.get("challenge") ?? "";
-  const maskedEmail = searchParams.get("email") ?? "";
-  const purpose = searchParams.get("purpose") === "LOGIN" ? "LOGIN" : "EMAIL_VERIFICATION";
+  const queryChallengeId = searchParams.get("challenge") ?? "";
+  const queryMaskedEmail = searchParams.get("email") ?? "";
+  const queryPurpose =
+    searchParams.get("purpose") === "LOGIN" ? "LOGIN" : "EMAIL_VERIFICATION";
+  const [challengeId, setChallengeId] = useState(queryChallengeId);
+  const [maskedEmail, setMaskedEmail] = useState(queryMaskedEmail);
+  const [purpose, setPurpose] = useState<
+    "LOGIN" | "EMAIL_VERIFICATION"
+  >(queryPurpose);
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
@@ -26,6 +32,12 @@ export function EmailOtpForm() {
   const [challenge, setChallenge] = useState<VerificationChallenge | null>(null);
   const [resendAvailableAt, setResendAvailableAt] = useState(() => Date.now() + 60_000);
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    setChallengeId(queryChallengeId);
+    setMaskedEmail(queryMaskedEmail);
+    setPurpose(queryPurpose);
+  }, [queryChallengeId, queryMaskedEmail, queryPurpose]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -78,13 +90,17 @@ export function EmailOtpForm() {
 
     const nextChallenge = result.challenge;
     setChallenge(nextChallenge);
+    setChallengeId(nextChallenge.challengeId);
+    setMaskedEmail(nextChallenge.maskedEmail);
+    setPurpose(nextChallenge.purpose);
+
     const query = new URLSearchParams({
       challenge: nextChallenge.challengeId,
       email: nextChallenge.maskedEmail,
       purpose: nextChallenge.purpose,
     });
 
-    window.history.replaceState(null, "", "/verify-email?" + query.toString());
+    router.replace("/verify-email?" + query.toString(), { scroll: false });
     setCode("");
     setResendAvailableAt(Date.now() + 60_000);
   };
