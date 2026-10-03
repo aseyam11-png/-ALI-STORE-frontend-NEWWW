@@ -167,17 +167,6 @@ function mapDetails(product: BackendProduct): ProductDetails {
         ? [summary.thumbnail]
         : [];
 
-  const primaryShippingMethod = {
-    id: `product-${product.id}-standard`,
-    name: "Standard Shipping",
-    description: "Shipping cost and delivery estimate are confirmed at checkout.",
-    price: 0,
-    currency: summary.price.currency,
-    estimatedMinDays: 7,
-    estimatedMaxDays: 15,
-    available: true,
-  };
-
   return {
     ...summary,
     description: product.description ?? "",
