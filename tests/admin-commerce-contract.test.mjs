@@ -147,11 +147,65 @@ test("authenticated wishlist state is hydrated globally", async () => {
   assert.match(source, /replaceWishlist/);
 });
 
-test("product-card wishlist mutations persist for authenticated users", async () => {
-  const source = await read("src/components/commerce/ProductCard.tsx");
-  assert.match(source, /getSession/);
-  assert.match(source, /addToWishlist/);
-  assert.match(source, /removeFromWishlist/);
-  assert.match(source, /toggleWishlistLocal/);
-  assert.doesNotMatch(source, /useSession\(\)/);
+test("product cards use backend cart mutations and shared wishlist behavior", async () => {
+  const card = await read("src/components/commerce/ProductCard.tsx");
+  const b2cCard = await read("src/components/commerce/B2CProductCard.tsx");
+  const wishlist = await read("src/components/commerce/WishlistButton.tsx");
+  assert.match(card, /addBackendCartItem/);
+  assert.match(b2cCard, /addBackendCartItem/);
+  assert.doesNotMatch(b2cCard, /@\/stores\/inventory-store/);
+  assert.match(wishlist, /addToWishlist/);
+  assert.match(wishlist, /removeFromWishlist/);
+  assert.match(wishlist, /session\.status === "authenticated"/);
+});
+
+
+test("product detail does not fabricate variants or delivery tiers", async () => {
+  const service = await read("src/features/products/services/product.service.ts");
+  const mapper = await read("src/features/products/services/b2c-product.mapper.ts");
+  assert.match(service, /variants:\s*\[\]/);
+  assert.match(service, /priceTiers:\s*\[\]/);
+  assert.match(service, /shippingMethods:\s*\[\]/);
+  assert.match(mapper, /variants:\s*\[\]/);
+  assert.doesNotMatch(service, /estimatedMinDays:\s*7/);
+  assert.doesNotMatch(service, /Standard Shipping/);
+});
+
+test("backend product contract exposes the live category slug", async () => {
+  const dto = await read("backend/src/main/java/com/store/product/dto/ProductResponse.java");
+  const service = await read("backend/src/main/java/com/store/product/service/ProductService.java");
+  assert.match(dto, /private String categorySlug;/);
+  assert.match(service, /\.categorySlug\(product\.getCategory\(\)\.getSlug\(\)\)/);
+});
+
+test("storefront category navigation uses the live backend category adapter", async () => {
+  const adapter = await read("src/features/catalog/services/category-api.service.ts");
+  const page = await read("src/app/(shop)/shop/categories/[slug]/page.tsx");
+  const hero = await read("src/components/commerce/HomeHero.tsx");
+  const grid = await read("src/components/commerce/CategoryGrid.tsx");
+  assert.match(adapter, /\/api\/v1\/categories/);
+  assert.match(page, /getCategories/);
+  assert.match(hero, /category-api\.service/);
+  assert.match(grid, /category-api\.service/);
+});
+
+test("static category generation is removed so backend category changes are visible", async () => {
+  await assert.rejects(
+    () => read("src/app/(shop)/shop/categories/[slug]/generateStaticParams.ts"),
+    /ENOENT|no such file/i,
+  );
+});
+
+test("frontend price rendering never assumes a currency when the backend did not provide one", async () => {
+  const price = await read("src/components/localization/LocalizedPrice.tsx");
+  assert.match(price, /currency\?\s*:\s*string/);
+  assert.match(price, /currency\s*\?/);
+  assert.doesNotMatch(price, /currency = "SAR"/);
+});
+
+test("recommendation card uses backend cart mutation and real image data", async () => {
+  const source = await read("src/components/commerce/recommendations/RecommendationCard.tsx");
+  assert.match(source, /addBackendCartItem/);
+  assert.match(source, /product\.image/);
+  assert.doesNotMatch(source, /formatSAR/);
 });
