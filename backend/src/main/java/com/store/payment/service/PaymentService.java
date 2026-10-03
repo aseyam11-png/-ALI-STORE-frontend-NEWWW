@@ -12,6 +12,7 @@ import com.store.order.service.OrderService;
 import com.store.payment.dto.PaymentRequest;
 import com.store.payment.dto.PaymentResponse;
 import com.store.payment.entity.Payment;
+import com.store.payment.entity.PaymentCollectionStatus;
 import com.store.payment.entity.PaymentMethod;
 import com.store.payment.entity.PaymentStatus;
 import com.store.payment.provider.PaymentProvider;
@@ -75,12 +76,16 @@ public class PaymentService {
             throw new ConflictException("A payment attempt already exists for this order");
         }
 
+        String idempotencyKey = "order-" + order.getId();
+
         if (request.getMethod() == PaymentMethod.CASH_ON_DELIVERY) {
             Payment codPayment = paymentRepository.save(Payment.builder()
                     .orderId(request.getOrderId())
                     .amount(request.getAmount())
                     .method(PaymentMethod.CASH_ON_DELIVERY)
                     .status(PaymentStatus.PENDING)
+                    .idempotencyKey(idempotencyKey)
+                    .collectionStatus(PaymentCollectionStatus.PENDING)
                     .build());
 
             orderService.updateOrderStatus(order.getId(), OrderStatus.PROCESSING);
@@ -88,26 +93,63 @@ public class PaymentService {
         }
 
         Payment reserved = paymentReservationService.reserve(
-                request.getOrderId(), request.getAmount(), request.getMethod());
+                request.getOrderId(), request.getAmount(), request.getMethod(), idempotencyKey);
 
-        PaymentProvider.PaymentResult result =
-                paymentProvider.charge(
-                        order.getId(), request.getAmount(),
-                        request.getMethod(), "order-" + order.getId());
+        try {
+            PaymentProvider.PaymentResult result =
+                    paymentProvider.charge(
+                            order.getId(), request.getAmount(),
+                            request.getMethod(), idempotencyKey);
 
-        reserved.setStatus(result.success()
-                ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
-        reserved.setTransactionId(result.transactionId());
+            reserved.setStatus(result.success()
+                    ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
+            reserved.setTransactionId(result.transactionId());
+            reserved.setCollectionStatus(PaymentCollectionStatus.NOT_REQUIRED);
 
-        Payment saved = paymentRepository.save(reserved);
+            Payment saved = paymentRepository.save(reserved);
 
-        if (result.success()) {
-            orderService.updateOrderStatus(order.getId(), OrderStatus.PROCESSING);
-        } else {
-            orderService.updateOrderStatus(order.getId(), OrderStatus.CANCELLED);
+            if (result.success()) {
+                orderService.updateOrderStatus(order.getId(), OrderStatus.PROCESSING);
+            } else {
+                orderService.updateOrderStatus(order.getId(), OrderStatus.CANCELLED);
+            }
+
+            return mapToResponse(saved);
+        } catch (RuntimeException ex) {
+            paymentReservationService.markRequiresReconciliation(
+                    reserved.getId(), ex.getMessage());
+            throw new ConflictException(
+                    "Payment outcome could not be confirmed; reconciliation is required");
+        }
+    }
+
+    @Transactional
+    public PaymentResponse confirmCodCollection(Long orderId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new ConflictException("COD can only be collected after the order is delivered");
         }
 
-        return mapToResponse(saved);
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for order id: " + orderId));
+
+        if (payment.getMethod() != PaymentMethod.CASH_ON_DELIVERY) {
+            throw new ConflictException("This order does not use cash on delivery");
+        }
+
+        if (payment.getCollectionStatus() == PaymentCollectionStatus.COLLECTED) {
+            return mapToResponse(payment);
+        }
+
+        if (payment.getCollectionStatus() != PaymentCollectionStatus.PENDING) {
+            throw new ConflictException("COD payment is not awaiting collection");
+        }
+
+        payment.setCollectionStatus(PaymentCollectionStatus.COLLECTED);
+        payment.setStatus(PaymentStatus.COMPLETED);
+        return mapToResponse(paymentRepository.save(payment));
     }
 
     @Transactional(readOnly = true)
@@ -130,6 +172,7 @@ public class PaymentService {
         return PaymentResponse.builder()
                 .id(payment.getId()).orderId(payment.getOrderId()).amount(payment.getAmount())
                 .method(payment.getMethod()).status(payment.getStatus())
-                .transactionId(payment.getTransactionId()).createdAt(payment.getCreatedAt()).build();
+                .transactionId(payment.getTransactionId()).collectionStatus(payment.getCollectionStatus())
+                .createdAt(payment.getCreatedAt()).build();
     }
 }
