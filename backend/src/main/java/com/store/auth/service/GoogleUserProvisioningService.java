@@ -36,7 +36,8 @@ public class GoogleUserProvisioningService {
                 .trim().toLowerCase(Locale.ROOT);
 
         Object verifiedClaim = oidcUser.getClaims().get("email_verified");
-        if (!Boolean.TRUE.equals(verifiedClaim) && !"true".equalsIgnoreCase(String.valueOf(verifiedClaim))) {
+        if (!Boolean.TRUE.equals(verifiedClaim)
+                && !"true".equalsIgnoreCase(String.valueOf(verifiedClaim))) {
             throw new BusinessException("Google account email is not verified");
         }
 
@@ -49,6 +50,8 @@ public class GoogleUserProvisioningService {
             if (!Boolean.TRUE.equals(existing.getIsEnabled())) {
                 throw new BusinessException("User account is disabled");
             }
+            existing.setEmailVerified(true);
+            userRepository.save(existing);
             identity.setProviderEmail(email);
             userIdentityRepository.save(identity);
             return existing;
@@ -66,6 +69,7 @@ public class GoogleUserProvisioningService {
                     .password(passwordEncoder.encode(generateRandomPassword()))
                     .role(role)
                     .isEnabled(true)
+                    .emailVerified(true)
                     .build();
 
             user = userRepository.save(user);
@@ -75,8 +79,12 @@ public class GoogleUserProvisioningService {
             throw new BusinessException("User account is disabled");
         }
 
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
         if (userIdentityRepository.existsByUserIdAndProvider(user.getId(), AuthProvider.GOOGLE)) {
-            throw new BusinessException("A different Google identity is already linked to this account");
+            throw new BusinessException(
+                    "A different Google identity is already linked to this account");
         }
 
         userIdentityRepository.save(UserIdentity.builder()
@@ -100,7 +108,9 @@ public class GoogleUserProvisioningService {
     }
 
     private String requireNonBlank(String value, String message) {
-        if (value == null || value.isBlank()) throw new BusinessException(message);
+        if (value == null || value.isBlank()) {
+            throw new BusinessException(message);
+        }
         return value;
     }
 }
