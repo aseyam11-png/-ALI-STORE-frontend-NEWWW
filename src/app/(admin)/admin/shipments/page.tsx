@@ -1,77 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Package,
-  Search,
-  Truck,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Package, RefreshCcw, Search, Truck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
-import {
-  getAdminOrders,
-  type BackendOrder,
-} from "@/features/orders/services/order.service";
-
-type ShipmentRow = {
-  orderId: number;
-  shipmentId: number | null;
-  status: string;
-  carrier: string;
-  trackingNumber: string;
-  eta: string;
-};
-
-function statusClass(status: string) {
-  switch (status) {
-    case "DELIVERED":
-      return "bg-emerald-50 text-emerald-700";
-    case "SHIPPED":
-    case "IN_TRANSIT":
-    case "OUT_FOR_DELIVERY":
-      return "bg-blue-50 text-blue-700";
-    case "PACKED":
-      return "bg-purple-50 text-purple-700";
-    case "CANCELLED":
-    case "FULFILLMENT_FAILED":
-      return "bg-red-50 text-red-700";
-    default:
-      return "bg-amber-50 text-amber-700";
-  }
-}
-
-function toShipmentRows(orders: BackendOrder[]): ShipmentRow[] {
-  const rows: ShipmentRow[] = [];
-
-  for (const order of orders) {
-    if (order.shipments.length === 0) {
-      rows.push({
-        orderId: order.id,
-        shipmentId: null,
-        status: order.status,
-        carrier: "No shipment assigned",
-        trackingNumber: "Tracking not assigned",
-        eta: "Pending",
-      });
-      continue;
-    }
-
-    for (const shipment of order.shipments) {
-      rows.push({
-        orderId: order.id,
-        shipmentId: shipment.id,
-        status: shipment.status,
-        carrier: shipment.carrier ?? "Carrier not assigned",
-        trackingNumber: shipment.trackingNumber ?? "Tracking not assigned",
-        eta: shipment.estimatedDeliveryDate ?? "Pending",
-      });
-    }
-  }
-
-  return rows;
-}
+import { getAdminOrders } from "@/features/admin/orders/services/admin-order-api.service";
+import type { BackendOrder } from "@/features/orders/services/order.service";
 
 export default function AdminShipmentsPage() {
   const [orders, setOrders] = useState<BackendOrder[]>([]);
@@ -79,157 +14,82 @@ export default function AdminShipmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let active = true;
+  async function refresh() {
+    setLoading(true);
+    setError("");
+    try {
+      setOrders((await getAdminOrders(0, 100)).content);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load shipments.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-    getAdminOrders()
-      .then((page) => {
-        if (!active) return;
-        setOrders(page.content);
-      })
-      .catch((caughtError: unknown) => {
-        if (!active) return;
-        setError(
-          caughtError instanceof Error
-            ? caughtError.message
-            : "تعذر تحميل الشحنات.",
-        );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+  useEffect(() => { void refresh(); }, []);
 
-    return () => {
-      active = false;
-    };
-  }, []);
+  const shipments = useMemo(
+    () => orders.flatMap((order) => order.shipments.map((shipment) => ({ order, shipment }))),
+    [orders],
+  );
 
-  const shipments = useMemo(() => toShipmentRows(orders), [orders]);
-
-  const filtered = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (!needle) return shipments;
-
-    return shipments.filter((shipment) =>
-      [
-        shipment.orderId,
-        shipment.shipmentId ?? "",
-        shipment.trackingNumber,
-        shipment.carrier,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [shipments, search]);
+  const filtered = shipments.filter(({ order, shipment }) =>
+    (String(order.id) + " " + (shipment.carrier ?? "") + " " + (shipment.trackingNumber ?? ""))
+      .toLowerCase()
+      .includes(search.trim().toLowerCase()),
+  );
 
   return (
     <AdminShell>
       <main className="min-h-screen bg-[#F8FAFC]">
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
-              Administration
-            </p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">
-              Shipment control
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Live shipment state from backend order data.
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">Administration</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">Shipment control</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Shipment records are loaded from real customer orders.</p>
           </div>
         </section>
 
         <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-          <div className="mb-5 flex h-11 max-w-xl items-center gap-3 rounded-xl border border-slate-200 bg-white px-3">
+          {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</div>}
+
+          <div className="mb-5 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3">
             <Search className="h-4 w-4 text-slate-400" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search order, shipment or tracking number..."
-              aria-label="Search shipments"
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+              placeholder="Search order, carrier or tracking..."
+              className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none"
             />
+            <button type="button" onClick={() => void refresh()} aria-label="Refresh shipments" className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50">
+              <RefreshCcw className="h-4 w-4" />
+            </button>
           </div>
 
-          {loading ? (
-            <div className="h-72 animate-pulse rounded-2xl bg-white" />
-          ) : error ? (
-            <section className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-              <p className="text-sm font-bold text-red-700">{error}</p>
-            </section>
-          ) : (
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {loading ? <div className="p-12 text-center text-sm text-slate-500">Loading shipments...</div> :
+              filtered.length === 0 ? <div className="p-12 text-center"><Package className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-4 text-sm font-bold text-slate-600">No shipments found.</p></div> :
               <div className="divide-y divide-slate-100">
-                {filtered.map((shipment) => (
-                  <div
-                    key={`${shipment.orderId}-${shipment.shipmentId ?? "none"}`}
-                    className="p-5"
-                  >
+                {filtered.map(({ order, shipment }) => (
+                  <article key={String(order.id) + "-" + String(shipment.id)} className="p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                          <Truck className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-black text-slate-900">
-                              Order #{shipment.orderId}
-                            </p>
-                            {shipment.shipmentId !== null && (
-                              <span className="text-xs font-bold text-slate-400">
-                                Shipment #{shipment.shipmentId}
-                              </span>
-                            )}
-                            <span
-                              className={`rounded-full px-2.5 py-1 text-[10px] font-black ${statusClass(
-                                shipment.status,
-                              )}`}
-                            >
-                              {shipment.status}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-400">
-                            {shipment.carrier}
-                          </p>
-                          <p className="mt-2 font-mono text-xs text-slate-600">
-                            {shipment.trackingNumber}
-                          </p>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]"><Truck className="h-5 w-5" /></div>
+                        <div>
+                          <p className="text-sm font-black text-slate-900">Order #{order.id}</p>
+                          <p className="mt-1 text-xs text-slate-400">{shipment.carrier ?? "Carrier not assigned"}</p>
+                          <p className="mt-2 font-mono text-xs text-slate-600">{shipment.trackingNumber ?? "Tracking not assigned"}</p>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
-                            ETA
-                          </p>
-                          <p className="mt-1 text-xs font-bold text-slate-700">
-                            {shipment.eta}
-                          </p>
-                        </div>
-                        <Link
-                          href={`/buyer/orders/${shipment.orderId}`}
-                          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black text-slate-700 hover:bg-slate-50"
-                        >
-                          View order
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
+                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black text-[#2563EB]">{shipment.status}</span>
+                        <Link href={"/buyer/orders/" + order.id} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black">View order<ArrowRight className="h-3.5 w-3.5" /></Link>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 ))}
-
-                {filtered.length === 0 && (
-                  <div className="p-12 text-center">
-                    <Package className="mx-auto h-8 w-8 text-slate-300" />
-                    <p className="mt-4 text-sm font-bold text-slate-600">
-                      No shipments found.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
+              </div>}
+          </section>
         </div>
       </main>
     </AdminShell>
