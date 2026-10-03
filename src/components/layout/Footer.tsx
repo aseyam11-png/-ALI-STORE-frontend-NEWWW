@@ -39,7 +39,7 @@ const footerGroups = [
   {
     title: "Support",
     links: [
-      ["AI Support", "/support"],
+      ["Help Center", "/support"],
       [
         "Buyer support",
         "/buyer/support",
@@ -63,8 +63,8 @@ const footerGroups = [
 const trustItems = [
   {
     icon: ShieldCheck,
-    title: "Quality checked",
-    text: "Every product is checked before it reaches you",
+    title: "Catalog information",
+    text: "Product availability is shown from the live catalog",
   },
 
   {
@@ -271,14 +271,14 @@ export function Footer() {
                 href="/support"
                 className="transition hover:text-white"
               >
-                Privacy
+                Support
               </Link>
 
               <Link
                 href="/support"
                 className="transition hover:text-white"
               >
-                Terms
+                Account & orders
               </Link>
 
               <Link
