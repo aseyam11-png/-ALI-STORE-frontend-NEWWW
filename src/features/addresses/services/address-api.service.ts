@@ -3,8 +3,6 @@ import type { CustomerAddress } from "../types/address.types";
 
 export type BackendAddress = {
   id: number;
-  street: string;
-  city: string;
   label?: string | null;
   recipientName?: string | null;
   phone?: string | null;
