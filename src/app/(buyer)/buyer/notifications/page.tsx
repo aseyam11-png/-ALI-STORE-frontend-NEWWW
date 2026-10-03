@@ -38,7 +38,6 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (session.status !== "authenticated") {
-      setLoading(false);
       return;
     }
 
@@ -128,7 +127,16 @@ export default function NotificationsPage() {
         </section>
 
         <div className="mx-auto max-w-[1000px] px-4 py-8 sm:px-6 lg:px-8">
-          {session.status !== "authenticated" ? (
+          {session.status === "loading" ? (
+            <section
+              className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm"
+            >
+              <Bell className="mx-auto h-9 w-9 text-neutral-300" />
+              <h2 className="mt-4 text-h3 font-bold text-foreground">
+                جارٍ التحقق من الجلسة...
+              </h2>
+            </section>
+          ) : session.status !== "authenticated" ? (
             <section className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm">
               <LogIn className="mx-auto h-9 w-9 text-neutral-300" />
               <h2 className="mt-4 text-h3 font-bold text-foreground">
