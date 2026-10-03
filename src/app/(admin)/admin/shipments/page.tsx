@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { ArrowRight, Package, RefreshCcw, Search, Truck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
@@ -96,7 +97,7 @@ export default function AdminShipmentsPage() {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black text-[#2563EB]">{shipment.status}</span>
-                        <Link href={"/buyer/orders/" + order.id} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black">View order<ArrowRight className="h-3.5 w-3.5" /></Link>
+                        <Link href={("/buyer/orders/" + order.id) as Route} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black">View order<ArrowRight className="h-3.5 w-3.5" /></Link>
                       </div>
                     </div>
                   </article>
