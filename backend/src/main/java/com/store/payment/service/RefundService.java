@@ -113,7 +113,7 @@ public class RefundService {
 
     @Transactional
     public RefundResponse retry(Long refundId) {
-        Refund refund = refundRepository.findById(refundId)
+        Refund refund = refundRepository.findByIdForUpdate(refundId)
                 .orElseThrow(() -> new ResourceNotFoundException("Refund not found"));
 
         if (refund.getStatus() == RefundStatus.SUCCEEDED) {
@@ -235,7 +235,13 @@ public class RefundService {
                 payment.getId(), RefundStatus.SUCCEEDED);
         BigDecimal pending = refundRepository.sumByPaymentIdAndStatus(
                 payment.getId(), RefundStatus.PENDING);
-        return payment.getAmount().subtract(refunded).subtract(pending).max(BigDecimal.ZERO);
+        BigDecimal unresolved = refundRepository.sumByPaymentIdAndStatus(
+                payment.getId(), RefundStatus.REQUIRES_RECONCILIATION);
+        return payment.getAmount()
+                .subtract(refunded)
+                .subtract(pending)
+                .subtract(unresolved)
+                .max(BigDecimal.ZERO);
     }
 
     private RefundResponse latestRefund(Long paymentId) {
