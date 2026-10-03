@@ -303,7 +303,7 @@ public class OrderService {
         order.setStatus(newStatus);
         Order saved = orderRepository.save(order);
         if (newStatus == OrderStatus.PROCESSING) fulfillmentService.enqueueForOrder(orderId);
-        return mapToResponse(saved);
+        return mapToResponse(saved, shipmentRepository.findByOrderIdOrderByIdAsc(orderId));
     }
 
     private void validateCancellationAllowed(Order order) {
