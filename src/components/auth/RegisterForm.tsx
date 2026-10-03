@@ -44,6 +44,15 @@ export function RegisterForm() {
     setSubmitting(false);
 
     if (!result.ok) {
+      if (result.requiresEmailVerification) {
+        const query = new URLSearchParams({
+          challenge: result.challengeId,
+          email: result.maskedEmail,
+        });
+        router.replace("/verify-email?" + query.toString());
+        return;
+      }
+
       setFormError(result.reason);
       return;
     }
