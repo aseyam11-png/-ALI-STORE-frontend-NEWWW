@@ -25,8 +25,7 @@ public class SupplierInventorySyncWorker {
     public void poll() {
         if (!enabled) return;
 
-        supplierRepository.findByStatus(SupplierStatus.ACTIVE).stream()
-                .filter(supplier -> Boolean.TRUE.equals(supplier.getInventorySyncEnabled()))
+        supplierRepository.findByStatusAndInventorySyncEnabledTrue(SupplierStatus.ACTIVE)
                 .forEach(supplier -> {
                     try {
                         syncService.syncSupplier(supplier.getId());
