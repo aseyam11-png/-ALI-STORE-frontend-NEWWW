@@ -367,15 +367,15 @@ test("catalog filter UI sends brand ids rather than unsupported brand names", as
   assert.match(source, /brandIdForApi/);
   assert.match(source, /brandOptions\.map/);
   assert.match(source, /item\.id/);
-  assert.match(service, /params\.set\("brand", String\(brandId\)\)/);
+  assert.match(service, /params\.set\("brand",\s*String\(brandId\)/);
   assert.doesNotMatch(service, /brandName/);
 });
 
 test("product service rejects non-numeric category and brand filters", async () => {
   const source = await read("src/features/products/services/product.service.ts");
   assert.match(source, /requireFilterId/);
-  assert.match(source, /categoryId must use the backend numeric identifier/);
-  assert.match(source, /brand must use the backend numeric identifier/);
+  assert.match(source, /\$\{field\} must use the backend numeric identifier/);
+  assert.match(source, /field: "categoryId" \| "brand"/);
   assert.doesNotMatch(source, /params\.set\("categorySlug"/);
   assert.doesNotMatch(source, /params\.set\("brandName"/);
 });
