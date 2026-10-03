@@ -28,6 +28,7 @@ export type BackendPayment = {
 };
 
 export async function replaceBackendCart(items: CartItem[]): Promise<BackendCart> {
+  const seenProductIds = new Set<number>();
   const requestItems = items.map((item) => {
     const productId = Number(item.productId);
 
@@ -38,6 +39,14 @@ export async function replaceBackendCart(items: CartItem[]): Promise<BackendCart
     if (!Number.isInteger(item.quantity) || item.quantity < 1) {
       throw new Error("Cart quantity must be a positive integer.");
     }
+
+    if (seenProductIds.has(productId)) {
+      throw new Error(
+        `Product ${productId} appears more than once in the backend cart contract. Variant-specific cart lines are not supported by the current backend.`,
+      );
+    }
+
+    seenProductIds.add(productId);
 
     return {
       productId,
@@ -106,6 +115,7 @@ export async function processBackendPayment(input: {
     body: JSON.stringify(input),
   });
 }
+
 export async function getBackendPaymentByOrderId(
   orderId: string,
 ): Promise<BackendPayment | null> {
