@@ -9,21 +9,33 @@ import {
 
 import { AppShell } from "@/components/layout/AppShell";
 import { ProductCard } from "@/components/commerce/ProductCard";
-import { featuredProducts } from "@/mocks/products";
-import { mapLegacyProductToCard } from "@/features/products";
+import { getProducts } from "@/features/products/services/product.service";
+import { mapProductSummaryToCard } from "@/features/products/services/product-card.mapper";
 
-export default function DealsPage() {
-  const dealProducts = featuredProducts
-    .filter(
-      (product) =>
-        product.discount !== undefined &&
-        product.discount > 0,
-    )
-    .sort(
-      (a, b) =>
-        (b.discount ?? 0) - (a.discount ?? 0),
-    )
-    .map(mapLegacyProductToCard);
+export default async function DealsPage() {
+  const response = await getProducts({
+    search: "",
+    categoryId: undefined,
+    subcategoryId: undefined,
+    brand: undefined,
+    supplierId: undefined,
+    minPrice: undefined,
+    maxPrice: undefined,
+    minRating: undefined,
+    verifiedSupplierOnly: false,
+    discountOnly: true,
+    inStockOnly: true,
+    featuredOnly: false,
+    bestsellerOnly: false,
+    newArrivalOnly: false,
+    sort: "relevance",
+    page: 1,
+    pageSize: 100,
+  });
+
+  const dealProducts = response.items
+    .filter((product) => (product.discountPercentage ?? 0) > 0)
+    .map(mapProductSummaryToCard);
 
   return (
     <AppShell>
@@ -150,7 +162,7 @@ export default function DealsPage() {
                   No active deals
                 </h3>
                 <p className="mt-2 text-sm text-slate-400">
-                  New wholesale offers will appear here soon.
+                  New offers will appear here when an active discount is published.
                 </p>
               </div>
             </div>
