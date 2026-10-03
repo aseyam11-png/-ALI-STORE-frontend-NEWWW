@@ -38,7 +38,10 @@ public class AuthSessionCookieService {
     void initialize() {
         cookieName = environment.getProperty("app.auth.cookie-name", "ali_store_session");
         secureCookie = Boolean.parseBoolean(environment.getProperty("app.auth.cookie-secure", "false"));
-        cookieSameSite = environment.getProperty("app.auth.cookie-same-site", secureCookie ? "None" : "Lax");
+        String configuredSameSite = environment.getProperty("app.auth.cookie-same-site", "");
+        cookieSameSite = configuredSameSite == null || configuredSameSite.isBlank()
+                ? (secureCookie ? "None" : "Lax")
+                : configuredSameSite;
         cookieDomain = environment.getProperty("app.auth.cookie-domain", "");
 
         if (isProd() && !secureCookie) {

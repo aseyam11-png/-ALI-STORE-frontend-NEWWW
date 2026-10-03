@@ -34,8 +34,11 @@ class AuthSessionCookieServiceTest {
     @Test
     void tamperedCookie_isRejected() {
         String encrypted = cookieService.encrypt("jwt-value");
-        String tampered = encrypted.substring(0, encrypted.length() - 1)
-                + (encrypted.endsWith("A") ? "B" : "A");
+        String[] parts = encrypted.split("\\.", -1);
+        String originalCiphertext = parts[2];
+        char replacement = originalCiphertext.charAt(0) == 'A' ? 'B' : 'A';
+        String tampered = parts[0] + "." + parts[1] + "."
+                + replacement + originalCiphertext.substring(1);
 
         assertThrows(SecurityException.class, () -> cookieService.decrypt(tampered));
     }

@@ -86,6 +86,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/api/v1/auth/login"),
                                 new AntPathRequestMatcher("/api/v1/auth/register"),
+                                new AntPathRequestMatcher("/api/v1/auth/email/verify"),
+                                new AntPathRequestMatcher("/api/v1/auth/email/resend"),
                                 new AntPathRequestMatcher("/api/v1/auth/csrf"),
                                 new AntPathRequestMatcher("/api/v1/auth/google"),
                                 new AntPathRequestMatcher("/api/v1/integrations/suppliers/shipments/update"),
