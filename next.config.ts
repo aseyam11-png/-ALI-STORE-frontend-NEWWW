@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const backendInternalUrl = process.env.BACKEND_INTERNAL_URL?.replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
   typedRoutes: true,
   images: {
@@ -22,6 +24,24 @@ const nextConfig: NextConfig = {
           })()
         : []),
     ],
+  },
+  async rewrites() {
+    if (!backendInternalUrl) return [];
+
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendInternalUrl}/api/v1/:path*`,
+      },
+      {
+        source: "/oauth2/:path*",
+        destination: `${backendInternalUrl}/oauth2/:path*`,
+      },
+      {
+        source: "/login/oauth2/:path*",
+        destination: `${backendInternalUrl}/login/oauth2/:path*`,
+      },
+    ];
   },
 };
 
