@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   BarChart3,
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { LocalizationProvider } from "../providers/LocalizationProvider";
+import { useSession } from "@/features/auth/session";
 
 const adminNav = [
   {
@@ -107,12 +108,39 @@ export function AdminShell({
   children,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const session = useSession();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuCloseRef = useRef<HTMLButtonElement | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    if (session.status !== "authenticated") return;
+    const role = session.user?.role ?? "";
+    if (role !== "ROLE_ADMIN" && role !== "ADMIN") {
+      router.replace("/");
+    }
+  }, [router, session.status, session.user?.role]);
+
+  if (session.status === "authenticating") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] text-sm font-bold text-slate-500">
+        Checking admin session…
+      </div>
+    );
+  }
+
+  if (session.status !== "authenticated") {
+    router.replace("/login");
+    return null;
+  }
+
+  const role = session.user?.role ?? "";
+  if (role !== "ROLE_ADMIN" && role !== "ADMIN") {
+    return null;
+  }
   const isActive = (href: string) =>
     href === "/admin"
       ? pathname === "/admin"
