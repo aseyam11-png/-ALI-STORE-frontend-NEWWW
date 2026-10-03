@@ -58,12 +58,7 @@ export function ProductsPageContent() {
 
   const categories = categoriesQuery.data ?? [];
 
-  const categoryIdForApi = useMemo(() => {
-    if (!category.trim()) return undefined;
-    if (/^\d+$/.test(category)) return category;
-    const matched = categories.find((item) => item.slug === category);
-    return matched ? String(matched.id) : undefined;
-  }, [categories, category]);
+  const categoryIdForApi = !category.trim() ? undefined : /^\d+$/.test(category) ? category : (categories.find((item) => item.slug === category) ? String(categories.find((item) => item.slug === category)?.id) : undefined);
 
   const numericBrandId = /^\d+$/.test(brand) ? brand : undefined;
 
