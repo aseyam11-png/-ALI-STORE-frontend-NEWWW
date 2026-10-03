@@ -3,6 +3,8 @@ package com.store.order.entity;
 import com.store.common.entity.BaseEntity;
 import com.store.user.entity.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
@@ -41,6 +43,7 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private String shippingAddress;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "reservation_expires_at", nullable = false)
     @Builder.Default
     private java.time.LocalDateTime reservationExpiresAt = java.time.LocalDateTime.now().plusMinutes(30);
