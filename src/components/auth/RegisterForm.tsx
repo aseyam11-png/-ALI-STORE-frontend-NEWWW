@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 
 import { register } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,7 @@ export function RegisterForm() {
           email: result.maskedEmail,
           purpose: result.purpose,
         });
-        router.replace("/verify-email?" + query.toString());
+        router.replace(("/verify-email?" + query.toString()) as Route);
         return;
       }
 
