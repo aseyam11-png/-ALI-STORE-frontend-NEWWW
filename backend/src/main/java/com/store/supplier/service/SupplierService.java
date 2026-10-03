@@ -73,7 +73,9 @@ public class SupplierService {
                     throw new ConflictException("Supplier external code already exists");
                 });
 
-        String apiBaseUrl = normalizeUrl(request.getApiBaseUrl());
+        String apiBaseUrl = request.getApiBaseUrl() != null
+                ? normalizeUrl(request.getApiBaseUrl())
+                : supplier.getApiBaseUrl();
         boolean fulfillmentEnabled =
                 request.getFulfillmentEnabled() != null
                         ? request.getFulfillmentEnabled()
@@ -84,7 +86,9 @@ public class SupplierService {
         supplier.setName(request.getName().trim());
         supplier.setApiBaseUrl(apiBaseUrl);
         supplier.setFulfillmentEnabled(fulfillmentEnabled);
-        if (request.getInventorySyncEnabled() != null) supplier.setInventorySyncEnabled(request.getInventorySyncEnabled());
+        if (request.getInventorySyncEnabled() != null) {
+            supplier.setInventorySyncEnabled(request.getInventorySyncEnabled());
+        }
 
         return map(supplierRepository.save(supplier));
     }
