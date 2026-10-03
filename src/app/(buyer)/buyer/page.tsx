@@ -112,7 +112,10 @@ export default function BuyerAccountPage() {
             </Link>
           </div>
 
-          <div className="mt-10 rounded-md border border-neutral-200 bg-surface p-6">
+          <Link
+            href={isAuthenticated ? "/buyer/orders" : "/login?next=/buyer/orders"}
+            className="mt-10 block rounded-md border border-neutral-200 bg-surface p-6 transition-colors duration-200 hover:border-primary-200 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          >
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-sm bg-neutral-100 text-neutral-500">
                 <Package className="h-5 w-5" />
@@ -123,12 +126,12 @@ export default function BuyerAccountPage() {
                 </p>
                 <p className="mt-1 text-body-sm text-muted-foreground">
                   {isAuthenticated
-                    ? "لا توجد طلبات حتى الآن."
+                    ? "عرض سجل الطلبات والحالات المؤكدة من الخادم."
                     : "سجّل الدخول لعرض سجل طلباتك."}
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
 
           <div className="mt-6 flex items-center gap-3 text-body-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 shrink-0 text-success" />

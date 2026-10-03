@@ -126,6 +126,10 @@ export function ProductInfo({
           </div>
         </div>
 
+        {product.variants.length > 0 && (
+          <div className="mt-7"><VariantSelector variants={product.variants} selectedVariantId={undefined} onChange={() => undefined} /></div>
+        )}
+
         <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface divide-y divide-neutral-100">
           <div className="flex items-center justify-between gap-5 px-5 py-4">
             <div className="flex items-center gap-3">
