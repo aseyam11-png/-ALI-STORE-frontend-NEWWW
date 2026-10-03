@@ -497,5 +497,10 @@ test("product detail does not show a fake zero rating", async () => {
   const source = await read("src/components/commerce/product/ProductInfo.tsx");
   assert.match(source, /product.reviewCount > 0/);
   assert.match(source, /No reviews yet/);
-  const ratingOccurrences = source.match(/product\.rating\.toFixed\(1\)/g) ?? [];\n  assert.equal(ratingOccurrences.length, 1);\n  assert.ok(source.indexOf("product.reviewCount > 0") < source.indexOf("product.rating.toFixed(1)"));
+  const ratingOccurrences = source.match(/product\.rating\.toFixed\(1\)/g) ?? [];
+  assert.equal(ratingOccurrences.length, 1);
+  assert.ok(
+    source.indexOf("product.reviewCount > 0") <
+      source.indexOf("product.rating.toFixed(1)"),
+  );
 });
