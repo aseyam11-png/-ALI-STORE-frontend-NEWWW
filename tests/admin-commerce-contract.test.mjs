@@ -201,3 +201,66 @@ test("recommendation card uses backend cart mutation and real image data", async
   assert.match(source, /product\.image/);
   assert.doesNotMatch(source, /formatSAR/);
 });
+
+
+test("customer product cards do not create one session request per card render", async () => {
+  const files = [
+    "src/components/commerce/ProductCard.tsx",
+    "src/components/commerce/B2CProductCard.tsx",
+    "src/components/commerce/WishlistButton.tsx",
+    "src/components/commerce/recommendations/RecommendationCard.tsx",
+  ];
+
+  for (const path of files) {
+    const source = await read(path);
+    assert.doesNotMatch(source, /useSession\(\)/);
+    assert.match(source, /getSession\(\)/);
+  }
+});
+
+test("live product detail contract does not fabricate variants or shipping estimates", async () => {
+  const source = await read("src/features/products/services/product.service.ts");
+  assert.match(source, /variants:\s*\[\]/);
+  assert.match(source, /shippingMethods:\s*\[\]/);
+  assert.match(source, /priceTiers:\s*\[\]/);
+  assert.doesNotMatch(source, /estimatedMinDays:\s*7/);
+  assert.doesNotMatch(source, /name:\s*"Standard Shipping"/);
+});
+
+test("catalog category service is backed by the backend category API", async () => {
+  const source = await read("src/features/catalog/services/category.service.ts");
+  assert.match(source, /\.\/category-api\.service/);
+  assert.match(source, /getCategories/);
+  assert.doesNotMatch(source, /categoryTree/);
+});
+
+test("support pages do not contain seeded customer, order, shipment or chat data", async () => {
+  const publicSupport = await read("src/app/(support)/support/page.tsx");
+  const buyerSupport = await read("src/app/(buyer)/buyer/support/page.tsx");
+  const conversation = await read("src/app/(buyer)/buyer/support/[id]/page.tsx");
+  const supportContent = await read("src/components/support/SupportCenterContent.tsx");
+
+  for (const source of [
+    publicSupport,
+    buyerSupport,
+    conversation,
+    supportContent,
+  ]) {
+    assert.doesNotMatch(source, /customer-001|AS-2026-10482|SHIP-1001|CHAT-1001/);
+  }
+
+  assert.match(
+    supportContent,
+    /المحادثة المباشرة غير متصلة حاليًا/,
+  );
+});
+
+test("protected buyer order and address pages do not request APIs before authentication", async () => {
+  const orders = await read("src/app/(buyer)/buyer/orders/page.tsx");
+  const addresses = await read("src/app/(buyer)/buyer/addresses/page.tsx");
+
+  assert.match(orders, /session\.status !== "authenticated"/);
+  assert.match(addresses, /session\.status !== "authenticated"/);
+  assert.match(orders, /\/login\?next=\/buyer\/orders/);
+  assert.match(addresses, /\/login\?next=\/buyer\/addresses/);
+});
