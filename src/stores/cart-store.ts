@@ -5,8 +5,7 @@ export interface CartItem {
   name: string;
 
   price: number;
-  supplierPrice?: number;
-  priceUnit: string;
+    priceUnit: string;
   currency?: string;
 
   quantity: number;
@@ -16,9 +15,6 @@ export interface CartItem {
   minOrderQuantity: number;
 
   // Internal fulfillment source — never shown to customers
-  supplierId?: string;
-  supplier?: string;
-
   // Shipping information
   shippingCost?: number;
   shippingMethod?: string;
@@ -54,8 +50,6 @@ interface CartState {
   getGrandTotal: () => number;
 
   replaceItems: (items: CartItem[]) => void;
-
-  getEstimatedProfit: () => number;
 
   getShippingInfo: () => CartShippingInfo;
 }
