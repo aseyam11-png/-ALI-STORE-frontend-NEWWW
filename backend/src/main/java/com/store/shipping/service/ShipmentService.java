@@ -15,6 +15,7 @@ import com.store.shipping.dto.ShipmentResponse;
 import com.store.shipping.entity.Shipment;
 import com.store.shipping.entity.ShipmentStatus;
 import com.store.shipping.repository.ShipmentRepository;
+import com.store.payment.service.RefundService;
 import com.store.shipping.repository.ShippingAddressRepository;
 import com.store.supplier.entity.Supplier;
 import com.store.supplier.entity.SupplierStatus;
@@ -53,6 +54,7 @@ public class ShipmentService {
     }
 
     private final ShipmentRepository shipmentRepository;
+    private final RefundService refundService;
     private final ShippingAddressRepository shippingAddressRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -158,6 +160,7 @@ public class ShipmentService {
                 fulfillmentTaskRepository.save(task);
             }
             releaseSupplierReservations(shipment);
+            refundService.prepareCancelledShipmentRefund(shipment.getId());
         }
 
         if (newStatus == ShipmentStatus.SHIPPED
