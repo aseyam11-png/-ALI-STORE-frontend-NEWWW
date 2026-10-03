@@ -2,198 +2,88 @@ import type {
   AppliedCoupon,
   Coupon,
 } from "../types/coupon.types";
+import { apiClient } from "@/lib/api/http-client";
 
-import { formatSAR } from "@/features/localization/services/currency.service";
+type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data: T;
+};
 
-const coupons: Coupon[] = [
-  {
-    code: "WELCOME10",
-    type: "PERCENTAGE",
-    value: 10,
-    maximumDiscount: 50,
-    expiresAt:
-      "2027-01-01T00:00:00.000Z",
-    usedCount: 0,
-    active: true,
-    description:
-      "10% off your order.",
-  },
-
-  {
-    code: "SAVE20",
-    type: "FIXED",
-    value: 20,
-    minimumOrderAmount: 100,
-    expiresAt:
-      "2027-01-01T00:00:00.000Z",
-    usedCount: 0,
-    active: true,
-    description:
-      `${formatSAR(20)} off orders of ${formatSAR(100)} or more.`,
-  },
-
-  {
-    code: "FREESHIP",
-    type: "FREE_SHIPPING",
-    value: 0,
-    expiresAt:
-      "2027-01-01T00:00:00.000Z",
-    usedCount: 0,
-    active: true,
-    description:
-      "Free shipping on your order.",
-  },
-];
-
-export interface CouponValidationResult {
-  valid: boolean;
-
-  message: string;
-
-  applied?: AppliedCoupon;
+interface BackendCoupon {
+  id: number;
+  code: string;
+  discountPercentage: number | string;
+  expirationDate: string;
+  isActive: boolean;
+  usageLimit?: number | null;
+  timesUsed: number;
+  minimumOrderAmount?: number | string | null;
 }
 
-export function validateCoupon(
-  code: string,
-  subtotal: number,
-  shipping: number,
-): CouponValidationResult {
-  const normalizedCode =
-    code.trim().toUpperCase();
-
-  if (!normalizedCode) {
-    return {
-      valid: false,
-      message:
-        "Enter a coupon code.",
-    };
+function unwrap<T>(response: ApiEnvelope<T>): T {
+  if (response.success === false) {
+    throw new Error(response.message || "Coupon request failed");
   }
+  return response.data;
+}
 
-  const coupon =
-    coupons.find(
-      (item) =>
-        item.code ===
-        normalizedCode,
-    );
-
-  if (!coupon) {
-    return {
-      valid: false,
-      message:
-        "Invalid coupon code.",
-    };
-  }
-
-  if (!coupon.active) {
-    return {
-      valid: false,
-      message:
-        "This coupon is no longer active.",
-    };
-  }
-
-  if (
-    new Date(
-      coupon.expiresAt,
-    ).getTime() <
-    Date.now()
-  ) {
-    return {
-      valid: false,
-      message:
-        "This coupon has expired.",
-    };
-  }
-
-  if (
-    coupon.usageLimit !==
-      undefined &&
-    coupon.usedCount >=
-      coupon.usageLimit
-  ) {
-    return {
-      valid: false,
-      message:
-        "This coupon has reached its usage limit.",
-    };
-  }
-
-  if (
-    coupon.minimumOrderAmount !==
-      undefined &&
-    subtotal <
-      coupon.minimumOrderAmount
-  ) {
-    return {
-      valid: false,
-      message: `Minimum order amount is ${formatSAR(coupon.minimumOrderAmount)}.`,
-    };
-  }
-
-  let discountAmount =
-    0;
-
-  let shippingDiscount =
-    0;
-
-  if (
-    coupon.type ===
-    "PERCENTAGE"
-  ) {
-    discountAmount =
-      (subtotal *
-        coupon.value) /
-      100;
-
-    if (
-      coupon.maximumDiscount !==
-        undefined
-    ) {
-      discountAmount =
-        Math.min(
-          discountAmount,
-          coupon.maximumDiscount,
-        );
-    }
-  }
-
-  if (
-    coupon.type ===
-    "FIXED"
-  ) {
-    discountAmount =
-      Math.min(
-        coupon.value,
-        subtotal,
-      );
-  }
-
-  if (
-    coupon.type ===
-    "FREE_SHIPPING"
-  ) {
-    shippingDiscount =
-      shipping;
-  }
-
-  const finalDiscount =
-    discountAmount +
-    shippingDiscount;
+function mapCoupon(coupon: BackendCoupon): Coupon {
+  const value = Number(coupon.discountPercentage);
 
   return {
-    valid: true,
+    code: coupon.code,
+    type: "PERCENTAGE",
+    value: Number.isFinite(value) ? value : 0,
+    minimumOrderAmount:
+      coupon.minimumOrderAmount == null
+        ? undefined
+        : Number(coupon.minimumOrderAmount),
+    expiresAt: coupon.expirationDate,
+    usageLimit: coupon.usageLimit ?? undefined,
+    usedCount: coupon.timesUsed,
+    active: coupon.isActive,
+    description: `${coupon.discountPercentage}% discount`,
+  };
+}
 
-    message:
-      coupon.description,
+export async function validateBackendCoupon(
+  code: string,
+  subtotal: number,
+): Promise<AppliedCoupon> {
+  const normalized = code.trim().toUpperCase();
 
-    applied: {
-      coupon,
+  if (!normalized) {
+    throw new Error("Enter a coupon code.");
+  }
 
-      discountAmount,
+  const response = await apiClient.request<ApiEnvelope<BackendCoupon>>(
+    `/api/v1/coupons/validate/${encodeURIComponent(normalized)}`,
+  );
 
-      shippingDiscount,
+  const coupon = mapCoupon(unwrap(response));
 
-      finalDiscount,
-    },
+  if (!coupon.active) {
+    throw new Error("This coupon is no longer active.");
+  }
+
+  const minimum =
+    coupon.minimumOrderAmount == null ? 0 : coupon.minimumOrderAmount;
+  if (subtotal < minimum) {
+    throw new Error(
+      `Minimum order amount is ${minimum.toFixed(2)}.`,
+    );
+  }
+
+  const discountAmount = Math.min(
+    subtotal,
+    (subtotal * Math.max(0, coupon.value)) / 100,
+  );
+
+  return {
+    coupon,
+    discountAmount,
+    shippingDiscount: 0,
+    finalDiscount: discountAmount,
   };
 }
