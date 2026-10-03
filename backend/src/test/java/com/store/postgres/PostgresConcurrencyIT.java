@@ -221,9 +221,9 @@ class PostgresConcurrencyIT {
         List<Long> orderIds = new java.util.ArrayList<>();
         for (String response : responses) {
             try {
-                int status = objectMapper.readTree(response).path("status").asInt();
+                boolean success = objectMapper.readTree(response).path("success").asBoolean();
                 long orderId = objectMapper.readTree(response).path("data").path("id").asLong();
-                if ((status == 200 || status == 202) && orderId > 0) {
+                if (success && orderId > 0) {
                     orderIds.add(orderId);
                 }
             } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
