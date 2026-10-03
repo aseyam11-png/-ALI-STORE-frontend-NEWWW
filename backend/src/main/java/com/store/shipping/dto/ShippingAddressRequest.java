@@ -7,15 +7,12 @@ import lombok.Data;
 @Data
 public class ShippingAddressRequest {
 
-    @NotBlank(message = "Label is required")
     @Size(max = 80, message = "Label is too long")
     private String label;
 
-    @NotBlank(message = "Recipient name is required")
     @Size(max = 160, message = "Recipient name is too long")
     private String recipientName;
 
-    @NotBlank(message = "Phone is required")
     @Size(max = 40, message = "Phone is too long")
     private String phone;
 
