@@ -1,46 +1,135 @@
 "use client";
 
-// The customer authentication boundary. No auth backend, session cookie,
-// token store, or credential service exists anywhere in this repository
-// today (verified by repository-wide search before writing this file) —
-// there is nothing real to integrate with yet. This module exists so
-// customer-facing UI (Login, Account, the Header) has ONE real seam to
-// depend on instead of each screen inventing its own "am I logged in"
-// logic or, worse, fabricating a logged-in state. Until a real backend is
-// wired in, `status` can only ever be "unauthenticated" — this is
-// intentional, not a bug: it is never allowed to silently become
-// "authenticated" without a real credential exchange behind it.
+import { useEffect, useState } from "react";
 
-export type SessionStatus = "unauthenticated" | "authenticating" | "authenticated";
+import {
+  API_BASE_URL,
+  HttpApiError,
+  apiClient,
+} from "@/lib/api/http-client";
+
+type ApiEnvelope<T> = {
+  data: T;
+};
+
+type AuthResponse = {
+  email: string;
+  role: string;
+};
+
+export type SessionStatus =
+  | "loading"
+  | "unauthenticated"
+  | "authenticated";
+
+export interface SessionUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string | null;
+  role: string;
+}
 
 export interface Session {
   status: SessionStatus;
+  user?: SessionUser;
 }
 
-// Deliberately not a hook with internal state yet — there is no session
-// source to subscribe to. Kept as a function (not a stub returning fake
-// user data) so call sites already read it the way they will once a real
-// session provider exists, without pretending one exists now.
 export function useSession(): Session {
-  return { status: "unauthenticated" };
+  const [session, setSession] = useState<Session>({ status: "loading" });
+
+  useEffect(() => {
+    let mounted = true;
+
+    getSession()
+      .then((user) => {
+        if (!mounted) return;
+        setSession(user
+          ? { status: "authenticated", user }
+          : { status: "unauthenticated" });
+      })
+      .catch(() => {
+        if (mounted) setSession({ status: "unauthenticated" });
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return session;
 }
 
-export interface LoginResult {
-  ok: false;
-  reason: "auth_backend_unavailable";
+export async function getSession(): Promise<SessionUser | null> {
+  try {
+    const response = await apiClient.request<ApiEnvelope<SessionUser>>(
+      "/api/v1/auth/session",
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof HttpApiError && error.status === 401) return null;
+    throw error;
+  }
 }
 
-// Always fails honestly — there is no authentication backend to call. This
-// function exists so the Login form has one real integration point to
-// call (and to replace, wholesale, the day a real auth API exists) instead
-// of the form component itself deciding what "success" would look like.
+export type LoginResult =
+  | { ok: true; email: string; role: string }
+  | { ok: false; reason: string };
+
 export async function login(credentials: {
-  identifier: string;
+  email: string;
   password: string;
 }): Promise<LoginResult> {
-  // Real input is accepted (and will be sent to a real backend once one
-  // exists) but is not usable yet — nothing here inspects or stores it.
-  void credentials;
+  try {
+    const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
+      "/api/v1/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      },
+    );
 
-  return { ok: false, reason: "auth_backend_unavailable" };
+    return { ok: true, email: response.data.email, role: response.data.role };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "login_failed",
+    };
+  }
+}
+
+export async function register(credentials: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phoneNumber?: string;
+}): Promise<LoginResult> {
+  try {
+    const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
+      "/api/v1/auth/register",
+      {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      },
+    );
+
+    return { ok: true, email: response.data.email, role: response.data.role };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "registration_failed",
+    };
+  }
+}
+
+export function loginWithGoogle(): void {
+  window.location.assign(API_BASE_URL + "/api/v1/auth/google");
+}
+
+export async function logout(): Promise<void> {
+  await apiClient.request<void>("/api/v1/auth/logout", {
+    method: "POST",
+  });
 }
