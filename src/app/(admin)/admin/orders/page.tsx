@@ -135,7 +135,9 @@ export default function AdminOrdersPage() {
                                 </p>
                               </div>
                               <p className="text-[10px] text-slate-400">
-                                Updated {new Date(shipment.updatedAt ?? order.createdAt).toLocaleString()}
+                                {shipment.estimatedDeliveryDate
+                                  ? `Estimated ${new Date(shipment.estimatedDeliveryDate).toLocaleDateString()}`
+                                  : "Delivery estimate not available"}
                               </p>
                             </div>
                           ))}
