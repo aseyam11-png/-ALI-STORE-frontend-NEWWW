@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 import type {
   WishlistProduct,
@@ -49,8 +50,9 @@ function buildProductIds(
 }
 
 export const useWishlistStore =
-  create<WishlistState>(
-    (set, get) => ({
+  create<WishlistState>()(
+    persist(
+      (set, get) => ({
       items: [],
 
       productIds: [],
@@ -154,5 +156,13 @@ export const useWishlistStore =
           productIds: [],
         });
       },
-    }),
+      }),
+      {
+        name: "alistore-wishlist",
+        partialize: (state) => ({
+          items: state.items,
+          productIds: state.productIds,
+        }),
+      },
+    ),
   );
