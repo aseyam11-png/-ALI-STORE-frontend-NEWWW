@@ -16,46 +16,24 @@ const footerGroups = [
     title: "Shop",
     links: [
       ["Products", "/shop/products"],
-      [
-        "Categories",
-        "/",
-      ],
+      ["Categories", "/"],
       ["Deals", "/shop/deals"],
-      [
-        "Visual search",
-        "/shop/visual-search",
-      ],
+      ["Visual search", "/shop/visual-search"],
     ],
   },
-
   {
     title: "Account",
     links: [
       ["My account", "/buyer"],
       ["My orders", "/buyer/orders"],
+      ["Addresses", "/buyer/addresses"],
+      ["Wishlist", "/buyer/wishlist"],
     ],
   },
-
   {
     title: "Support",
     links: [
-      ["Help Center", "/support"],
-      [
-        "Buyer support",
-        "/buyer/support",
-      ],
-      [
-        "Shipping help",
-        "/support",
-      ],
-      [
-        "Buyer protection",
-        "/support",
-      ],
-      [
-        "Help center",
-        "/support",
-      ],
+      ["Help center", "/support"],
     ],
   },
 ] as const;
