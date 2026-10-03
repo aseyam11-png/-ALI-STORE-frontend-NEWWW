@@ -1,0 +1,75 @@
+import { apiClient } from "@/lib/api/http-client";
+
+export interface BackendCartItem {
+  id: number;
+  productId: number;
+  productName: string;
+  productPrice: number;
+  currency?: string;
+  quantity: number;
+  subTotal: number;
+}
+
+export interface BackendCart {
+  id: number;
+  items: BackendCartItem[];
+  totalPrice: number;
+  currency?: string;
+}
+
+export async function getBackendCart(): Promise<BackendCart> {
+  return apiClient.requestData<BackendCart>("/api/v1/cart");
+}
+
+export async function addBackendCartItem(
+  productId: number,
+  quantity: number,
+): Promise<BackendCart> {
+  return apiClient.requestData<BackendCart>("/api/v1/cart/items", {
+    method: "POST",
+    body: JSON.stringify({ productId, quantity }),
+  });
+}
+
+export async function updateBackendCartItem(
+  itemId: number,
+  quantity: number,
+  productId: number,
+): Promise<BackendCart> {
+  return apiClient.requestData<BackendCart>(`/api/v1/cart/items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ productId, quantity }),
+  });
+}
+
+export async function removeBackendCartItem(itemId: number): Promise<BackendCart> {
+  return apiClient.requestData<BackendCart>(`/api/v1/cart/items/${itemId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function clearBackendCart(): Promise<BackendCart> {
+  return apiClient.requestData<BackendCart>("/api/v1/cart", {
+    method: "DELETE",
+  });
+}
+
+export async function replaceBackendCart(
+  items: Array<{ productId: string; quantity: number }>,
+): Promise<BackendCart> {
+  await clearBackendCart();
+  let cart = await getBackendCart();
+
+  for (const item of items) {
+    const productId = Number(item.productId);
+    if (!Number.isInteger(productId) || productId < 1) {
+      throw new Error(`Invalid backend product id: ${item.productId}`);
+    }
+    if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+      throw new Error("Cart quantity must be a positive integer.");
+    }
+    cart = await addBackendCartItem(productId, item.quantity);
+  }
+
+  return cart;
+}
