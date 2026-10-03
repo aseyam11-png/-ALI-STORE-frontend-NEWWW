@@ -2,6 +2,7 @@ package com.store.foundation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.auth.service.JwtService;
+import com.store.inventory.dto.UpdateStockRequest;
 import com.store.brand.entity.Brand;
 import com.store.brand.repository.BrandRepository;
 import com.store.category.entity.Category;
@@ -58,6 +59,7 @@ class CatalogSecurityTest {
     @Autowired private BrandRepository brandRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private SupplierRepository supplierRepository;
+    @Autowired private com.store.inventory.service.InventoryService inventoryService;
 
     private Role adminRole;
     private Category category;
@@ -167,6 +169,40 @@ class CatalogSecurityTest {
 
         mockMvc.perform(get("/api/v1/products/" + active.getId()))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void liveCatalog_exposesBrandStockAndSlugFilters() throws Exception {
+        Brand brand = brandRepository.save(Brand.builder()
+                .name("Acme Test").description("Catalog test brand").build());
+
+        Product product = productRepository.save(Product.builder()
+                .name("Live Catalog Product")
+                .slug("live-catalog-product")
+                .price(new BigDecimal("49.90"))
+                .currency("USD")
+                .sku("LIVE-CATALOG-1")
+                .status(ProductStatus.ACTIVE)
+                .category(category)
+                .brand(brand)
+                .supplier(supplier)
+                .supplierSku("SUP-LIVE-1")
+                .supplierCost(new BigDecimal("20.00"))
+                .build());
+
+        inventoryService.initializeForProduct(product);
+        UpdateStockRequest stockRequest = new UpdateStockRequest();
+        stockRequest.setQuantity(12);
+        inventoryService.updateStock(product.getId(), stockRequest);
+
+        mockMvc.perform(get("/api/v1/products")
+                        .param("categorySlug", "electronics")
+                        .param("brandName", "Acme Test"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].id").value(product.getId()))
+                .andExpect(jsonPath("$.data.content[0].brandName").value("Acme Test"))
+                .andExpect(jsonPath("$.data.content[0].availableQuantity").value(12))
+                .andExpect(jsonPath("$.data.content[0].availability").value("IN_STOCK"));
     }
 
     @Test
