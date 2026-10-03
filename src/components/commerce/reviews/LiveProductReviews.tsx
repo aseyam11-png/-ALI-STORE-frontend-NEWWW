@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Star } from "lucide-react";
 import { useSession } from "@/features/auth/session";
 import {
@@ -19,7 +19,7 @@ export function LiveProductReviews({ productId }: { productId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -29,11 +29,11 @@ export function LiveProductReviews({ productId }: { productId: string }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
   useEffect(() => {
     void load();
-  }, [productId]);
+  }, [load]);
 
   const average = useMemo(
     () =>
