@@ -20,8 +20,6 @@ import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 interface CouponInputProps {
   subtotal: number;
 
-  shipping: number;
-
   onApply?: (
     coupon: AppliedCoupon,
   ) => void;
@@ -31,7 +29,6 @@ interface CouponInputProps {
 
 export function CouponInput({
   subtotal,
-  shipping,
   onApply,
   onRemove,
 }: CouponInputProps) {
