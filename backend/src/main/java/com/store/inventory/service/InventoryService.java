@@ -30,7 +30,7 @@ public class InventoryService {
         return inventoryRepository.findByProductId(product.getId())
                 .orElseGet(() -> inventoryRepository.save(Inventory.builder()
                         .product(product).quantity(0).reservedQuantity(0)
-                        .lowStockThreshold(5).source(null).lastSyncedAt(null).build()));
+                        .lowStockThreshold(5).source(null).lastSyncedAt(null).supplierReportedQuantity(null).inventoryDiscrepancy(false).build()));
     }
 
     public InventoryResponse getInventoryByProductId(Long productId) {
@@ -72,6 +72,7 @@ public class InventoryService {
         int available = inventory.getQuantity() - inventory.getReservedQuantity();
         if (available < quantity) throw new BusinessException("Insufficient stock for product id: " + productId);
         inventory.setReservedQuantity(inventory.getReservedQuantity() + quantity);
+        refreshDiscrepancy(inventory);
         inventoryRepository.save(inventory);
     }
 
@@ -80,11 +81,12 @@ public class InventoryService {
         if (quantity < 1) return;
         Inventory inventory = inventoryRepository.findByProductIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for product id: " + productId));
-        if (inventory.getReservedQuantity() < quantity || inventory.getQuantity() < quantity) {
+        if (inventory.getReservedQuantity() < quantity) {
             throw new BusinessException("Reserved stock cannot be committed for product id: " + productId);
         }
         inventory.setReservedQuantity(inventory.getReservedQuantity() - quantity);
-        inventory.setQuantity(inventory.getQuantity() - quantity);
+        inventory.setQuantity(Math.max(0, inventory.getQuantity() - quantity));
+        refreshDiscrepancy(inventory);
         inventoryRepository.save(inventory);
     }
 
@@ -100,6 +102,7 @@ public class InventoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for product id: " + productId));
         int release = Math.min(quantity, inventory.getReservedQuantity());
         inventory.setReservedQuantity(inventory.getReservedQuantity() - release);
+        refreshDiscrepancy(inventory);
         inventoryRepository.save(inventory);
     }
 
@@ -121,6 +124,8 @@ public class InventoryService {
         inventory.setQuantity(quantity);
         inventory.setSource(InventorySource.SUPPLIER_SYNC);
         inventory.setLastSyncedAt(effectiveSyncedAt);
+        inventory.setSupplierReportedQuantity(quantity);
+        refreshDiscrepancy(inventory);
         return mapToResponse(inventoryRepository.save(inventory));
     }
 
@@ -134,6 +139,8 @@ public class InventoryService {
         inventory.setQuantity(request.getQuantity());
         inventory.setSource(InventorySource.MANUAL);
         inventory.setLastSyncedAt(LocalDateTime.now());
+        inventory.setSupplierReportedQuantity(null);
+        inventory.setInventoryDiscrepancy(false);
         if (request.getLowStockThreshold() != null) inventory.setLowStockThreshold(request.getLowStockThreshold());
         return mapToResponse(inventoryRepository.save(inventory));
     }
@@ -143,6 +150,12 @@ public class InventoryService {
         if (inventory.getLastSyncedAt() == null) return false;
         long age = java.time.Duration.between(inventory.getLastSyncedAt(), LocalDateTime.now()).toMillis();
         return age >= 0 && age <= staleAfterMs;
+    }
+
+    private void refreshDiscrepancy(Inventory inventory) {
+        Integer supplierReported = inventory.getSupplierReportedQuantity();
+        inventory.setInventoryDiscrepancy(
+                supplierReported != null && supplierReported < inventory.getReservedQuantity());
     }
 
     private InventoryResponse mapToResponse(Inventory inventory) {
@@ -155,6 +168,8 @@ public class InventoryService {
                 .isLowStock(known && available <= inventory.getLowStockThreshold())
                 .availability(!known ? PublicAvailability.UNKNOWN : (available > 0 ? PublicAvailability.IN_STOCK : PublicAvailability.OUT_OF_STOCK))
                 .source(inventory.getSource()).lastSyncedAt(inventory.getLastSyncedAt())
+                .supplierReportedQuantity(inventory.getSupplierReportedQuantity())
+                .inventoryDiscrepancy(Boolean.TRUE.equals(inventory.getInventoryDiscrepancy()))
                 .build();
     }
 }
