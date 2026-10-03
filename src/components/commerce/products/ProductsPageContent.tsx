@@ -52,8 +52,8 @@ export function ProductsPageContent() {
   const filters = useMemo<ProductFilters>(
     () => ({
       search: query,
-      categoryId: category || undefined,
-      brand: brand || undefined,
+      categoryId: categoryIdForApi,
+      brand: brandIdForApi,
       minPrice: minPriceParam,
       maxPrice: maxPriceParam,
       inStockOnly: inStock,
@@ -71,8 +71,8 @@ export function ProductsPageContent() {
     }),
     [
       query,
-      category,
-      brand,
+      categoryIdForApi,
+      brandIdForApi,
       minPriceParam,
       maxPriceParam,
       inStock,
@@ -84,6 +84,7 @@ export function ProductsPageContent() {
   const productsQuery = useQuery({
     queryKey: ["catalog", "products", filters],
     queryFn: () => getProducts(filters),
+    enabled: !categoryResolutionError && !brandResolutionError,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
@@ -96,19 +97,82 @@ export function ProductsPageContent() {
   });
 
   const categories = categoriesQuery.data ?? [];
-  const products = (productsQuery.data?.items ?? []).map(normalizeB2CProduct);
 
-  const brands = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (productsQuery.data?.items ?? [])
-            .map((product) => product.brand?.name)
-            .filter((value): value is string => Boolean(value)),
-        ),
-      ),
-    [productsQuery.data?.items],
-  );
+  const categoryIdForApi = useMemo(() => {
+    if (!category.trim()) return undefined;
+    if (/^\d+$/.test(category)) return category;
+    const matched = categories.find((item) => item.slug === category);
+    return matched ? String(matched.id) : undefined;
+  }, [categories, category]);
+
+  const legacyBrandOptionsQuery = useQuery({
+    queryKey: ["catalog", "brand-options", categoryIdForApi],
+    queryFn: async () =>
+      (
+        await getProducts({
+          search: "",
+          categoryId: categoryIdForApi,
+          subcategoryId: undefined,
+          brand: undefined,
+          supplierId: undefined,
+          minPrice: undefined,
+          maxPrice: undefined,
+          minRating: undefined,
+          verifiedSupplierOnly: false,
+          discountOnly: false,
+          inStockOnly: false,
+          featuredOnly: false,
+          bestsellerOnly: false,
+          newArrivalOnly: false,
+          sort: "relevance",
+          page: 1,
+          pageSize: 100,
+        })
+      ).items,
+    enabled: Boolean(brand && !/^\d+$/.test(brand)),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const brandOptions = useMemo(() => {
+    const source =
+      brand && !/^\d+$/.test(brand)
+        ? legacyBrandOptionsQuery.data ?? []
+        : productsQuery.data?.items ?? [];
+
+    const byId = new Map<string, { id: string; name: string }>();
+    for (const product of source) {
+      if (!product.brand) continue;
+      byId.set(product.brand.id, {
+        id: product.brand.id,
+        name: product.brand.name,
+      });
+    }
+    return Array.from(byId.values());
+  }, [
+    brand,
+    legacyBrandOptionsQuery.data,
+    productsQuery.data?.items,
+  ]);
+
+  const brandIdForApi = useMemo(() => {
+    if (!brand.trim()) return undefined;
+    if (/^\d+$/.test(brand)) return brand;
+    return brandOptions.find((item) => item.name === brand)?.id;
+  }, [brand, brandOptions]);
+
+  const categoryResolutionError =
+    Boolean(category) &&
+    !categoriesQuery.isPending &&
+    !categoryIdForApi;
+
+  const brandResolutionError =
+    Boolean(brand) &&
+    !/^\d+$/.test(brand) &&
+    !legacyBrandOptionsQuery.isPending &&
+    !brandIdForApi;
+
+  const products = (productsQuery.data?.items ?? []).map(normalizeB2CProduct);
 
   const updateParams = (changes: Record<string, string | undefined>) => {
     const next = new URLSearchParams(params.toString());
@@ -292,14 +356,14 @@ export function ProductsPageContent() {
               </label>
               <select
                 id="brand-filter"
-                value={brand}
+                value={brandIdForApi ?? brand}
                 onChange={(event) => updateParams({ brand: event.target.value || undefined, page: "1" })}
                 className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
               >
                 <option value="">كل العلامات</option>
-                {brands.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
+                {brandOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
                   </option>
                 ))}
               </select>
@@ -364,7 +428,25 @@ export function ProductsPageContent() {
             </aside>
 
             <section className="min-w-0">
-              {productsQuery.isPending ? (
+              {categoryResolutionError || brandResolutionError ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+                  <h2 className="text-lg font-black text-amber-800">
+                    تعذر تطبيق الفلتر
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-amber-700">
+                    {categoryResolutionError
+                      ? "القسم المحدد غير موجود في الكتالوج الحالي."
+                      : "العلامة المحددة غير موجودة في الكتالوج الحالي."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-5 inline-flex h-10 items-center rounded-xl bg-brand px-5 text-xs font-black text-white"
+                  >
+                    مسح الفلاتر
+                  </button>
+                </div>
+              ) : productsQuery.isPending ? (
                 <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, index) => (
                     <div key={index} className="aspect-[0.86] animate-pulse rounded-2xl bg-neutral-100" />
