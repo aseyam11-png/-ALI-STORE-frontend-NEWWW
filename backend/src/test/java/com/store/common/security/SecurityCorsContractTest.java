@@ -30,6 +30,9 @@ class SecurityCorsContractTest {
         assertTrue(configuration.getAllowedMethods().contains("OPTIONS"));
         assertTrue(configuration.getAllowedHeaders().contains("X-XSRF-TOKEN"));
         assertTrue(configuration.getAllowedHeaders().contains("Content-Type"));
+        assertTrue(configuration.getAllowedHeaders().contains("Idempotency-Key"));
+        assertTrue(configuration.getExposedHeaders().contains("Retry-After"));
+        assertEquals(3600L, configuration.getMaxAge());
         assertTrue(configuration.getAllowCredentials());
         assertFalse(configuration.getAllowedHeaders().contains("*"));
         assertFalse(configuration.getAllowedOrigins().contains("*"));

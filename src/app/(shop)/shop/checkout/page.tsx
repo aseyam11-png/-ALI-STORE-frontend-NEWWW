@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,12 +17,19 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
-import { useOrderStore } from "@/stores/order-store";
-import { useCustomerStore } from "@/stores/customer-store";
-import { useAddressStore } from "@/stores/address-store";
+import type { CustomerAddress } from "@/features/addresses/types/address.types";
+import { getMyAddresses } from "@/features/addresses/services/address-api.service";
+import { useSession } from "@/features/auth/session";
+import { useRouter } from "next/navigation";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
+import {
+  createBackendOrder,
+  processBackendPayment,
+  replaceBackendCart,
+  type BackendPayment,
+} from "@/features/commerce/services/checkout-api.service";
 
 interface FormState {
   fullName: string;
@@ -58,26 +65,48 @@ export default function CheckoutPage() {
     (state) => state.clearCart,
   );
 
-  const createOrder = useOrderStore(
-    (state) => state.createOrder,
-  );
-
-  const getDefaultAddress = useCustomerStore(
-    (state) => state.getDefaultAddress,
-  );
-
-  const selectedAddressId = useAddressStore(
-    (state) => state.selectedAddressId,
-  );
-
-  const addresses = useAddressStore(
-    (state) => state.addresses,
-  );
+  const session = useSession();
+  const router = useRouter();
 
   const [form, setForm] =
-    useState<FormState>(
-      initialForm,
-    );
+    useState<FormState>(initialForm);
+
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.replace("/login?next=/shop/checkout");
+      return;
+    }
+
+    if (session.status !== "authenticated") return;
+
+    getMyAddresses()
+      .then((nextAddresses) => {
+        setAddresses(nextAddresses);
+        const defaultAddress = nextAddresses.find((address) => address.isDefault) ?? nextAddresses[0];
+        if (!defaultAddress) return;
+        setSelectedAddressId(defaultAddress.id);
+        setForm((current) => ({
+          ...current,
+          fullName: defaultAddress.recipientName,
+          phone: defaultAddress.phone,
+          address: [
+            defaultAddress.street,
+            defaultAddress.building,
+            defaultAddress.apartment ? `Apt ${defaultAddress.apartment}` : "",
+            defaultAddress.area,
+          ].filter(Boolean).join(", "),
+          city: defaultAddress.city,
+          country: defaultAddress.country,
+          postalCode: defaultAddress.postalCode ?? "",
+        }));
+      })
+      .catch(() => {
+        setAddresses([]);
+      });
+  }, [router, session.status, session.user?.email]);
 
   const [paymentMethod, setPaymentMethod] =
     useState("card");
@@ -90,90 +119,29 @@ export default function CheckoutPage() {
   const [error, setError] =
     useState("");
 
-  const defaultAddress = getDefaultAddress();
-
-  const selectedAddress = addresses.find(
-    (address) =>
-      address.id === selectedAddressId,
-  );
-
-  const addressSyncKey =
-    selectedAddress?.id ??
-    (defaultAddress ? `default:${defaultAddress.fullName}` : null);
-
-  const [syncedAddressKey, setSyncedAddressKey] =
-    useState<string | null>(null);
-
-  if (addressSyncKey !== syncedAddressKey) {
-    setSyncedAddressKey(addressSyncKey);
-
-    if (selectedAddress) {
-      setForm((current) => ({
-        fullName:
-          selectedAddress.recipientName,
-        email:
-          current.email,
-        phone:
-          selectedAddress.phone,
-        address:
-          [
-            selectedAddress.street,
-            selectedAddress.building
-              ? `Building ${selectedAddress.building}`
-              : "",
-            selectedAddress.apartment
-              ? `Apt ${selectedAddress.apartment}`
-              : "",
-            selectedAddress.area,
-          ]
-            .filter(Boolean)
-            .join(", "),
-        city:
-          selectedAddress.city,
-        country:
-          selectedAddress.country,
-        postalCode:
-          selectedAddress.postalCode ?? "",
-      }));
-    } else if (defaultAddress) {
-      setForm((current) => ({
-        ...current,
-        fullName:
-          current.fullName ||
-          defaultAddress.fullName,
-        phone:
-          current.phone ||
-          defaultAddress.phone,
-        address:
-          current.address ||
-          defaultAddress.addressLine1,
-        city:
-          current.city ||
-          defaultAddress.city,
-        country:
-          current.country ||
-          defaultAddress.country,
-        postalCode:
-          current.postalCode ||
-          defaultAddress.postalCode ||
-          "",
-      }));
-    }
-  }
-
   const [successOrderId, setSuccessOrderId] =
     useState("");
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const [successPaymentStatus, setSuccessPaymentStatus] =
+    useState<BackendPayment["status"]>("PENDING");
 
-  const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          total +
-          item.price *
-            item.quantity,
-        0,
-      ),
-    [items],
+  const effectiveEmail = form.email || session.user?.email || "";
+
+  if (session.status !== "authenticated") {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-3xl px-4 py-16 text-center text-body-sm text-muted-foreground">
+            جارٍ التحقق من الحساب...
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
+
+  const subtotal = items.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
   );
 
   const shippingCost =
@@ -208,7 +176,6 @@ export default function CheckoutPage() {
       keyof FormState
     > = [
       "fullName",
-      "email",
       "phone",
       "address",
       "city",
@@ -217,74 +184,66 @@ export default function CheckoutPage() {
 
     return required.every(
       (field) =>
-        form[field].trim().length > 0,
+        field === "email"
+          ? effectiveEmail.trim().length > 0
+          : form[field].trim().length > 0,
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     setError("");
 
     if (items.length === 0) {
-      setError(
-        "Your cart is empty.",
-      );
+      setError("Your cart is empty.");
       return;
     }
 
     if (!validate()) {
-      setError(
-        "Please complete all required shipping information.",
-      );
+      setError("Please complete all required shipping information.");
       return;
     }
 
-    const order = createOrder({
-      customerName:
-        form.fullName,
+    try {
+      await replaceBackendCart(items);
 
-      customerEmail:
-        form.email,
+      idempotencyKeyRef.current ??= crypto.randomUUID();
 
-      address: {
-        fullName:
+      const order = await createBackendOrder({
+        idempotencyKey: idempotencyKeyRef.current,
+        shippingAddress: [
           form.fullName,
-        phone:
           form.phone,
-        address:
           form.address,
-        city:
           form.city,
-        country:
           form.country,
-        postalCode:
           form.postalCode,
-      },
+        ].filter(Boolean).join(", "),
+        couponCode: appliedCoupon?.coupon.code,
+      });
 
-      paymentMethod,
+      const backendPaymentMethod =
+        paymentMethod === "cod"
+          ? "CASH_ON_DELIVERY"
+          : paymentMethod === "wallet"
+            ? "PAYPAL"
+            : "CREDIT_CARD";
 
-      items,
+      const payment = await processBackendPayment({
+        orderId: order.id,
+        amount: order.totalAmount,
+        method: backendPaymentMethod,
+      });
 
-      shippingMethod:
-        shippingMode === "express"
-          ? "Express"
-          : shipping.method,
-
-      estimatedDelivery:
-        shipping.estimatedDelivery,
-
-      subtotal,
-
-      shippingCost,
-
-      grandTotal:
-        total,
-    });
-
-    clearCart();
-
-    setSuccessOrderId(
-      order.id,
-    );
+      clearCart();
+      setSuccessOrderId(String(order.id));
+      setSuccessPaymentStatus(payment.status);
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to place the order. Please try again.";
+      setError(message);
+    }
   };
 
   if (successOrderId) {
@@ -308,7 +267,7 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Your payment has been recorded. We&apos;ll send tracking
+                Your order has been created successfully. We&apos;ll send tracking
                 information as soon as your order ships.
               </p>
 
@@ -330,7 +289,11 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
-                    PAID
+                    {successPaymentStatus === "COMPLETED"
+                      ? "PAID"
+                      : successPaymentStatus === "FAILED"
+                        ? "FAILED"
+                        : "PENDING"}
                   </span>
                 </div>
 
@@ -414,45 +377,24 @@ export default function CheckoutPage() {
               <div className="space-y-6">
 
                 {/* Saved addresses */}
-                <CheckoutAddressSelector
-                  onAddressChange={(addressId) => {
-                    const selected =
-                      addresses.find(
-                        (address) =>
-                          address.id ===
-                          addressId,
-                      );
-
-                    if (!selected) {
-                      return;
-                    }
-
+                          <CheckoutAddressSelector
+                  addresses={addresses}
+                  selectedAddressId={selectedAddressId}
+                  onSelect={(selected) => {
+                    setSelectedAddressId(selected.id);
                     setForm((current) => ({
                       ...current,
-                      fullName:
-                        selected.recipientName,
-                      phone:
-                        selected.phone,
-                      address:
-                        [
-                          selected.street,
-                          selected.building
-                            ? `Building ${selected.building}`
-                            : "",
-                          selected.apartment
-                            ? `Apt ${selected.apartment}`
-                            : "",
-                          selected.area,
-                        ]
-                          .filter(Boolean)
-                          .join(", "),
-                      city:
-                        selected.city,
-                      country:
-                        selected.country,
-                      postalCode:
-                        selected.postalCode ??
-                        "",
+                      fullName: selected.recipientName,
+                      phone: selected.phone,
+                      address: [
+                        selected.street,
+                        selected.building,
+                        selected.apartment ? `Apt ${selected.apartment}` : "",
+                        selected.area,
+                      ].filter(Boolean).join(", "),
+                      city: selected.city,
+                      country: selected.country,
+                      postalCode: selected.postalCode ?? "",
                     }));
                   }}
                 />
@@ -515,7 +457,7 @@ export default function CheckoutPage() {
                         id="email"
                         type="email"
                         value={
-                          form.email
+                          form.email || session.user?.email || ""
                         }
                         onChange={(
                           event,
