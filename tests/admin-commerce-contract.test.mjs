@@ -317,8 +317,8 @@ test("admin support routes do not expose seeded conversation data", async () => 
     list + detail,
     /CHAT-1001|customer-001|AS-2026-10482|SHIP-1001|admin-001/,
   );
-  assert.match(list, /لا توجد محادثات دعم فعلية/);
-  assert.match(detail, /redirect\(["']\/admin\/support["']\)/);
+  assert.match(list, /redirect\(["\']\/admin["\']/);
+  assert.match(detail, /redirect\(["\']\/admin\/support["\']/);
 });
 
 test("search query contract exposes only backend-supported sort values", async () => {
