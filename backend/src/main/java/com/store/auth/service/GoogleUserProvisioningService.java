@@ -90,7 +90,9 @@ public class GoogleUserProvisioningService {
     }
 
     private String generateRandomPassword() {
-        return UUID.randomUUID() + UUID.randomUUID() + Long.toHexString(secureRandom.nextLong());
+        return UUID.randomUUID().toString()
+                + UUID.randomUUID().toString()
+                + Long.toHexString(secureRandom.nextLong());
     }
 
     private String defaultName(String value, String fallback) {
