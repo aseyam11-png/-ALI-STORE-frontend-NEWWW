@@ -5,7 +5,8 @@ interface SimilarProductsProps {
 }
 
 export function SimilarProducts(
-  _props: SimilarProductsProps,
+  props: SimilarProductsProps,
 ): ReactNode {
+  void props;
   return null;
 }
