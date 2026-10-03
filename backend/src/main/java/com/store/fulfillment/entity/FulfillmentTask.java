@@ -3,8 +3,6 @@ package com.store.fulfillment.entity;
 import com.store.common.entity.BaseEntity;
 import com.store.shipping.entity.Shipment;
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -33,7 +31,6 @@ public class FulfillmentTask extends BaseEntity {
     @Builder.Default
     private Integer attempts = 0;
 
-    @JdbcTypeCode(SqlTypes.TIMESTAMP_WITH_TIMEZONE)
     @Column(name = "next_attempt_at", nullable = false)
     @Builder.Default
     private LocalDateTime nextAttemptAt = LocalDateTime.now();
