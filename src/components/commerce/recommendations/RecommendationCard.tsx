@@ -12,7 +12,7 @@ import {
   mapBackendCartToLocal,
 } from "@/features/cart/services/cart-api.service";
 import { useCartStore } from "@/stores/cart-store";
-import { useSession } from "@/features/auth/session";
+import { getSession } from "@/features/auth/session";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 
 interface RecommendationCardProps {
@@ -22,7 +22,6 @@ interface RecommendationCardProps {
 export function RecommendationCard({
   product,
 }: RecommendationCardProps) {
-  const session = useSession();
   const addLocalItem = useCartStore((state) => state.addItem);
   const replaceItems = useCartStore((state) => state.replaceItems);
   const [busy, setBusy] = useState(false);
@@ -51,7 +50,9 @@ export function RecommendationCard({
         minOrderQuantity: 1,
       };
 
-      if (session.status === "authenticated") {
+      const session = await getSession();
+
+      if (session) {
         const numericId = Number(product.id);
         if (!Number.isInteger(numericId) || numericId < 1) {
           throw new Error("Invalid product id.");
