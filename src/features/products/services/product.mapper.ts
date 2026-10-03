@@ -133,13 +133,11 @@ export function mapMockProductToSummary(
         .replace(/[^a-z0-9]+/g, "-"),
     },
 
-    brand: {
-      id: `brand-${product.id}`,
-      name: product.supplier,
-      slug: product.supplier
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-"),
-    },
+    // Do not derive a customer-facing brand from the supplier.
+    // A supplier is the fulfillment/source party; a brand is a separate
+    // product attribute and must only be populated from authoritative
+    // catalog data. The mock Product contract has no brand field, so
+    // leaving it undefined is more truthful than fabricating one.
 
     stockQuantity,
     availableQuantity: stockQuantity,
