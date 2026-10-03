@@ -54,6 +54,15 @@ export function LoginForm() {
     setSubmitting(false);
 
     if (!result.ok) {
+      if (result.requiresEmailVerification) {
+        const query = new URLSearchParams({
+          challenge: result.challengeId,
+          email: result.maskedEmail,
+        });
+        window.location.assign("/verify-email?" + query.toString());
+        return;
+      }
+
       setFormError(result.reason);
       return;
     }
