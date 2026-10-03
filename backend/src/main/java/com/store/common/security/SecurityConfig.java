@@ -56,13 +56,16 @@ public class SecurityConfig {
     @Value("${app.auth.cookie-domain:}")
     private String authCookieDomain;
 
+    @Value("${app.auth.cookie-same-site:}")
+    private String authCookieSameSite;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CookieCsrfTokenRepository csrfRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfRepository.setCookiePath("/");
         csrfRepository.setCookieCustomizer(cookie -> {
             cookie.secure(authCookieSecure)
-                    .sameSite(authCookieSecure ? "None" : "Lax");
+                    .sameSite(resolveCookieSameSite());
             if (authCookieDomain != null && !authCookieDomain.isBlank()) {
                 cookie.domain(authCookieDomain);
             }
@@ -130,6 +133,13 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    private String resolveCookieSameSite() {
+        if (authCookieSameSite == null || authCookieSameSite.isBlank()) {
+            return authCookieSecure ? "None" : "Lax";
+        }
+        return authCookieSameSite;
     }
 
     @Bean
