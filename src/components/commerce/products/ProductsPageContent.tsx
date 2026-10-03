@@ -49,11 +49,76 @@ export function ProductsPageContent() {
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const categoriesQuery = useQuery({
+    queryKey: ["catalog", "categories"],
+    queryFn: getTopLevelCategories,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const categories = categoriesQuery.data ?? [];
+
+  const categoryIdForApi = !category.trim() ? undefined : /^\d+$/.test(category) ? category : (categories.find((item) => item.slug === category) ? String(categories.find((item) => item.slug === category)?.id) : undefined);
+
+  const numericBrandId = /^\d+$/.test(brand) ? brand : undefined;
+
+  const legacyBrandOptionsQuery = useQuery({
+    queryKey: ["catalog", "brand-options", categoryIdForApi],
+    queryFn: async () =>
+      (
+        await getProducts({
+          search: "",
+          categoryId: categoryIdForApi,
+          subcategoryId: undefined,
+          brand: undefined,
+          supplierId: undefined,
+          minPrice: undefined,
+          maxPrice: undefined,
+          minRating: undefined,
+          verifiedSupplierOnly: false,
+          discountOnly: false,
+          inStockOnly: false,
+          featuredOnly: false,
+          bestsellerOnly: false,
+          newArrivalOnly: false,
+          sort: "relevance",
+          page: 1,
+          pageSize: 100,
+        })
+      ).items,
+    enabled: Boolean(brand && !numericBrandId),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const brandIdForApi = useMemo(() => {
+    if (!brand.trim()) return undefined;
+    if (numericBrandId) return numericBrandId;
+
+    const matched = (legacyBrandOptionsQuery.data ?? []).find(
+      (product) =>
+        product.brand?.name === brand &&
+        /^\d+$/.test(product.brand.id),
+    );
+    return matched?.brand?.id;
+  }, [brand, numericBrandId, legacyBrandOptionsQuery.data]);
+
+  const categoryResolutionError =
+    Boolean(category) &&
+    !categoriesQuery.isPending &&
+    !categoryIdForApi;
+
+  const brandResolutionError =
+    Boolean(brand) &&
+    !numericBrandId &&
+    !legacyBrandOptionsQuery.isPending &&
+    !brandIdForApi;
+
   const filters = useMemo<ProductFilters>(
     () => ({
       search: query,
-      categoryId: category || undefined,
-      brand: brand || undefined,
+      categoryId: categoryIdForApi,
+      brand: brandIdForApi,
       minPrice: minPriceParam,
       maxPrice: maxPriceParam,
       inStockOnly: inStock,
@@ -71,8 +136,8 @@ export function ProductsPageContent() {
     }),
     [
       query,
-      category,
-      brand,
+      categoryIdForApi,
+      brandIdForApi,
       minPriceParam,
       maxPriceParam,
       inStock,
@@ -84,31 +149,34 @@ export function ProductsPageContent() {
   const productsQuery = useQuery({
     queryKey: ["catalog", "products", filters],
     queryFn: () => getProducts(filters),
+    enabled: !categoryResolutionError && !brandResolutionError,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
 
-  const categoriesQuery = useQuery({
-    queryKey: ["catalog", "categories"],
-    queryFn: getTopLevelCategories,
-    staleTime: 5 * 60_000,
-    retry: 1,
-  });
+  const brandOptions = useMemo(() => {
+    const source =
+      brand && !numericBrandId
+        ? legacyBrandOptionsQuery.data ?? []
+        : productsQuery.data?.items ?? [];
 
-  const categories = categoriesQuery.data ?? [];
+    const byId = new Map<string, { id: string; name: string }>();
+    for (const product of source) {
+      if (!product.brand || !/^\d+$/.test(product.brand.id)) continue;
+      byId.set(product.brand.id, {
+        id: product.brand.id,
+        name: product.brand.name,
+      });
+    }
+    return Array.from(byId.values());
+  }, [
+    brand,
+    numericBrandId,
+    legacyBrandOptionsQuery.data,
+    productsQuery.data?.items,
+  ]);
+
   const products = (productsQuery.data?.items ?? []).map(normalizeB2CProduct);
-
-  const brands = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (productsQuery.data?.items ?? [])
-            .map((product) => product.brand?.name)
-            .filter((value): value is string => Boolean(value)),
-        ),
-      ),
-    [productsQuery.data?.items],
-  );
 
   const updateParams = (changes: Record<string, string | undefined>) => {
     const next = new URLSearchParams(params.toString());
@@ -292,14 +360,14 @@ export function ProductsPageContent() {
               </label>
               <select
                 id="brand-filter"
-                value={brand}
+                value={brandIdForApi ?? brand}
                 onChange={(event) => updateParams({ brand: event.target.value || undefined, page: "1" })}
                 className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
               >
                 <option value="">كل العلامات</option>
-                {brands.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
+                {brandOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
                   </option>
                 ))}
               </select>
@@ -364,7 +432,25 @@ export function ProductsPageContent() {
             </aside>
 
             <section className="min-w-0">
-              {productsQuery.isPending ? (
+              {categoryResolutionError || brandResolutionError ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+                  <h2 className="text-lg font-black text-amber-800">
+                    تعذر تطبيق الفلتر
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-amber-700">
+                    {categoryResolutionError
+                      ? "القسم المحدد غير موجود في الكتالوج الحالي."
+                      : "العلامة المحددة غير موجودة في الكتالوج الحالي."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-5 inline-flex h-10 items-center rounded-xl bg-brand px-5 text-xs font-black text-white"
+                  >
+                    مسح الفلاتر
+                  </button>
+                </div>
+              ) : productsQuery.isPending ? (
                 <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, index) => (
                     <div key={index} className="aspect-[0.86] animate-pulse rounded-2xl bg-neutral-100" />

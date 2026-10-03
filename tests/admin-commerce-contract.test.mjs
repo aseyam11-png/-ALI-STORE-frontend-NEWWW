@@ -351,3 +351,76 @@ test("logout clears customer-only client state after the backend session is term
   assert.match(provider, /replaceWishlist\(\[\]\)/);
   assert.match(provider, /replaceNotifications\(\[\]\)/);
 });
+
+
+test("catalog filter UI resolves category slugs to numeric backend ids before querying products", async () => {
+  const source = await read("src/components/commerce/products/ProductsPageContent.tsx");
+  assert.match(source, /categoryIdForApi/);
+  assert.match(source, /getProducts\(filters\)/);
+  assert.match(source, /categoryId:\s*categoryIdForApi/);
+  assert.doesNotMatch(source, /categoryId:\s*category\s*\|\|\s*undefined/);
+});
+
+test("catalog filter UI sends brand ids rather than unsupported brand names", async () => {
+  const source = await read("src/components/commerce/products/ProductsPageContent.tsx");
+  const service = await read("src/features/products/services/product.service.ts");
+  assert.match(source, /brandIdForApi/);
+  assert.match(source, /brandOptions\.map/);
+  assert.match(source, /item\.id/);
+  assert.match(service, /params\.set\("brand",\s*String\(brandId\)/);
+  assert.doesNotMatch(service, /params\.set\(\"brandName\"/);
+});
+
+test("product service rejects non-numeric category and brand filters", async () => {
+  const source = await read("src/features/products/services/product.service.ts");
+  assert.match(source, /requireFilterId/);
+  assert.match(source, /\$\{field\} must use the backend numeric identifier/);
+  assert.match(source, /field: "categoryId" \| "brand"/);
+  assert.doesNotMatch(source, /params\.set\("categorySlug"/);
+  assert.doesNotMatch(source, /params\.set\("brandName"/);
+});
+
+test("related products use the backend category id contract", async () => {
+  const page = await read("src/app/(shop)/shop/products/[id]/page.tsx");
+  const service = await read("src/features/products/services/product.service.ts");
+  assert.match(page, /productDetails\.category\?\.id/);
+  assert.match(service, /numericCategoryId/);
+  assert.match(service, /params\.set\("category", String\(numericCategoryId\)\)/);
+  assert.doesNotMatch(service, /params\.set\("categorySlug"/);
+});
+
+test("product detail review UI uses the live review API and not the removed moderation store", async () => {
+  const page = await read("src/app/(shop)/shop/products/[id]/page.tsx");
+  const reviews = await read("src/components/commerce/reviews/LiveProductReviews.tsx");
+  assert.match(page, /components\/commerce\/reviews\/ProductReviews/);
+  assert.match(reviews, /getProductReviews/);
+  assert.match(reviews, /addProductReview/);
+  assert.doesNotMatch(reviews, /review-moderation-store/);
+});
+
+test("admin reviews no longer expose fake local moderation data", async () => {
+  const page = await read("src/app/(admin)/admin/reviews/page.tsx");
+  const detail = await read("src/app/(admin)/admin/reviews/[id]/page.tsx");
+  assert.doesNotMatch(page, /useReviewModerationStore|REV-1001|REV-1004/);
+  assert.match(page, /Moderation API is not available/);
+  assert.match(detail, /redirect\(["']\/admin\/reviews["']\)/);
+});
+
+test("system administration does not publish fabricated uptime or latency metrics", async () => {
+  const source = await read("src/app/(system)/system/page.tsx");
+  assert.doesNotMatch(source, /99\.98%|99\.99%|99\.95%|99\.91%|48ms|100%/);
+  assert.doesNotMatch(source, /useState\(/);
+  assert.match(source, /مراقبة التشغيل غير موصولة/);
+});
+
+test("review legacy local store and summary are removed", async () => {
+  await assert.rejects(
+    () => read("src/stores/review-moderation-store.ts"),
+    /ENOENT|no such file/i,
+  );
+  await assert.rejects(
+    () => read("src/components/commerce/reviews/ReviewSummary.tsx"),
+    /ENOENT|no such file/i,
+  );
+});
+

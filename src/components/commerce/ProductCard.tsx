@@ -142,15 +142,23 @@ export function ProductCard({ product }: ProductCardProps) {
         </Link>
 
         <div className="mt-2.5 flex items-center gap-1.5">
-          <Star className="h-4 w-4 fill-warning-500 text-warning-500" />
-          <span className="text-body-sm font-medium text-foreground">
-            {product.rating.toFixed(1)}
-          </span>
-          <span className="text-caption text-muted-foreground">
-            {t("reviewsCount", {
-              count: product.reviewCount.toLocaleString("en-US"),
-            })}
-          </span>
+          {product.reviewCount > 0 ? (
+            <>
+              <Star className="h-4 w-4 fill-warning-500 text-warning-500" />
+              <span className="text-body-sm font-medium text-foreground">
+                {product.rating.toFixed(1)}
+              </span>
+              <span className="text-caption text-muted-foreground">
+                {t("reviewsCount", {
+                  count: product.reviewCount.toLocaleString("en-US"),
+                })}
+              </span>
+            </>
+          ) : (
+            <span className="text-caption text-muted-foreground">
+              لا توجد تقييمات بعد
+            </span>
+          )}
         </div>
 
         <div className="mt-auto pt-4">

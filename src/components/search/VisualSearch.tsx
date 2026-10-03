@@ -83,7 +83,7 @@ export function VisualSearch() {
       )
     ) {
       setError(
-        "Please choose an image file.",
+        "اختر ملف صورة صالحًا.",
       );
       return;
     }
@@ -93,7 +93,7 @@ export function VisualSearch() {
       10 * 1024 * 1024
     ) {
       setError(
-        "Image must be 10 MB or less.",
+        "يجب ألا يتجاوز حجم الصورة 10 ميجابايت.",
       );
       return;
     }
@@ -178,17 +178,17 @@ export function VisualSearch() {
 
           <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-surface text-brand">
               <Camera className="h-5 w-5" />
             </div>
 
             <div>
               <h2 className="text-lg font-black text-slate-900">
-                Search by image
+                البحث بالصورة
               </h2>
 
               <p className="mt-1 text-xs text-slate-400">
-                Upload a product photo to discover similar items.
+                ارفع صورة منتج لاكتشاف منتجات مشابهة.
               </p>
             </div>
 
@@ -196,7 +196,7 @@ export function VisualSearch() {
 
           <label
             htmlFor="visual-search-file"
-            className="mt-5 flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-blue-300 hover:bg-blue-50"
+            className="mt-5 flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-primary-200 hover:bg-info-surface"
           >
 
             {preview ? (
@@ -221,16 +221,16 @@ export function VisualSearch() {
                 </div>
 
                 <p className="mt-4 text-sm font-black text-slate-800">
-                  Upload an image
+                  رفع صورة
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-400">
-                  JPG, PNG or WEBP · Maximum 10 MB
+                  JPG, PNG or WEBP · الحد الأقصى 10 ميجابايت
                 </p>
 
-                <span className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-xs font-black text-white">
+                <span className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-black text-white">
                   <Upload className="h-4 w-4" />
-                  Choose image
+                  اختيار الصورة
                 </span>
               </>
             )}
@@ -279,7 +279,7 @@ export function VisualSearch() {
                 onClick={
                   clear
                 }
-                aria-label="Remove selected image"
+                aria-label="إزالة الصورة المحددة"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white"
               >
                 <X className="h-4 w-4" />
@@ -306,17 +306,17 @@ export function VisualSearch() {
               !selectedFile ||
               searching
             }
-            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {searching ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Finding similar products...
+                جارٍ البحث عن منتجات مشابهة...
               </>
             ) : (
               <>
                 <Search className="h-4 w-4" />
-                Search by image
+                البحث بالصورة
               </>
             )}
           </button>
@@ -328,19 +328,19 @@ export function VisualSearch() {
           <div className="flex items-center justify-between gap-4">
 
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#2563EB]">
-                Visual matches
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand">
+                نتائج البحث بالصورة
               </p>
 
               <h2 className="mt-2 text-xl font-black text-slate-900">
-                Similar products
+                منتجات مشابهة
               </h2>
             </div>
 
             {results.length >
               0 && (
-              <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-[#2563EB]">
-                {results.length} matches
+              <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-brand">
+                {results.length} نتيجة
               </span>
             )}
 
@@ -357,11 +357,11 @@ export function VisualSearch() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-black text-slate-800">
-                  Upload a product photo
+                  ارفع صورة لمنتج
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  We will show products that visually match the uploaded image.
+                  ستظهر هنا المنتجات الأقرب بصريًا إلى الصورة المرفوعة.
                 </p>
 
               </div>
@@ -379,7 +379,7 @@ export function VisualSearch() {
                     href={`/shop/products/${encodeURIComponent(
                       result.productId,
                     )}`}
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg"
+                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-lg"
                   >
 
                     <div className="relative flex aspect-square items-center justify-center bg-slate-50">
@@ -406,7 +406,7 @@ export function VisualSearch() {
 
                       <div className="flex items-center justify-between gap-2">
 
-                        <span className="text-[10px] font-black text-[#2563EB]">
+                        <span className="text-[10px] font-black text-brand">
                           {
                             result.brand
                           }
@@ -415,7 +415,7 @@ export function VisualSearch() {
                         <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black text-emerald-700">
                           {
                             result.similarity
-                          }% match
+                          }% تطابق
                         </span>
 
                       </div>
@@ -436,7 +436,7 @@ export function VisualSearch() {
                         amountUSD={
                           result.price
                         }
-                        className="mt-3 block text-lg font-black text-[#0F2747]"
+                        className="mt-3 block text-lg font-black text-brand-ink"
                       />
 
                     </div>

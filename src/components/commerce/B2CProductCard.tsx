@@ -146,15 +146,23 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
         </Link>
 
         <div className="mt-3 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-sm font-black">
-            <Star className="h-4 w-4 fill-warning-500 text-warning-500" />
-            {product.rating.toFixed(1)}
-          </span>
-          <span className="text-xs text-neutral-400">
-            {t("reviewsCount", {
-              count: product.reviewCount.toLocaleString(),
-            })}
-          </span>
+          {product.reviewCount > 0 ? (
+            <>
+              <span className="inline-flex items-center gap-1 text-sm font-black">
+                <Star className="h-4 w-4 fill-warning-500 text-warning-500" />
+                {product.rating.toFixed(1)}
+              </span>
+              <span className="text-xs text-neutral-400">
+                {t("reviewsCount", {
+                  count: product.reviewCount.toLocaleString(),
+                })}
+              </span>
+            </>
+          ) : (
+            <span className="text-xs text-neutral-400">
+              لا توجد تقييمات بعد
+            </span>
+          )}
         </div>
 
         <div className="mt-3 flex items-end gap-2">

@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ProductBreadcrumb } from "@/components/commerce/product/ProductBreadcrumb";
 import { ProductDescription } from "@/components/commerce/product/ProductDescription";
 import { ProductInfo } from "@/components/commerce/product/ProductInfo";
-import { ProductReviews } from "@/components/commerce/product/ProductReviews";
+import { ProductReviews } from "@/components/commerce/reviews/ProductReviews";
 import { ProductSpecifications } from "@/components/commerce/product/ProductSpecifications";
 import { ProductTrust } from "@/components/commerce/product/ProductTrust";
 import { RelatedProducts } from "@/components/commerce/product/RelatedProducts";
@@ -74,7 +74,7 @@ export default async function ProductDetailPage({
   const relatedProducts =
     await getRelatedProducts(
       productDetails.id,
-      productDetails.category?.slug,
+      productDetails.category?.id,
       4,
     );
 
@@ -126,14 +126,7 @@ export default async function ProductDetailPage({
           </div>
 
           <section className="mt-8">
-            <ProductReviews
-              rating={
-                productDetails.rating
-              }
-              reviews={
-                productDetails.reviewCount
-              }
-            />
+            <ProductReviews productId={productDetails.id} />
           </section>
 
           <RelatedProducts
