@@ -75,7 +75,6 @@ export default function ProductsPage() {
       minPriceParam,
       maxPriceParam,
       inStock,
-      dealsOnly,
       sort,
       page,
     ],
