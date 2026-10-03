@@ -314,7 +314,6 @@ export function ProductsPageContent() {
                 className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
               >
                 <option value="relevance">الأكثر صلة</option>
-                <option value="newest">الأحدث</option>
                 <option value="price_asc">السعر: من الأقل</option>
                 <option value="price_desc">السعر: من الأعلى</option>
               </select>
