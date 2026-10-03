@@ -23,8 +23,7 @@ public class AuthSessionCookieService {
     private static final int GCM_IV_BYTES = 12;
     private static final int GCM_TAG_BITS = 128;
     private static final String VERSION = "v1";
-    private static final byte[] AAD =
-            "ALI-STORE-AUTH-COOKIE-V1".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] AAD = "ALI-STORE-AUTH-COOKIE-V1".getBytes(StandardCharsets.UTF_8);
 
     private final Environment environment;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -38,12 +37,8 @@ public class AuthSessionCookieService {
     @PostConstruct
     void initialize() {
         cookieName = environment.getProperty("app.auth.cookie-name", "ali_store_session");
-        secureCookie = Boolean.parseBoolean(
-                environment.getProperty("app.auth.cookie-secure", "false"));
-        String configuredSameSite = environment.getProperty("app.auth.cookie-same-site", "");
-        cookieSameSite = configuredSameSite == null || configuredSameSite.isBlank()
-                ? (secureCookie ? "None" : "Lax")
-                : configuredSameSite;
+        secureCookie = Boolean.parseBoolean(environment.getProperty("app.auth.cookie-secure", "false"));
+        cookieSameSite = environment.getProperty("app.auth.cookie-same-site", secureCookie ? "None" : "Lax");
         cookieDomain = environment.getProperty("app.auth.cookie-domain", "");
 
         if (isProd() && !secureCookie) {
@@ -55,8 +50,7 @@ public class AuthSessionCookieService {
 
         String configuredKey = environment.getProperty("AUTH_COOKIE_ENCRYPTION_KEY");
         if ((configuredKey == null || configuredKey.isBlank()) && isProd()) {
-            throw new IllegalStateException(
-                    "AUTH_COOKIE_ENCRYPTION_KEY must be configured separately in production");
+            throw new IllegalStateException("AUTH_COOKIE_ENCRYPTION_KEY must be configured separately in production");
         }
         if (configuredKey == null || configuredKey.isBlank()) {
             configuredKey = environment.getProperty("JWT_SECRET", "");
@@ -66,22 +60,18 @@ public class AuthSessionCookieService {
         try {
             rawKey = Base64.getDecoder().decode(configuredKey);
         } catch (IllegalArgumentException ex) {
-            throw new IllegalStateException(
-                    "AUTH_COOKIE_ENCRYPTION_KEY must be valid Base64", ex);
+            throw new IllegalStateException("AUTH_COOKIE_ENCRYPTION_KEY must be valid Base64", ex);
         }
         if (rawKey.length < AES_KEY_BYTES) {
-            throw new IllegalStateException(
-                    "AUTH_COOKIE_ENCRYPTION_KEY must decode to at least 32 bytes");
+            throw new IllegalStateException("AUTH_COOKIE_ENCRYPTION_KEY must decode to at least 32 bytes");
         }
 
-        encryptionKey = new SecretKeySpec(
-                Arrays.copyOf(rawKey, AES_KEY_BYTES), "AES");
+        encryptionKey = new SecretKeySpec(Arrays.copyOf(rawKey, AES_KEY_BYTES), "AES");
     }
 
     public String encrypt(String plaintext) {
         if (plaintext == null || plaintext.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Cannot encrypt an empty authentication token");
+            throw new IllegalArgumentException("Cannot encrypt an empty authentication token");
         }
 
         byte[] iv = new byte[GCM_IV_BYTES];
@@ -89,22 +79,13 @@ public class AuthSessionCookieService {
 
         try {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(
-                    Cipher.ENCRYPT_MODE,
-                    encryptionKey,
-                    new GCMParameterSpec(GCM_TAG_BITS, iv));
+            cipher.init(Cipher.ENCRYPT_MODE, encryptionKey, new GCMParameterSpec(GCM_TAG_BITS, iv));
             cipher.updateAAD(AAD);
-            byte[] ciphertext =
-                    cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
-
-            return VERSION + "."
-                    + Base64.getUrlEncoder().withoutPadding().encodeToString(iv)
-                    + "."
-                    + Base64.getUrlEncoder().withoutPadding()
-                    .encodeToString(ciphertext);
+            byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+            return VERSION + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(iv)
+                    + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(ciphertext);
         } catch (GeneralSecurityException ex) {
-            throw new IllegalStateException(
-                    "Authentication cookie encryption failed", ex);
+            throw new IllegalStateException("Authentication cookie encryption failed", ex);
         }
     }
 
@@ -121,58 +102,47 @@ public class AuthSessionCookieService {
         try {
             byte[] iv = Base64.getUrlDecoder().decode(parts[1]);
             byte[] ciphertext = Base64.getUrlDecoder().decode(parts[2]);
-
             if (iv.length != GCM_IV_BYTES) {
-                throw new SecurityException(
-                        "Authentication cookie nonce is invalid");
+                throw new SecurityException("Authentication cookie nonce is invalid");
             }
 
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(
-                    Cipher.DECRYPT_MODE,
-                    encryptionKey,
+            cipher.init(Cipher.DECRYPT_MODE, encryptionKey,
                     new GCMParameterSpec(GCM_TAG_BITS, iv));
             cipher.updateAAD(AAD);
-
-            return new String(
-                    cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
+            return new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
         } catch (SecurityException ex) {
             throw ex;
         } catch (GeneralSecurityException | IllegalArgumentException ex) {
-            throw new SecurityException(
-                    "Authentication cookie cannot be authenticated", ex);
+            throw new SecurityException("Authentication cookie cannot be authenticated", ex);
         }
     }
 
     public ResponseCookie buildCookie(String jwt, long maxAgeSeconds) {
-        ResponseCookie.ResponseCookieBuilder builder =
-                ResponseCookie.from(cookieName, encrypt(jwt))
-                        .httpOnly(true)
-                        .secure(secureCookie)
-                        .sameSite(cookieSameSite)
-                        .path("/")
-                        .maxAge(Math.max(0, maxAgeSeconds));
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, encrypt(jwt))
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(Math.max(0, maxAgeSeconds));
 
         if (!cookieDomain.isBlank()) {
             builder.domain(cookieDomain);
         }
-
         return builder.build();
     }
 
     public ResponseCookie clearCookie() {
-        ResponseCookie.ResponseCookieBuilder builder =
-                ResponseCookie.from(cookieName, "")
-                        .httpOnly(true)
-                        .secure(secureCookie)
-                        .sameSite(cookieSameSite)
-                        .path("/")
-                        .maxAge(0);
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(0);
 
         if (!cookieDomain.isBlank()) {
             builder.domain(cookieDomain);
         }
-
         return builder.build();
     }
 
