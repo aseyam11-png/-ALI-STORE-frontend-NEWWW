@@ -111,12 +111,24 @@ class FoundationIntegrationTest {
                 "firstName", "Ali", "lastName", "Store", "email", "ali@example.com",
                 "password", "Password123", "phoneNumber", "0599000000");
 
-        mockMvc.perform(post("/api/v1/auth/register")
+        var registrationResult = mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerBody)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.token").doesNotExist())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie().exists("ali_store_session"));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie().exists("ali_store_session"))
+                .andReturn();
+
+        var sessionCookie = registrationResult.getResponse().getCookie("ali_store_session");
+        Assertions.assertNotNull(sessionCookie);
+        Assertions.assertTrue(sessionCookie.isHttpOnly());
+        Assertions.assertEquals("Lax", sessionCookie.getAttribute("SameSite"));
+        Assertions.assertTrue(sessionCookie.getValue().startsWith("v1."));
+        Assertions.assertFalse(sessionCookie.getValue().contains(".ey"));
+
+        mockMvc.perform(get("/api/v1/auth/session").cookie(sessionCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.email").value("ali@example.com"));
 
         Map<String, String> loginBody = Map.of("email", "ali@example.com", "password", "Password123");
 
