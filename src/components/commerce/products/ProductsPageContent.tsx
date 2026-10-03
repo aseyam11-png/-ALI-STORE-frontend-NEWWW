@@ -49,6 +49,74 @@ export function ProductsPageContent() {
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const categoriesQuery = useQuery({
+    queryKey: ["catalog", "categories"],
+    queryFn: getTopLevelCategories,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const categories = categoriesQuery.data ?? [];
+
+  const categoryIdForApi = useMemo(() => {
+    if (!category.trim()) return undefined;
+    if (/^\d+$/.test(category)) return category;
+    const matched = categories.find((item) => item.slug === category);
+    return matched ? String(matched.id) : undefined;
+  }, [categories, category]);
+
+  const numericBrandId = /^\d+$/.test(brand) ? brand : undefined;
+
+  const legacyBrandOptionsQuery = useQuery({
+    queryKey: ["catalog", "brand-options", categoryIdForApi],
+    queryFn: async () =>
+      (
+        await getProducts({
+          search: "",
+          categoryId: categoryIdForApi,
+          subcategoryId: undefined,
+          brand: undefined,
+          supplierId: undefined,
+          minPrice: undefined,
+          maxPrice: undefined,
+          minRating: undefined,
+          verifiedSupplierOnly: false,
+          discountOnly: false,
+          inStockOnly: false,
+          featuredOnly: false,
+          bestsellerOnly: false,
+          newArrivalOnly: false,
+          sort: "relevance",
+          page: 1,
+          pageSize: 100,
+        })
+      ).items,
+    enabled: Boolean(brand && !numericBrandId),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const brandIdForApi = useMemo(() => {
+    if (!brand.trim()) return undefined;
+    if (numericBrandId) return numericBrandId;
+
+    const matched = (legacyBrandOptionsQuery.data ?? []).find(
+      (product) => product.brand?.name === brand,
+    );
+    return matched?.brand?.id;
+  }, [brand, numericBrandId, legacyBrandOptionsQuery.data]);
+
+  const categoryResolutionError =
+    Boolean(category) &&
+    !categoriesQuery.isPending &&
+    !categoryIdForApi;
+
+  const brandResolutionError =
+    Boolean(brand) &&
+    !numericBrandId &&
+    !legacyBrandOptionsQuery.isPending &&
+    !brandIdForApi;
+
   const filters = useMemo<ProductFilters>(
     () => ({
       search: query,
@@ -89,54 +157,9 @@ export function ProductsPageContent() {
     staleTime: 30_000,
   });
 
-  const categoriesQuery = useQuery({
-    queryKey: ["catalog", "categories"],
-    queryFn: getTopLevelCategories,
-    staleTime: 5 * 60_000,
-    retry: 1,
-  });
-
-  const categories = categoriesQuery.data ?? [];
-
-  const categoryIdForApi = useMemo(() => {
-    if (!category.trim()) return undefined;
-    if (/^\d+$/.test(category)) return category;
-    const matched = categories.find((item) => item.slug === category);
-    return matched ? String(matched.id) : undefined;
-  }, [categories, category]);
-
-  const legacyBrandOptionsQuery = useQuery({
-    queryKey: ["catalog", "brand-options", categoryIdForApi],
-    queryFn: async () =>
-      (
-        await getProducts({
-          search: "",
-          categoryId: categoryIdForApi,
-          subcategoryId: undefined,
-          brand: undefined,
-          supplierId: undefined,
-          minPrice: undefined,
-          maxPrice: undefined,
-          minRating: undefined,
-          verifiedSupplierOnly: false,
-          discountOnly: false,
-          inStockOnly: false,
-          featuredOnly: false,
-          bestsellerOnly: false,
-          newArrivalOnly: false,
-          sort: "relevance",
-          page: 1,
-          pageSize: 100,
-        })
-      ).items,
-    enabled: Boolean(brand && !/^\d+$/.test(brand)),
-    staleTime: 5 * 60_000,
-    retry: 1,
-  });
-
   const brandOptions = useMemo(() => {
     const source =
-      brand && !/^\d+$/.test(brand)
+      brand && !numericBrandId
         ? legacyBrandOptionsQuery.data ?? []
         : productsQuery.data?.items ?? [];
 
@@ -151,26 +174,10 @@ export function ProductsPageContent() {
     return Array.from(byId.values());
   }, [
     brand,
+    numericBrandId,
     legacyBrandOptionsQuery.data,
     productsQuery.data?.items,
   ]);
-
-  const brandIdForApi = useMemo(() => {
-    if (!brand.trim()) return undefined;
-    if (/^\d+$/.test(brand)) return brand;
-    return brandOptions.find((item) => item.name === brand)?.id;
-  }, [brand, brandOptions]);
-
-  const categoryResolutionError =
-    Boolean(category) &&
-    !categoriesQuery.isPending &&
-    !categoryIdForApi;
-
-  const brandResolutionError =
-    Boolean(brand) &&
-    !/^\d+$/.test(brand) &&
-    !legacyBrandOptionsQuery.isPending &&
-    !brandIdForApi;
 
   const products = (productsQuery.data?.items ?? []).map(normalizeB2CProduct);
 
