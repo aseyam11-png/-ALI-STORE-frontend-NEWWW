@@ -16,6 +16,7 @@ function statusLabel(status: BackendOrder["status"]) {
     SHIPPED: "تم الشحن",
     DELIVERED: "تم التوصيل",
     CANCELLED: "ملغي",
+    FULFILLMENT_FAILED: "فشل تنفيذ الطلب",
   }[status];
 }
 
