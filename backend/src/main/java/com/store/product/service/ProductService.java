@@ -343,6 +343,7 @@ public class ProductService {
                 .availableQuantity(inventoryService.getAvailableQuantity(product.getId()))
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
+                .categorySlug(product.getCategory().getSlug())
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
                 .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
                 .images(imageUrls)
