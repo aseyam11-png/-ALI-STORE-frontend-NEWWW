@@ -127,6 +127,7 @@ export default function BuyerOrderTrackingPage() {
 
               <LocalizedPrice
                 amountUSD={Number(order.totalAmount)}
+                currency={order.currency}
                 className="text-2xl font-black text-[#0F2747]"
               />
             </div>
@@ -213,6 +214,7 @@ export default function BuyerOrderTrackingPage() {
                       </div>
                       <LocalizedPrice
                         amountUSD={Number(item.subTotal)}
+                        currency={order.currency}
                         className="shrink-0 text-sm font-black text-slate-800"
                       />
                     </div>
@@ -236,11 +238,11 @@ export default function BuyerOrderTrackingPage() {
               <div className="mt-5 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Discount</span>
-                  <LocalizedPrice amountUSD={Number(order.discountAmount)} className="font-bold text-emerald-600" />
+                  <LocalizedPrice amountUSD={Number(order.discountAmount)} currency={order.currency} className="font-bold text-emerald-600" />
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-4 text-base">
                   <span className="font-bold text-slate-500">Total</span>
-                  <LocalizedPrice amountUSD={Number(order.totalAmount)} className="font-black text-[#0F2747]" />
+                  <LocalizedPrice amountUSD={Number(order.totalAmount)} currency={order.currency} className="font-black text-[#0F2747]" />
                 </div>
               </div>
             </aside>
