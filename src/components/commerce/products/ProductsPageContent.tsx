@@ -12,7 +12,7 @@ import { ProductPagination } from "@/components/commerce/products/ProductPaginat
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import { getProducts } from "@/features/products/services/product.service";
 import type { ProductFilters, ProductSort } from "@/features/products/types/product-filter.types";
-import { getTopLevelCategories } from "@/features/catalog/services/category.service";
+import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
 
 function parseNumber(value: string | null) {
@@ -88,7 +88,14 @@ export function ProductsPageContent() {
     staleTime: 30_000,
   });
 
-  const categories = getTopLevelCategories();
+  const categoriesQuery = useQuery({
+    queryKey: ["catalog", "categories"],
+    queryFn: getTopLevelCategories,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const categories = categoriesQuery.data ?? [];
   const products = (productsQuery.data?.items ?? []).map(normalizeB2CProduct);
 
   const brands = useMemo(
