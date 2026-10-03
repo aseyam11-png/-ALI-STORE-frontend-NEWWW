@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -56,7 +57,7 @@ function ActionButton({
 }: {
   href: string;
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <Link
@@ -122,13 +123,13 @@ export function Header() {
 
             <span className="hidden lg:inline-flex">
               <ActionButton href="/shop/visual-search" label="Search by image">
-                <Camera className="h-4.5 w-4.5" />
+                <Camera className="h-4 w-4" />
               </ActionButton>
             </span>
 
             <span className="hidden sm:inline-flex">
               <ActionButton href="/buyer/support" label="Messages">
-                <MessageCircle className="h-4.5 w-4.5" />
+                <MessageCircle className="h-4 w-4" />
               </ActionButton>
             </span>
 
@@ -138,7 +139,7 @@ export function Header() {
 
             <span className="hidden sm:inline-flex">
               <ActionButton href="/buyer/wishlist" label="Wishlist">
-                <Heart className="h-4.5 w-4.5" />
+                <Heart className="h-4 w-4" />
                 <AnimatePresence>
                   {wishlistCount > 0 && (
                     <motion.span
@@ -158,7 +159,7 @@ export function Header() {
               href="/shop/cart"
               label={"Shopping cart with " + cartCount + " items"}
             >
-              <ShoppingCart className="h-4.5 w-4.5" />
+              <ShoppingCart className="h-4 w-4" />
               <AnimatePresence>
                 {cartCount > 0 && (
                   <motion.span
