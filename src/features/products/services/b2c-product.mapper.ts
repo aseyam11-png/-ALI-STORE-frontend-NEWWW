@@ -53,9 +53,8 @@ export function normalizeB2CProduct(product: ProductSummary): B2CProduct {
 
     discountPercentage: product.price.discountPercentage,
 
-    // No real inventory source exists (see features/inventory/
-    // availability.ts) — this stays honestly at 0 rather than reading a
-    // field that was never real on the previous input shape either.
+    // ProductSummary already carries the backend's authoritative
+    // available quantity. Keep it intact for customer-facing stock controls.
     stock: product.availableQuantity,
 
     images: product.thumbnail?.url
