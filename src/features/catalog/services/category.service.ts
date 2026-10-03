@@ -1,82 +1,49 @@
 import {
-  categoryTree,
-} from "../data/category-tree";
+  flattenCategoryTree,
+  getCategories,
+  getCategoryBySlug,
+  getCategoryPathFromTree,
+  getTopLevelCategories,
+} from "./category-api.service";
 
-import type {
-  CategoryNode,
-} from "../types/category.types";
+import type { CategoryNode } from "../types/category.types";
 
-// The canonical customer-facing category access boundary. `category-tree.ts`
-// is the one category source this service reads — UI should call these
-// functions rather than importing `categoryTree` (or any other category
-// array) directly, so there is exactly one place that ever decides what
-// "the categories" are.
-export function getTopLevelCategories(): CategoryNode[] {
-  return categoryTree;
+export {
+  getCategories,
+  getCategoryBySlug,
+  getTopLevelCategories,
+  flattenCategoryTree,
+  getCategoryPathFromTree,
+};
+
+export async function flattenCategories(
+  nodes?: CategoryNode[],
+): Promise<CategoryNode[]> {
+  const categories =
+    nodes ?? (await getCategories());
+
+  return flattenCategoryTree(categories);
 }
 
-export function flattenCategories(
-  nodes: CategoryNode[] = categoryTree,
-): CategoryNode[] {
-  return nodes.flatMap(
-    (node) => [
-      node,
-      ...flattenCategories(
-        node.children,
-      ),
-    ],
+export async function findCategory(
+  slug: string,
+): Promise<CategoryNode | undefined> {
+  return getCategoryBySlug(slug);
+}
+
+export async function getCategoryPath(
+  slug: string,
+): Promise<CategoryNode[]> {
+  const categories = await getCategories();
+  return getCategoryPathFromTree(
+    categories,
+    slug,
   );
 }
 
-export function findCategory(
+export async function getChildren(
   slug: string,
-): CategoryNode | undefined {
-  return flattenCategories().find(
-    (category) =>
-      category.slug === slug,
-  );
-}
-
-export function getCategoryPath(
-  slug: string,
-): CategoryNode[] {
-  const category =
-    findCategory(slug);
-
-  if (!category) {
-    return [];
-  }
-
-  const path: CategoryNode[] = [
-    category,
-  ];
-
-  let parentSlug =
-    category.parentSlug;
-
-  while (parentSlug) {
-    const parent =
-      findCategory(
-        parentSlug,
-      );
-
-    if (!parent) {
-      break;
-    }
-
-    path.unshift(parent);
-    parentSlug =
-      parent.parentSlug;
-  }
-
-  return path;
-}
-
-export function getChildren(
-  slug: string,
-): CategoryNode[] {
-  return (
-    findCategory(slug)
-      ?.children ?? []
-  );
+): Promise<CategoryNode[]> {
+  const category = await getCategoryBySlug(slug);
+  return category?.children ?? [];
 }
