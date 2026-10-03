@@ -69,7 +69,7 @@ public class ProductService {
         if (request.getSupplierId() != null) {
             supplier = supplierRepository.findById(request.getSupplierId())
                     .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
-            ensureSupplierCanFulfill(supplier);
+            ensureSupplierReferenceValid(supplier);
         }
 
         if (request.getSupplierCost() != null) {
@@ -227,7 +227,7 @@ public class ProductService {
         if (request.getSupplierId() != null) {
             Supplier supplier = supplierRepository.findById(request.getSupplierId())
                     .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
-            ensureSupplierCanFulfill(supplier);
+            ensureSupplierReferenceValid(supplier);
             product.setSupplier(supplier);
         }
         if (request.getSupplierSku() != null && !request.getSupplierSku().isBlank()) {
@@ -249,6 +249,14 @@ public class ProductService {
                 new ResourceNotFoundException("Product not found with id: " + id));
         product.setStatus(ProductStatus.ARCHIVED);
         productRepository.save(product);
+    }
+
+    private void ensureSupplierReferenceValid(Supplier supplier) {
+        if (supplier == null
+                || supplier.getStatus() != SupplierStatus.ACTIVE
+                || !Boolean.TRUE.equals(supplier.getFulfillmentEnabled())) {
+            throw new BusinessException("Supplier is not active for fulfillment");
+        }
     }
 
     private void ensureSupplierCanFulfill(Supplier supplier) {
