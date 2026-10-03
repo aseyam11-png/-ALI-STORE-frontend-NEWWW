@@ -25,7 +25,20 @@ export default function AdminProductsPage() {
     }
   }
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    let active = true;
+    getAdminProducts(0, 100)
+      .then((page) => {
+        if (active) setProducts(page.content);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : "Unable to load products.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const filtered = products.filter((product) =>
     (product.name + " " + product.sku + " " + (product.supplierSku ?? ""))
