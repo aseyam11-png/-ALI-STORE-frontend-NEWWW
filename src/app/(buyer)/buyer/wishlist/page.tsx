@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -10,6 +11,8 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useSession } from "@/features/auth/session";
+import { getProductById } from "@/features/products/services/product.service";
 
 import {
   useWishlistStore,
@@ -28,11 +31,48 @@ export default function WishlistPage() {
         state.items,
     );
 
-  const removeItem =
+  const toggleItem =
     useWishlistStore(
-      (state) =>
-        state.removeItem,
+      (state) => state.toggleItem,
     );
+
+  const productIds =
+    useWishlistStore(
+      (state) => state.productIds,
+    );
+
+  const session = useSession();
+
+  useEffect(() => {
+    if (session.status !== "authenticated") return;
+
+    const hydrate = async () => {
+      await useWishlistStore.getState().hydrateRemote();
+      const state = useWishlistStore.getState();
+
+      for (const productId of state.productIds) {
+        if (state.items.some((item) => item.id === productId)) continue;
+
+        const product = await getProductById(productId);
+        if (!product) continue;
+
+        state.addItem({
+          id: product.id,
+          name: product.name,
+          price: product.price.amount,
+          image: product.images[0]?.url,
+          brand: product.brand?.name,
+          category: product.category?.name,
+          originalPrice: product.price.originalAmount,
+          discountPercentage: product.price.discountPercentage,
+          rating: product.rating,
+          reviewCount: product.reviewCount,
+        });
+      }
+    };
+
+    void hydrate();
+  }, [session.status]);
 
   const addItem =
     useCartStore(
@@ -79,9 +119,9 @@ export default function WishlistPage() {
 
               </div>
 
-              {items.length > 0 && (
+              {productIds.length > 0 && (
                 <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-[#2563EB]">
-                  {items.length} saved
+                  {productIds.length} saved
                 </span>
               )}
 
@@ -233,11 +273,9 @@ export default function WishlistPage() {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            removeItem(
-                              product.id,
-                            )
-                          }
+                          onClick={() => {
+                            void toggleItem(product);
+                          }}
                           aria-label={`Remove ${product.name} from wishlist`}
                           className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 text-red-500 hover:bg-red-50"
                         >
