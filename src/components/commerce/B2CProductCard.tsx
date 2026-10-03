@@ -11,7 +11,7 @@ import { formatCurrency } from "@/features/localization/services/currency.servic
 import { addBackendCartItem, mapBackendCartToLocal } from "@/features/cart/services/cart-api.service";
 import { useCartStore } from "@/stores/cart-store";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
-import { useSession } from "@/features/auth/session";
+import { getSession } from "@/features/auth/session";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
 
@@ -21,7 +21,6 @@ interface B2CProductCardProps {
 
 export function B2CProductCard({ product }: B2CProductCardProps) {
   const { t } = useTranslation();
-  const session = useSession();
   const addLocalItem = useCartStore((state) => state.addItem);
   const replaceItems = useCartStore((state) => state.replaceItems);
   const [cartBusy, setCartBusy] = useState(false);
@@ -52,7 +51,9 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
 
       const numericId = Number(product.id);
 
-      if (session.status === "authenticated") {
+      const session = await getSession();
+
+      if (session) {
         if (!Number.isInteger(numericId) || numericId < 1) {
           throw new Error("Invalid product id.");
         }
