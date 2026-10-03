@@ -120,7 +120,7 @@ export async function addBackendCartItem(
   productId: string,
   quantity: number,
 ): Promise<BackendCart> {
-  const id = toProductId(productId);
+  const id = productIdToNumber(productId);
 
   return unwrap(
     await apiClient.request<ApiEnvelope<BackendCart>>("/api/v1/cart/items", {
