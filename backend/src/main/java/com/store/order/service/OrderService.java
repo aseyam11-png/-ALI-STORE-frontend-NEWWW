@@ -82,8 +82,23 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(String email, OrderRequest request) {
+        return createOrder(email, request, null);
+    }
+
+    @Transactional
+    public OrderResponse createOrder(String email, OrderRequest request, String idempotencyKey) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String normalizedKey = normalizeIdempotencyKey(idempotencyKey);
+
+        // Serialize checkout attempts for this customer before checking idempotency.
         Cart cart = cartRepository.findWithLockByUserId(user.getId()).orElseThrow(() -> new BusinessException("Cart is empty"));
+
+        if (normalizedKey != null) {
+            Order existing = orderRepository.findByUserIdAndIdempotencyKey(user.getId(), normalizedKey).orElse(null);
+            if (existing != null) {
+                return mapToResponse(existing, shipmentRepository.findByOrderIdOrderByIdAsc(existing.getId()));
+            }
+        }
         List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
         if (cartItems.isEmpty()) throw new BusinessException("Cannot place order with an empty cart");
 
@@ -117,6 +132,7 @@ public class OrderService {
                 .user(user)
                 .status(OrderStatus.PENDING)
                 .shippingAddress(request.getShippingAddress().trim())
+                .idempotencyKey(normalizedKey)
                 .currency(orderCurrency.trim().toUpperCase())
                 .reservationExpiresAt(LocalDateTime.now().plusMinutes(30))
                 .totalAmount(totalAmount)
@@ -163,6 +179,15 @@ public class OrderService {
         }
 
         return mapToResponse(savedOrder, shipmentRepository.findByOrderIdOrderByIdAsc(savedOrder.getId()));
+    }
+
+    private String normalizeIdempotencyKey(String key) {
+        if (key == null || key.isBlank()) return null;
+        String normalized = key.trim();
+        if (normalized.length() > 100) {
+            throw new BusinessException("Idempotency-Key must not exceed 100 characters");
+        }
+        return normalized;
     }
 
     @Scheduled(fixedDelayString = "${app.orders.reservation-expiry-poll-ms:60000}")
