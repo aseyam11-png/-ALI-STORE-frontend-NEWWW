@@ -103,6 +103,7 @@ class PostgresConcurrencyIT {
     @Autowired private SupplierRepository supplierRepository;
     @Autowired private InventoryRepository inventoryRepository;
     @Autowired private CouponRepository couponRepository;
+    @Autowired private com.store.order.repository.OrderRepository orderRepository;
 
     private Role userRole() {
         return roleRepository.findByName("ROLE_USER")
@@ -177,6 +178,58 @@ class PostgresConcurrencyIT {
 
         Assertions.assertEquals(1, successCount,
                 "exactly one of two truly concurrent checkout requests against real PostgreSQL must succeed - proves CartRepository.findWithLockByUserId's pessimistic lock");
+    }
+
+    @Test
+    void checkout_concurrentRetryWithSameIdempotencyKey_returnsSameOriginalOrder() throws Exception {
+        User user = createUser("idempotent-race-pg@example.com");
+        Product product = productWithStock("IDEMPOTENT-PG-1", 10);
+
+        mockMvc.perform(post("/api/v1/cart/items")
+                        .header("Authorization", "Bearer " + tokenFor(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                Map.of("productId", product.getId(), "quantity", 2))))
+                .andExpect(status().isOk());
+
+        String token = tokenFor(user);
+        String body = objectMapper.writeValueAsString(Map.of("shippingAddress", "1 Main St"));
+        String idempotencyKey = "checkout-race-pg-001";
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Callable<String> checkoutCall = () ->
+                mockMvc.perform(post("/api/v1/orders")
+                                .header("Authorization", "Bearer " + token)
+                                .header("Idempotency-Key", idempotencyKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        List<Future<String>> futures = executor.invokeAll(List.of(checkoutCall, checkoutCall));
+        executor.shutdown();
+
+        List<String> responses = futures.stream().map(future -> {
+            try {
+                return future.get();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
+
+        List<Long> orderIds = responses.stream()
+                .filter(response -> response.contains("\"status\":200") || response.contains("\"status\":202"))
+                .map(response -> objectMapper.readTree(response).path("data").path("id").asLong())
+                .toList();
+
+        Assertions.assertEquals(2, orderIds.size(), "both concurrent retries must receive a successful response");
+        Assertions.assertEquals(orderIds.get(0), orderIds.get(1),
+                "same idempotency key must resolve both requests to the same order");
+
+        Assertions.assertEquals(1,
+                orderRepository.findByUserIdAndIdempotencyKey(user.getId(), idempotencyKey).stream().count(),
+                "database must contain exactly one order for the customer and idempotency key");
     }
 
     @Test
