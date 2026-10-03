@@ -4,10 +4,14 @@ import type {
 } from "../types/recommendation.types";
 import { getProducts } from "@/features/products/services/product.service";
 
+const LIVE_CATALOG_TYPES = new Set<RecommendationType>([
+  "TRENDING",
+]);
+
 export async function getRecommendations(
   type: RecommendationType,
 ): Promise<RecommendationProduct[]> {
-  if (type === "RECENTLY_VIEWED") {
+  if (!LIVE_CATALOG_TYPES.has(type)) {
     return [];
   }
 
@@ -43,7 +47,9 @@ export async function getRecommendations(
     reviewCount: product.reviewCount,
     originalPrice: product.price.originalAmount,
     discountPercentage: product.price.discountPercentage,
-    href: "/shop/products/" + encodeURIComponent(product.id),
+    href:
+      "/shop/products/" +
+      encodeURIComponent(product.id),
     shipping: product.shipping,
     currency: product.price.currency,
     reason: type,
