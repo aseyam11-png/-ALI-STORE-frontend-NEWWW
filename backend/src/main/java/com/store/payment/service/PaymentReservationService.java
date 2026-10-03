@@ -57,6 +57,9 @@ public class PaymentReservationService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found for reconciliation"));
         payment.setStatus(PaymentStatus.REQUIRES_RECONCILIATION);
+        payment.setProviderError(message == null || message.isBlank()
+                ? "Provider outcome could not be confirmed"
+                : message.substring(0, Math.min(message.length(), 1000)));
         paymentRepository.save(payment);
     }
 }
