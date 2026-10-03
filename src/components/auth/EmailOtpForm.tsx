@@ -20,24 +20,23 @@ export function EmailOtpForm() {
   const queryMaskedEmail = searchParams.get("email") ?? "";
   const queryPurpose =
     searchParams.get("purpose") === "LOGIN" ? "LOGIN" : "EMAIL_VERIFICATION";
-  const [challengeId, setChallengeId] = useState(queryChallengeId);
-  const [maskedEmail, setMaskedEmail] = useState(queryMaskedEmail);
-  const [purpose, setPurpose] = useState<
-    "LOGIN" | "EMAIL_VERIFICATION"
-  >(queryPurpose);
+  const [localChallenge, setLocalChallenge] =
+    useState<VerificationChallenge | null>(null);
+
+  const activeLocalChallenge =
+    localChallenge?.challengeId === queryChallengeId || !queryChallengeId
+      ? localChallenge
+      : null;
+  const challengeId = activeLocalChallenge?.challengeId ?? queryChallengeId;
+  const maskedEmail = activeLocalChallenge?.maskedEmail ?? queryMaskedEmail;
+  const purpose = activeLocalChallenge?.purpose ?? queryPurpose;
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [challenge, setChallenge] = useState<VerificationChallenge | null>(null);
+  const challenge = activeLocalChallenge;
   const [resendAvailableAt, setResendAvailableAt] = useState(() => Date.now() + 60_000);
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    setChallengeId(queryChallengeId);
-    setMaskedEmail(queryMaskedEmail);
-    setPurpose(queryPurpose);
-  }, [queryChallengeId, queryMaskedEmail, queryPurpose]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -89,10 +88,7 @@ export function EmailOtpForm() {
     }
 
     const nextChallenge = result.challenge;
-    setChallenge(nextChallenge);
-    setChallengeId(nextChallenge.challengeId);
-    setMaskedEmail(nextChallenge.maskedEmail);
-    setPurpose(nextChallenge.purpose);
+    setLocalChallenge(nextChallenge);
 
     const query = new URLSearchParams({
       challenge: nextChallenge.challengeId,
