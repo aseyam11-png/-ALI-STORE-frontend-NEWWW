@@ -92,6 +92,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Image decoding for real server-side visual similarity (JPEG/PNG/WebP) -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-webp</artifactId>
+            <version>3.15.2</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
