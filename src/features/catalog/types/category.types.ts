@@ -3,12 +3,8 @@ export interface CategoryNode {
   slug: string;
   name: string;
   description: string;
-
   parentSlug?: string;
-
   image?: string;
-
   children: CategoryNode[];
-
-  productCount: number;
+  productCount?: number;
 }
