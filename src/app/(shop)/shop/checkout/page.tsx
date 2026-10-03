@@ -676,7 +676,6 @@ export default function CheckoutPage() {
                 <div className="mt-5">
                   <CouponInput
                     subtotal={serverCartTotal}
-                    shipping={0}
                     onApply={setAppliedCoupon}
                     onRemove={() => setAppliedCoupon(null)}
                   />
