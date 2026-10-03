@@ -28,3 +28,5 @@ jwt:
 app:
   cors:
     allowed-origins: http://localhost:3000
+  fulfillment:
+    api-token: test-supplier-token
