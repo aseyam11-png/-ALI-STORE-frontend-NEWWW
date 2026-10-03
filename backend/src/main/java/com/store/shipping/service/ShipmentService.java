@@ -160,6 +160,17 @@ public class ShipmentService {
             releaseSupplierReservations(shipment);
         }
 
+        if (newStatus == ShipmentStatus.SHIPPED
+                || newStatus == ShipmentStatus.IN_TRANSIT
+                || newStatus == ShipmentStatus.DELIVERED) {
+            if (shipment.getSupplierOrderId() == null || shipment.getSupplierOrderId().isBlank()) {
+                throw new BusinessException("Shipment cannot advance before supplier order acceptance is recorded");
+            }
+            if (task == null || task.getStatus() != FulfillmentTaskStatus.SUCCEEDED) {
+                throw new BusinessException("Shipment cannot advance before fulfillment is confirmed by the supplier");
+            }
+        }
+
         shipment.setStatus(newStatus);
         if (newStatus == ShipmentStatus.SHIPPED && shipment.getShippedAt() == null) {
             shipment.setShippedAt(LocalDateTime.now());
