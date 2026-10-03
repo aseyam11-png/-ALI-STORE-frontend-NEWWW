@@ -18,6 +18,8 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
 
     List<Refund> findByPaymentIdOrderByCreatedAtAsc(Long paymentId);
 
+    List<Refund> findByStatusOrderByCreatedAtAsc(RefundStatus status);
+
     @Query("""
             select coalesce(sum(r.amount), 0)
             from Refund r
