@@ -31,8 +31,31 @@ function readCookie(name: string): string | undefined {
   return part ? decodeURIComponent(part.slice(prefix.length)) : undefined;
 }
 
+export type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data: T;
+};
+
+function unwrapApiEnvelope<T>(payload: T | ApiEnvelope<T>): T {
+  if (typeof payload === "object" && payload !== null && "data" in payload) {
+    const envelope = payload as ApiEnvelope<T>;
+    if (envelope.success === false) {
+      throw new Error(envelope.message || "API request failed");
+    }
+    return envelope.data;
+  }
+
+  return payload as T;
+}
+
 export class HttpClient {
   constructor(private readonly baseUrl: string) {}
+
+  async requestData<T>(path: string, init?: RequestInit): Promise<T> {
+    const payload = await this.request<T | ApiEnvelope<T>>(path, init);
+    return unwrapApiEnvelope<T>(payload);
+  }
 
   async request<T>(path: string, init?: RequestInit): Promise<T> {
     const method = (init?.method ?? "GET").toUpperCase();
