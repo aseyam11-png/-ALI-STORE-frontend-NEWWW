@@ -232,7 +232,9 @@ public class OrderService {
         if (order.getStatus() == OrderStatus.PENDING && order.getReservationExpiresAt() != null
                 && !order.getReservationExpiresAt().isAfter(LocalDateTime.now())) {
             expireOrderReservation(order);
-            if (newStatus == OrderStatus.CANCELLED) return mapToResponse(order);
+            if (newStatus == OrderStatus.CANCELLED) {
+                return mapToResponse(order, shipmentRepository.findByOrderIdOrderByIdAsc(orderId));
+            }
             throw new OrderExpiredException("Order reservation has expired");
         }
 
