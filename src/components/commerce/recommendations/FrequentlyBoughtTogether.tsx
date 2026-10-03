@@ -5,7 +5,8 @@ interface FrequentlyBoughtTogetherProps {
 }
 
 export function FrequentlyBoughtTogether(
-  _props: FrequentlyBoughtTogetherProps,
+  props: FrequentlyBoughtTogetherProps,
 ): ReactNode {
+  void props;
   return null;
 }
