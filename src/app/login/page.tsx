@@ -37,6 +37,16 @@ export default function LoginPage() {
             </div>
 
             <p className="mt-8 text-center text-body-sm text-muted-foreground">
+              ليس لديك حساب؟{" "}
+              <Link
+                href="/register"
+                className="font-medium text-brand hover:text-brand-hover"
+              >
+                إنشاء حساب جديد
+              </Link>
+            </p>
+
+            <p className="mt-3 text-center text-body-sm text-muted-foreground">
               تريد التسوق فقط؟{" "}
               <Link
                 href="/shop/products"
