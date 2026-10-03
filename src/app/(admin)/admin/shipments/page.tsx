@@ -7,7 +7,7 @@ import { ArrowRight, Package, RefreshCcw, Search, Truck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
 import { getAdminOrders } from "@/features/admin/orders/services/admin-order-api.service";
-import type { BackendOrder } from "@/features/orders/services/order.service";
+import type { BackendOrder, BackendShipment } from "@/features/orders/services/order.service";
 
 export default function AdminShipmentsPage() {
   const [orders, setOrders] = useState<BackendOrder[]>([]);
