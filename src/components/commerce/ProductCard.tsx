@@ -14,7 +14,6 @@ import {
 } from "@/features/cart/services/cart-api.service";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useTranslation } from "@/lib/i18n/dictionary";
-import { useSession } from "@/features/auth/session";
 
 interface ProductCardProps {
   product: ProductCardModel;
@@ -26,7 +25,6 @@ interface ProductCardProps {
 // product reads as the same component, never a per-section variant.
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
-  const session = useSession();
   const addItem = useCartStore((state) => state.addItem);
   const replaceItems = useCartStore((state) => state.replaceItems);
   const toggleWishlist = useWishlistStore((state) => state.toggle);
@@ -64,7 +62,6 @@ export function ProductCard({ product }: ProductCardProps) {
     };
 
     if (
-      session.status !== "authenticated" ||
       !Number.isInteger(Number(product.id)) ||
       Number(product.id) <= 0
     ) {
