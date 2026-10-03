@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,6 +37,7 @@ public class AuthController {
     private final Environment environment;
     private final TokenRevocationService tokenRevocationService;
     private final AuthSessionCookieService cookieService;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @org.springframework.beans.factory.annotation.Value("${jwt.expiration:86400000}")
     private long jwtExpirationMs;
@@ -59,7 +61,11 @@ public class AuthController {
     }
 
     @GetMapping("/google")
-    public ResponseEntity<Void> googleLogin() {
+    public ResponseEntity<?> googleLogin() {
+        if (clientRegistrationRepository.findByRegistrationId("google") == null) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Google login is not configured"));
+        }
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create("/oauth2/authorization/google"))
                 .build();
