@@ -47,8 +47,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Foundational, non-negotiable behaviors for Phase 1 stabilization:
- * auth issues real tokens, the catalog foundation (category/product/inventory)
- * is wired end to end, and customer-owned resources cannot be accessed by
+ * authentication requires the configured email-verification/OTP step before
+ * issuing a session, the catalog foundation (category/product/inventory) is
+ * wired end to end, and customer-owned resources cannot be accessed by
  * spoofing identity via headers/params instead of the authenticated principal.
  * Runs against an isolated in-memory H2 database (see application-test.yml) -
  * see the stabilization report for why Flyway-against-real-Postgres is
