@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useState } from "react";
 import { CheckCircle2, ShoppingCart, Star, Truck, Zap } from "lucide-react";
 
@@ -83,7 +84,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
     <article className="group overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
       <div className="relative aspect-square overflow-hidden bg-neutral-100">
         <Link
-          href={"/shop/products/" + encodeURIComponent(product.id)}
+          href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
           className="absolute inset-0"
           aria-label={t("viewProduct", { name: product.name })}
         >
@@ -196,7 +197,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-success-600" />
             <span className="truncate text-xs font-bold text-neutral-800">
-              {t("fulfilledByAliStore")}
+              {t("shippedByAliStore")}
             </span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-[11px] text-neutral-500">
