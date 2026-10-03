@@ -66,6 +66,7 @@ export default function WishlistPage() {
             brandName: item.brandName ?? undefined,
             categoryName: item.categoryName ?? undefined,
             originalPrice: undefined,
+            currency: item.currency ?? undefined,
           }))
         : localItems.map((item) => ({
             productId: item.id,
@@ -75,6 +76,7 @@ export default function WishlistPage() {
             brandName: item.brand,
             categoryName: item.category,
             originalPrice: item.originalPrice,
+            currency: item.currency,
           })),
     [localItems, serverItems, session.status],
   );
@@ -198,7 +200,7 @@ export default function WishlistPage() {
                         </h2>
                       </Link>
 
-                      <LocalizedPrice amountUSD={price} className="mt-3 text-xl font-black text-[#0F2747]" />
+                      <LocalizedPrice amountUSD={price} currency={product.currency} className="mt-3 text-xl font-black text-[#0F2747]" />
 
                       <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
                         <button
