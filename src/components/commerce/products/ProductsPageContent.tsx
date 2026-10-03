@@ -101,7 +101,9 @@ export function ProductsPageContent() {
     if (numericBrandId) return numericBrandId;
 
     const matched = (legacyBrandOptionsQuery.data ?? []).find(
-      (product) => product.brand?.name === brand,
+      (product) =>
+        product.brand?.name === brand &&
+        /^\d+$/.test(product.brand.id),
     );
     return matched?.brand?.id;
   }, [brand, numericBrandId, legacyBrandOptionsQuery.data]);
@@ -165,7 +167,7 @@ export function ProductsPageContent() {
 
     const byId = new Map<string, { id: string; name: string }>();
     for (const product of source) {
-      if (!product.brand) continue;
+      if (!product.brand || !/^\d+$/.test(product.brand.id)) continue;
       byId.set(product.brand.id, {
         id: product.brand.id,
         name: product.brand.name,
