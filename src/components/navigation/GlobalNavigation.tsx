@@ -117,7 +117,7 @@ export function GlobalNavigation() {
                 {active && (
                   <motion.span
                     layoutId="global-nav-active"
-                    className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[#2563EB]"
+                    className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-brand"
                   />
                 )}
               </Link>
