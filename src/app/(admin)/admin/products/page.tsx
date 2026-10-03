@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useState } from "react";
 import { Edit3, Package, RefreshCcw, Search } from "lucide-react";
 
@@ -81,7 +82,7 @@ export default function AdminProductsPage() {
                         <p className="mt-1 text-xs text-slate-400">{product.sku} · {product.categoryName ?? "No category"} · {product.brandName ?? "No brand"}</p>
                         <p className="mt-2 text-xs text-slate-500">Supplier: {product.supplierName ?? "Not configured"} · {product.supplierSku ?? "No supplier SKU"}</p>
                       </div>
-                      <Link href={"/admin/products/" + product.id} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-xs font-black text-white"><Edit3 className="h-4 w-4" />Manage</Link>
+                      <Link href={("/admin/products/" + product.id) as Route} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-xs font-black text-white"><Edit3 className="h-4 w-4" />Manage</Link>
                     </div>
                   </article>
                 ))}
