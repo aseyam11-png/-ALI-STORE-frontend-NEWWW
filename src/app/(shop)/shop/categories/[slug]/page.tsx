@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import {
   ArrowRight,
   ChevronRight,
@@ -63,7 +64,7 @@ export default async function CategoryPage({
                     </span>
                   ) : (
                     <Link
-                      href={"/shop/categories/" + encodeURIComponent(item.slug)}
+                      href={("/shop/categories/" + encodeURIComponent(item.slug)) as Route}
                       className="font-bold hover:text-[#2563EB]"
                     >
                       {item.name}
@@ -92,7 +93,7 @@ export default async function CategoryPage({
               </div>
 
               <Link
-                href={"/shop/products?category=" + encodeURIComponent(category.slug)}
+                href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
               >
                 <ShoppingBag className="h-4 w-4" />
