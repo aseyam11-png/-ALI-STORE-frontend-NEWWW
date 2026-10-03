@@ -122,7 +122,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ProductResponse> searchProducts(String q, Long categoryId, Long brandId,
+    public PageResponse<ProductResponse> searchProducts(String q, Long categoryId, String categorySlug,
+                                                         Long brandId, String brandName,
                                                          BigDecimal minPrice, BigDecimal maxPrice,
                                                          PublicAvailability availability, String sort,
                                                          int page, int pageSize) {
@@ -139,8 +140,16 @@ public class ProductService {
                 .and(ProductSpecifications.hasActiveSupplier());
 
         if (q != null && !q.isBlank()) spec = spec.and(ProductSpecifications.nameOrSkuContains(q.trim()));
-        if (categoryId != null) spec = spec.and(ProductSpecifications.inCategory(categoryId));
-        if (brandId != null) spec = spec.and(ProductSpecifications.hasBrand(brandId));
+        if (categoryId != null) {
+            spec = spec.and(ProductSpecifications.inCategory(categoryId));
+        } else if (categorySlug != null && !categorySlug.isBlank()) {
+            spec = spec.and(ProductSpecifications.inCategorySlug(categorySlug.trim()));
+        }
+        if (brandId != null) {
+            spec = spec.and(ProductSpecifications.hasBrand(brandId));
+        } else if (brandName != null && !brandName.isBlank()) {
+            spec = spec.and(ProductSpecifications.hasBrandName(brandName.trim()));
+        }
         if (minPrice != null) spec = spec.and(ProductSpecifications.priceGreaterThanOrEqual(minPrice));
         if (maxPrice != null) spec = spec.and(ProductSpecifications.priceLessThanOrEqual(maxPrice));
         if (availability == PublicAvailability.IN_STOCK || availability == PublicAvailability.OUT_OF_STOCK) {
@@ -331,6 +340,7 @@ public class ProductService {
                 .sku(product.getSku())
                 .status(product.getStatus())
                 .availability(inventoryService.getPublicAvailability(product.getId()))
+                .availableQuantity(inventoryService.getAvailableQuantity(product.getId()))
                 .categoryId(product.getCategory().getId())
                 .categoryName(product.getCategory().getName())
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)

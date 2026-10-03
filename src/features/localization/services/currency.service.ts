@@ -16,3 +16,14 @@ export function formatSAR(amount: number): string {
 
   return `${formatted} ر.س`;
 }
+
+
+export function formatCurrency(amount: number, currency: string, locale = "en-US"): string {
+  const value = Number.isFinite(amount) ? amount : 0;
+  const normalized = currency?.trim().toUpperCase() || "USD";
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: normalized,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
