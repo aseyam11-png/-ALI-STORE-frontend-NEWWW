@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useState } from "react";
 import { CheckCircle2, Plus, ShoppingCart, Star } from "lucide-react";
 
@@ -82,7 +83,7 @@ export function RecommendationCard({
   return (
     <article className="min-w-[210px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <Link
-        href={product.href ?? ("/shop/products/" + encodeURIComponent(product.id))}
+        href={(product.href ?? ("/shop/products/" + encodeURIComponent(product.id))) as Route}
         className="block"
       >
         <div className="relative aspect-square bg-slate-50">
