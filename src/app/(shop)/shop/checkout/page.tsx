@@ -230,12 +230,13 @@ export default function CheckoutPage() {
     if (!validate()) { setError("Please complete all required shipping information."); return; }
     setSubmitting(true);
     try {
-      for (const item of items) {
-        await apiClient.request("/api/v1/cart/items", {
-          method: "POST",
-          body: JSON.stringify({ productId: Number(item.productId), quantity: item.quantity }),
-        });
-      }
+      await apiClient.request("/api/v1/cart", {
+        method: "PUT",
+        body: JSON.stringify(items.map((item) => ({
+          productId: Number(item.productId),
+          quantity: item.quantity,
+        }))),
+      });
       const orderResponse = await apiClient.request<{
         success: boolean;
         message: string;
