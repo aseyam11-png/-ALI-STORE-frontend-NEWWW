@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import type { ProductCardModel } from "@/features/products/types/product-card.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
-import { useSession } from "@/features/auth/session";
+import { getSession } from "@/features/auth/session";
 import {
   addToWishlist,
   removeFromWishlist,
@@ -26,7 +26,6 @@ interface ProductCardProps {
 // product reads as the same component, never a per-section variant.
 export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
-  const session = useSession();
   const addItem = useCartStore((state) => state.addItem);
   const isSaved = useWishlistStore((state) =>
     state.productIds.includes(product.id),
@@ -53,13 +52,15 @@ export function ProductCard({ product }: ProductCardProps) {
     product.stockStatus === "low_stock";
 
   const handleWishlist = async () => {
-    if (wishlistBusy || session.status === "loading") return;
+    if (wishlistBusy) return;
 
     setWishlistBusy(true);
     setWishlistError(false);
 
     try {
-      if (session.status === "authenticated") {
+      const session = await getSession();
+
+      if (session) {
         if (isSaved) {
           await removeFromWishlist(product.id);
         } else {
