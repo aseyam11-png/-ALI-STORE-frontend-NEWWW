@@ -40,6 +40,14 @@ export default function CartPage() {
     0,
   );
 
+  const shipping = {
+    cost: 0,
+    method: "Calculated at checkout",
+    estimatedDelivery: "",
+  };
+
+  const grandTotal = subtotal;
+
   const session = useSession();
   const replaceItems = useCartStore((state) => state.replaceItems);
   const [syncing, setSyncing] = useState(false);
