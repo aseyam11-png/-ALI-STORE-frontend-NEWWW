@@ -1,18 +1,15 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// There is no authentication backend in this repository yet (verified by
-// repository-wide search) — `login()` always resolves to
-// `auth_backend_unavailable`. This form must never simulate a successful
-// sign-in: it validates real input honestly, then reports the one true
-// outcome available today instead of pretending to authenticate anyone.
 export function LoginForm() {
+  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +26,7 @@ export function LoginForm() {
     let hasError = false;
 
     if (!trimmedIdentifier) {
-      setIdentifierError("أدخل بريدك الإلكتروني أو رقم هاتفك");
+      setIdentifierError("أدخل بريدك الإلكتروني");
       hasError = true;
     } else {
       setIdentifierError(undefined);
@@ -49,14 +46,17 @@ export function LoginForm() {
     setFormError(undefined);
     setSubmitting(true);
 
-    const result = await login({ identifier: trimmedIdentifier, password });
-
-    setSubmitting(false);
-
-    if (!result.ok) {
-      setFormError(
-        "تسجيل الدخول غير متاح حاليًا — نعمل على تفعيل هذه الخدمة قريبًا.",
-      );
+    try {
+      const result = await login({ identifier: trimmedIdentifier, password });
+      if (result.ok) {
+        router.replace("/buyer");
+        router.refresh();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "تعذر تسجيل الدخول";
+      setFormError(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -71,7 +71,7 @@ export function LoginForm() {
         name="identifier"
         type="text"
         autoComplete="username"
-        label="البريد الإلكتروني أو رقم الهاتف"
+        label="البريد الإلكتروني"
         value={identifier}
         onChange={(event) => setIdentifier(event.target.value)}
         error={identifierError}
