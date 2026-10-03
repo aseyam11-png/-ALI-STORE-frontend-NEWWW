@@ -33,7 +33,7 @@ public class FulfillmentService {
 
     @Transactional
     public void enqueueForOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
         var bySupplier = supplierOrderPartitioner.partition(order);
