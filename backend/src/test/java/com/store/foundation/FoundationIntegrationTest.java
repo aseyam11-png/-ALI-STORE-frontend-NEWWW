@@ -106,7 +106,7 @@ class FoundationIntegrationTest {
     }
 
     @Test
-    void registerThenLogin_issuesRealJwt() throws Exception {
+    void registerThenLogin_usesEncryptedSessionAndHashedPassword() throws Exception {
         Map<String, String> registerBody = Map.of(
                 "firstName", "Ali", "lastName", "Store", "email", "ali@example.com",
                 "password", "Password123", "phoneNumber", "0599000000");
@@ -118,6 +118,12 @@ class FoundationIntegrationTest {
                 .andExpect(jsonPath("$.data.token").doesNotExist())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie().exists("ali_store_session"))
                 .andReturn();
+
+        User persistedUser = userRepository.findByEmailIgnoreCase("ali@example.com").orElseThrow();
+        Assertions.assertNotEquals("Password123", persistedUser.getPassword());
+        Assertions.assertTrue(
+                passwordEncoder.matches("Password123", persistedUser.getPassword()),
+                "the database must store a one-way BCrypt password hash");
 
         var sessionCookie = registrationResult.getResponse().getCookie("ali_store_session");
         Assertions.assertNotNull(sessionCookie);
