@@ -11,6 +11,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 
 @Component
 @RequiredArgsConstructor
@@ -22,16 +24,18 @@ public class HttpSupplierFulfillmentClient implements SupplierFulfillmentClient 
     @Override
     public SupplierFulfillmentResponse submit(Supplier supplier, SupplierFulfillmentRequest request) {
         if (!Boolean.TRUE.equals(supplier.getFulfillmentEnabled())) {
-            throw new IllegalStateException("Supplier fulfillment is disabled");
+            throw new SupplierFulfillmentException("Supplier fulfillment is disabled", false);
         }
         if (supplier.getApiBaseUrl() == null || supplier.getApiBaseUrl().isBlank()) {
-            throw new IllegalStateException("Supplier fulfillment API is not configured for supplier " + supplier.getExternalCode());
+            throw new SupplierFulfillmentException(
+                    "Supplier fulfillment API is not configured for supplier " + supplier.getExternalCode(), false);
         }
 
         String apiPath = environment.getProperty("app.fulfillment.api-path", "/v1/orders");
         String apiToken = credentialResolver.resolveApiToken(supplier);
         if (apiToken.isBlank()) {
-            throw new IllegalStateException("No supplier API token is configured for " + supplier.getExternalCode());
+            throw new SupplierFulfillmentException(
+                    "No supplier API token is configured for " + supplier.getExternalCode(), false);
         }
 
         String endpoint = supplier.getApiBaseUrl().replaceAll("/+$", "") + apiPath;
@@ -54,11 +58,21 @@ public class HttpSupplierFulfillmentClient implements SupplierFulfillmentClient 
 
             if (response == null || !Boolean.TRUE.equals(response.getAccepted())
                     || response.getSupplierOrderId() == null || response.getSupplierOrderId().isBlank()) {
-                throw new IllegalStateException("Supplier rejected or returned an invalid fulfillment response");
+                throw new SupplierFulfillmentException(
+                        "Supplier rejected or returned an invalid fulfillment response", false);
             }
             return response;
+        } catch (HttpStatusCodeException ex) {
+            int status = ex.getStatusCode().value();
+            boolean retryable = status == 408 || status == 429 || status >= 500;
+            throw new SupplierFulfillmentException(
+                    "Supplier fulfillment request returned HTTP " + status, ex, retryable);
+        } catch (ResourceAccessException ex) {
+            throw new SupplierFulfillmentException(
+                    "Supplier fulfillment request could not reach the supplier", ex, true);
         } catch (RestClientException ex) {
-            throw new IllegalStateException("Supplier fulfillment request failed", ex);
+            throw new SupplierFulfillmentException(
+                    "Supplier fulfillment request failed", ex, false);
         }
     }
 }

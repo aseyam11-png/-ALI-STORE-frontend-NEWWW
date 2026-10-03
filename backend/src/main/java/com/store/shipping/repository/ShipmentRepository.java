@@ -16,11 +16,15 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 
     List<Shipment> findByOrderIdOrderByIdAsc(Long orderId);
 
+    List<Shipment> findByOrderIdInOrderByOrderIdAscIdAsc(List<Long> orderIds);
+
     boolean existsByOrderIdAndSupplierId(Long orderId, Long supplierId);
 
     Optional<Shipment> findByOrderIdAndSupplierId(Long orderId, Long supplierId);
 
     Optional<Shipment> findByTrackingNumber(String trackingNumber);
+
+    Optional<Shipment> findBySupplierOrderId(String supplierOrderId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from Shipment s join fetch s.supplier where s.supplierOrderId = :supplierOrderId")

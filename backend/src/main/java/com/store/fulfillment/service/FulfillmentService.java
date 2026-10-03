@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +25,7 @@ public class FulfillmentService {
     private final ShipmentRepository shipmentRepository;
     private final FulfillmentTaskRepository taskRepository;
     private final FulfillmentTaskProcessor taskProcessor;
+    private final SupplierOrderPartitioner supplierOrderPartitioner;
 
     public FulfillmentTask findTaskByShipmentId(Long shipmentId) {
         return taskRepository.findByShipmentId(shipmentId).orElse(null);
@@ -33,12 +33,10 @@ public class FulfillmentService {
 
     @Transactional
     public void enqueueForOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        var bySupplier = order.getItems().stream()
-                .filter(item -> item.getSupplier() != null)
-                .collect(Collectors.groupingBy(item -> item.getSupplier().getId()));
+        var bySupplier = supplierOrderPartitioner.partition(order);
 
         for (var entry : bySupplier.entrySet()) {
             Supplier supplier = entry.getValue().get(0).getSupplier();

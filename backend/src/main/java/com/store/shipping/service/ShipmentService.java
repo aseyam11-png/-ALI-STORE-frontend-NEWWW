@@ -15,6 +15,7 @@ import com.store.shipping.dto.ShipmentResponse;
 import com.store.shipping.entity.Shipment;
 import com.store.shipping.entity.ShipmentStatus;
 import com.store.shipping.repository.ShipmentRepository;
+import com.store.payment.service.RefundService;
 import com.store.shipping.repository.ShippingAddressRepository;
 import com.store.supplier.entity.Supplier;
 import com.store.supplier.entity.SupplierStatus;
@@ -53,6 +54,7 @@ public class ShipmentService {
     }
 
     private final ShipmentRepository shipmentRepository;
+    private final RefundService refundService;
     private final ShippingAddressRepository shippingAddressRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -62,7 +64,7 @@ public class ShipmentService {
 
     @Transactional
     public ShipmentResponse createShipment(ShipmentRequest request) {
-        Order order = orderRepository.findById(request.getOrderId())
+        Order order = orderRepository.findByIdForUpdate(request.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + request.getOrderId()));
 
         if (order.getStatus() != OrderStatus.PROCESSING) {
@@ -158,6 +160,18 @@ public class ShipmentService {
                 fulfillmentTaskRepository.save(task);
             }
             releaseSupplierReservations(shipment);
+            refundService.prepareCancelledShipmentRefund(shipment.getId());
+        }
+
+        if (newStatus == ShipmentStatus.SHIPPED
+                || newStatus == ShipmentStatus.IN_TRANSIT
+                || newStatus == ShipmentStatus.DELIVERED) {
+            if (shipment.getSupplierOrderId() == null || shipment.getSupplierOrderId().isBlank()) {
+                throw new BusinessException("Shipment cannot advance before supplier order acceptance is recorded");
+            }
+            if (task == null || task.getStatus() != FulfillmentTaskStatus.SUCCEEDED) {
+                throw new BusinessException("Shipment cannot advance before fulfillment is confirmed by the supplier");
+            }
         }
 
         shipment.setStatus(newStatus);
@@ -178,13 +192,18 @@ public class ShipmentService {
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if (order.getStatus() == OrderStatus.DELIVERED) return;
+        if (order.getStatus() == OrderStatus.DELIVERED
+                || order.getStatus() == OrderStatus.CANCELLED
+                || order.getStatus() == OrderStatus.FULFILLMENT_FAILED) {
+            return;
+        }
 
         List<Shipment> shipments = shipmentRepository.findByOrderIdOrderByIdAsc(orderId);
         if (shipments.isEmpty()) return;
 
         boolean allDelivered = shipments.stream().allMatch(s -> s.getStatus() == ShipmentStatus.DELIVERED);
         boolean allCancelled = shipments.stream().allMatch(s -> s.getStatus() == ShipmentStatus.CANCELLED);
+        boolean anyCancelled = shipments.stream().anyMatch(s -> s.getStatus() == ShipmentStatus.CANCELLED);
         boolean anyInTransit = shipments.stream().anyMatch(s ->
                 s.getStatus() == ShipmentStatus.SHIPPED
                         || s.getStatus() == ShipmentStatus.IN_TRANSIT
@@ -194,6 +213,11 @@ public class ShipmentService {
             order.setStatus(OrderStatus.DELIVERED);
         } else if (allCancelled) {
             order.setStatus(OrderStatus.CANCELLED);
+        } else if (anyCancelled) {
+            // A multi-supplier order with at least one cancelled shipment cannot
+            // reach DELIVERED under the existing lifecycle. Preserve that fact
+            // explicitly instead of leaving the order permanently stuck in SHIPPED.
+            order.setStatus(OrderStatus.FULFILLMENT_FAILED);
         } else if (anyInTransit && order.getStatus() == OrderStatus.PROCESSING) {
             order.setStatus(OrderStatus.SHIPPED);
         }
@@ -210,7 +234,7 @@ public class ShipmentService {
             String carrier,
             LocalDateTime estimatedDeliveryDate) {
 
-        Shipment shipment = shipmentRepository.findBySupplierOrderIdForUpdate(supplierOrderId)
+        Shipment shipment = shipmentRepository.findBySupplierOrderId(supplierOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Shipment not found for supplier order id: " + supplierOrderId));
 
@@ -257,7 +281,7 @@ public class ShipmentService {
 
     @Transactional(readOnly = true)
     public ShipmentResponse getBySupplierOrderId(String supplierOrderId) {
-        Shipment shipment = shipmentRepository.findBySupplierOrderIdForUpdate(supplierOrderId)
+        Shipment shipment = shipmentRepository.findBySupplierOrderId(supplierOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Shipment not found for supplier order id: " + supplierOrderId));
         return mapToResponse(shipment);

@@ -1,9 +1,13 @@
 package com.store.auth.controller;
 
 import com.store.auth.dto.AuthResponse;
+import com.store.auth.dto.EmailOtpChallengeResponse;
+import com.store.auth.dto.EmailOtpResendRequest;
+import com.store.auth.dto.EmailOtpVerificationRequest;
 import com.store.auth.dto.LoginRequest;
 import com.store.auth.dto.RegisterRequest;
 import com.store.auth.service.AuthService;
+import com.store.auth.service.AuthSessionCookieService;
 import com.store.auth.service.TokenRevocationService;
 import com.store.common.exception.ResourceNotFoundException;
 import com.store.common.response.ApiResponse;
@@ -17,12 +21,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -33,6 +39,8 @@ public class AuthController {
     private final UserRepository userRepository;
     private final Environment environment;
     private final TokenRevocationService tokenRevocationService;
+    private final AuthSessionCookieService cookieService;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @org.springframework.beans.factory.annotation.Value("${jwt.expiration:86400000}")
     private long jwtExpirationMs;
@@ -42,8 +50,14 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse servletResponse) {
         AuthResponse response = authService.register(request);
-        writeSessionCookie(servletResponse, response.getToken());
-        return ResponseEntity.ok(ApiResponse.success(response, "User registered successfully"));
+        writeSessionCookieIfAuthenticated(servletResponse, response);
+        HttpStatus status = response.isRequiresEmailVerification()
+                ? HttpStatus.ACCEPTED
+                : HttpStatus.OK;
+        String message = response.isRequiresEmailVerification()
+                ? "Verification code sent to your email"
+                : "User registered successfully";
+        return ResponseEntity.status(status).body(ApiResponse.success(response, message));
     }
 
     @PostMapping("/login")
@@ -51,8 +65,45 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse servletResponse) {
         AuthResponse response = authService.login(request);
-        writeSessionCookie(servletResponse, response.getToken());
-        return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
+        writeSessionCookieIfAuthenticated(servletResponse, response);
+        HttpStatus status = response.isRequiresEmailVerification()
+                ? HttpStatus.ACCEPTED
+                : HttpStatus.OK;
+        String message = response.isRequiresEmailVerification()
+                ? "Verification code sent to your email"
+                : "Login successful";
+        return ResponseEntity.status(status).body(ApiResponse.success(response, message));
+    }
+
+    @PostMapping("/email/verify")
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(
+            @Valid @RequestBody EmailOtpVerificationRequest request,
+            HttpServletResponse servletResponse) {
+        AuthResponse response = authService.verifyEmailCode(
+                request.getChallengeId(), request.getCode());
+        writeSessionCookieIfAuthenticated(servletResponse, response);
+        return ResponseEntity.ok(ApiResponse.success(
+                response, "Email verification completed successfully"));
+    }
+
+    @PostMapping("/email/resend")
+    public ResponseEntity<ApiResponse<EmailOtpChallengeResponse>> resendEmailCode(
+            @Valid @RequestBody EmailOtpResendRequest request) {
+        EmailOtpChallengeResponse response =
+                authService.resendEmailCode(request.getChallengeId());
+        return ResponseEntity.ok(ApiResponse.success(
+                response, "A new verification code was sent to your email"));
+    }
+
+    @GetMapping("/google")
+    public ResponseEntity<?> googleLogin() {
+        if (clientRegistrationRepository.findByRegistrationId("google") == null) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Google login is not configured"));
+        }
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("/oauth2/authorization/google"))
+                .build();
     }
 
     @GetMapping("/csrf")
@@ -87,12 +138,25 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout(
             HttpServletRequest request,
             HttpServletResponse servletResponse) {
-        String token = extractCookieToken(request);
+        String token = extractDecryptedCookieToken(request);
         if (token == null) token = extractBearerToken(request);
         tokenRevocationService.revoke(token);
 
-        servletResponse.addHeader("Set-Cookie", buildCookie("", 0).toString());
+        servletResponse.addHeader("Set-Cookie", cookieService.clearCookie().toString());
         return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully"));
+    }
+
+    private void writeSessionCookieIfAuthenticated(
+            HttpServletResponse servletResponse,
+            AuthResponse response) {
+        if (response.getToken() == null || response.getToken().isBlank()) {
+            return;
+        }
+
+        long maxAgeSeconds = Math.max(0, jwtExpirationMs / 1000);
+        servletResponse.addHeader(
+                "Set-Cookie",
+                cookieService.buildCookie(response.getToken(), maxAgeSeconds).toString());
     }
 
     private String extractBearerToken(HttpServletRequest request) {
@@ -100,7 +164,7 @@ public class AuthController {
         return value != null && value.startsWith("Bearer ") ? value.substring(7) : null;
     }
 
-    private String extractCookieToken(HttpServletRequest request) {
+    private String extractDecryptedCookieToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) return null;
 
@@ -108,34 +172,14 @@ public class AuthController {
                 "app.auth.cookie-name",
                 environment.getProperty("AUTH_COOKIE_NAME", "ali_store_session"));
         for (Cookie cookie : cookies) {
-            if (cookieName.equals(cookie.getName())) return cookie.getValue();
+            if (cookieName.equals(cookie.getName())) {
+                try {
+                    return cookieService.decrypt(cookie.getValue());
+                } catch (SecurityException ignored) {
+                    return null;
+                }
+            }
         }
         return null;
-    }
-
-    private void writeSessionCookie(HttpServletResponse servletResponse, String token) {
-        servletResponse.addHeader("Set-Cookie", buildCookie(token, Math.max(0, jwtExpirationMs / 1000)).toString());
-    }
-
-    private ResponseCookie buildCookie(String value, long maxAgeSeconds) {
-        boolean secure = Boolean.parseBoolean(environment.getProperty(
-                "app.auth.cookie-secure",
-                environment.getProperty("AUTH_COOKIE_SECURE", "false")));
-
-        String name = environment.getProperty(
-                "app.auth.cookie-name",
-                environment.getProperty("AUTH_COOKIE_NAME", "ali_store_session"));
-
-        String sameSite = environment.getProperty(
-                "app.auth.cookie-same-site",
-                environment.getProperty("AUTH_COOKIE_SAME_SITE", secure ? "None" : "Lax"));
-
-        return ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite(sameSite)
-                .path("/")
-                .maxAge(maxAgeSeconds)
-                .build();
     }
 }

@@ -2,8 +2,11 @@ package com.store.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.store.auth.service.CustomUserDetailsService;
+import com.store.auth.service.GoogleOAuth2FailureHandler;
+import com.store.auth.service.GoogleOAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,11 +16,10 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -43,14 +45,33 @@ public class SecurityConfig {
     private final RateLimiter rateLimiter;
     private final ObjectMapper objectMapper;
     private final ClientIpResolver clientIpResolver;
+    private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
+    private final GoogleOAuth2FailureHandler googleOAuth2FailureHandler;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private List<String> allowedOrigins;
+
+    @Value("${app.auth.cookie-secure:false}")
+    private boolean authCookieSecure;
+
+    @Value("${app.auth.cookie-domain:}")
+    private String authCookieDomain;
+
+    @Value("${app.auth.cookie-same-site:}")
+    private String authCookieSameSite;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CookieCsrfTokenRepository csrfRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfRepository.setCookiePath("/");
+        csrfRepository.setCookieCustomizer(cookie -> {
+            cookie.secure(authCookieSecure)
+                    .sameSite(resolveCookieSameSite());
+            if (authCookieDomain != null && !authCookieDomain.isBlank()) {
+                cookie.domain(authCookieDomain);
+            }
+        });
 
         CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
         RequestMatcher bearerAuthentication = request -> {
@@ -65,18 +86,27 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/api/v1/auth/login"),
                                 new AntPathRequestMatcher("/api/v1/auth/register"),
-                                new AntPathRequestMatcher("/api/v1/auth/logout"),
                                 new AntPathRequestMatcher("/api/v1/auth/csrf"),
+                                new AntPathRequestMatcher("/api/v1/auth/google"),
                                 new AntPathRequestMatcher("/api/v1/integrations/suppliers/shipments/update"),
                                 bearerAuthentication
                         ))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .exceptionHandling(exceptions -> exceptions
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                new AntPathRequestMatcher("/api/**")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/csrf",
+                                "/api/v1/auth/google",
+                                "/api/v1/auth/email/verify",
+                                "/api/v1/auth/email/resend",
+                                "/oauth2/authorization/**",
+                                "/login/oauth2/code/**",
                                 "/api/v1/integrations/suppliers/shipments/update",
                                 "/api/v1/health/**",
                                 "/actuator/health",
@@ -89,7 +119,10 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(googleOAuth2SuccessHandler)
+                        .failureHandler(googleOAuth2FailureHandler))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new AuthRateLimitFilter(rateLimiter, objectMapper, clientIpResolver), JwtAuthenticationFilter.class)
@@ -106,6 +139,13 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    private String resolveCookieSameSite() {
+        if (authCookieSameSite == null || authCookieSameSite.isBlank()) {
+            return authCookieSecure ? "None" : "Lax";
+        }
+        return authCookieSameSite;
     }
 
     @Bean
@@ -126,17 +166,12 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }

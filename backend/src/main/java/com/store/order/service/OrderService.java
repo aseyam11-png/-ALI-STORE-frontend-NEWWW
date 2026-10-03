@@ -26,9 +26,11 @@ import com.store.order.repository.OrderRepository;
 import com.store.payment.entity.Payment;
 import com.store.payment.entity.PaymentMethod;
 import com.store.payment.entity.PaymentStatus;
+import com.store.payment.service.RefundService;
 import com.store.payment.repository.PaymentRepository;
 import com.store.product.entity.Product;
 import com.store.product.enums.ProductStatus;
+import com.store.shipping.entity.Shipment;
 import com.store.shipping.entity.ShipmentStatus;
 import com.store.shipping.repository.ShipmentRepository;
 import com.store.supplier.entity.SupplierStatus;
@@ -58,8 +60,11 @@ public class OrderService {
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(OrderStatus.class);
     static {
         ALLOWED_TRANSITIONS.put(OrderStatus.PENDING, EnumSet.of(OrderStatus.PROCESSING, OrderStatus.CANCELLED));
-        ALLOWED_TRANSITIONS.put(OrderStatus.PROCESSING, EnumSet.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED));
-        ALLOWED_TRANSITIONS.put(OrderStatus.SHIPPED, EnumSet.of(OrderStatus.DELIVERED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.PROCESSING, EnumSet.of(
+                OrderStatus.SHIPPED, OrderStatus.CANCELLED, OrderStatus.FULFILLMENT_FAILED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.SHIPPED, EnumSet.of(
+                OrderStatus.DELIVERED, OrderStatus.FULFILLMENT_FAILED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.FULFILLMENT_FAILED, EnumSet.noneOf(OrderStatus.class));
         ALLOWED_TRANSITIONS.put(OrderStatus.DELIVERED, EnumSet.noneOf(OrderStatus.class));
         ALLOWED_TRANSITIONS.put(OrderStatus.CANCELLED, EnumSet.noneOf(OrderStatus.class));
     }
@@ -73,6 +78,7 @@ public class OrderService {
     private final PaymentRepository paymentRepository;
     private final ShipmentRepository shipmentRepository;
     private final FulfillmentService fulfillmentService;
+    private final RefundService refundService;
 
     @Transactional
     public OrderResponse createOrder(String email, OrderRequest request) {
@@ -156,7 +162,7 @@ public class OrderService {
             fulfillmentService.enqueueForOrder(savedOrder.getId());
         }
 
-        return mapToResponse(savedOrder);
+        return mapToResponse(savedOrder, shipmentRepository.findByOrderIdOrderByIdAsc(savedOrder.getId()));
     }
 
     @Scheduled(fixedDelayString = "${app.orders.reservation-expiry-poll-ms:60000}")
@@ -185,8 +191,13 @@ public class OrderService {
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getUserOrders(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Page<OrderResponse> page = orderRepository.findByUserId(user.getId(), safePageable(pageable)).map(this::mapToResponse);
-        return PageResponse.of(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages(), page.isLast());
+        Page<Order> page = orderRepository.findByUserId(user.getId(), safePageable(pageable));
+        Map<Long, List<Shipment>> shipmentsByOrder = loadShipmentsByOrderIds(page.getContent());
+        List<OrderResponse> content = page.getContent().stream()
+                .map(order -> mapToResponse(order, shipmentsByOrder.getOrDefault(order.getId(), List.of())))
+                .toList();
+        return PageResponse.of(content, page.getNumber(), page.getSize(), page.getTotalElements(),
+                page.getTotalPages(), page.isLast());
     }
 
     @Transactional(readOnly = true)
@@ -194,13 +205,18 @@ public class OrderService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         if (!order.getUser().getId().equals(user.getId())) throw new ForbiddenException("This order does not belong to you");
-        return mapToResponse(order);
+        return mapToResponse(order, shipmentRepository.findByOrderIdOrderByIdAsc(orderId));
     }
 
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getAllOrdersForAdmin(Pageable pageable) {
-        Page<OrderResponse> page = orderRepository.findAll(safePageable(pageable)).map(this::mapToResponse);
-        return PageResponse.of(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages(), page.isLast());
+        Page<Order> page = orderRepository.findAll(safePageable(pageable));
+        Map<Long, List<Shipment>> shipmentsByOrder = loadShipmentsByOrderIds(page.getContent());
+        List<OrderResponse> content = page.getContent().stream()
+                .map(order -> mapToResponse(order, shipmentsByOrder.getOrDefault(order.getId(), List.of())))
+                .toList();
+        return PageResponse.of(content, page.getNumber(), page.getSize(), page.getTotalElements(),
+                page.getTotalPages(), page.isLast());
     }
 
     private Pageable safePageable(Pageable pageable) {
@@ -218,7 +234,9 @@ public class OrderService {
         if (order.getStatus() == OrderStatus.PENDING && order.getReservationExpiresAt() != null
                 && !order.getReservationExpiresAt().isAfter(LocalDateTime.now())) {
             expireOrderReservation(order);
-            if (newStatus == OrderStatus.CANCELLED) return mapToResponse(order);
+            if (newStatus == OrderStatus.CANCELLED) {
+                return mapToResponse(order, shipmentRepository.findByOrderIdOrderByIdAsc(orderId));
+            }
             throw new OrderExpiredException("Order reservation has expired");
         }
 
@@ -227,6 +245,15 @@ public class OrderService {
         if (!allowed.contains(newStatus)) {
             throw new BusinessException(
                     "Cannot transition order from " + order.getStatus() + " to " + newStatus);
+        }
+
+        if (newStatus == OrderStatus.FULFILLMENT_FAILED) {
+            var shipments = shipmentRepository.findByOrderIdOrderByIdAsc(orderId);
+            if (shipments.isEmpty() || shipments.stream().noneMatch(
+                    shipment -> shipment.getStatus() == ShipmentStatus.CANCELLED)) {
+                throw new BusinessException(
+                        "Order cannot be marked FULFILLMENT_FAILED without a cancelled shipment");
+            }
         }
 
         if (newStatus == OrderStatus.PROCESSING) {
@@ -279,8 +306,17 @@ public class OrderService {
 
         order.setStatus(newStatus);
         Order saved = orderRepository.save(order);
+
+        if (newStatus == OrderStatus.CANCELLED) {
+            Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            if (payment != null && payment.getStatus() == PaymentStatus.COMPLETED) {
+                refundService.prepareOrderCancellationRefund(
+                        orderId, "Order cancelled before supplier fulfillment started");
+            }
+        }
+
         if (newStatus == OrderStatus.PROCESSING) fulfillmentService.enqueueForOrder(orderId);
-        return mapToResponse(saved);
+        return mapToResponse(saved, shipmentRepository.findByOrderIdOrderByIdAsc(orderId));
     }
 
     private void validateCancellationAllowed(Order order) {
@@ -310,7 +346,18 @@ public class OrderService {
                         item.getProduct().getId(), item.getQuantity()));
     }
 
-    private OrderResponse mapToResponse(Order order) {
+    private Map<Long, List<Shipment>> loadShipmentsByOrderIds(List<Order> orders) {
+        List<Long> orderIds = orders.stream().map(Order::getId).toList();
+        if (orderIds.isEmpty()) return Map.of();
+
+        return shipmentRepository.findByOrderIdInOrderByOrderIdAscIdAsc(orderIds).stream()
+                .collect(Collectors.groupingBy(
+                        Shipment::getOrderId,
+                        java.util.LinkedHashMap::new,
+                        Collectors.toList()));
+    }
+
+    private OrderResponse mapToResponse(Order order, List<Shipment> shipments) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> OrderItemResponse.builder()
                         .id(item.getId()).productId(item.getProduct().getId())
@@ -318,13 +365,12 @@ public class OrderService {
                         .price(item.getUnitPrice()).subTotal(item.getSubtotal()).build())
                 .collect(Collectors.toList());
 
-        List<ShipmentSummaryResponse> shipmentResponses =
-                shipmentRepository.findByOrderIdOrderByIdAsc(order.getId()).stream()
-                        .map(shipment -> ShipmentSummaryResponse.builder()
-                                .id(shipment.getId()).status(shipment.getStatus())
-                                .carrier(shipment.getCarrier()).trackingNumber(shipment.getTrackingNumber())
-                                .estimatedDeliveryDate(shipment.getEstimatedDeliveryDate()).build())
-                        .collect(Collectors.toList());
+        List<ShipmentSummaryResponse> shipmentResponses = shipments.stream()
+                .map(shipment -> ShipmentSummaryResponse.builder()
+                        .id(shipment.getId()).status(shipment.getStatus())
+                        .carrier(shipment.getCarrier()).trackingNumber(shipment.getTrackingNumber())
+                        .estimatedDeliveryDate(shipment.getEstimatedDeliveryDate()).build())
+                .collect(Collectors.toList());
 
         return OrderResponse.builder()
                 .id(order.getId()).status(order.getStatus())

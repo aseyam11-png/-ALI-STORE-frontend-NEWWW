@@ -3,6 +3,7 @@ package com.store.order.entity;
 import com.store.product.entity.Product;
 import com.store.supplier.entity.Supplier;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -30,6 +31,7 @@ public class OrderItem {
     private BigDecimal subtotal;
 
     // Snapshots preserve the supplier mapping and source cost used at checkout.
+    @BatchSize(size = 50)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id", nullable = false)
     private Supplier supplier;
@@ -44,6 +46,7 @@ public class OrderItem {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
+    @BatchSize(size = 50)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

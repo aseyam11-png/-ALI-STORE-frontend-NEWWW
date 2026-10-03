@@ -16,6 +16,7 @@ import com.store.shipping.entity.Shipment;
 import com.store.shipping.entity.ShipmentStatus;
 import com.store.shipping.repository.ShipmentRepository;
 import com.store.shipping.service.ShipmentService;
+import com.store.payment.service.RefundService;
 import com.store.supplier.entity.SupplierStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,8 @@ public class FulfillmentTaskProcessor {
     private final InventoryService inventoryService;
     private final SupplierFulfillmentClient supplierFulfillmentClient;
     private final ShipmentService shipmentService;
+    private final SupplierOrderPartitioner supplierOrderPartitioner;
+    private final RefundService refundService;
     private final PlatformTransactionManager transactionManager;
 
     public void processTask(Long taskId) {
@@ -81,9 +84,9 @@ public class FulfillmentTaskProcessor {
             return null;
         }
 
-        List<SupplierFulfillmentRequest.Item> items = order.getItems().stream()
-                .filter(item -> item.getSupplier() != null
-                        && item.getSupplier().getId().equals(shipment.getSupplier().getId()))
+        List<SupplierFulfillmentRequest.Item> items = supplierOrderPartitioner
+                .forSupplier(order, shipment.getSupplier().getId())
+                .stream()
                 .map(this::mapItem)
                 .toList();
 
@@ -134,9 +137,8 @@ public class FulfillmentTaskProcessor {
         shipment.setStatus(ShipmentStatus.PROCESSING);
         shipmentRepository.save(shipment);
 
-        order.getItems().stream()
-                .filter(item -> item.getSupplier() != null
-                        && item.getSupplier().getId().equals(shipment.getSupplier().getId()))
+        supplierOrderPartitioner
+                .forSupplier(order, shipment.getSupplier().getId())
                 .forEach(item -> inventoryService.commitReservedStock(
                         item.getProduct().getId(), item.getQuantity()));
 
@@ -151,13 +153,17 @@ public class FulfillmentTaskProcessor {
 
         if (task.getStatus() != FulfillmentTaskStatus.PROCESSING) return;
 
-        task.setLastError(safeMessage(ex));
-        if (task.getAttempts() >= MAX_ATTEMPTS) {
-            Shipment shipment = task.getShipment();
-            permanentlyFail(task, shipment, safeMessage(ex));
+        String reason = safeMessage(ex);
+        task.setLastError(reason);
+        if (ex instanceof SupplierFulfillmentException supplierException
+                && !supplierException.isRetryable()) {
+            permanentlyFail(task, task.getShipment(), reason);
+        } else if (task.getAttempts() >= MAX_ATTEMPTS) {
+            permanentlyFail(task, task.getShipment(), reason);
         } else {
             task.setStatus(FulfillmentTaskStatus.PENDING);
-            task.setNextAttemptAt(LocalDateTime.now().plusMinutes(Math.min(30, task.getAttempts() * 2L)));
+            task.setNextAttemptAt(LocalDateTime.now()
+                    .plusMinutes(Math.min(30, task.getAttempts() * 2L)));
             taskRepository.save(task);
         }
     }
@@ -174,12 +180,24 @@ public class FulfillmentTaskProcessor {
 
         releaseSupplierReservations(shipment);
         shipmentService.synchronizeOrderStatus(shipment.getOrderId());
+        refundService.prepareCancelledShipmentRefund(shipment.getId());
     }
 
     private void cancelTask(FulfillmentTask task, String reason) {
+        Shipment shipment = task.getShipment();
+
         task.setStatus(FulfillmentTaskStatus.CANCELLED);
         task.setLastError(reason);
         taskRepository.save(task);
+
+        if (shipment.getStatus() == ShipmentStatus.PENDING) {
+            shipment.setStatus(ShipmentStatus.CANCELLED);
+            shipmentRepository.save(shipment);
+        }
+
+        releaseSupplierReservations(shipment);
+        shipmentService.synchronizeOrderStatus(shipment.getOrderId());
+        refundService.prepareCancelledShipmentRefund(shipment.getId());
     }
 
     private void releaseSupplierReservations(Shipment shipment) {
@@ -189,9 +207,8 @@ public class FulfillmentTaskProcessor {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Order not found with id: " + shipment.getOrderId()));
 
-        order.getItems().stream()
-                .filter(item -> item.getSupplier() != null
-                        && item.getSupplier().getId().equals(shipment.getSupplier().getId()))
+        supplierOrderPartitioner
+                .forSupplier(order, shipment.getSupplier().getId())
                 .forEach(item -> inventoryService.releaseReservedStockUpTo(
                         item.getProduct().getId(), item.getQuantity()));
     }
