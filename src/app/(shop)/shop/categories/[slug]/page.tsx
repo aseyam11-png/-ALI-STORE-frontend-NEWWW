@@ -48,9 +48,7 @@ export default async function CategoryPage({
               <Link
                 href="/"
                 className="font-bold hover:text-brand"
-              >
-                Home
-              </Link>
+              >الرئيسية</Link>
 
               {path.map((item, index) => (
                 <span
@@ -77,9 +75,7 @@ export default async function CategoryPage({
             <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-info-surface px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-brand">
-                  <FolderTree className="h-3.5 w-3.5" />
-                  Category
-                </div>
+                  <FolderTree className="h-3.5 w-3.5" />القسم</div>
 
                 <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
                   {category.name}
@@ -96,9 +92,7 @@ export default async function CategoryPage({
                 href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
               >
-                <ShoppingBag className="h-4 w-4" />
-                Shop this category
-                <ArrowRight className="h-4 w-4" />
+                <ShoppingBag className="h-4 w-4" />تصفح هذا القسم<ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -108,12 +102,8 @@ export default async function CategoryPage({
           <div className="grid gap-7 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
               <div className="mb-5">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-neutral-400">
-                  Browse
-                </p>
-                <h2 className="mt-1 text-lg font-black text-foreground">
-                  Categories
-                </h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-neutral-400">تصفح</p>
+                <h2 className="mt-1 text-lg font-black text-foreground">الأقسام</h2>
               </div>
 
               <CategoryTree categories={categories} />
@@ -123,12 +113,8 @@ export default async function CategoryPage({
               {category.children.length > 0 ? (
                 <>
                   <div className="mb-5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-neutral-400">
-                      Explore
-                    </p>
-                    <h2 className="mt-1 text-xl font-black text-foreground">
-                      Shop by subcategory
-                    </h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-neutral-400">اكتشف</p>
+                    <h2 className="mt-1 text-xl font-black text-foreground">تصفح الأقسام الفرعية</h2>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -155,9 +141,7 @@ export default async function CategoryPage({
                           </p>
                         )}
 
-                        <div className="mt-5 text-xs font-black text-brand">
-                          Explore category
-                        </div>
+                        <div className="mt-5 text-xs font-black text-brand">اكتشاف القسم</div>
                       </Link>
                     ))}
                   </div>
@@ -179,9 +163,7 @@ export default async function CategoryPage({
                   <Link
                     href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
                     className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
-                  >
-                    View products
-                    <ArrowRight className="h-4 w-4" />
+                  >عرض المنتجات<ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               )}
