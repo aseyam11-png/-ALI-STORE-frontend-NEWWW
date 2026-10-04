@@ -47,7 +47,7 @@ test("storefront hardening: product variants flow into pricing, actions, and sti
   assert.match(info, /selectedVariant=\{selectedVariant\}/);
   assert.match(actions, /selectedVariant\?: B2CProductVariant/);
   assert.match(actions, /selectedVariant\?\.id/);
-  assert.match(actions, /does not persist variants yet/);
+  assert.match(actions, /variantCartUnsupported/);
   assert.match(actions, /selectedVariant\.available && stock > 0/);
   assert.match(sticky, /getVariantPrice/);
   assert.match(sticky, /getVariantStock/);
@@ -60,7 +60,7 @@ test("storefront hardening: authenticated variant selection cannot be silently f
 
   assert.match(actions, /session\.status === "authenticated"/);
   assert.match(actions, /if \(selectedVariant\)/);
-  assert.match(actions, /current cart API does not persist variants yet/);
+  assert.match(actions, /variantCartUnsupported/);
   assert.match(cartApi, /variantId: undefined/);
   assert.match(cartApi, /cannot persist product variants/);
   assert.match(cartApi, /variantId\?: string/);
@@ -125,4 +125,21 @@ test("storefront hardening: flash deals stay empty until promotion data is real"
   const source = read("src/components/commerce/FlashDeals.tsx");
   assert.match(source, /does not expose promotion\/discount fields/);
   assert.match(source, /return null/);
+});
+
+
+test("storefront hardening: homepage exposes real catalog sections for core fashion categories", () => {
+  const page = read("src/app/page.tsx");
+  const sections = read("src/components/commerce/HomeCategorySections.tsx");
+  const section = read("src/components/commerce/HomeCategorySection.tsx");
+
+  assert.match(page, /<HomeCategorySections\s*\/>/);
+  for (const title of ["الملابس", "الساعات", "الإكسسوارات", "الأحذية"]) {
+    assert.match(sections, new RegExp(title));
+  }
+  assert.match(sections, /getCategories/);
+  assert.match(sections, /flattenCategoryTree/);
+  assert.match(section, /getProducts/);
+  assert.match(section, /inStockOnly: true/);
+  assert.doesNotMatch(section, /MOCK_|supplierPrice|sellerId/i);
 });
