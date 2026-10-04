@@ -22,13 +22,13 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
   const addLocalItem = useCartStore((state) => state.addItem);
   const replaceItems = useCartStore((state) => state.replaceItems);
 
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setالكمية] = useState(1);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   const price = getVariantPrice(product, selectedVariant);
   const stock = getVariantStock(product, selectedVariant);
-  const available =
+  const متوفر =
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
 
@@ -36,13 +36,13 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
   const increase = () => {
     if (quantity < stock) {
-      setQuantity((current) => current + 1);
+      setالكمية((current) => current + 1);
       setMessage("");
     }
   };
 
   const decrease = () => {
-    setQuantity((current) => Math.max(1, current - 1));
+    setالكمية((current) => Math.max(1, current - 1));
     setMessage("");
   };
 
@@ -61,7 +61,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
         priceUnit: "unit",
         quantity,
         image: selectedVariant?.image ?? product.images[0]?.url,
-        minOrderQuantity: 1,
+        minOrderالكمية: 1,
       };
 
       if (session.status === "authenticated") {
@@ -83,13 +83,13 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
         addLocalItem(localLine);
       }
 
-      setMessage("Product added to cart.");
+      setMessage("تمت إضافة المنتج إلى السلة.");
       return true;
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Unable to add this product to the cart.",
+          : "تعذر إضافة المنتج إلى السلة.",
       );
       return false;
     } finally {
@@ -107,13 +107,13 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
     <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black text-foreground">Quantity</p>
+          <p className="text-sm font-bold text-foreground">الكمية</p>
           <p className="mt-1 text-xs text-neutral-400">
             {product.stockStatus === "unknown"
-              ? "Availability is being confirmed"
-              : available
-                ? stock + " available"
-                : "This product is currently unavailable"}
+              ? "جارٍ التحقق من التوفر"
+              : متوفر
+                ? stock + " متوفر"
+                : "المنتج غير متوفر حاليًا"}
           </p>
         </div>
 
@@ -129,7 +129,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
           </button>
 
           <span
-            className="flex h-11 min-w-16 items-center justify-center border-x border-neutral-200 px-4 text-sm font-black"
+            className="flex h-11 min-w-16 items-center justify-center border-x border-neutral-200 px-4 text-sm font-bold"
             aria-live="polite"
           >
             {quantity}
@@ -148,8 +148,8 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       </div>
 
       <div className="mt-5 flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-4">
-        <span className="text-sm text-neutral-500">Estimated subtotal</span>
-        <span className="text-2xl font-black text-foreground">
+        <span className="text-sm text-neutral-500">المجموع التقديري</span>
+        <span className="text-2xl font-bold text-foreground">
           {formatCurrency(subtotal, product.currency)}
         </span>
       </div>
@@ -160,24 +160,24 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
           onClick={() => void addToCart()}
           disabled={busy || !available}
           aria-busy={busy}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-surface text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-surface text-sm font-bold text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <ShoppingCart className="h-4 w-4" />
           {busy
-            ? "Adding..."
+            ? "جارٍ الإضافة…"
             : product.stockStatus === "unknown"
-              ? "Checking availability"
-              : "Add to cart"}
+              ? "جارٍ التحقق من التوفر"
+              : "أضف للسلة"}
         </button>
 
         <button
           type="button"
           onClick={() => void handleBuyNow()}
           disabled={busy || !available}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-bold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <Zap className="h-4 w-4" />
-          Buy now
+          اشترِ الآن
         </button>
       </div>
 
