@@ -26,6 +26,17 @@ function parsePage(value: string | null) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
+function parseSort(value: string | null): ProductSort {
+  switch (value) {
+    case "price_asc":
+    case "price_desc":
+    case "relevance":
+      return value;
+    default:
+      return "relevance";
+  }
+}
+
 export function ProductsPageContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,7 +45,7 @@ export function ProductsPageContent() {
   const query = params.get("q") ?? "";
   const category = params.get("category") ?? "";
   const brand = params.get("brand") ?? "";
-  const sort = (params.get("sort") as ProductSort | null) ?? "relevance";
+  const sort = parseSort(params.get("sort"));
   const page = parsePage(params.get("page"));
   const inStock = params.get("inStock") === "true";
   const minPriceParam = parseNumber(params.get("minPrice"));
@@ -310,6 +321,7 @@ export function ProductsPageContent() {
               type="button"
               onClick={() => setFiltersOpen((value) => !value)}
               aria-expanded={filtersOpen}
+              aria-controls="catalog-filters"
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-xs font-black text-neutral-700"
             >
               <Filter className="h-4 w-4" />
@@ -322,6 +334,7 @@ export function ProductsPageContent() {
 
           <div className="grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
             <aside
+              id="catalog-filters"
               className={`h-fit rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm ${filtersOpen ? "block" : "hidden"} lg:block`}
             >
               <div className="flex items-center justify-between">
