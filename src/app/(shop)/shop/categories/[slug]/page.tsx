@@ -42,7 +42,7 @@ export default async function CategoryPage({
         <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
             <nav
-              aria-label="Category breadcrumb"
+              aria-label="مسار التنقل للقسم"
               className="flex flex-wrap items-center gap-2 text-xs text-neutral-400"
             >
               <Link
