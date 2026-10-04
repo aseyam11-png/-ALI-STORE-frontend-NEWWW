@@ -8,6 +8,7 @@ import { Eye, X } from "lucide-react";
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
+import { useTranslation } from "@/lib/i18n/dictionary";
 
 interface ProductQuickViewProps {
   product: B2CProduct;
@@ -24,6 +25,7 @@ export function ProductQuickView({
   onAddToCart,
   addBusy,
 }: ProductQuickViewProps) {
+  const { t } = useTranslation();
   const titleId = useId();
   const panelRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -95,7 +97,7 @@ export function ProductQuickView({
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
-          aria-label="Close quick view"
+          aria-label="إغلاق العرض السريع"
           className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <X className="h-5 w-5" />
@@ -161,16 +163,16 @@ export function ProductQuickView({
                 (available ? "text-success-700" : "text-danger-700")
               }>
                 {product.stockStatus === "unknown"
-                  ? "جارٍ التحقق من التوفر"
+                  ? t("availabilityChecking")
                   : available
-                    ? product.stock + " available"
-                    : "غير متوفر"}
+                    ? `${product.stock} ${t("available")}`
+                    : t("outOfStock")}
               </p>
             </div>
 
             <div className="rounded-xl bg-neutral-50 p-4">
               <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
-                SKU
+                {t("sku")}
               </p>
               <p className="mt-1 truncate font-mono text-xs font-bold text-neutral-700">
                 {product.sku}
@@ -206,7 +208,7 @@ export function ProductQuickView({
               aria-busy={addBusy}
               className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-5 text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              {addBusy ? "جارٍ الإضافة…" : "أضف إلى السلة"}
+              {addBusy ? t("adding") : t("addToCart")}
             </button>
           </div>
         </div>
