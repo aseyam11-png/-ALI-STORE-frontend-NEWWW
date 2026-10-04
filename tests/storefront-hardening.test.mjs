@@ -48,6 +48,7 @@ test("storefront hardening: product variants flow into pricing, actions, and sti
   assert.match(actions, /selectedVariant\?: B2CProductVariant/);
   assert.match(actions, /selectedVariant\?\.id/);
   assert.match(actions, /does not persist variants yet/);
+  assert.match(actions, /selectedVariant\.available && stock > 0/);
   assert.match(sticky, /getVariantPrice/);
   assert.match(sticky, /getVariantStock/);
   assert.match(sticky, /selectedVariant\?: B2CProductVariant/);
@@ -61,6 +62,8 @@ test("storefront hardening: authenticated variant selection cannot be silently f
   assert.match(actions, /if \(selectedVariant\)/);
   assert.match(actions, /current cart API does not persist variants yet/);
   assert.match(cartApi, /variantId: undefined/);
+  assert.match(cartApi, /cannot persist product variants/);
+  assert.match(cartApi, /variantId\?: string/);
 });
 
 test("storefront hardening: checkout enforces its visible required email field", () => {
