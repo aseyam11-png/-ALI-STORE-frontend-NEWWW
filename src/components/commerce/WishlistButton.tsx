@@ -53,7 +53,7 @@ export function WishlistButton({
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Unable to update wishlist.",
+          : "تعذر تحديث المفضلة.",
       );
     } finally {
       setBusy(false);
