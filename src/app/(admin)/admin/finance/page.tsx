@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, DollarSign, RefreshCcw, Wallet } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
+import { AdminStatusPill } from "@/components/admin/AdminStatusPill";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import {
   collectCashOnDelivery,
@@ -13,6 +16,12 @@ import {
   getAdminPayments,
   type AdminPayment,
 } from "@/features/admin/finance/services/admin-finance-api.service";
+
+function paymentTone(status: AdminPayment["status"]) {
+  if (status === "COMPLETED" || status === "REFUNDED") return "success" as const;
+  if (status === "FAILED") return "danger" as const;
+  return "warning" as const;
+}
 
 export default function AdminFinancePage() {
   const [payments, setPayments] = useState<AdminPayment[]>([]);
@@ -29,7 +38,7 @@ export default function AdminFinancePage() {
       })
       .catch((err) => {
         if (active) {
-          setError(err instanceof Error ? err.message : "Unable to load payment ledger.");
+          setError(err instanceof Error ? err.message : "تعذر تحميل سجل المدفوعات.");
         }
       })
       .finally(() => {
@@ -65,7 +74,7 @@ export default function AdminFinancePage() {
       const page = await getAdminPayments(0, 100);
       setPayments(page.content);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load payment ledger.");
+      setError(err instanceof Error ? err.message : "تعذر تحميل سجل المدفوعات.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +87,7 @@ export default function AdminFinancePage() {
       await action();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Finance action failed.");
+      setError(err instanceof Error ? err.message : "فشل إجراء المدفوعات.");
     } finally {
       setBusyId(null);
     }
@@ -86,115 +95,105 @@ export default function AdminFinancePage() {
 
   return (
     <AdminShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
-              Administration
-            </p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">
-              Payments &amp; finance
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              Live payment ledger. Settlement actions are enforced by the backend; no client-side settlement state is trusted.
-            </p>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-          {error && (
-            <div
-              role="alert"
-              className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700"
+      <main className="min-h-screen bg-background">
+        <AdminPageHeader
+          eyebrow="المدفوعات"
+          title="المدفوعات والمالية"
+          description="السجل المعروض هنا Server-backed، والإجراءات الحساسة تُنفذ عبر الخادم ولا تعتمد على الحالة المحلية في المتصفح."
+          actions={
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              disabled={loading}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand disabled:opacity-50"
             >
+              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
+              تحديث
+            </button>
+          }
+        />
+
+        <div className="container-shell py-8">
+          {error && (
+            <div role="alert" className="mb-5 rounded-xl border border-danger-100 bg-danger-surface p-4 text-body-sm font-medium text-danger-700">
               {error}
             </div>
           )}
 
           <div className="grid gap-4 md:grid-cols-3">
-            <Metric icon={DollarSign} label="Gross payment value" value={summary.gross} />
-            <Metric icon={CheckCircle2} label="Completed" value={summary.completed} />
-            <Metric icon={Clock3} label="Needs action" value={summary.needsAction} />
+            <AdminMetricCard icon={DollarSign} label="إجمالي قيمة المدفوعات" value={summary.gross.toFixed(2)} detail="من السجلات المحملة" />
+            <AdminMetricCard icon={CheckCircle2} label="مكتملة" value={summary.completed.toFixed(2)} tone="success" />
+            <AdminMetricCard icon={Clock3} label="تحتاج إجراء" value={summary.needsAction.toFixed(2)} tone="warning" />
           </div>
 
-          <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 p-5">
+          <section className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
+            <div className="flex flex-col gap-3 border-b border-neutral-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <div>
-                <h2 className="text-lg font-black text-slate-900">Payment ledger</h2>
-                <p className="mt-1 text-xs text-slate-400">Server-backed payment records</p>
+                <h2 className="text-h3 font-bold text-foreground">سجل المدفوعات</h2>
+                <p className="mt-1 text-caption text-muted-foreground">بيانات الدفع الفعلية التي أعادها الخادم.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => void refresh()}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-black"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Refresh
-              </button>
+              <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-caption font-medium text-neutral-600">
+                {payments.length} سجل
+              </span>
             </div>
 
             {loading ? (
-              <div className="p-12 text-center text-sm text-slate-500">Loading payments...</div>
+              <div className="divide-y divide-neutral-100" aria-label="جاري تحميل المدفوعات">
+                {[1, 2, 3].map((row) => (
+                  <div key={row} className="animate-pulse p-6">
+                    <div className="h-4 w-1/3 rounded bg-neutral-100" />
+                    <div className="mt-3 h-3 w-1/2 rounded bg-neutral-100" />
+                  </div>
+                ))}
+              </div>
             ) : payments.length === 0 ? (
-              <div className="p-12 text-center text-sm text-slate-500">No payments recorded.</div>
+              <div className="p-14 text-center text-body-sm text-muted-foreground">لا توجد مدفوعات مسجلة.</div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-neutral-100">
                 {payments.map((payment) => (
-                  <article key={payment.id} className="p-5">
+                  <article key={payment.id} className="p-5 transition-colors hover:bg-neutral-50 sm:p-6">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-black text-slate-900">
-                            Payment #{payment.id}
-                          </p>
-                          <StatusPill status={payment.status} />
+                          <p className="text-body font-bold text-foreground">دفعة #{payment.id}</p>
+                          <AdminStatusPill label={payment.status} tone={paymentTone(payment.status)} />
                         </div>
-                        <p className="mt-1 text-xs text-slate-400">
-                          Order #{payment.orderId} · {payment.method}
+                        <p className="mt-1 text-caption text-muted-foreground">
+                          طلب #{payment.orderId} · {payment.method}
                         </p>
-                        {payment.transactionId && (
-                          <p className="mt-2 font-mono text-xs text-slate-500">
-                            {payment.transactionId}
-                          </p>
-                        )}
+                        {payment.transactionId ? (
+                          <p className="mt-2 truncate font-mono text-label text-neutral-500">{payment.transactionId}</p>
+                        ) : null}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3">
                         <LocalizedPrice
                           amountUSD={Number(payment.amount)}
-                          className="text-lg font-black text-[#0F2747]"
+                          className="text-body-lg font-bold text-foreground"
                         />
 
-                        {payment.status === "REQUIRES_RECONCILIATION" && (
+                        {payment.status === "REQUIRES_RECONCILIATION" ? (
                           <button
                             type="button"
                             disabled={busyId === payment.id}
-                            onClick={() =>
-                              void runAction(payment.id, () => reconcilePayment(payment.id))
-                            }
-                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-xs font-black text-white disabled:opacity-50"
+                            onClick={() => void runAction(payment.id, () => reconcilePayment(payment.id))}
+                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-body-sm font-medium text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Reconcile
+                            {busyId === payment.id ? "جارٍ التنفيذ…" : "مطابقة الدفع"}
                           </button>
-                        )}
+                        ) : null}
 
-                        {payment.method === "CASH_ON_DELIVERY" &&
-                          payment.collectionStatus !== "COLLECTED" && (
-                            <button
-                              type="button"
-                              disabled={busyId === payment.id}
-                              onClick={() =>
-                                void runAction(
-                                  payment.id,
-                                  () => collectCashOnDelivery(payment.id),
-                                )
-                              }
-                              className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-xs font-black text-emerald-700 disabled:opacity-50"
-                            >
-                              <Wallet className="h-4 w-4" />
-                              Collect COD
-                            </button>
-                          )}
+                        {payment.method === "CASH_ON_DELIVERY" && payment.collectionStatus !== "COLLECTED" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === payment.id}
+                            onClick={() => void runAction(payment.id, () => collectCashOnDelivery(payment.id))}
+                            className="inline-flex h-10 items-center gap-2 rounded-xl border border-success-100 bg-success-surface px-4 text-body-sm font-medium text-success-700 transition hover:border-success-500 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Wallet className="h-4 w-4" aria-hidden="true" />
+                            {busyId === payment.id ? "جارٍ التحصيل…" : "تحصيل COD"}
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </article>
@@ -205,43 +204,5 @@ export default function AdminFinancePage() {
         </div>
       </main>
     </AdminShell>
-  );
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Wallet;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-black text-slate-400">{label}</p>
-        <Icon className="h-4 w-4 text-[#2563EB]" />
-      </div>
-      <LocalizedPrice
-        amountUSD={value}
-        className="mt-5 block text-2xl font-black text-[#0F172A]"
-      />
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: AdminPayment["status"] }) {
-  const tone =
-    status === "COMPLETED" || status === "REFUNDED"
-      ? "bg-emerald-50 text-emerald-700"
-      : status === "FAILED"
-        ? "bg-red-50 text-red-700"
-        : "bg-amber-50 text-amber-700";
-
-  return (
-    <span className={"rounded-full px-2.5 py-1 text-[10px] font-black " + tone}>
-      {status}
-    </span>
   );
 }

@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { BarChart3, Plus, RefreshCcw, Trash2 } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
+import { AdminStatusPill } from "@/components/admin/AdminStatusPill";
 import {
   createPricingRule,
   deletePricingRule,
@@ -29,7 +32,7 @@ export default function AdminPricingPage() {
     try {
       setRules(await getPricingRules());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load pricing rules.");
+      setError(err instanceof Error ? err.message : "تعذر تحميل قواعد التسعير.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +45,7 @@ export default function AdminPricingPage() {
         if (active) setRules(nextRules);
       })
       .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load pricing rules.");
+        if (active) setError(err instanceof Error ? err.message : "تعذر تحميل قواعد التسعير.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -57,15 +60,15 @@ export default function AdminPricingPage() {
     const numericTarget = targetId ? Number(targetId) : undefined;
 
     if (!Number.isFinite(numericValue) || numericValue < 0) {
-      setError("Markup value must be zero or greater.");
+      setError("قيمة الـMarkup يجب أن تكون صفرًا أو أكبر.");
       return;
     }
     if (!Number.isInteger(numericPriority)) {
-      setError("Priority must be an integer.");
+      setError("الأولوية يجب أن تكون رقمًا صحيحًا.");
       return;
     }
-    if ((scope !== "GLOBAL") && (!Number.isInteger(numericTarget) || numericTarget! < 1)) {
-      setError("A valid category or product id is required for this scope.");
+    if (scope !== "GLOBAL" && (!Number.isInteger(numericTarget) || numericTarget! < 1)) {
+      setError("أدخل معرف قسم أو منتج صحيح لهذا النطاق.");
       return;
     }
 
@@ -82,102 +85,149 @@ export default function AdminPricingPage() {
       setTargetId("");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to create pricing rule.");
+      setError(err instanceof Error ? err.message : "تعذر إنشاء قاعدة التسعير.");
     }
   }
 
   async function remove(id: number) {
+    setError("");
     try {
       await deletePricingRule(id);
       setRules((current) => current.filter((rule) => rule.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to delete pricing rule.");
+      setError(err instanceof Error ? err.message : "تعذر حذف قاعدة التسعير.");
     }
   }
 
+  const activeRules = rules.filter((rule) => rule.active).length;
+  const categoryRules = rules.filter((rule) => rule.scope === "CATEGORY").length;
+
   return (
     <AdminShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1300px] px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">Administration</p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">Pricing rules</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              Store-owned markup policies are persisted and applied against supplier cost.
-            </p>
-          </div>
-        </section>
+      <main className="min-h-screen bg-background">
+        <AdminPageHeader
+          eyebrow="التسعير"
+          title="قواعد تسعير المتجر"
+          description="القواعد محفوظة على الخادم وتحدد هامش المتجر فوق تكلفة المورد. الواجهة لا تحسب سعر بيع بديلًا ولا تتجاوز سياسة الـBackend."
+          actions={
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              disabled={loading}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand disabled:opacity-50"
+            >
+              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
+              تحديث
+            </button>
+          }
+        />
 
-        <div className="mx-auto max-w-[1300px] px-4 py-7 sm:px-6 lg:px-8">
+        <div className="container-shell py-8">
           {error && (
-            <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            <div role="alert" className="mb-5 rounded-xl border border-danger-100 bg-danger-surface p-4 text-body-sm font-medium text-danger-700">
               {error}
             </div>
           )}
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
-                <Plus className="h-5 w-5" />
-              </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <AdminMetricCard icon={BarChart3} label="إجمالي القواعد" value={String(rules.length)} />
+            <AdminMetricCard icon={BarChart3} label="القواعد النشطة" value={String(activeRules)} tone="success" />
+            <AdminMetricCard icon={BarChart3} label="على مستوى الأقسام" value={String(categoryRules)} tone="neutral" />
+          </div>
+
+          <section className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-raised sm:p-6">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-brand">
+                <Plus className="h-5 w-5" aria-hidden="true" />
+              </span>
               <div>
-                <h2 className="text-lg font-black text-slate-900">Create pricing rule</h2>
-                <p className="mt-1 text-xs text-slate-400">Product scope overrides category, which overrides global.</p>
+                <h2 className="text-h3 font-bold text-foreground">إضافة قاعدة</h2>
+                <p className="mt-1 text-caption leading-5 text-muted-foreground">
+                  المنتج يتقدم على القسم، والقسم يتقدم على النطاق العام حسب منطق الخادم.
+                </p>
               </div>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <SelectField label="Scope" value={scope} onChange={(v) => { setScope(v as AdminPricingScope); setTargetId(""); }}>
-                <option value="GLOBAL">Global</option>
-                <option value="CATEGORY">Category</option>
-                <option value="PRODUCT">Product</option>
+              <SelectField label="النطاق" value={scope} onChange={(next) => { setScope(next as AdminPricingScope); setTargetId(""); }}>
+                <option value="GLOBAL">عام</option>
+                <option value="CATEGORY">قسم</option>
+                <option value="PRODUCT">منتج</option>
               </SelectField>
-              <SelectField label="Type" value={type} onChange={(v) => setType(v as AdminPricingType)}>
-                <option value="PERCENTAGE_MARKUP">Percentage markup</option>
-                <option value="FIXED_MARKUP">Fixed markup</option>
+              <SelectField label="النوع" value={type} onChange={(next) => setType(next as AdminPricingType)}>
+                <option value="PERCENTAGE_MARKUP">نسبة مئوية</option>
+                <option value="FIXED_MARKUP">قيمة ثابتة</option>
               </SelectField>
-              <TextField label={type === "PERCENTAGE_MARKUP" ? "Markup %" : "Markup amount"} value={value} onChange={setValue} type="number" />
-              <TextField label="Priority" value={priority} onChange={setPriority} type="number" />
-              <TextField label={scope === "CATEGORY" ? "Category ID" : scope === "PRODUCT" ? "Product ID" : "Target"} value={targetId} onChange={setTargetId} disabled={scope === "GLOBAL"} />
+              <TextField label={type === "PERCENTAGE_MARKUP" ? "نسبة الـMarkup" : "قيمة الـMarkup"} value={value} onChange={setValue} type="number" />
+              <TextField label="الأولوية" value={priority} onChange={setPriority} type="number" />
+              <TextField label={scope === "CATEGORY" ? "معرّف القسم" : scope === "PRODUCT" ? "معرّف المنتج" : "الهدف"} value={targetId} onChange={setTargetId} disabled={scope === "GLOBAL"} />
             </div>
 
             <button
               type="button"
               onClick={() => void create()}
-              className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+              className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-body-sm font-medium text-white transition hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              <Plus className="h-4 w-4" />
-              Add rule
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              حفظ القاعدة
             </button>
           </section>
 
-          <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <section className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
+            <div className="border-b border-neutral-100 px-5 py-4 sm:px-6">
+              <h2 className="text-h3 font-bold text-foreground">القواعد الحالية</h2>
+              <p className="mt-1 text-caption text-muted-foreground">{rules.length} قاعدة محملة من الخادم.</p>
+            </div>
+
             {loading ? (
-              <div className="p-10 text-center text-sm text-slate-500">Loading rules...</div>
-            ) : rules.length === 0 ? (
-              <div className="p-10 text-center text-sm text-slate-500">No pricing rules configured.</div>
-            ) : (
-              rules.map((rule) => (
-                <div key={rule.id} className="flex flex-col gap-4 border-b border-slate-100 p-5 last:border-0 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-black text-slate-900">#{rule.id} · {rule.scope}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {rule.scope === "CATEGORY"
-                        ? `Category: ${rule.categoryName ?? rule.categoryId}`
-                        : rule.scope === "PRODUCT"
-                          ? `Product: ${rule.productName ?? rule.productId}`
-                          : "All products"}
-                    </p>
-                    <p className="mt-2 text-xs font-black text-blue-700">
-                      {rule.type === "PERCENTAGE_MARKUP" ? `+${rule.value}%` : `+${rule.value}`} · priority {rule.priority}
-                    </p>
+              <div className="divide-y divide-neutral-100" aria-label="جاري تحميل القواعد">
+                {[1, 2, 3].map((row) => (
+                  <div key={row} className="animate-pulse p-6">
+                    <div className="h-4 w-1/3 rounded bg-neutral-100" />
+                    <div className="mt-3 h-3 w-1/2 rounded bg-neutral-100" />
                   </div>
-                  <button type="button" onClick={() => void remove(rule.id)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-black text-red-700">
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </button>
-                </div>
-              ))
+                ))}
+              </div>
+            ) : rules.length === 0 ? (
+              <div className="p-14 text-center">
+                <p className="text-body-sm font-medium text-foreground">لا توجد قواعد تسعير.</p>
+                <p className="mt-1 text-caption text-muted-foreground">أنشئ أول قاعدة من النموذج أعلاه.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-neutral-100">
+                {rules.map((rule) => (
+                  <div key={rule.id} className="flex flex-col gap-4 p-5 transition-colors hover:bg-neutral-50 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-body font-bold text-foreground">#{rule.id}</p>
+                        <AdminStatusPill label={rule.active ? "نشطة" : "متوقفة"} tone={rule.active ? "success" : "neutral"} />
+                        <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-caption font-medium text-neutral-600">
+                          {rule.scope}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-body-sm text-neutral-600">
+                        {rule.scope === "CATEGORY"
+                          ? `القسم: ${rule.categoryName ?? rule.categoryId}`
+                          : rule.scope === "PRODUCT"
+                            ? `المنتج: ${rule.productName ?? rule.productId}`
+                            : "كل المنتجات"}
+                      </p>
+                      <p className="mt-1 text-caption font-medium text-brand">
+                        {rule.type === "PERCENTAGE_MARKUP" ? `+${rule.value}%` : `+${rule.value}`} · أولوية {rule.priority}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void remove(rule.id)}
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-danger-100 bg-danger-surface px-4 text-body-sm font-medium text-danger-700 transition hover:border-danger-500"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      حذف
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </section>
         </div>
@@ -186,9 +236,21 @@ export default function AdminPricingPage() {
   );
 }
 
-function TextField({ label, value, onChange, type = "text", disabled = false }: { label: string; value: string; onChange: (value: string) => void; type?: string; disabled?: boolean }) {
+function TextField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  disabled = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  disabled?: boolean;
+}) {
   return (
-    <label className="block text-xs font-black text-slate-600">
+    <label className="block text-body-sm font-medium text-neutral-600">
       {label}
       <input
         disabled={disabled}
@@ -196,17 +258,31 @@ function TextField({ label, value, onChange, type = "text", disabled = false }: 
         min={type === "number" ? "0" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none disabled:bg-slate-100"
+        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-body-sm text-foreground outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-neutral-100"
       />
     </label>
   );
 }
 
-function SelectField({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: React.ReactNode }) {
+function SelectField({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
   return (
-    <label className="block text-xs font-black text-slate-600">
+    <label className="block text-body-sm font-medium text-neutral-600">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-body-sm text-foreground outline-none transition focus:border-primary-300 focus:ring-4 focus:ring-primary-100"
+      >
         {children}
       </select>
     </label>

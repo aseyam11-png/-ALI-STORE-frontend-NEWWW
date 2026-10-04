@@ -309,46 +309,46 @@ export default function CheckoutPage() {
   if (successOrderId) {
     return (
       <AppShell>
-        <main className="min-h-screen bg-[#F8FAFC]">
+        <main className="min-h-screen bg-background">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
+            <section className="rounded-3xl border border-neutral-200 bg-surface p-8 text-center shadow-sm sm:p-12">
 
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success-surface text-success-600">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
 
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">
+              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-success-600">
                 Order confirmed
               </p>
 
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
                 Thank you for your order
               </h1>
 
-              <p className="mt-3 text-sm leading-6 text-slate-500">
+              <p className="mt-3 text-sm leading-6 text-neutral-500">
                 Your order has been created and the payment status below comes directly
                 from the payment service. Tracking appears after fulfillment begins.
               </p>
 
-              <div className="mx-auto mt-7 max-w-md rounded-2xl bg-slate-50 p-5 text-start">
+              <div className="mx-auto mt-7 max-w-md rounded-2xl bg-neutral-50 p-5 text-start">
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-neutral-400">
                     Order number
                   </span>
 
-                  <span className="text-sm font-black text-[#0F2747]">
+                  <span className="text-sm font-black text-brand-ink">
                     {successOrderId}
                   </span>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-neutral-400">
                     Payment
                   </span>
 
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
+                  <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
                     {successPaymentStatus === "COMPLETED"
                       ? "PAID"
                       : successPaymentStatus === "FAILED"
@@ -363,7 +363,7 @@ export default function CheckoutPage() {
 
                 <Link
                   href="/buyer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
                 >
                   View my orders
                   <ArrowRight className="h-4 w-4" />
@@ -371,7 +371,7 @@ export default function CheckoutPage() {
 
                 <Link
                   href="/shop/products"
-                  className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-700"
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-200 px-5 text-sm font-bold text-neutral-700"
                 >
                   Continue shopping
                 </Link>
@@ -387,24 +387,24 @@ export default function CheckoutPage() {
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-background">
 
-        <section className="border-b border-slate-200 bg-white">
+        <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
 
             <Link
               href="/shop/cart"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
+              className="inline-flex items-center gap-2 text-xs font-black text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
               Back to cart
             </Link>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
               Checkout
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
               One secure payment for your order.
             </p>
 
@@ -414,17 +414,17 @@ export default function CheckoutPage() {
         <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
 
           {items.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <section className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-12 text-center">
 
-              <Package className="mx-auto h-8 w-8 text-slate-300" />
+              <Package className="mx-auto h-8 w-8 text-neutral-300" />
 
-              <h2 className="mt-5 text-xl font-black text-slate-900">
+              <h2 className="mt-5 text-xl font-black text-foreground">
                 Your cart is empty
               </h2>
 
               <Link
                 href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
               >
                 Browse products
                 <ArrowRight className="h-4 w-4" />
@@ -460,19 +460,19 @@ export default function CheckoutPage() {
                 />
 
                 {/* Contact */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-surface text-brand">
                       <MapPin className="h-5 w-5" />
                     </div>
 
                     <div>
-                      <h2 className="text-lg font-black text-slate-900">
+                      <h2 className="text-lg font-black text-foreground">
                         Delivery information
                       </h2>
 
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-neutral-400">
                         Where should we deliver your order?
                       </p>
                     </div>
@@ -483,7 +483,7 @@ export default function CheckoutPage() {
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="full-name"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         Full name *
                       </label>
@@ -501,14 +501,14 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="email"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         Email *
                       </label>
@@ -527,14 +527,14 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="phone"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         Phone *
                       </label>
@@ -553,14 +553,14 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="address"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         Address *
                       </label>
@@ -578,14 +578,14 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="city"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         City *
                       </label>
@@ -603,14 +603,14 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="country"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         Country *
                       </label>
@@ -628,14 +628,14 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="postal-code"
-                        className="text-xs font-black text-slate-600"
+                        className="text-xs font-black text-neutral-600"
                       >
                         Postal code
                       </label>
@@ -653,7 +653,7 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
-                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
 
@@ -661,17 +661,17 @@ export default function CheckoutPage() {
                 </section>
 
                 {/* Payment */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                   <div className="flex items-center gap-3">
-                    <CreditCard className="h-5 w-5 text-[#2563EB]" />
+                    <CreditCard className="h-5 w-5 text-brand" />
 
                     <div>
-                      <h2 className="text-lg font-black text-slate-900">
+                      <h2 className="text-lg font-black text-foreground">
                         Payment
                       </h2>
 
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-neutral-400">
                         Choose how you&apos;d like to pay.
                       </p>
                     </div>
@@ -707,11 +707,11 @@ export default function CheckoutPage() {
                           className={`rounded-2xl border p-4 text-start transition ${
                             paymentMethod ===
                             option.value
-                              ? "border-[#2563EB] bg-blue-50"
-                              : "border-slate-200 hover:bg-slate-50"
+                              ? "border-brand bg-info-surface"
+                              : "border-neutral-200 hover:bg-neutral-50"
                           }`}
                         >
-                          <p className="text-xs font-black text-slate-900">
+                          <p className="text-xs font-black text-foreground">
                             {option.label}
                           </p>
                         </button>
@@ -725,7 +725,7 @@ export default function CheckoutPage() {
                 {error && (
                   <div
                     role="alert"
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700"
+                    className="rounded-xl border border-danger-100 bg-danger-surface px-4 py-3 text-sm font-bold text-danger-700"
                   >
                     {error}
                   </div>
@@ -734,12 +734,12 @@ export default function CheckoutPage() {
               </div>
 
               {/* Summary */}
-              <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24">
+              <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm xl:sticky xl:top-24">
 
                 <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-[#2563EB]" />
+                  <Package className="h-5 w-5 text-brand" />
 
-                  <h2 className="text-lg font-black text-slate-900">
+                  <h2 className="text-lg font-black text-foreground">
                     Your order
                   </h2>
                 </div>
@@ -750,16 +750,16 @@ export default function CheckoutPage() {
                     (item) => (
                       <div
                         key={`${item.productId}-${item.variantId ?? "default"}`}
-                        className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
+                        className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 p-3"
                       >
-                        <p className="min-w-0 truncate text-xs font-bold text-slate-700">
+                        <p className="min-w-0 truncate text-xs font-bold text-neutral-700">
                           {item.name}{" "}
-                          <span className="text-slate-400">
+                          <span className="text-neutral-400">
                             × {item.quantity}
                           </span>
                         </p>
 
-                        <p className="shrink-0 text-xs font-black text-slate-900">
+                        <p className="shrink-0 text-xs font-black text-foreground">
                           <LocalizedPrice
                             amountUSD={item.price * item.quantity}
                             currency={item.currency ?? serverCartCurrency}
@@ -771,7 +771,7 @@ export default function CheckoutPage() {
 
                 </div>
 
-                <div className="mt-5 rounded-xl bg-slate-50 p-3 text-[11px] text-slate-400">
+                <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
                   Shipping is calculated and confirmed by the backend when the
                   order is created.
                 </div>
@@ -784,37 +784,37 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                <div className="mt-6 space-y-3 border-t border-slate-100 pt-5">
+                <div className="mt-6 space-y-3 border-t border-neutral-100 pt-5">
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">
+                    <span className="text-neutral-500">
                       Subtotal
                     </span>
 
                     <LocalizedPrice
                       amountUSD={cartSubtotal}
                       currency={serverCartCurrency}
-                      className="font-bold text-slate-800"
+                      className="font-bold text-neutral-800"
                     />
                   </div>
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">
+                    <span className="text-neutral-500">
                       Shipping
                     </span>
 
-                    <span className="font-bold text-slate-800">
+                    <span className="font-bold text-neutral-800">
                       Confirmed by backend at order creation
                     </span>
                   </div>
 
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">
+                      <span className="text-neutral-500">
                         Discount
                       </span>
 
-                      <span className="font-bold text-emerald-600">
+                      <span className="font-bold text-success-600">
                         −<LocalizedPrice
                           amountUSD={couponDiscount}
                           currency={serverCartCurrency}
@@ -825,18 +825,18 @@ export default function CheckoutPage() {
 
                 </div>
 
-                <div className="mt-5 border-t border-slate-100 pt-5">
+                <div className="mt-5 border-t border-neutral-100 pt-5">
 
                   <div className="flex items-end justify-between">
 
-                    <span className="text-sm font-bold text-slate-500">
+                    <span className="text-sm font-bold text-neutral-500">
                       Total
                     </span>
 
                     <LocalizedPrice
                       amountUSD={total}
                       currency={serverCartCurrency}
-                      className="text-3xl font-black text-[#0F2747]"
+                      className="text-3xl font-black text-brand-ink"
                     />
 
                   </div>
@@ -846,17 +846,17 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white transition hover:bg-[#1D4ED8] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
                   Place order
                 </button>
 
-                <div className="mt-4 rounded-xl bg-emerald-50 p-3">
+                <div className="mt-4 rounded-xl bg-success-surface p-3">
                   <div className="flex items-start gap-2">
-                    <ShieldCheck className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    <ShieldCheck className="mt-0.5 h-4 w-4 text-success-600" />
 
-                    <p className="text-[11px] leading-5 text-emerald-700">
+                    <p className="text-[11px] leading-5 text-success-700">
                       Your payment is processed securely by ALI STORE.
                     </p>
                   </div>

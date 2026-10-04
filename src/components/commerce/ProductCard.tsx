@@ -86,11 +86,11 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-raised">
-      <div className="relative aspect-square overflow-hidden bg-neutral-50">
+    <article className="interactive-lift group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
+      <div className="media-frame relative aspect-square overflow-hidden bg-neutral-50">
         <Link
           href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
-          className="absolute inset-0"
+          className="absolute inset-0 outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           aria-label={product.name}
         >
           {product.image?.url ? (
@@ -99,20 +99,20 @@ export function ProductCard({ product }: ProductCardProps) {
               alt={product.image.alt}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 22vw"
-              className="object-contain p-4 transition duration-300 group-hover:scale-[1.03]"
+              className="object-contain p-4 transition-transform duration-500 ease-brand group-hover:scale-[1.04]"
             />
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <ShoppingCart className="h-8 w-8 text-neutral-300" />
+            <div className="flex h-full items-center justify-center text-neutral-300">
+              <ShoppingCart className="h-8 w-8" aria-hidden="true" />
             </div>
           )}
         </Link>
 
-        {product.discountPercentage !== undefined && (
-          <span className="absolute start-3 top-3 rounded-sm bg-discount px-2 py-1 text-label font-medium text-white">
+        {product.discountPercentage !== undefined ? (
+          <span className="pointer-events-none absolute start-3 top-3 rounded-lg bg-discount px-2 py-1 text-label font-medium text-white shadow-sm">
             -{product.discountPercentage}%
           </span>
-        )}
+        ) : null}
 
         <WishlistButton
           product={{
@@ -127,24 +127,24 @@ export function ProductCard({ product }: ProductCardProps) {
             rating: product.rating,
             reviewCount: product.reviewCount,
           }}
-          className="absolute end-3 top-3"
+          className="absolute end-3 top-3 transition-transform duration-200 ease-brand group-hover:scale-105"
         />
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         <Link
           href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
-          className="outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          className="rounded-lg outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
-          <h3 className="line-clamp-2 min-h-[2.7em] text-h4 leading-6 text-foreground transition-colors duration-200 group-hover:text-brand">
+          <h3 className="line-clamp-2 min-h-[2.9rem] text-body font-medium leading-6 text-foreground transition-colors duration-200 group-hover:text-brand">
             {product.name}
           </h3>
         </Link>
 
-        <div className="mt-2.5 flex items-center gap-1.5">
+        <div className="mt-2.5 flex min-h-5 items-center gap-1.5">
           {product.reviewCount > 0 ? (
             <>
-              <Star className="h-4 w-4 fill-warning-500 text-warning-500" />
+              <Star className="h-4 w-4 fill-warning-500 text-warning-500" aria-hidden="true" />
               <span className="text-body-sm font-medium text-foreground">
                 {product.rating.toFixed(1)}
               </span>
@@ -170,52 +170,52 @@ export function ProductCard({ product }: ProductCardProps) {
               )}
             </span>
             {product.price.originalAmount !== undefined &&
-              product.price.originalAmount > product.price.amount && (
-                <span className="text-body-sm text-muted-foreground line-through">
-                  {formatCurrency(
-                    product.price.originalAmount,
-                    product.price.currency,
-                  )}
-                </span>
-              )}
+            product.price.originalAmount > product.price.amount ? (
+              <span className="text-caption text-muted-foreground line-through">
+                {formatCurrency(
+                  product.price.originalAmount,
+                  product.price.currency,
+                )}
+              </span>
+            ) : null}
           </div>
 
           <div className="mt-3">
             {product.stockStatus === "unknown" ? (
-              <span className="text-xs font-semibold text-neutral-500">
-                Availability is being confirmed
+              <span className="text-caption font-medium text-neutral-500">
+                يتم التحقق من التوفر…
               </span>
             ) : canAddToCart ? (
-              <span className="text-xs font-semibold text-success-700">
+              <span className="text-caption font-medium text-success-700">
                 {product.stockStatus === "low_stock"
-                  ? "Limited availability"
+                  ? "توفر محدود"
                   : t("inStock")}
               </span>
             ) : (
-              <span className="text-xs font-semibold text-danger-700">
+              <span className="text-caption font-medium text-danger-700">
                 {t("outOfStock")}
               </span>
             )}
           </div>
 
-          {error && (
-            <p role="alert" className="mt-2 text-xs font-bold text-danger-700">
+          {error ? (
+            <p role="alert" className="mt-2 text-caption font-medium text-danger-700">
               {error}
             </p>
-          )}
+          ) : null}
 
           <button
             type="button"
             onClick={() => void handleAddToCart()}
             disabled={!canAddToCart || busy}
             aria-busy={busy}
-            className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-body font-medium text-white transition-colors duration-200 hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+            className="mt-3.5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-body-sm font-medium text-white transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-brand-hover disabled:cursor-not-allowed disabled:transform-none disabled:bg-neutral-300 focus-visible:ring-4 focus-visible:ring-primary-100"
           >
-            <ShoppingCart className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4" aria-hidden="true" />
             {busy
-              ? "Adding..."
+              ? "جارٍ الإضافة…"
               : product.stockStatus === "unknown"
-                ? "Checking availability"
+                ? "يتم التحقق من التوفر"
                 : canAddToCart
                   ? t("addToCart")
                   : t("outOfStock")}
