@@ -2,7 +2,6 @@
 
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
-import { Tabs } from "@/components/ui/tabs";
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import {
