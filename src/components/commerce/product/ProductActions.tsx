@@ -188,7 +188,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
       {message && (
         <div
-          role="status"
+          role={messageTone === "error" ? "alert" : "status"}
           className={
             "mt-4 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold " +
             (messageTone === "success"
