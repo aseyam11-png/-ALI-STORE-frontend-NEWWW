@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { useSession } from "@/features/auth/session";
 import {
   deleteNotification,
@@ -103,8 +103,11 @@ export default function NotificationsPage() {
   };
 
   return (
-    <AppShell>
-      <main className="min-h-screen bg-background">
+    <AccountWorkspace
+      activeTab="notifications"
+      title="الإشعارات"
+      description="تابع تحديثات الحساب والطلبات والتنبيهات المهمة من مكان واحد."
+    >
         <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1000px] px-4 py-10 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4">
@@ -239,7 +242,6 @@ export default function NotificationsPage() {
             </>
           )}
         </div>
-      </main>
-    </AppShell>
+    </AccountWorkspace>
   );
 }
