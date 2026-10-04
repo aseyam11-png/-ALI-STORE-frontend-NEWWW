@@ -9,6 +9,8 @@ import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import { getProducts } from "@/features/products/services/product.service";
 
+// Homepage category shelves are catalog-driven; an empty backend category stays hidden.
+
 interface HomeCategorySectionProps {
   title: string;
   description: string;
