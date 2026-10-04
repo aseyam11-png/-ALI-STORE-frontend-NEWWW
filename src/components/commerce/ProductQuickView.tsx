@@ -72,7 +72,7 @@ export function ProductQuickView({
 
   if (!open) return null;
 
-  const available =
+  const متوفر =
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
 
@@ -95,7 +95,7 @@ export function ProductQuickView({
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
-          aria-label="Close quick view"
+          aria-label="إغلاق العرض السريع"
           className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <X className="h-5 w-5" />
@@ -158,12 +158,12 @@ export function ProductQuickView({
               </p>
               <p className={
                 "mt-1 text-sm font-black " +
-                (available ? "text-success-700" : "text-danger-700")
+                (متوفر ? "text-success-700" : "text-danger-700")
               }>
                 {product.stockStatus === "unknown"
                   ? "جارٍ التحقق من التوفر"
-                  : available
-                    ? product.stock + " available"
+                  : متوفر
+                    ? product.stock + " متوفر"
                     : "غير متوفر"}
               </p>
             </div>
@@ -195,14 +195,12 @@ export function ProductQuickView({
               href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
               onClick={onClose}
               className="inline-flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-surface px-5 text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
-            >
-              عرض التفاصيل
-            </Link>
+            >عرض التفاصيل</Link>
 
             <button
               type="button"
               onClick={onAddToCart}
-              disabled={!available || addBusy}
+              disabled={!متوفر || addBusy}
               aria-busy={addBusy}
               className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-5 text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
