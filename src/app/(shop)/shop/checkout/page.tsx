@@ -196,7 +196,7 @@ export default function CheckoutPage() {
     0,
   );
 
-  const cartالمجموع الفرعي =
+  const cartSubtotal =
     serverCartTotal ?? subtotal;
 
   const couponالخصم =
@@ -304,7 +304,7 @@ export default function CheckoutPage() {
       const paymentIsAccepted =
         payment.status === "COMPLETED" ||
         (payment.method === "CASH_ON_DELIVERY" &&
-          payment.status === "PENDING");
+          payment.status === "بانتظار الدفع");
 
       if (!paymentIsAccepted) {
         setPaymentRecoveryOrderId(createdOrderId);
@@ -431,7 +431,7 @@ export default function CheckoutPage() {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-400">
-                    Order number
+                    رقم الطلب
                   </span>
 
                   <span className="text-sm font-black text-brand-ink">
@@ -441,14 +441,14 @@ export default function CheckoutPage() {
 
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs text-neutral-400">
-                    Payment
+                    الدفع
                   </span>
 
                   <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
                     {successPaymentStatus === "COMPLETED"
                       ? "تم الدفع"
                       : successPaymentStatus === "FAILED"
-                        ? "FAILED"
+                        ? "فشل الدفع"
                         : "PENDING"}
                   </span>
                 </div>
@@ -497,7 +497,7 @@ export default function CheckoutPage() {
             </Link>
 
             <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
-              Checkout
+              إتمام الطلب
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
@@ -883,7 +883,7 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">
-                      Subtotal
+                      المجموع الفرعي
                     </span>
 
                     <LocalizedPrice
@@ -895,7 +895,7 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">
-                      Shipping
+                      الشحن
                     </span>
 
                     <span className="font-bold text-neutral-800">
@@ -906,7 +906,7 @@ export default function CheckoutPage() {
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-neutral-500">
-                        Discount
+                        الخصم
                       </span>
 
                       <span className="font-bold text-success-600">
@@ -925,7 +925,7 @@ export default function CheckoutPage() {
                   <div className="flex items-end justify-between">
 
                     <span className="text-sm font-bold text-neutral-500">
-                      Total
+                      الإجمالي
                     </span>
 
                     <LocalizedPrice
