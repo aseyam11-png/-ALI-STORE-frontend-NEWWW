@@ -41,7 +41,7 @@ export function AdminMetricCard({
       <div className="flex items-start justify-between gap-4">
         <p className="text-body-sm font-medium text-muted-foreground">{label}</p>
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.icon}`}>
-          <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+          <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
       </div>
       <p className={`mt-4 text-2xl font-bold tracking-tight ${styles.value}`}>{value}</p>
