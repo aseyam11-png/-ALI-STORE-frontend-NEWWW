@@ -143,7 +143,7 @@ export function VisualSearch() {
           searchError instanceof
             Error
             ? searchError.message
-            : "Visual search failed.",
+            : "تعذر تنفيذ البحث بالصورة.",
         );
       } finally {
         setSearching(
@@ -209,7 +209,7 @@ export function VisualSearch() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview}
-                  alt="Selected search image"
+                  alt="الصورة المختارة للبحث"
                   className="mx-auto max-h-[230px] w-full rounded-xl object-contain"
                 />
 
@@ -225,7 +225,7 @@ export function VisualSearch() {
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-neutral-400">
-                  JPG, PNG or WEBP · الحد الأقصى 10 ميجابايت
+                  JPG أو PNG أو WEBP · الحد الأقصى 10 ميجابايت
                 </p>
 
                 <span className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-black text-white">
