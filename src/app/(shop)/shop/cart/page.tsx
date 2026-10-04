@@ -154,7 +154,7 @@ export default function CartPage() {
     }
   };
 
-  const handleRemove = async (
+  const handleحذف = async (
     productId: string,
     variantId: string | undefined,
   ) => {
@@ -487,14 +487,14 @@ export default function CartPage() {
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      handleRemove(
+                                      handleحذف(
                                         item.productId,
                                         item.variantId,
                                       )
                                     }
                                     className="text-xs font-bold text-danger hover:underline"
                                   >
-                                    Remove
+                                    حذف
                                   </button>
 
                                 </div>
@@ -595,8 +595,8 @@ export default function CartPage() {
 
                   <RecommendationSection
                     type="BASED_ON_BROWSING"
-                    title="Recommended for you"
-                    description="Suggestions based on products you may like."
+                    title="مقترحات لك"
+                    description="اقتراحات مبنية على المنتجات التي قد تناسبك."
                   />
 
                 </aside>
