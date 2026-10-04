@@ -154,7 +154,7 @@ export default function CartPage() {
     }
   };
 
-  const handleحذف = async (
+  const handleRemove = async (
     productId: string,
     variantId: string | undefined,
   ) => {
@@ -487,7 +487,7 @@ export default function CartPage() {
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      handleحذف(
+                                      handleRemove(
                                         item.productId,
                                         item.variantId,
                                       )
