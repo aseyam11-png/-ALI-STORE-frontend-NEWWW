@@ -110,11 +110,11 @@ export function CouponInput({
           <div className="min-w-0 flex-1">
 
             <p className="text-sm font-black text-success-800">
-              Coupon applied
+              تم تطبيق الكوبون
             </p>
 
             <p className="mt-1 text-xs text-success-700">
-              Code:{" "}
+              الرمز:{" "}
               <span className="font-black">
                 {
                   applied.coupon.code
@@ -124,7 +124,7 @@ export function CouponInput({
 
             <div className="mt-2 flex items-center gap-2 text-[10px] font-black text-success-700">
 
-              Discount:
+              الخصم:
 
               <LocalizedPrice
                 amountUSD={
@@ -141,7 +141,7 @@ export function CouponInput({
             onClick={
               remove
             }
-            aria-label="Remove coupon"
+            aria-label="إزالة الكوبون"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-success-600 hover:bg-surface"
           >
             <X className="h-4 w-4" />
@@ -164,11 +164,11 @@ export function CouponInput({
 
         <div>
           <h2 className="text-sm font-black text-foreground">
-            Coupon or promo code
+            كود الخصم
           </h2>
 
           <p className="mt-1 text-[10px] text-neutral-400">
-            Enter your discount code before placing the order.
+            أدخل كود الخصم قبل إتمام الطلب.
           </p>
         </div>
 
@@ -196,8 +196,8 @@ export function CouponInput({
               apply();
             }
           }}
-          placeholder="e.g. WELCOME10"
-          aria-label="Coupon code"
+          placeholder="مثال: WELCOME10"
+          aria-label="كود الخصم"
           className="h-11 min-w-0 flex-1 rounded-xl border border-neutral-200 px-3 text-sm font-bold uppercase outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
         />
 
@@ -207,7 +207,7 @@ export function CouponInput({
           disabled={!code.trim() || applying}
           className="h-11 rounded-xl bg-brand px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-neutral-300"
         >
-          {applying ? "Checking..." : "Apply"}
+          {applying ? "جارٍ التحقق..." : "تطبيق"}
         </button>
 
       </div>
@@ -230,7 +230,7 @@ export function CouponInput({
       )}
 
       <div className="mt-3 text-[9px] text-neutral-400">
-        Coupon availability is checked securely with ALI STORE.
+        يتم التحقق من صلاحية الكوبون بأمان عبر ALI STORE.
       </div>
 
     </section>
