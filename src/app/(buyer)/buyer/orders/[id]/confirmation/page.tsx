@@ -46,12 +46,12 @@ function paymentLabel(payment: BackendPayment | null): string {
 function paymentClass(payment: BackendPayment | null): string {
   switch (payment?.status) {
     case "COMPLETED":
-      return "bg-emerald-50 text-emerald-700";
+      return "bg-success-surface text-success-700";
     case "FAILED":
     case "REFUNDED":
       return "bg-red-50 text-red-700";
     default:
-      return "bg-amber-50 text-amber-700";
+      return "bg-warning-surface text-warning-700";
   }
 }
 
@@ -96,8 +96,8 @@ export default function OrderConfirmationPage() {
   if (loading) {
     return (
       <AppShell>
-        <main className="min-h-screen bg-[#F8FAFC] p-8">
-          <div className="mx-auto h-96 max-w-[1200px] animate-pulse rounded-3xl bg-white" />
+        <main className="min-h-screen bg-background p-8">
+          <div className="mx-auto h-96 max-w-[1200px] animate-pulse rounded-3xl bg-surface" />
         </main>
       </AppShell>
     );
@@ -106,13 +106,13 @@ export default function OrderConfirmationPage() {
   if (error || !order) {
     return (
       <AppShell>
-        <main className="min-h-screen bg-[#F8FAFC]">
+        <main className="min-h-screen bg-background">
           <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-            <Package className="mx-auto h-9 w-9 text-slate-300" />
-            <h1 className="mt-5 text-2xl font-black text-slate-900">
+            <Package className="mx-auto h-9 w-9 text-neutral-300" />
+            <h1 className="mt-5 text-2xl font-black text-foreground">
               تعذر العثور على الطلب
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-neutral-500">
               {error || "هذا الطلب غير متاح لحسابك."}
             </p>
             <Link
@@ -146,12 +146,12 @@ export default function OrderConfirmationPage() {
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
+      <main className="min-h-screen bg-background">
+        <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
             <Link
               href="/buyer/orders"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
+              className="inline-flex items-center gap-2 text-xs font-black text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
               My orders
@@ -162,8 +162,8 @@ export default function OrderConfirmationPage() {
                 className={
                   "flex h-14 w-14 items-center justify-center rounded-2xl " +
                   (paymentNeedsAttention
-                    ? "bg-amber-50 text-amber-700"
-                    : "bg-blue-50 text-[#2563EB]")
+                    ? "bg-warning-surface text-warning-700"
+                    : "bg-info-surface text-brand")
                 }
               >
                 {paymentNeedsAttention ? (
@@ -177,7 +177,7 @@ export default function OrderConfirmationPage() {
                   className={
                     "text-[10px] font-black uppercase tracking-[0.18em] " +
                     (paymentNeedsAttention
-                      ? "text-amber-700"
+                      ? "text-warning-700"
                       : "text-blue-600")
                   }
                 >
@@ -186,7 +186,7 @@ export default function OrderConfirmationPage() {
                 <h1 className="mt-1 text-3xl font-black tracking-tight text-[#0F172A]">
                   Order #{order.id}
                 </h1>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-neutral-500">
                   {paymentSucceeded
                     ? "Your order and payment have been confirmed by the server."
                     : codPending
@@ -201,10 +201,10 @@ export default function OrderConfirmationPage() {
         <div className="mx-auto max-w-[1200px] px-4 py-7 sm:px-6 lg:px-8">
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
                       Order number
                     </p>
                     <p className="mt-1 text-xl font-black text-[#0F2747]">
@@ -222,14 +222,14 @@ export default function OrderConfirmationPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-[#2563EB]" />
+                  <Package className="h-5 w-5 text-brand" />
                   <div>
-                    <h2 className="text-lg font-black text-slate-900">
+                    <h2 className="text-lg font-black text-foreground">
                       Order items
                     </h2>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-neutral-400">
                       {order.items.length} product
                       {order.items.length !== 1 ? "s" : ""} in this order.
                     </p>
@@ -246,14 +246,14 @@ export default function OrderConfirmationPage() {
                         <p className="truncate text-xs font-bold text-slate-800">
                           {item.productName}
                         </p>
-                        <p className="mt-1 text-[10px] text-slate-400">
+                        <p className="mt-1 text-[10px] text-neutral-400">
                           Qty: {item.quantity}
                         </p>
                       </div>
                       <LocalizedPrice
                         amountUSD={Number(item.subTotal)}
                         currency={order.currency}
-                        className="shrink-0 text-xs font-black text-slate-700"
+                        className="shrink-0 text-xs font-black text-neutral-700"
                       />
                     </div>
                   ))}
@@ -262,17 +262,17 @@ export default function OrderConfirmationPage() {
             </div>
 
             <aside className="h-fit space-y-5 lg:sticky lg:top-24">
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-[#2563EB]" />
-                  <h2 className="text-lg font-black text-slate-900">
+                  <CreditCard className="h-5 w-5 text-brand" />
+                  <h2 className="text-lg font-black text-foreground">
                     Payment summary
                   </h2>
                 </div>
 
                 <div className="mt-5 space-y-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Order total</span>
+                    <span className="text-neutral-500">Order total</span>
                     <LocalizedPrice
                       amountUSD={Number(order.totalAmount)}
                       currency={order.currency}
@@ -294,7 +294,7 @@ export default function OrderConfirmationPage() {
                     </div>
                   )}
 
-                  <div className="border-t border-slate-100 pt-4 text-xs text-slate-500">
+                  <div className="border-t border-slate-100 pt-4 text-xs text-neutral-500">
                     Order lifecycle: {order.status}
                   </div>
 
@@ -302,7 +302,7 @@ export default function OrderConfirmationPage() {
                     className={
                       "rounded-xl p-3 text-xs leading-5 " +
                       (paymentNeedsAttention
-                        ? "border border-amber-200 bg-amber-50 text-amber-800"
+                        ? "border border-amber-200 bg-warning-surface text-amber-800"
                         : "bg-slate-50 text-slate-600")
                     }
                   >
