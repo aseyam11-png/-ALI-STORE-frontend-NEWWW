@@ -87,8 +87,8 @@ export function WishlistButton({
           buttonSize +
           " items-center justify-center rounded-full border bg-white/95 shadow-sm backdrop-blur transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 " +
           (isInWishlist
-            ? "border-red-200 text-red-500"
-            : "border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500")
+            ? "border-danger-100 text-danger-600"
+            : "border-neutral-200 text-neutral-500 hover:border-danger-100 hover:text-danger-600")
         }
       >
         <Heart
