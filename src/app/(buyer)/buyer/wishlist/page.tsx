@@ -114,39 +114,7 @@ export default function WishlistPage() {
       title="المفضلة"
       description="احتفظ بالمنتجات التي تهمك وارجع إليها أو أضفها إلى السلة عندما تكون جاهزًا للشراء."
     >
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
-            <Link
-              href="/shop/products"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              Continue shopping
-            </Link>
-
-            <div className="mt-5 flex items-end justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Heart className="h-6 w-6 text-red-500" fill="currentColor" />
-                  <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">Wishlist</h1>
-                </div>
-                <p className="mt-2 text-sm text-slate-500">
-                  {session.status === "authenticated"
-                    ? "Saved products are loaded from your account."
-                    : "Products saved locally on this device."}
-                </p>
-              </div>
-
-              {visibleItems.length > 0 && (
-                <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-[#2563EB]">
-                  {visibleItems.length} saved
-                </span>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-[1200px] px-4 py-7 sm:px-6 lg:px-8">
+        <div className="min-w-0">
           {error && (
             <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
               {error}
