@@ -239,6 +239,7 @@ export default function CheckoutPage() {
   const placeOrder = async () => {
     setError("");
     setPaymentRecoveryOrderId("");
+    let createdOrderId = "";
 
     if (items.length === 0) {
       setError("Your cart is empty.");
@@ -279,6 +280,8 @@ export default function CheckoutPage() {
         couponCode: appliedCoupon?.coupon.code,
       });
 
+      createdOrderId = String(order.id);
+
       const backendPaymentMethod =
         paymentMethod === "cod"
           ? "CASH_ON_DELIVERY"
@@ -298,8 +301,22 @@ export default function CheckoutPage() {
         method: backendPaymentMethod,
       });
 
+      const paymentIsAccepted =
+        payment.status === "COMPLETED" ||
+        (payment.method === "CASH_ON_DELIVERY" &&
+          payment.status === "PENDING");
+
+      if (!paymentIsAccepted) {
+        setPaymentRecoveryOrderId(createdOrderId);
+        setError(
+          "The order was created, but the payment was not confirmed. "
+          + "Do not place a second order; review the existing order status.",
+        );
+        return;
+      }
+
       clearCart();
-      setSuccessOrderId(String(order.id));
+      setSuccessOrderId(createdOrderId);
       setSuccessPaymentStatus(payment.status);
     } catch (caughtError) {
       const message =
@@ -307,13 +324,10 @@ export default function CheckoutPage() {
           ? caughtError.message
           : "Unable to place the order. Please try again.";
 
-      const currentOrderId =
-        typeof order !== "undefined" ? String(order.id) : "";
-
-      if (currentOrderId) {
-        setPaymentRecoveryOrderId(currentOrderId);
+      if (createdOrderId) {
+        setPaymentRecoveryOrderId(createdOrderId);
         setError(
-          "The order was created, but the payment was not confirmed. "
+          "The order was created, but the payment could not be confirmed. "
           + "Do not place a second order; review the existing order status.",
         );
         return;
