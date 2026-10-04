@@ -123,15 +123,11 @@ export function SmartAutocomplete({
     );
 
   const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<string[]>(() => getSearchHistory());
   const [suggestionsLoading, setSuggestionsLoading] = useState(
     () => value.trim().length >= 2,
   );
   const [suggestionsError, setSuggestionsError] = useState(false);
-
-  useEffect(() => {
-    setHistory(getSearchHistory());
-  }, []);
 
   useEffect(() => {
     let active = true;
