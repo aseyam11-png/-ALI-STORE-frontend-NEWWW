@@ -71,9 +71,7 @@ export function VariantSelector({
                 {groupName}
               </h2>
 
-              <span className="text-xs text-neutral-400">
-                Select
-              </span>
+              <span className="text-xs text-neutral-400">اختر</span>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">

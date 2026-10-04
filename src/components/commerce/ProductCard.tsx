@@ -78,7 +78,7 @@ export function ProductCard({ product }: ProductCardProps) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Unable to add the product to your cart.",
+          : "تعذر إضافة المنتج إلى السلة.",
       );
     } finally {
       setBusy(false);

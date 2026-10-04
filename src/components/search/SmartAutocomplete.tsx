@@ -1,6 +1,7 @@
 "use client";
 
 import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -91,6 +92,8 @@ export function SmartAutocomplete({
   placeholder = "ابحث عن منتج، قسم أو رقم...",
   className = "",
 }: SmartAutocompleteProps) {
+  const router = useRouter();
+
   const [
     open,
     setOpen,
@@ -209,12 +212,14 @@ export function SmartAutocomplete({
   const selectSuggestion =
     (
       suggestion: AutocompleteSuggestion,
+      navigate = false,
     ) => {
-      onChange(
-        suggestion.title,
-      );
-
+      onChange(suggestion.title);
       setOpen(false);
+
+      if (navigate) {
+        router.push(suggestion.href as Route);
+      }
     };
 
   const handleKeyDown = (
@@ -281,9 +286,8 @@ export function SmartAutocomplete({
         event.preventDefault();
 
         selectSuggestion(
-          suggestions[
-            highlighted
-          ],
+          suggestions[highlighted],
+          true,
         );
 
         return;

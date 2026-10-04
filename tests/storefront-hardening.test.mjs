@@ -76,8 +76,8 @@ test("storefront hardening: cart does not call a subtotal-only value Total when 
   const cart = read("src/app/(shop)/shop/cart/page.tsx");
   const subtotalIndex = cart.lastIndexOf("<span className=\"font-bold text-neutral-500\">");
   assert.notEqual(subtotalIndex, -1);
-  assert.match(cart.slice(subtotalIndex, subtotalIndex + 180), />\s*Subtotal\s*</);
-  assert.match(cart, /shipping.*confirmed at checkout/i);
+  assert.match(cart.slice(subtotalIndex, subtotalIndex + 220), />\s*المجموع الفرعي\s*</);
+  assert.match(cart, /يتم احتساب الشحن وتأكيده عند إتمام الطلب/);
 });
 
 test("storefront hardening: customer-facing palette uses ALI STORE semantic tokens", () => {
@@ -125,4 +125,13 @@ test("storefront hardening: flash deals stay empty until promotion data is real"
   const source = read("src/components/commerce/FlashDeals.tsx");
   assert.match(source, /does not expose promotion\/discount fields/);
   assert.match(source, /return null/);
+});
+
+
+test("storefront hardening: cart customer copy remains Arabic after UX polish", () => {
+  const cart = read("src/app/(shop)/shop/cart/page.tsx");
+  assert.doesNotMatch(cart, />\s*Browse products\s*</);
+  assert.doesNotMatch(cart, />\s*Remove\s*</);
+  assert.match(cart, /تصفح المنتجات/);
+  assert.match(cart, /إزالة/);
 });

@@ -27,9 +27,7 @@ export function ProductGallery({
   if (images.length === 0) {
     return (
       <div className="flex min-h-[520px] items-center justify-center rounded-2xl border border-neutral-200 bg-surface">
-        <p className="text-sm text-neutral-400">
-          No product images available
-        </p>
+        <p className="text-sm text-neutral-400">لا توجد صور للمنتج</p>
       </div>
     );
   }
@@ -54,7 +52,7 @@ export function ProductGallery({
           onClick={() =>
             setFullscreenOpen(true)
           }
-          aria-label="View fullscreen"
+          aria-label="عرض الصورة بالحجم الكامل"
           className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-surface/95 text-neutral-500 shadow-sm transition hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <Maximize2 className="h-4 w-4" />
@@ -74,7 +72,7 @@ export function ProductGallery({
               key={`${image}-${index}`}
               type="button"
               onClick={() => setSelectedImage(image)}
-              aria-label={`View ${productName} image ${index + 1}`}
+              aria-label={`عرض صورة ${productName} ${index + 1}`}
               aria-pressed={isSelected}
               className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-surface transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 ${
                 isSelected

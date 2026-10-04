@@ -37,7 +37,7 @@ function paymentLabel(payment: BackendPayment | null): string {
     case "REFUNDED":
       return "تم رد المبلغ";
     case "REQUIRES_RECONCILIATION":
-      return "يتطلب تسوية";
+      return "الدفع يحتاج مراجعة";
     default:
       return "لم يتم تسجيل دفعة";
   }
@@ -294,10 +294,6 @@ export default function OrderConfirmationPage() {
                     </div>
                   )}
 
-                  <div className="border-t border-neutral-100 pt-4 text-xs text-neutral-500">
-                    Order lifecycle: {order.status}
-                  </div>
-
                   <div
                     className={
                       "rounded-xl p-3 text-xs leading-5 " +
@@ -307,25 +303,20 @@ export default function OrderConfirmationPage() {
                     }
                   >
                     {payment ? (
-                      <>
-                        <p>
-                          Payment #{payment.id}: {payment.status}
-                        </p>
-                        {payment.status === "REQUIRES_RECONCILIATION" && (
-                          <p className="mt-2 font-bold">
-                            The server preserved this payment attempt for reconciliation.
-                            Do not create a duplicate order.
+                      paymentNeedsAttention ? (
+                        <>
+                          <p className="font-bold">
+                            تعذر تأكيد الدفع في هذه المحاولة.
                           </p>
-                        )}
-                        {payment.status === "FAILED" && (
-                          <p className="mt-2 font-bold">
-                            This payment attempt failed. The existing order remains
-                            the authoritative checkout record.
+                          <p className="mt-2">
+                            طلبك محفوظ لدينا. لا تنشئ طلبًا ثانيًا، وراجع حالة الطلب من صفحة طلباتك.
                           </p>
-                        )}
-                      </>
+                        </>
+                      ) : (
+                        <p>تم حفظ حالة الدفع المرتبطة بهذا الطلب على الخادم.</p>
+                      )
                     ) : (
-                      "No payment record is available for this order."
+                      "لا توجد معلومات دفع متاحة لهذا الطلب حاليًا."
                     )}
                   </div>
                 </div>

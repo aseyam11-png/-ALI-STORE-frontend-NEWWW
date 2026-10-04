@@ -75,7 +75,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
       setCartError(
         error instanceof Error
           ? error.message
-          : "Unable to add this product to the cart.",
+          : "تعذر إضافة المنتج إلى السلة.",
       );
     } finally {
       setCartBusy(false);
@@ -142,7 +142,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
           type="button"
           onClick={() => setQuickViewOpen(true)}
           aria-label={"عرض سريع " + product.name}
-          className="absolute bottom-3 end-3 z-10 inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-white/95 px-3 text-xs font-black text-neutral-700 opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          className="absolute bottom-3 end-3 z-10 inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-white/95 px-3 text-xs font-bold text-neutral-700 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <Eye className="h-3.5 w-3.5" aria-hidden="true" />
           عرض سريع

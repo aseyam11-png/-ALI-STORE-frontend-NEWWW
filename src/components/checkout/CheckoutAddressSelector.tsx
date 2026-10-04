@@ -34,11 +34,11 @@ export function CheckoutAddressSelector({
 
           <div>
             <h2 className="text-lg font-black text-foreground">
-              Delivery address
+              عنوان التوصيل
             </h2>
 
             <p className="mt-1 text-xs text-neutral-400">
-              Choose where your order should be delivered.
+              اختر العنوان الذي تريد استلام طلبك عليه.
             </p>
           </div>
 
@@ -49,7 +49,7 @@ export function CheckoutAddressSelector({
           className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 text-[10px] font-black text-neutral-600"
         >
           <Plus className="h-3.5 w-3.5" />
-          Manage addresses
+          إدارة العناوين
         </Link>
 
       </div>
@@ -64,10 +64,10 @@ export function CheckoutAddressSelector({
 
             return (
               <button
-                key={
-                  address.id
-                }
+                key={address.id}
                 type="button"
+                role="radio"
+                aria-checked={selected}
                 onClick={() => onSelect(address)}
                 className={`w-full rounded-xl border p-4 text-start transition ${
                   selected
@@ -98,7 +98,7 @@ export function CheckoutAddressSelector({
                         }
                       </p>
 
-                      {address.isDefault && (
+                      {address.isافتراضي && (
                         <span className="rounded-full bg-surface px-2 py-1 text-[9px] font-black text-brand">
                           Default
                         </span>
@@ -123,7 +123,7 @@ export function CheckoutAddressSelector({
                         : ""}
 
                       {address.apartment
-                        ? ` · Apt ${address.apartment}`
+                        ? ` · شقة ${address.apartment}`
                         : ""}
 
                       {" · "}
@@ -162,14 +162,14 @@ export function CheckoutAddressSelector({
             <MapPin className="mx-auto h-6 w-6 text-neutral-300" />
 
             <p className="mt-3 text-sm font-black text-neutral-700">
-              No shipping address
+              لا يوجد عنوان توصيل
             </p>
 
             <Link
               href="/buyer/addresses"
               className="mt-4 inline-flex h-10 items-center rounded-lg bg-brand px-4 text-xs font-black text-white"
             >
-              Add address
+              إضافة عنوان
             </Link>
 
           </div>

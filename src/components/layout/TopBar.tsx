@@ -16,16 +16,16 @@ export function TopBar() {
 
           <span className="hidden items-center gap-1.5 sm:flex">
             <ShieldCheck className="h-3.5 w-3.5 text-success" />
-            Product information from ALI STORE
+            معلومات المنتجات من ALI STORE
           </span>
 
           <span className="hidden items-center gap-1.5 md:flex">
             <Globe2 className="h-3.5 w-3.5 text-primary-300" />
-            Shipping details confirmed at checkout
+            يتم تأكيد تفاصيل الشحن عند إتمام الطلب
           </span>
 
           <span className="truncate text-neutral-300">
-            Secure checkout & account protection
+            دفع آمن وحماية للحساب
           </span>
 
         </div>
@@ -37,7 +37,7 @@ export function TopBar() {
             className="hidden items-center gap-1.5 transition hover:text-neutral-0 sm:flex"
           >
             <Headphones className="h-3.5 w-3.5" />
-            Help Center
+            مركز المساعدة
           </Link>
 
           <LocaleCurrencySwitcher />
