@@ -515,9 +515,7 @@ export default function CheckoutPage() {
 
               <Package className="mx-auto h-8 w-8 text-neutral-300" />
 
-              <h2 className="mt-5 text-xl font-black text-foreground">
-                Your cart is empty
-              </h2>
+              <h2 className="mt-5 text-xl font-black text-foreground">سلتك فارغة</h2>
 
               <Link
                 href="/shop/products"
