@@ -309,8 +309,7 @@ export default function CheckoutPage() {
       if (!paymentIsAccepted) {
         setPaymentRecoveryOrderId(createdOrderId);
         setError(
-          "تم إنشاء الطلب، لكن لم يتم تأكيد الدفع. "
-          + "Do not place a second order; review the existing order status.",
+          "تم إنشاء الطلب، لكن لم يتم تأكيد الدفع. لا تنشئ طلبًا مكررًا؛ راجع حالة الطلب الحالي.",
         );
         return;
       }
@@ -448,7 +447,7 @@ export default function CheckoutPage() {
                       ? "تم الدفع"
                       : successPaymentStatus === "FAILED"
                         ? "فشل الدفع"
-                        : "PENDING"}
+                        : "بانتظار الدفع"}
                   </span>
                 </div>
 
