@@ -7,13 +7,20 @@ import { Heart, Home, Search, ShoppingBag, Camera } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 
-const items = [
+type MobileNavItem = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  count?: "cart" | "wishlist";
+};
+
+const items: readonly MobileNavItem[] = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/shop/products", label: "المنتجات", icon: Search },
   { href: "/shop/visual-search", label: "بحث بالصورة", icon: Camera },
   { href: "/buyer/wishlist", label: "المفضلة", icon: Heart, count: "wishlist" },
   { href: "/shop/cart", label: "السلة", icon: ShoppingBag, count: "cart" },
-] as const;
+];
 
 export function MobileStoreBar() {
   const pathname = usePathname();
@@ -55,7 +62,13 @@ export function MobileStoreBar() {
                   : "text-neutral-500 hover:bg-neutral-50 hover:text-brand")
               }
             >
-              <span className={active ? "relative flex h-8 w-8 items-center justify-center rounded-xl bg-primary-50" : "relative flex h-8 w-8 items-center justify-center rounded-xl"}>
+              <span
+                className={
+                  active
+                    ? "relative flex h-8 w-8 items-center justify-center rounded-xl bg-primary-50"
+                    : "relative flex h-8 w-8 items-center justify-center rounded-xl"
+                }
+              >
                 <Icon className="h-4.5 w-4.5" aria-hidden="true" />
                 {count > 0 ? (
                   <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[8px] font-bold text-white">
