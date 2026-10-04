@@ -60,30 +60,32 @@ const GROUPS = [
 ] as const;
 
 export async function HomeCategorySections() {
+  let bySlug: Map<string, Awaited<ReturnType<typeof getCategories>>[number]> | null = null;
+
   try {
     const categories = flattenCategoryTree(await getCategories());
-    const bySlug = new Map(categories.map((category) => [category.slug, category]));
-
-    return (
-      <>
-        {GROUPS.map((group) => {
-          const categoryIds = group.slugs
-            .map((slug) => bySlug.get(slug)?.id)
-            .filter((id): id is string => Boolean(id));
-
-          return (
-            <HomeCategorySection
-              key={group.key}
-              title={group.title}
-              description={group.description}
-              categoryIds={Array.from(new Set(categoryIds))}
-              href={group.href}
-            />
-          );
-        })}
-      </>
-    );
+    bySlug = new Map(categories.map((category) => [category.slug, category]));
   } catch {
     return null;
   }
+
+  return (
+    <>
+      {GROUPS.map((group) => {
+        const categoryIds = group.slugs
+          .map((slug) => bySlug?.get(slug)?.id)
+          .filter((id): id is string => Boolean(id));
+
+        return (
+          <HomeCategorySection
+            key={group.key}
+            title={group.title}
+            description={group.description}
+            categoryIds={Array.from(new Set(categoryIds))}
+            href={group.href}
+          />
+        );
+      })}
+    </>
+  );
 }
