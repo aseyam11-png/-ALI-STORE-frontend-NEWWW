@@ -11,49 +11,48 @@ import {
 
 const footerGroups = [
   {
-    title: "Shop",
+    title: "التسوق",
     links: [
-      ["Products", "/shop/products"],
-      ["Categories", "/"],
-      ["Deals", "/shop/deals"],
-      ["Visual search", "/shop/visual-search"],
+      ["المنتجات", "/shop/products"],
+      ["العروض", "/shop/deals"],
+      ["البحث بالصورة", "/shop/visual-search"],
     ],
   },
   {
-    title: "Account",
+    title: "حسابي",
     links: [
-      ["My account", "/buyer"],
-      ["My orders", "/buyer/orders"],
-      ["Addresses", "/buyer/addresses"],
-      ["Wishlist", "/buyer/wishlist"],
+      ["حسابي", "/buyer"],
+      ["طلباتي", "/buyer/orders"],
+      ["العناوين", "/buyer/addresses"],
+      ["المفضلة", "/buyer/wishlist"],
     ],
   },
   {
-    title: "Support",
-    links: [["Help center", "/support"]],
+    title: "المساعدة",
+    links: [["مركز المساعدة", "/support"]],
   },
 ] as const;
 
 const trustItems = [
   {
     icon: ShieldCheck,
-    title: "Catalog information",
-    text: "Product availability is shown from the live catalog",
+    title: "معلومات الكتالوج",
+    text: "التوفر المعروض مبني على الكتالوج الفعلي",
   },
   {
     icon: CreditCard,
-    title: "Secure transactions",
-    text: "Protected checkout and payment workflows",
+    title: "معاملات آمنة",
+    text: "مسارات دفع وإتمام طلب محمية",
   },
   {
     icon: Truck,
-    title: "Delivery details",
-    text: "Delivery cost and timing are confirmed during checkout",
+    title: "تفاصيل التوصيل",
+    text: "يتم تأكيد التكلفة والوقت أثناء إتمام الطلب",
   },
   {
     icon: Headphones,
-    title: "Customer support",
-    text: "Customer support information and account tools",
+    title: "دعم العملاء",
+    text: "معلومات المساعدة وأدوات الحساب",
   },
 ] as const;
 
@@ -96,21 +95,21 @@ export function Footer() {
               </Link>
 
               <p className="mt-4 max-w-md text-sm leading-7 text-neutral-300">
-                ALI STORE is a single-merchant online store. Product ordering, payment and fulfillment are coordinated through one storefront.
+                ALI STORE متجر إلكتروني بائع واحد؛ يتم تنسيق الطلب والدفع والتنفيذ عبر تجربة متجر موحدة.
               </p>
 
               <div className="mt-6 space-y-3">
                 <div className="flex items-center gap-2 text-xs text-neutral-300">
                   <Globe2 className="h-4 w-4 text-primary-300" />
-                  Delivery details at checkout
+                  تفاصيل التوصيل عند إتمام الطلب
                 </div>
                 <div className="flex items-center gap-2 text-xs text-neutral-300">
                   <Headphones className="h-4 w-4 text-primary-300" />
-                  Support through the Help Center
+                  الدعم عبر مركز المساعدة
                 </div>
                 <div className="flex items-center gap-2 text-xs text-neutral-300">
                   <ShieldCheck className="h-4 w-4 text-primary-300" />
-                  Secure account and checkout
+                  حساب وإتمام طلب آمن
                 </div>
               </div>
 
@@ -118,7 +117,7 @@ export function Footer() {
                 href="/shop/products"
                 className="mt-6 inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-black text-brand-ink transition hover:-translate-y-0.5 hover:bg-neutral-100"
               >
-                Browse the catalog
+                تصفح المنتجات
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -144,9 +143,9 @@ export function Footer() {
 
           <div className="mt-10 grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <p className="text-sm font-black">Need help finding the right product?</p>
+              <p className="text-sm font-black">تحتاج مساعدة في اختيار المنتج المناسب؟</p>
               <p className="mt-1 text-xs leading-5 text-neutral-400">
-                Browse the catalog or open the support center.
+                تصفح المنتجات أو افتح مركز المساعدة.
               </p>
             </div>
 
@@ -154,7 +153,7 @@ export function Footer() {
               href="/support"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-black text-white transition hover:-translate-y-0.5 hover:bg-brand-hover"
             >
-              Open support
+              فتح مركز المساعدة
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -162,9 +161,9 @@ export function Footer() {
           <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
             <span>© 2026 AliStore</span>
             <div className="flex flex-wrap gap-5">
-              <Link href="/support" className="transition hover:text-white">Support</Link>
+              <Link href="/support" className="transition hover:text-white">المساعدة</Link>
               <Link href="/support" className="transition hover:text-white">Account &amp; orders</Link>
-              <Link href="/support" className="transition hover:text-white">Help</Link>
+              <Link href="/support" className="transition hover:text-white">المساعدة</Link>
             </div>
           </div>
         </div>
