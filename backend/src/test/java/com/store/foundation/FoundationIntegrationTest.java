@@ -131,6 +131,7 @@ class FoundationIntegrationTest {
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.data.token").doesNotExist())
                 .andExpect(jsonPath("$.data.requiresEmailVerification").value(true))
+                .andExpect(jsonPath("$.data.purpose").value("EMAIL_VERIFICATION"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie().doesNotExist("ali_store_session"))
                 .andReturn().getResponse().getContentAsString();
 
@@ -184,6 +185,7 @@ class FoundationIntegrationTest {
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.data.token").doesNotExist())
                 .andExpect(jsonPath("$.data.requiresEmailVerification").value(true))
+                .andExpect(jsonPath("$.data.purpose").value("LOGIN"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie().doesNotExist("ali_store_session"))
                 .andReturn().getResponse().getContentAsString();
 

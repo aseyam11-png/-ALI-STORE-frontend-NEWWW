@@ -1,5 +1,7 @@
 package com.store.auth.dto;
 
+import com.store.auth.entity.EmailOtpPurpose;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -22,4 +24,5 @@ public class AuthResponse {
     private String challengeId;
     private String maskedEmail;
     private Long expiresInSeconds;
+    private EmailOtpPurpose purpose;
 }
