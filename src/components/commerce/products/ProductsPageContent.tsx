@@ -270,7 +270,7 @@ export function ProductsPageContent() {
     <AppShell>
       <main className="min-h-screen bg-background">
         <section className="border-b border-neutral-200 bg-surface">
-          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="container-shell py-8 sm:py-10">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-info-surface px-3 py-1.5 text-[11px] font-black text-brand">
@@ -293,7 +293,7 @@ export function ProductsPageContent() {
               </div>
             </div>
 
-            <div className="mt-7 max-w-4xl">
+            <div className="mt-7 max-w-5xl">
               <div className="flex h-13 items-center rounded-2xl border border-neutral-200 bg-surface p-1.5 shadow-sm focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100">
                 <Search className="ms-3 h-5 w-5 shrink-0 text-neutral-400" />
                 <input
@@ -333,9 +333,30 @@ export function ProductsPageContent() {
               </div>
             </div>
           </div>
+
+          {activeFilterCount > 0 ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="الفلاتر المطبقة">
+              <span className="text-caption font-medium text-muted-foreground">مفعّل:</span>
+              {query ? <span className="rounded-full bg-primary-50 px-3 py-1.5 text-caption font-medium text-brand">بحث: {query}</span> : null}
+              {category ? <span className="rounded-full bg-primary-50 px-3 py-1.5 text-caption font-medium text-brand">قسم</span> : null}
+              {brand ? <span className="rounded-full bg-primary-50 px-3 py-1.5 text-caption font-medium text-brand">علامة</span> : null}
+              {inStock ? <span className="rounded-full bg-success-surface px-3 py-1.5 text-caption font-medium text-success-700">متوفر فقط</span> : null}
+              {(minPriceParam !== undefined || maxPriceParam !== undefined) ? (
+                <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-caption font-medium text-neutral-700">نطاق سعر</span>
+              ) : null}
+              {sort !== "relevance" ? <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-caption font-medium text-neutral-700">ترتيب مخصص</span> : null}
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="rounded-full px-3 py-1.5 text-caption font-medium text-brand transition hover:bg-primary-50"
+              >
+                مسح
+              </button>
+            </div>
+          ) : null}
         </section>
 
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
+        <div className="container-shell py-7 sm:py-8">
           <div className="mb-5 flex items-center justify-between lg:hidden">
             <button
               type="button"
@@ -352,7 +373,7 @@ export function ProductsPageContent() {
             </span>
           </div>
 
-          <div className="grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
             <aside
               id="catalog-filters"
               onMouseDown={(event) => {
@@ -528,18 +549,28 @@ export function ProductsPageContent() {
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-surface px-4 py-3 shadow-raised sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-black text-foreground">
-                        المنتجات
+                      <p className="text-body-sm font-medium text-foreground">
+                        {productsQuery.data?.pagination.totalItems ?? products.length} نتيجة
                       </p>
-                      <p className="mt-1 text-xs text-neutral-400">
+                      <p className="mt-1 text-caption text-muted-foreground">
                         الصفحة {page} من {productsQuery.data?.pagination.totalPages ?? 1}
                       </p>
                     </div>
-                    {productsQuery.isFetching && (
-                      <span className="text-xs font-bold text-brand">تحديث…</span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {productsQuery.isFetching ? (
+                        <span className="text-caption font-medium text-brand" aria-live="polite">تحديث…</span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setFiltersOpen(true)}
+                        className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-neutral-200 px-3 text-caption font-medium text-neutral-700 lg:hidden"
+                      >
+                        <SlidersHorizontal className="h-4 w-4" />
+                        الفلاتر
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
