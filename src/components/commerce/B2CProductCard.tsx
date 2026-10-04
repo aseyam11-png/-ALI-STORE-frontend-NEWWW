@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
-import { CheckCircle2, ShoppingCart, Star, Truck, Zap } from "lucide-react";
+import { CheckCircle2, Eye, ShoppingCart, Star, Truck, Zap } from "lucide-react";
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import { addBackendCartItem, mapBackendCartToLocal } from "@/features/cart/services/cart-api.service";
 import { useCartStore } from "@/stores/cart-store";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
+import { ProductQuickView } from "@/components/commerce/ProductQuickView";
 import { getSession } from "@/features/auth/session";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useTranslation } from "@/lib/i18n/dictionary";
@@ -25,6 +26,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
   const replaceItems = useCartStore((state) => state.replaceItems);
   const [cartBusy, setCartBusy] = useState(false);
   const [cartError, setCartError] = useState("");
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
 
   const available =
     product.stockStatus === "in_stock" ||
@@ -134,6 +136,16 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
           }}
           className="absolute end-3 top-3 transition-transform duration-200 ease-brand group-hover:scale-105"
         />
+
+        <button
+          type="button"
+          onClick={() => setQuickViewOpen(true)}
+          aria-label={"Quick view " + product.name}
+          className="absolute bottom-3 end-3 z-10 inline-flex h-9 items-center gap-1.5 rounded-lg border border-neutral-200 bg-white/95 px-3 text-xs font-black text-neutral-700 opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+        >
+          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+          Quick view
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
@@ -242,5 +254,13 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
         </button>
       </div>
     </article>
+
+    <ProductQuickView
+      product={product}
+      open={quickViewOpen}
+      onClose={() => setQuickViewOpen(false)}
+      onAddToCart={() => void handleCart()}
+      addBusy={cartBusy}
+    />
   );
 }
