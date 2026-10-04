@@ -22,13 +22,13 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
   const addLocalItem = useCartStore((state) => state.addItem);
   const replaceItems = useCartStore((state) => state.replaceItems);
 
-  const [quantity, setالكمية] = useState(1);
+  const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   const price = getVariantPrice(product, selectedVariant);
   const stock = getVariantStock(product, selectedVariant);
-  const متوفر =
+  const available =
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
 
@@ -36,13 +36,13 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
   const increase = () => {
     if (quantity < stock) {
-      setالكمية((current) => current + 1);
+      setQuantity((current) => current + 1);
       setMessage("");
     }
   };
 
   const decrease = () => {
-    setالكمية((current) => Math.max(1, current - 1));
+    setQuantity((current) => Math.max(1, current - 1));
     setMessage("");
   };
 
@@ -61,7 +61,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
         priceUnit: "unit",
         quantity,
         image: selectedVariant?.image ?? product.images[0]?.url,
-        minOrderالكمية: 1,
+        minOrderQuantity: 1,
       };
 
       if (session.status === "authenticated") {
