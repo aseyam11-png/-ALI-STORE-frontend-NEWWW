@@ -20,7 +20,7 @@ import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import { getMyAddresses } from "@/features/addresses/services/address-api.service";
 import { useSession } from "@/features/auth/session";
 import { useRouter } from "next/navigation";
-import { إتمام الطلبAddressSelector } from "@/components/checkout/إتمام الطلبAddressSelector";
+import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
@@ -52,7 +52,7 @@ const initialForm: FormState = {
   postalCode: "",
 };
 
-export default function إتمام الطلبPage() {
+export default function CheckoutPage() {
   const items = useCartStore(
     (state) => state.items,
   );
@@ -76,12 +76,12 @@ export default function إتمام الطلبPage() {
   const [paymentMethod, setPaymentMethod] =
     useState("cod");
 
-  // Current production backend exposes COD only until a real online gateway is configured.
+  // Online payments stay disabled until a real production gateway is configured.
   const onlinePaymentsEnabled =
     process.env.NEXT_PUBLIC_ONLINE_PAYMENTS_ENABLED === "true";
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [serverCartالإجمالي قبل الشحن, setServerCartالإجمالي قبل الشحن] =
+  const [serverCartTotal, setServerCartTotal] =
     useState<number | null>(null);
   const [serverCartCurrency, setServerCartCurrency] =
     useState<string | undefined>(undefined);
@@ -116,7 +116,7 @@ export default function إتمام الطلبPage() {
           if (!active) return;
           const mapped = mapBackendCartToLocal(migrated, localItems);
           replaceItems(mapped);
-          setServerCartالإجمالي قبل الشحن(migrated.totalPrice);
+          setServerCartTotal(migrated.totalPrice);
           setServerCartCurrency(
             migrated.currency ?? mapped[0]?.currency,
           );
@@ -125,7 +125,7 @@ export default function إتمام الطلبPage() {
 
         const mapped = mapBackendCartToLocal(backend, localItems);
         replaceItems(mapped);
-        setServerCartالإجمالي قبل الشحن(backend.totalPrice);
+        setServerCartTotal(backend.totalPrice);
         setServerCartCurrency(
           backend.currency ?? mapped[0]?.currency,
         );
@@ -200,15 +200,15 @@ export default function إتمام الطلبPage() {
     0,
   );
 
-  const cartالمجموع الفرعي =
-    serverCartالإجمالي قبل الشحن ?? subtotal;
+  const cartSubtotal =
+    serverCartTotal ?? subtotal;
 
-  const couponالخصم =
-    appliedCoupon?.finalالخصم ?? 0;
+  const couponDiscount =
+    appliedCoupon?.finalDiscount ?? 0;
 
   const total = Math.max(
     0,
-    cartالمجموع الفرعي - couponالخصم,
+    cartSubtotal - couponDiscount,
   );
 
   const setField = (
@@ -263,7 +263,7 @@ export default function إتمام الطلبPage() {
         items,
       );
       replaceItems(synchronizedItems);
-      setServerCartالإجمالي قبل الشحن(synchronizedCart.totalPrice);
+      setServerCartTotal(synchronizedCart.totalPrice);
       setServerCartCurrency(
         synchronizedCart.currency ??
           synchronizedItems[0]?.currency ??
@@ -372,7 +372,7 @@ export default function إتمام الطلبPage() {
               <div className="mt-7 rounded-2xl bg-neutral-50 p-5">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs text-neutral-400">
-                    رقم الطلب
+                    Order number
                   </span>
                   <span className="text-sm font-black text-brand-ink">
                     {paymentRecoveryOrderId}
@@ -437,7 +437,7 @@ export default function إتمام الطلبPage() {
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-400">
-                    رقم الطلب
+                    Order number
                   </span>
 
                   <span className="text-sm font-black text-brand-ink">
@@ -446,9 +446,7 @@ export default function إتمام الطلبPage() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-neutral-400">
-                    Payment
-                  </span>
+                  <span className="text-xs text-neutral-400">الدفع</span>
 
                   <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
                     {successPaymentStatus === "COMPLETED"
@@ -502,9 +500,7 @@ export default function إتمام الطلبPage() {
               العودة إلى السلة
             </Link>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
-              إتمام الطلب
-            </h1>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">إتمام الطلب</h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
               أكمل طلبك من خلال عملية شراء آمنة.
@@ -539,7 +535,7 @@ export default function إتمام الطلبPage() {
               <div className="space-y-6">
 
                 {/* Saved addresses */}
-                          <إتمام الطلبAddressSelector
+                          <CheckoutAddressSelector
                   addresses={addresses}
                   selectedAddressId={selectedAddressId}
                   onSelect={(selected) => {
@@ -769,9 +765,7 @@ export default function إتمام الطلبPage() {
                     <CreditCard className="h-5 w-5 text-brand" />
 
                     <div>
-                      <h2 className="text-lg font-black text-foreground">
-                        Payment
-                      </h2>
+                      <h2 className="text-lg font-black text-foreground">الدفع</h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
                         اختر طريقة الدفع المناسبة لك.
@@ -796,8 +790,7 @@ export default function إتمام الطلبPage() {
                         value: "cod",
                         label: "الدفع عند الاستلام",
                         enabled: true,
-                      },
-                    ].map(
+                      }                    ].map(
                       (option) => (
                         <button
                           key={option.value}
@@ -824,7 +817,7 @@ export default function إتمام الطلبPage() {
                           </div>
                         </button>
                       ),
-                    )}}
+                    )}
 
                   </div>
 
@@ -847,9 +840,7 @@ export default function إتمام الطلبPage() {
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-brand" />
 
-                  <h2 className="text-lg font-black text-foreground">
-                    ملخص طلبك
-                  </h2>
+                  <h2 className="text-lg font-black text-foreground">ملخص طلبك</h2>
                 </div>
 
                 <div className="mt-6 space-y-2">
@@ -886,7 +877,7 @@ export default function إتمام الطلبPage() {
 
                 <div className="mt-5">
                   <CouponInput
-                    subtotal={cartالمجموع الفرعي}
+                    subtotal={cartSubtotal}
                     onApply={setAppliedCoupon}
                     onRemove={() => setAppliedCoupon(null)}
                   />
@@ -895,36 +886,30 @@ export default function إتمام الطلبPage() {
                 <div className="mt-6 space-y-3 border-t border-neutral-100 pt-5">
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-neutral-500">
-                      المجموع الفرعي
-                    </span>
+                    <span className="text-neutral-500">المجموع الفرعي</span>
 
                     <LocalizedPrice
-                      amountUSD={cartالمجموع الفرعي}
+                      amountUSD={cartSubtotal}
                       currency={serverCartCurrency}
                       className="font-bold text-neutral-800"
                     />
                   </div>
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-neutral-500">
-                      الشحن
-                    </span>
+                    <span className="text-neutral-500">الشحن</span>
 
                     <span className="font-bold text-neutral-800">
                       يُؤكد عند إنشاء الطلب عبر الخادم
                     </span>
                   </div>
 
-                  {couponالخصم > 0 && (
+                  {couponDiscount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-neutral-500">
-                        الخصم
-                      </span>
+                      <span className="text-neutral-500">الخصم</span>
 
                       <span className="font-bold text-success-600">
                         −<LocalizedPrice
-                          amountUSD={couponالخصم}
+                          amountUSD={couponDiscount}
                           currency={serverCartCurrency}
                         />
                       </span>
@@ -937,9 +922,7 @@ export default function إتمام الطلبPage() {
 
                   <div className="flex items-end justify-between">
 
-                    <span className="text-sm font-bold text-neutral-500">
-                      الإجمالي قبل الشحن
-                    </span>
+                    <span className="text-sm font-bold text-neutral-500">الإجمالي قبل الشحن</span>
 
                     <LocalizedPrice
                       amountUSD={total}
@@ -956,9 +939,7 @@ export default function إتمام الطلبPage() {
                   onClick={placeOrder}
                   className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
-                  <LockKeyhole className="h-4 w-4" />
-                  تأكيد الطلب
-                </button>
+                  <LockKeyhole className="h-4 w-4" />تأكيد الطلب</button>
 
                 <div className="mt-4 rounded-xl bg-success-surface p-3">
                   <div className="flex items-start gap-2">
