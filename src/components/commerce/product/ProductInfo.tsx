@@ -24,16 +24,14 @@ interface ProductInfoProps {
 export function ProductInfo({
   product,
 }: ProductInfoProps) {
-  const [selectedVariant, setSelectedVariant] =
-    useState<B2CProductVariant | undefined>(undefined);
-
+  const [selectedVariant, setSelectedVariant] = useState<B2CProductVariant | undefined>(undefined);
   const stock = selectedVariant?.stock ?? product.stock;
   const activePrice = selectedVariant?.price ?? product.price;
   const galleryImages = product.images.map(
     (image) => image.url,
   );
 
-  const متوفر =
+  const available =
     product.stockStatus === "in_stock" ||
     product.stockStatus === "low_stock";
 
@@ -90,7 +88,7 @@ export function ProductInfo({
             </span>
           ) : (
             <span className="rounded-lg bg-neutral-100 px-2.5 py-1.5 text-body-sm font-medium text-neutral-500">
-              لا توجد تقييمات بعد
+              No reviews yet
             </span>
           )}
           <span className="rounded-lg border border-neutral-200 bg-surface px-2.5 py-1.5 text-[10px] font-mono text-neutral-500">
@@ -118,20 +116,20 @@ export function ProductInfo({
           <div className="mt-3 flex items-center gap-2">
             {product.stockStatus === "unknown" ? (
               <span className="text-xs font-bold text-neutral-500">
-                جارٍ تأكيد التوفر
+                Availability is being confirmed
               </span>
-            ) : متوفر ? (
+            ) : available ? (
               <>
                 <CheckCircle2 className="h-4 w-4 text-success-600" />
                 <span className="text-xs font-black text-success-700">
                   {stock <= 5
-                    ? "متبقي " + stock + " left in stock"
-                    : stock + " متوفر"}
+                    ? "Only " + stock + " left in stock"
+                    : stock + " available"}
                 </span>
               </>
             ) : (
               <span className="text-xs font-black text-danger-700">
-                المنتج غير متوفر حاليًا
+                This product is out of stock
               </span>
             )}
           </div>
@@ -139,17 +137,17 @@ export function ProductInfo({
 
         {product.variants.length > 0 && (
           <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm"><VariantSelector
-            variants={product.variants}
-            selectedVariantId={selectedVariant?.id}
-            onChange={setSelectedVariant}
-          /></div>
+              variants={product.variants}
+              selectedVariantId={selectedVariant?.id}
+              onChange={setSelectedVariant}
+            /></div>
         )}
 
         <div className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface divide-y divide-neutral-100 shadow-sm">
           <div className="flex items-center justify-between gap-5 px-5 py-4">
             <div className="flex items-center gap-3">
               <Truck className="h-4 w-4 text-success-600" />
-              <span className="text-sm text-neutral-500">التوصيل</span>
+              <span className="text-sm text-neutral-500">Delivery</span>
             </div>
             <span className="text-end text-sm font-black text-foreground">
               {product.shipping.method}
@@ -159,10 +157,10 @@ export function ProductInfo({
           <div className="flex items-center justify-between gap-5 px-5 py-4">
             <div className="flex items-center gap-3">
               <Heart className="h-4 w-4 text-danger-500" />
-              <span className="text-sm text-neutral-500">الإرجاع</span>
+              <span className="text-sm text-neutral-500">Returns</span>
             </div>
             <span className="text-end text-sm font-black text-foreground">
-              {product.returnPolicy ?? "الإرجاع information is not متوفر here."}
+              {product.returnPolicy ?? "Returns information is not available here."}
             </span>
           </div>
         </div>
@@ -173,10 +171,10 @@ export function ProductInfo({
               <ShieldCheck className="h-4 w-4 shrink-0 text-success-600" />
               <div>
                 <p className="text-xs font-black text-neutral-800">
-                  دفع آمن
+                  Secure payment
                 </p>
                 <p className="mt-1 text-[11px] leading-5 text-neutral-400">
-                  تتم معالجة الدفع بأمان عبر ALI STORE.
+                  Payment is processed securely by ALI STORE.
                 </p>
               </div>
             </div>
@@ -187,10 +185,10 @@ export function ProductInfo({
               <Truck className="h-4 w-4 shrink-0 text-brand" />
               <div>
                 <p className="text-xs font-black text-neutral-800">
-                  تنفيذ الطلب
+                  Fulfillment
                 </p>
                 <p className="mt-1 text-[11px] leading-5 text-neutral-400">
-                  تتم إدارة تنفيذ الطلب عبر ALI STORE.
+                  Order fulfillment is coordinated by ALI STORE.
                 </p>
               </div>
             </div>
