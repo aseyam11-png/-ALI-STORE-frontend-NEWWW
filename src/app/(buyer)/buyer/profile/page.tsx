@@ -298,7 +298,7 @@ function AuthenticatedProfile({
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-caption text-muted-foreground">
-              يمكنك حفظ الاسم ورقم الهاتف فقط. تغيير كلمة المرور موجود في صفحة الأمان.
+              يمكنك حفظ الاسم ورقم الهاتف فقط. إدارة الجلسة وتسجيل الخروج الآمن من صفحة الأمان.
             </p>
 
             <button
