@@ -14,7 +14,7 @@ const footerGroups = [
     title: "Shop",
     links: [
       ["Products", "/shop/products"],
-      ["Categories", "/"],
+      ["Categories", "/shop/products"],
       ["Deals", "/shop/deals"],
       ["Visual search", "/shop/visual-search"],
     ],
@@ -163,7 +163,7 @@ export function Footer() {
             <span>© 2026 AliStore</span>
             <div className="flex flex-wrap gap-5">
               <Link href="/support" className="transition hover:text-white">Support</Link>
-              <Link href="/support" className="transition hover:text-white">Account &amp; orders</Link>
+              <Link href="/buyer/orders" className="transition hover:text-white">Account &amp; orders</Link>
               <Link href="/support" className="transition hover:text-white">Help</Link>
             </div>
           </div>
