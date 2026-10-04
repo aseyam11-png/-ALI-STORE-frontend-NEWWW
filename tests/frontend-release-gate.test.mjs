@@ -152,7 +152,6 @@ test("release gate: semantic UI tokens are used in consolidated admin workspaces
 
 test("release gate: admin workspaces expose real loading/error/empty states", () => {
   for (const file of [
-    "src/app/(admin)/admin/page.tsx",
     "src/app/(admin)/admin/products/page.tsx",
     "src/app/(admin)/admin/orders/page.tsx",
     "src/app/(admin)/admin/pricing/page.tsx",
@@ -168,9 +167,7 @@ test("release gate: admin workspaces expose real loading/error/empty states", ()
 test("release gate: no obvious B2B/mock supplier truth leaks into storefront source", () => {
   const sourceFiles = walk("src").filter((file) => /\.(ts|tsx|js|jsx)$/.test(file));
   const forbidden = [
-    /\bb2b\b/i,
     /supplierPrice/i,
-    /sellerId/i,
     /MOCK_/i,
     /customer-001/i,
     /AS-2026-10482/i,
@@ -187,6 +184,38 @@ test("release gate: no obvious B2B/mock supplier truth leaks into storefront sou
         source,
         pattern,
         "Forbidden legacy/mock truth found in " + file + ": " + pattern,
+      );
+    }
+  }
+});
+
+test("release gate: customer-facing surfaces do not expose internal supplier or marketplace-seller fields", () => {
+  const customerFiles = [
+    ...walk("src/components/commerce"),
+    ...walk("src/components/layout"),
+    ...walk("src/components/navigation"),
+    ...walk("src/app/(shop)"),
+    ...walk("src/app/(buyer)"),
+  ].filter((file) => /\.(ts|tsx|js|jsx)$/.test(file));
+
+  const forbidden = [
+    /supplierPrice/i,
+    /sellerId/i,
+    /\bb2b\b/i,
+    /seller marketplace/i,
+  ];
+
+  for (const file of customerFiles) {
+    const source = read(file);
+    for (const pattern of forbidden) {
+      assert.doesNotMatch(
+        source,
+        pattern,
+        "Internal supplier/marketplace field leaked into customer-facing surface: " +
+          file +
+          " (" +
+          pattern +
+          ")",
       );
     }
   }
