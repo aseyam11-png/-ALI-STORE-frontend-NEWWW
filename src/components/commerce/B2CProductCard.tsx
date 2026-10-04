@@ -54,7 +54,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
 
       if (session) {
         if (!Number.isInteger(numericId) || numericId < 1) {
-          throw new Error("Invalid product id.");
+          throw new Error("معرّف المنتج غير صالح.");
         }
 
         const currentItems = useCartStore.getState().items;
