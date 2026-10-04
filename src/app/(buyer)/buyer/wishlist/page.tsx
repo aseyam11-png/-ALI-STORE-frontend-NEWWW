@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
@@ -116,30 +116,30 @@ export default function WishlistPage() {
     >
         <div className="min-w-0">
           {error && (
-            <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            <div role="alert" className="mb-5 rounded-xl border border-danger-100 bg-danger-surface p-4 text-sm font-bold text-danger-700">
               {error}
             </div>
           )}
 
           {loading ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-neutral-200 bg-surface p-12 text-center text-sm text-neutral-500">
               جارٍ تحميل المفضلة...
             </div>
           ) : visibleItems.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-14 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-400">
+            <section className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-14 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-discount-surface text-discount-600">
                 <Heart className="h-8 w-8" fill="currentColor" />
               </div>
-              <h2 className="mt-5 text-xl font-black text-slate-900">Your wishlist is empty</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                Save products you like and come back to them later.
+              <h2 className="mt-5 text-xl font-black text-foreground">قائمة المفضلة فارغة</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
+                احفظ المنتجات التي تعجبك وارجع إليها لاحقًا.
               </p>
               <Link
                 href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Browse products
+                تصفح المنتجات
               </Link>
             </section>
           ) : (
@@ -151,7 +151,7 @@ export default function WishlistPage() {
                 const price = product.price;
 
                 return (
-                  <article key={productId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <article key={productId} className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
                     <Link href={`/shop/products/${encodeURIComponent(productId)}`} className="block">
                       <div className="relative flex aspect-square items-center justify-center bg-slate-50">
                         {image ? (
@@ -174,7 +174,7 @@ export default function WishlistPage() {
                       )}
 
                       <Link href={`/shop/products/${encodeURIComponent(productId)}`}>
-                        <h2 className="mt-1 line-clamp-2 min-h-[42px] text-sm font-black leading-5 text-slate-900">
+                        <h2 className="mt-1 line-clamp-2 min-h-[42px] text-sm font-black leading-5 text-foreground">
                           {name}
                         </h2>
                       </Link>
@@ -236,7 +236,7 @@ export default function WishlistPage() {
                             }
                           }}
                           aria-busy={cartBusyId === productId}
-                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <ShoppingCart className="h-4 w-4" />
                           {cartBusyId === productId
