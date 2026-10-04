@@ -46,7 +46,7 @@ export default function CartPage() {
   );
 
   const session = useSession();
-  const replaceItems = useCartStore((state) => state.replaceItems);
+  const replaceالمنتجات = useCartStore((state) => state.replaceالمنتجات);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
 
@@ -60,17 +60,17 @@ export default function CartPage() {
       setError("");
 
       try {
-        const localItems = useCartStore.getState().items;
+        const localالمنتجات = useCartStore.getState().items;
         const backend = await getBackendCart();
 
         if (!active) return;
 
-        if (backend.items.length === 0 && localItems.length > 0) {
-          const migrated = await replaceBackendCart(localItems);
+        if (backend.items.length === 0 && localالمنتجات.length > 0) {
+          const migrated = await replaceBackendCart(localالمنتجات);
           if (!active) return;
-          replaceItems(mapBackendCartToLocal(migrated, localItems));
+          replaceالمنتجات(mapBackendCartToLocal(migrated, localالمنتجات));
         } else {
-          replaceItems(mapBackendCartToLocal(backend, localItems));
+          replaceالمنتجات(mapBackendCartToLocal(backend, localالمنتجات));
         }
       } catch (caughtError) {
         if (active) {
@@ -90,7 +90,7 @@ export default function CartPage() {
     return () => {
       active = false;
     };
-  }, [session.status, replaceItems]);
+  }, [session.status, replaceالمنتجات]);
 
   const handleQuantityChange = async (
     productId: string,
@@ -111,14 +111,14 @@ export default function CartPage() {
     );
 
     if (session.status !== "authenticated") {
-      const nextItems = useCartStore.getState().items.map(
+      const nextالمنتجات = useCartStore.getState().items.map(
         (candidate) =>
           candidate.productId === productId &&
           candidate.variantId === variantId
             ? { ...candidate, quantity: safeQuantity }
             : candidate,
       );
-      replaceItems(nextItems);
+      replaceالمنتجات(nextالمنتجات);
       return;
     }
 
@@ -136,7 +136,7 @@ export default function CartPage() {
         safeQuantity,
         Number(productId),
       );
-      replaceItems(
+      replaceالمنتجات(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -166,7 +166,7 @@ export default function CartPage() {
     if (!item) return;
 
     if (session.status !== "authenticated") {
-      replaceItems(
+      replaceالمنتجات(
         useCartStore.getState().items.filter(
           (candidate) =>
             !(
@@ -190,7 +190,7 @@ export default function CartPage() {
       const backend = await removeBackendCartItem(
         item.backendItemId,
       );
-      replaceItems(
+      replaceالمنتجات(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -215,7 +215,7 @@ export default function CartPage() {
     if (!confirmed) return;
 
     if (session.status !== "authenticated") {
-      replaceItems([]);
+      replaceالمنتجات([]);
       return;
     }
 
@@ -224,7 +224,7 @@ export default function CartPage() {
 
     try {
       const backend = await clearBackendCart();
-      replaceItems(
+      replaceالمنتجات(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -254,24 +254,24 @@ export default function CartPage() {
         )}
 
         <section className="border-b border-neutral-200 bg-surface">
-          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="container-shell py-8 sm:py-10">
 
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand">
-              Shopping cart
+              سلة التسوق
             </p>
 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
-              Your cart
+              سلتك
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-neutral-500">
-              Review your items and continue to checkout when you&apos;re ready.
+              راجع المنتجات ثم انتقل إلى إتمام الطلب عندما تكون مستعدًا.
             </p>
 
           </div>
         </section>
 
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
+        <div className="container-shell py-7 sm:py-8">
 
           {items.length === 0 ? (
             <div className="space-y-6">
@@ -283,12 +283,11 @@ export default function CartPage() {
                 </div>
 
                 <h2 className="mt-5 text-2xl font-bold text-foreground">
-                  Your cart is empty
+                  سلتك is empty
                 </h2>
 
                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                  Discover products from our catalog and add them to your
-                  cart.
+                  تصفح الكتالوج وأضف المنتجات التي تريدها إلى سلتك.
                 </p>
 
                 <Link
@@ -301,8 +300,8 @@ export default function CartPage() {
 
               <RecommendationSection
                 type="TRENDING"
-                title="Trending products"
-                description="Popular products customers are exploring right now."
+                title="منتجات رائجة"
+                description="منتجات يكتشفها العملاء حاليًا من الكتالوج."
               />
 
             </div>
@@ -341,7 +340,7 @@ export default function CartPage() {
 
                   </div>
 
-                  <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
+                  <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
 
                     <div className="divide-y divide-slate-100">
 
@@ -492,25 +491,25 @@ export default function CartPage() {
 
                   <RecommendationSection
                     type="FREQUENTLY_BOUGHT_TOGETHER"
-                    title="Frequently bought together"
-                    description="Complete your purchase with products customers often add."
+                    title="يُضاف مع هذه المنتجات"
+                    description="اكتشف منتجات يضيفها العملاء عادةً مع مشترياتهم."
                   />
 
                 </section>
 
-                <aside className="h-fit space-y-5 xl:sticky xl:top-24">
+                <aside className="h-fit space-y-5 xl:sticky xl:top-28">
 
-                  <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
+                  <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-raised">
 
                     <h2 className="text-lg font-bold text-foreground">
-                      Order summary
+                      ملخص الطلب
                     </h2>
 
                     <div className="mt-6 space-y-4">
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Items
+                          المنتجات
                         </span>
 
                         <span className="font-bold">
@@ -520,7 +519,7 @@ export default function CartPage() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="font-bold">
@@ -530,11 +529,11 @@ export default function CartPage() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Shipping
+                          الشحن
                         </span>
 
                         <span className="font-bold">
-                          Confirmed at checkout
+                          يُحدد عند إتمام الطلب
                         </span>
                       </div>
 
@@ -544,7 +543,7 @@ export default function CartPage() {
 
                       <div className="flex items-end justify-between">
                         <span className="font-bold text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="text-3xl font-bold text-brand-ink">
@@ -561,7 +560,7 @@ export default function CartPage() {
                       href="/shop/checkout"
                       className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary-500)] text-sm font-medium text-white"
                     >
-                      Continue to checkout
+                      متابعة إلى إتمام الطلب
                       <ChevronRight className="h-4 w-4" />
                     </Link>
 
@@ -569,8 +568,8 @@ export default function CartPage() {
 
                   <RecommendationSection
                     type="BASED_ON_BROWSING"
-                    title="Recommended for you"
-                    description="Suggestions based on products you may like."
+                    title="موصى به لك"
+                    description="اقتراحات مبنية على المنتجات التي قد تهمك."
                   />
 
                 </aside>
