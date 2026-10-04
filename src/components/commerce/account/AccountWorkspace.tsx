@@ -149,7 +149,7 @@ export function AccountWorkspace({
 
                 <div className="p-3">
                   {ACCOUNT_NAV_GROUPS.map((group) => (
-                    <div key={group.label} className="not-last:mb-4">
+                    <div key={group.label} className="mb-4 last:mb-0">
                       <p className="px-3 pb-2 pt-2 text-[10px] font-black uppercase tracking-[0.12em] text-neutral-400">
                         {group.label}
                       </p>
