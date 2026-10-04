@@ -25,7 +25,17 @@ import type {
 
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 
-export function VisualSearch() {
+export interface VisualSearchProps {
+  resultHref?: (productId: string) => string;
+  resultActionLabel?: string;
+  resultContext?: "storefront" | "admin";
+}
+
+export function VisualSearch({
+  resultHref = (productId) => `/shop/products/${encodeURIComponent(productId)}`,
+  resultActionLabel = "عرض المنتج",
+  resultContext = "storefront",
+}: VisualSearchProps) {
   const [
     preview,
     setPreview,
@@ -376,9 +386,7 @@ export function VisualSearch() {
                     key={
                       result.id
                     }
-                    href={`/shop/products/${encodeURIComponent(
-                      result.productId,
-                    )}`}
+                    href={resultHref(result.productId)}
                     className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-lg"
                   >
 
@@ -432,12 +440,21 @@ export function VisualSearch() {
                         }
                       </p>
 
-                      <LocalizedPrice
-                        amountUSD={
-                          result.price
-                        }
-                        className="mt-3 block text-lg font-black text-brand-ink"
-                      />
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <LocalizedPrice
+                          amountUSD={result.price}
+                          className="block text-lg font-black text-brand-ink"
+                        />
+                        <span
+                          className={
+                            resultContext === "admin"
+                              ? "text-[10px] font-black text-brand"
+                              : "text-[10px] font-black text-neutral-400"
+                          }
+                        >
+                          {resultActionLabel}
+                        </span>
+                      </div>
 
                     </div>
 
