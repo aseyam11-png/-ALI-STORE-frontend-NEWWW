@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  ArrowRight,
+  ArrowLeft,
   BarChart3,
   Boxes,
   CreditCard,
@@ -14,36 +14,37 @@ import {
 } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 const management = [
   {
     href: "/admin/products",
-    title: "Products",
-    description: "Manage the live B2C catalog and supplier-backed listings.",
+    title: "المنتجات",
+    description: "إدارة الكتالوج الحي والبيانات القادمة من المورد.",
     icon: Package,
   },
   {
     href: "/admin/orders",
-    title: "Orders & shipments",
-    description: "Handle order transitions and shipment visibility in one workflow.",
+    title: "الطلبات والشحن",
+    description: "متابعة انتقالات الطلبات وحالة الشحن ضمن مسار واحد.",
     icon: ShoppingBag,
   },
   {
     href: "/admin/pricing",
-    title: "Pricing",
-    description: "Manage store-owned automatic pricing rules.",
+    title: "التسعير",
+    description: "إدارة قواعد هامش الربح التي يملكها المتجر.",
     icon: BarChart3,
   },
   {
     href: "/admin/finance",
-    title: "Payments",
-    description: "Review the live payment ledger and settlement actions.",
+    title: "المدفوعات",
+    description: "مراجعة سجل المدفوعات وتنفيذ الإجراءات المسموح بها.",
     icon: CreditCard,
   },
   {
     href: "/warehouse",
-    title: "Fulfillment",
-    description: "Open the canonical fulfillment operations surface.",
+    title: "التنفيذ",
+    description: "الوصول إلى مساحة عمليات التنفيذ والشحن المعتمدة.",
     icon: Boxes,
   },
 ] as const;
@@ -51,82 +52,69 @@ const management = [
 export default function AdminPage() {
   return (
     <AdminShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2563EB]">
-              Platform administration
-            </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
-              Admin control center
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Core store operations are grouped here. Small or unavailable operational surfaces no longer consume standalone pages.
-            </p>
-          </div>
-        </section>
+      <main className="min-h-screen bg-background">
+        <AdminPageHeader
+          eyebrow="مركز الإدارة"
+          title="إدارة ALI STORE"
+          description="مساحة تشغيل موحدة للكتالوج والطلبات والتسعير والمدفوعات، مع الاعتماد على بيانات وخدمات الخادم دون اختلاق حالات غير موجودة."
+        />
 
-        <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="container-shell py-8">
           <section>
-            <div className="mb-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
-                Core modules
-              </p>
-              <h2 className="mt-1 text-xl font-black text-slate-900">Management</h2>
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-label font-bold uppercase tracking-[0.16em] text-neutral-400">
+                  التشغيل
+                </p>
+                <h2 className="mt-1 text-h2 font-bold text-foreground">
+                  المسارات الأساسية
+                </h2>
+              </div>
+              <span className="text-caption text-muted-foreground">
+                كل بطاقة تفتح المسار التشغيلي المرتبط بها
+              </span>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {management.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                    className="interactive-lift group rounded-2xl border border-neutral-200 bg-surface p-5 shadow-raised focus-visible:ring-4 focus-visible:ring-primary-100"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-blue-50 group-hover:text-[#2563EB]">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-[#2563EB]" />
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700 transition-colors duration-200 group-hover:bg-primary-50 group-hover:text-brand">
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <ArrowLeft className="h-4 w-4 text-neutral-300 transition group-hover:-translate-x-1 group-hover:text-brand" aria-hidden="true" />
                     </div>
-                    <h3 className="mt-5 text-sm font-black text-slate-900">{item.title}</h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-400">{item.description}</p>
+                    <h3 className="mt-5 text-body-lg font-bold text-foreground">{item.title}</h3>
+                    <p className="mt-2 text-body-sm leading-6 text-muted-foreground">{item.description}</p>
                   </Link>
                 );
               })}
             </div>
           </section>
 
-          <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
-                Consolidated operations
+          <section className="mt-8 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-raised sm:p-6">
+            <div className="max-w-3xl">
+              <p className="text-label font-bold uppercase tracking-[0.16em] text-neutral-400">
+                شفافية التشغيل
               </p>
-              <h2 className="mt-1 text-xl font-black text-slate-900">
-                Status & unavailable modules
+              <h2 className="mt-1 text-h2 font-bold text-foreground">
+                المزايا غير المتاحة تبقى واضحة
               </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-400">
-                These are intentionally shown as status cards until their real backend contracts exist.
+              <p className="mt-2 text-body-sm leading-6 text-muted-foreground">
+                لا يتم اختلاق مؤشرات أو محادثات أو مراقبة نظام من واجهة الإدارة. أي وظيفة غير مدعومة بعقد Backend حقيقي تظهر كحالة واضحة بدل بيانات وهمية.
               </p>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              <StatusCard
-                icon={Star}
-                title="Review moderation"
-                description="Customer review APIs exist, but an admin moderation queue is not exposed by the backend."
-              />
-              <StatusCard
-                icon={LifeBuoy}
-                title="Support"
-                description="There is no persisted support conversation API, so the frontend does not invent conversations."
-              />
-              <StatusCard
-                icon={ShieldCheck}
-                title="System monitoring"
-                description="Uptime, latency and maintenance controls require a real operational monitoring endpoint."
-              />
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <StatusCard icon={Star} title="مراجعة التقييمات" description="تظهر APIs الخاصة بتقييمات العملاء، لكن لا توجد حاليًا طابور Moderation إداري حقيقي." />
+              <StatusCard icon={LifeBuoy} title="الدعم" description="لا توجد محادثات دعم محفوظة على الخادم يمكن للواجهة عرضها كبيانات حقيقية." />
+              <StatusCard icon={ShieldCheck} title="المراقبة" description="المراقبة التشغيلية تحتاج endpoint فعليًا للـuptime والـlatency وحالات الصيانة." />
             </div>
           </section>
         </div>
@@ -145,10 +133,10 @@ function StatusCard({
   description: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <Icon className="h-5 w-5 text-slate-500" />
-      <h3 className="mt-4 text-sm font-black text-slate-900">{title}</h3>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+    <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 transition-colors duration-200 hover:border-neutral-300 hover:bg-surface">
+      <Icon className="h-5 w-5 text-neutral-500" aria-hidden="true" />
+      <h3 className="mt-4 text-body-sm font-bold text-foreground">{title}</h3>
+      <p className="mt-1 text-caption leading-5 text-muted-foreground">{description}</p>
     </div>
   );
 }

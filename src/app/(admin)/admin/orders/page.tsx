@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCcw, Truck } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
+import { AdminStatusPill } from "@/components/admin/AdminStatusPill";
 import { getAdminOrders, updateAdminOrderStatus } from "@/features/admin/orders/services/admin-order-api.service";
 import type { BackendOrder } from "@/features/orders/services/order.service";
 
@@ -14,6 +17,13 @@ const statusOptions: BackendOrder["status"][] = [
   "CANCELLED",
   "FULFILLMENT_FAILED",
 ];
+
+function statusTone(status: BackendOrder["status"]) {
+  if (status === "DELIVERED") return "success" as const;
+  if (status === "CANCELLED" || status === "FULFILLMENT_FAILED") return "danger" as const;
+  if (status === "SHIPPED") return "brand" as const;
+  return "warning" as const;
+}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<BackendOrder[]>([]);
@@ -26,7 +36,7 @@ export default function AdminOrdersPage() {
     try {
       setOrders((await getAdminOrders(0, 100)).content);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load orders.");
+      setError(err instanceof Error ? err.message : "تعذر تحميل الطلبات.");
     } finally {
       setLoading(false);
     }
@@ -39,7 +49,7 @@ export default function AdminOrdersPage() {
         if (active) setOrders(page.content);
       })
       .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load orders.");
+        if (active) setError(err instanceof Error ? err.message : "تعذر تحميل الطلبات.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -53,44 +63,84 @@ export default function AdminOrdersPage() {
       const updated = await updateAdminOrderStatus(orderId, status);
       setOrders((current) => current.map((order) => order.id === updated.id ? updated : order));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Order transition rejected by server.");
+      setError(err instanceof Error ? err.message : "رفض الخادم انتقال الطلب.");
     }
   }
 
+  const summary = useMemo(() => ({
+    total: orders.length,
+    processing: orders.filter((order) => order.status === "PROCESSING").length,
+    shipped: orders.filter((order) => order.status === "SHIPPED").length,
+    needsAttention: orders.filter((order) =>
+      order.status === "FULFILLMENT_FAILED" || order.status === "CANCELLED",
+    ).length,
+  }), [orders]);
+
   return (
     <AdminShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">Administration</p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0F172A]">Order operations</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Manage customer orders through backend transition rules.</p>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-          {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{error}</div>}
-
-          <div className="mb-5 flex justify-end">
-            <button type="button" onClick={() => void refresh()} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black">
-              <RefreshCcw className="h-4 w-4" />Refresh
+      <main className="min-h-screen bg-background">
+        <AdminPageHeader
+          eyebrow="الطلبات"
+          title="تشغيل الطلبات والشحن"
+          description="تحديثات الحالة تمر عبر قواعد الـBackend. الواجهة هنا تتحكم في العرض فقط ولا تعتبر الحالة المحلية مصدر الحقيقة."
+          actions={
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              disabled={loading}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand disabled:opacity-50"
+            >
+              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
+              تحديث
             </button>
+          }
+        />
+
+        <div className="container-shell py-8">
+          {error && (
+            <div role="alert" className="mb-5 rounded-xl border border-danger-100 bg-danger-surface p-4 text-body-sm font-medium text-danger-700">
+              {error}
+            </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <AdminMetricCard icon={Truck} label="إجمالي الطلبات" value={String(summary.total)} detail="الطلبات المعروضة من الخادم" />
+            <AdminMetricCard icon={RefreshCcw} label="قيد المعالجة" value={String(summary.processing)} tone="warning" />
+            <AdminMetricCard icon={Truck} label="تم الشحن" value={String(summary.shipped)} tone="brand" />
+            <AdminMetricCard icon={Truck} label="يحتاج انتباه" value={String(summary.needsAttention)} tone="neutral" detail="إلغاء أو فشل تنفيذ" />
           </div>
 
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {loading ? <div className="p-12 text-center text-sm text-slate-500">Loading orders...</div> :
-              orders.length === 0 ? <div className="p-12 text-center text-sm text-slate-500">No customer orders.</div> :
-              <div className="divide-y divide-slate-100">
+          <section className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
+            <div className="flex items-center justify-between gap-4 border-b border-neutral-100 px-5 py-4 sm:px-6">
+              <div>
+                <h2 className="text-h3 font-bold text-foreground">الطلبات الحالية</h2>
+                <p className="mt-1 text-caption text-muted-foreground">
+                  {orders.length} طلب ضمن الصفحة الحالية
+                </p>
+              </div>
+            </div>
+
+            {loading ? (
+              <LoadingRows />
+            ) : orders.length === 0 ? (
+              <div className="px-6 py-16 text-center text-body-sm text-muted-foreground">
+                لا توجد طلبات عملاء حاليًا.
+              </div>
+            ) : (
+              <div className="divide-y divide-neutral-100">
                 {orders.map((order) => (
-                  <article key={order.id} className="p-5">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                      <div>
+                  <article key={order.id} className="p-5 transition-colors hover:bg-neutral-50 sm:p-6">
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-black text-slate-900">Order #{order.id}</p>
-                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black text-[#2563EB]">{order.status}</span>
+                          <p className="text-body font-bold text-foreground">طلب #{order.id}</p>
+                          <AdminStatusPill label={order.status} tone={statusTone(order.status)} />
                         </div>
-                        <p className="mt-2 text-xs text-slate-400">{order.items.length} items · {new Date(order.createdAt).toLocaleString()}</p>
+                        <p className="mt-2 text-caption text-muted-foreground">
+                          {order.items.length} منتجات · {new Date(order.createdAt).toLocaleString("ar")}
+                        </p>
                       </div>
+
                       <div className="flex flex-wrap gap-2">
                         {statusOptions.map((status) => (
                           <button
@@ -98,7 +148,7 @@ export default function AdminOrdersPage() {
                             type="button"
                             disabled={status === order.status}
                             onClick={() => void changeStatus(order.id, status)}
-                            className="inline-flex h-9 items-center rounded-lg border border-slate-200 px-3 text-[10px] font-black disabled:cursor-not-allowed disabled:bg-slate-100"
+                            className="min-h-9 rounded-lg border border-neutral-200 px-3 text-label font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
                           >
                             {status}
                           </button>
@@ -106,38 +156,33 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <div className="mt-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                       <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-slate-500" />
-                        <p className="text-xs font-black text-slate-700">Shipments</p>
+                        <Truck className="h-4 w-4 text-neutral-500" aria-hidden="true" />
+                        <p className="text-body-sm font-medium text-foreground">الشحنات</p>
                       </div>
 
                       {order.shipments.length === 0 ? (
-                        <p className="mt-2 text-xs text-slate-400">No shipment has been created for this order yet.</p>
+                        <p className="mt-2 text-caption text-muted-foreground">لم يتم إنشاء شحنة لهذا الطلب بعد.</p>
                       ) : (
-                        <div className="mt-3 space-y-3">
+                        <div className="mt-3 space-y-2">
                           {order.shipments.map((shipment) => (
-                            <div
-                              key={shipment.id}
-                              className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-                            >
+                            <div key={shipment.id} className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-surface p-3 sm:flex-row sm:items-center sm:justify-between">
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-[#2563EB]">
-                                    {shipment.status}
-                                  </span>
-                                  <span className="text-xs font-bold text-slate-700">
-                                    {shipment.carrier ?? "Carrier not assigned"}
+                                  <AdminStatusPill label={shipment.status} tone="neutral" />
+                                  <span className="text-caption font-medium text-foreground">
+                                    {shipment.carrier ?? "لم يتم تعيين شركة نقل"}
                                   </span>
                                 </div>
-                                <p className="mt-1 truncate font-mono text-[11px] text-slate-500">
-                                  {shipment.trackingNumber ?? "Tracking number not assigned"}
+                                <p className="mt-1 truncate font-mono text-label text-muted-foreground">
+                                  {shipment.trackingNumber ?? "لم يتم تعيين رقم تتبع"}
                                 </p>
                               </div>
-                              <p className="text-[10px] text-slate-400">
+                              <p className="text-label text-muted-foreground">
                                 {shipment.estimatedDeliveryDate
-                                  ? `Estimated ${new Date(shipment.estimatedDeliveryDate).toLocaleDateString()}`
-                                  : "Delivery estimate not available"}
+                                  ? `متوقع ${new Date(shipment.estimatedDeliveryDate).toLocaleDateString("ar")}`
+                                  : "موعد التسليم غير متاح"}
                               </p>
                             </div>
                           ))}
@@ -146,10 +191,25 @@ export default function AdminOrdersPage() {
                     </div>
                   </article>
                 ))}
-              </div>}
+              </div>
+            )}
           </section>
         </div>
       </main>
     </AdminShell>
+  );
+}
+
+function LoadingRows() {
+  return (
+    <div aria-label="جاري تحميل الطلبات" className="divide-y divide-neutral-100">
+      {[1, 2, 3].map((row) => (
+        <div key={row} className="animate-pulse p-6">
+          <div className="h-4 w-1/3 rounded bg-neutral-100" />
+          <div className="mt-3 h-3 w-1/2 rounded bg-neutral-100" />
+          <div className="mt-5 h-20 rounded-xl bg-neutral-100" />
+        </div>
+      ))}
+    </div>
   );
 }
