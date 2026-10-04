@@ -97,7 +97,7 @@ export function ProductQuickView({
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
-          aria-label="إغلاق العرض السريع"
+          aria-label={t("closeQuickView")}
           className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
         >
           <X className="h-5 w-5" />
