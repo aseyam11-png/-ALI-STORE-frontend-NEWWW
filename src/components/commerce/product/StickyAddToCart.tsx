@@ -2,19 +2,26 @@
 
 import { ShoppingCart } from "lucide-react";
 
-import type { B2CProduct } from "@/features/products/types/b2c-product.types";
+import type { B2CProduct, B2CProductVariant } from "@/features/products/types/b2c-product.types";
+import { getVariantPrice, getVariantStock } from "@/features/products/services/variant.utils";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 
 interface StickyAddToCartProps {
   product: B2CProduct;
+  selectedVariant?: B2CProductVariant;
 }
 
 export function StickyAddToCart({
   product,
+  selectedVariant,
 }: StickyAddToCartProps) {
+  const selectedStock = getVariantStock(product, selectedVariant);
   const available =
-    product.stockStatus === "in_stock" ||
-    product.stockStatus === "low_stock";
+    selectedStock > 0 &&
+    (selectedVariant?.available ?? true) &&
+    (product.stockStatus === "in_stock" ||
+      product.stockStatus === "low_stock");
+  const price = getVariantPrice(product, selectedVariant);
 
   const activatePrimaryCartAction = () => {
     const button = document.getElementById(
@@ -36,7 +43,7 @@ export function StickyAddToCart({
             {product.name}
           </p>
           <LocalizedPrice
-            amountUSD={product.price}
+            amountUSD={price}
             currency={product.currency}
             className="mt-0.5 text-base font-black text-brand-ink"
           />
