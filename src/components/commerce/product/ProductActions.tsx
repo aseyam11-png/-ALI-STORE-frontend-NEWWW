@@ -123,7 +123,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
             {product.stockStatus === "unknown"
               ? t("availabilityChecking")
               : available
-                ? stock + " available"
+                ? `${stock} ${t("available")}`
                 : t("unavailable")}
           </p>
         </div>
