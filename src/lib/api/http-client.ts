@@ -71,14 +71,31 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    if (unsafeMethod && typeof window !== "undefined") {
+    const csrfExemptMutationPaths = new Set([
+      "/api/v1/auth/login",
+      "/api/v1/auth/register",
+      "/api/v1/auth/email/verify",
+      "/api/v1/auth/email/resend",
+    ]);
+
+    const shouldPrepareCsrf =
+      unsafeMethod &&
+      typeof window !== "undefined" &&
+      !csrfExemptMutationPaths.has(path);
+
+    if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
 
       if (!csrfToken) {
-        await fetch(this.baseUrl + "/api/v1/auth/csrf", {
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        });
+        try {
+          await fetch(this.baseUrl + "/api/v1/auth/csrf", {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+          });
+        } catch {
+          // The actual mutation below is the source of truth. A missing CSRF
+          // bootstrap must not prevent the client from reaching the backend.
+        }
         csrfToken = readCookie("XSRF-TOKEN");
       }
 
