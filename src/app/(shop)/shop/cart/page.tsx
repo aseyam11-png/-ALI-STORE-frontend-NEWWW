@@ -250,11 +250,11 @@ export default function CartPage() {
         <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
 
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand">
               Shopping cart
             </p>
 
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
               Your cart
             </h1>
 
@@ -276,7 +276,7 @@ export default function CartPage() {
                   <ShoppingBag className="h-7 w-7" />
                 </div>
 
-                <h2 className="mt-5 text-2xl font-black text-foreground">
+                <h2 className="mt-5 text-2xl font-bold text-foreground">
                   Your cart is empty
                 </h2>
 
@@ -314,7 +314,7 @@ export default function CartPage() {
                   <div className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
 
                     <div>
-                      <p className="text-sm font-black text-foreground">
+                      <p className="text-sm font-bold text-foreground">
                         {itemCount} {itemCount === 1 ? "منتج" : "منتجات"}
                       </p>
 
@@ -327,7 +327,7 @@ export default function CartPage() {
                       type="button"
                       onClick={() => void handleClear()}
                       disabled={syncing}
-                      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-danger transition hover:bg-danger-surface"
+                      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-danger transition hover:bg-danger-surface"
                     >
                       <Trash2 className="h-4 w-4" />
                       Clear cart
@@ -377,7 +377,7 @@ export default function CartPage() {
 
                                   <Link
                                     href={`/shop/products/${encodeURIComponent(item.productId)}`}
-                                    className="text-sm font-black text-foreground hover:text-brand"
+                                    className="text-sm font-bold text-foreground hover:text-brand"
                                   >
                                     {
                                       item.name
@@ -392,7 +392,7 @@ export default function CartPage() {
                                     </p>
                                   )}
 
-                                  <p className="mt-2 text-lg font-black text-brand-ink">
+                                  <p className="mt-2 text-lg font-bold text-brand-ink">
                                     <LocalizedPrice
                                       amountUSD={item.price}
                                       currency={item.currency}
@@ -421,7 +421,7 @@ export default function CartPage() {
                                         <Minus className="h-4 w-4" />
                                       </button>
 
-                                      <span className="flex h-10 min-w-12 items-center justify-center border-x border-neutral-200 px-3 text-sm font-black">
+                                      <span className="flex h-10 min-w-12 items-center justify-center border-x border-neutral-200 px-3 text-sm font-bold">
                                         {
                                           item.quantity
                                         }
@@ -449,7 +449,7 @@ export default function CartPage() {
 
                                 <div className="flex items-end justify-between gap-5 sm:flex-col sm:items-end">
 
-                                  <p className="text-xl font-black text-brand-ink">
+                                  <p className="text-xl font-bold text-brand-ink">
                                     <LocalizedPrice
                                       amountUSD={itemTotal}
                                       currency={item.currency}
@@ -496,7 +496,7 @@ export default function CartPage() {
 
                   <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
-                    <h2 className="text-lg font-black text-foreground">
+                    <h2 className="text-lg font-bold text-foreground">
                       Order summary
                     </h2>
 
@@ -541,7 +541,7 @@ export default function CartPage() {
                           Subtotal
                         </span>
 
-                        <span className="text-3xl font-black text-brand-ink">
+                        <span className="text-3xl font-bold text-brand-ink">
                           <LocalizedPrice
                             amountUSD={subtotal}
                             currency={items[0]?.currency}
