@@ -1,19 +1,7 @@
-"use client";
-
 import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  CheckCircle2,
-  Send,
-  UserRound,
+  Headphones,
+  ShieldCheck,
 } from "lucide-react";
-
-import {
-  useSupportChatStore,
-} from "@/stores/support-chat-store";
 
 import type {
   SupportRole,
@@ -31,293 +19,59 @@ interface SupportConversationProps {
   showAdminControls?: boolean;
 }
 
+/**
+ * Support conversation placeholder.
+ *
+ * The repository currently has no persisted Support conversation API contract.
+ * This component intentionally does not create or read local seeded conversations.
+ */
 export function SupportConversation({
   conversationId,
   currentUser,
   showAdminControls = false,
 }: SupportConversationProps) {
-  const conversation =
-    useSupportChatStore(
-      (state) =>
-        state.getConversation(
-          conversationId,
-        ),
-    );
-
-  const sendMessage =
-    useSupportChatStore(
-      (state) =>
-        state.sendMessage,
-    );
-
-  const markRead =
-    useSupportChatStore(
-      (state) =>
-        state.markConversationRead,
-    );
-
-  const setStatus =
-    useSupportChatStore(
-      (state) =>
-        state.setConversationStatus,
-    );
-
-  const [
-    message,
-    setMessage,
-  ] = useState("");
-
-  useEffect(() => {
-    markRead(
-      conversationId,
-      currentUser.role,
-    );
-  }, [
-    conversationId,
-    currentUser.role,
-    markRead,
-  ]);
-
-  if (!conversation) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-        <p className="text-sm font-bold text-slate-600">
-          Conversation not found.
-        </p>
-      </div>
-    );
-  }
-
-  const submit = () => {
-    const value =
-      message.trim();
-
-    if (!value) {
-      return;
-    }
-
-    sendMessage(
-      conversationId,
-      currentUser,
-      value,
-    );
-
-    setMessage("");
-  };
+  void conversationId;
+  void currentUser;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-      <header className="border-b border-slate-100 p-5">
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-          <div>
-            <h2 className="text-lg font-black text-slate-900">
-              {
-                conversation.subject
-              }
-            </h2>
-
-            <p className="mt-1 text-xs text-slate-400">
-              {conversation.orderId
-                ? `Order ${conversation.orderId}`
-                : "Support"}
-            </p>
-          </div>
-
-          {showAdminControls && (
-            <div className="flex gap-2">
-
-              {[
-                "OPEN",
-                "PENDING",
-                "RESOLVED",
-                "CLOSED",
-              ].map(
-                (status) => (
-                  <button
-                    key={
-                      status
-                    }
-                    type="button"
-                    onClick={() =>
-                      setStatus(
-                        conversationId,
-                        status as
-                          | "OPEN"
-                          | "PENDING"
-                          | "RESOLVED"
-                          | "CLOSED",
-                      )
-                    }
-                    className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black ${
-                      conversation.status ===
-                      status
-                        ? "bg-blue-50 text-[#2563EB]"
-                        : "text-slate-400 hover:bg-slate-50"
-                    }`}
-                  >
-                    {
-                      status
-                    }
-                  </button>
-                ),
-              )}
-
-            </div>
-          )}
-
+    <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-raised sm:p-8">
+      <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-info-surface text-brand">
+          <Headphones className="h-5 w-5" aria-hidden="true" />
         </div>
 
-      </header>
-
-      <div className="max-h-[560px] min-h-[420px] space-y-4 overflow-y-auto bg-slate-50/70 p-5">
-
-        {conversation.messages.map(
-          (item) => {
-            const mine =
-              item.senderId ===
-              currentUser.id;
-
-            return (
-              <div
-                key={
-                  item.id
-                }
-                className={`flex ${
-                  mine
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-
-                <div
-                  className={`max-w-[82%] ${
-                    mine
-                      ? "items-end"
-                      : "items-start"
-                  }`}
-                >
-
-                  <div className="mb-1 flex items-center gap-2 text-[10px] text-slate-400">
-
-                    {!mine && (
-                      <UserRound className="h-3 w-3" />
-                    )}
-
-                    <span className="font-bold">
-                      {
-                        item.senderName
-                      }
-                    </span>
-
-                    <span>
-                      {
-                        item.senderRole
-                      }
-                    </span>
-
-                  </div>
-
-                  <div
-                    className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
-                      mine
-                        ? "rounded-br-md bg-[#2563EB] text-white"
-                        : "rounded-bl-md bg-white text-slate-700 shadow-sm"
-                    }`}
-                  >
-                    {
-                      item.body
-                    }
-                  </div>
-
-                  <p className="mt-1 text-[9px] text-slate-400">
-                    {new Date(
-                      item.createdAt,
-                    ).toLocaleTimeString(
-                      "en-US",
-                      {
-                        hour:
-                          "2-digit",
-                        minute:
-                          "2-digit",
-                      },
-                    )}
-                  </p>
-
-                </div>
-
-              </div>
-            );
-          },
-        )}
-
-        {conversation.messages.length ===
-          0 && (
-          <div className="flex min-h-[360px] items-center justify-center text-sm text-slate-400">
-            Start the conversation.
-          </div>
-        )}
-
+        <div className="min-w-0">
+          <p className="text-label font-medium uppercase tracking-[0.14em] text-brand">
+            ALI STORE support
+          </p>
+          <h2 className="mt-2 text-h2 font-bold tracking-tight text-foreground">
+            المحادثة المباشرة غير متصلة حاليًا
+          </h2>
+          <p className="mt-2 max-w-2xl text-body-sm leading-7 text-muted-foreground">
+            لا يوجد عقد Backend محفوظ للمحادثات يمكن للواجهة الاعتماد عليه حاليًا.
+            لذلك لا يتم إنشاء رسائل أو حالات محلية وهمية، ولا يتم عرض بيانات دعم مزروعة.
+          </p>
+        </div>
       </div>
 
-      <footer className="border-t border-slate-100 bg-white p-4">
-
-        <div className="flex items-end gap-2">
-
-          <textarea
-            value={message}
-            onChange={(event) =>
-              setMessage(
-                event.target.value,
-              )
-            }
-            onKeyDown={(event) => {
-              if (
-                event.key ===
-                  "Enter" &&
-                !event.shiftKey
-              ) {
-                event.preventDefault();
-                submit();
-              }
-            }}
-            rows={2}
-            placeholder="Write your message..."
-            aria-label="Support message"
-            className="min-h-[52px] flex-1 resize-none rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+      <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <ShieldCheck
+            className="mt-0.5 h-5 w-5 shrink-0 text-amber-700"
+            aria-hidden="true"
           />
-
-          <button
-            type="button"
-            onClick={
-              submit
-            }
-            disabled={
-              !message.trim()
-            }
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-            aria-label="Send message"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-
-        </div>
-
-        {conversation.status ===
-          "RESOLVED" && (
-          <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-emerald-700">
-
-            <CheckCircle2 className="h-3.5 w-3.5" />
-
-            Conversation resolved
-
+          <div>
+            <h3 className="text-body-sm font-bold text-amber-900">
+              المسار الآمن الحالي
+            </h3>
+            <p className="mt-1 text-caption leading-5 text-amber-800">
+              {showAdminControls
+                ? "إجراءات إدارة المحادثة ستظهر فقط بعد توفير endpoint حقيقي للمحادثات وصلاحياته."
+                : "يمكن متابعة الطلب أو العنوان أو الدفع من الصفحات المرتبطة بالبيانات الفعلية."}
+            </p>
           </div>
-        )}
-
-      </footer>
-
+        </div>
+      </div>
     </section>
   );
 }
