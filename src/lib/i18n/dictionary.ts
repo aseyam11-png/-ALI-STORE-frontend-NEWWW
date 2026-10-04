@@ -24,6 +24,7 @@ const dictionary = {
   shippedByAliStore: { ar: "يُشحن من ALI STORE", en: "Shipped by ALI STORE" },
   freeShipping: { ar: "شحن مجاني", en: "Free shipping" },
   noImage: { ar: "لا توجد صورة", en: "No image" },
+  closeQuickView: { ar: "إغلاق العرض السريع", en: "Close quick view" },
   noReviews: { ar: "لا توجد تقييمات بعد", en: "No reviews yet" },
   sku: { ar: "رمز المنتج", en: "SKU" },
   availabilityChecking: { ar: "جارٍ التحقق من التوفر", en: "Availability is being confirmed" },
