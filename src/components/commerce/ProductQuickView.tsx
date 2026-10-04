@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useId } from "react";
 import { Eye, X } from "lucide-react";
 
@@ -156,7 +157,7 @@ export function ProductQuickView({
 
           <div className="mt-auto grid gap-3 pt-7 sm:grid-cols-2">
             <Link
-              href={"/shop/products/" + encodeURIComponent(product.id)}
+              href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
               onClick={onClose}
               className="inline-flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-surface px-5 text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
