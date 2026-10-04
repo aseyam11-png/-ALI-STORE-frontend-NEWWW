@@ -343,13 +343,13 @@ export default function CheckoutPage() {
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
             <section
               role="alert"
-              className="rounded-3xl border border-amber-200 bg-surface p-8 shadow-sm sm:p-12"
+              className="rounded-3xl border border-warning-100 bg-surface p-8 shadow-sm sm:p-12"
             >
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-warning-surface text-warning-700">
                 <CreditCard className="h-8 w-8" />
               </div>
 
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
+              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-warning-700">
                 تنبيه بشأن الدفع
               </p>
 
