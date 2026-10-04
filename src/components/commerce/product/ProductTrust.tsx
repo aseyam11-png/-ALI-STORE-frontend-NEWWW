@@ -34,13 +34,13 @@ export function ProductTrust({
           icon: Truck,
           title: "Shipping",
           description:
-            "Shipping cost and delivery timing are confirmed at checkout.",
+            "يتم تأكيد تكلفة الشحن وموعد التوصيل عند إتمام الطلب.",
         }]),
     {
       icon: ShieldCheck,
       title: "Secure checkout",
       description:
-        "Your payment and order details are protected end to end.",
+        "بيانات الدفع والطلب محمية أثناء العملية.",
     },
     ...(returnPolicy
       ? [{
@@ -53,7 +53,7 @@ export function ProductTrust({
       icon: Headphones,
       title: "AliStore support",
       description:
-        "Track your order or reach support anytime after checkout.",
+        "تابع طلبك أو تواصل مع الدعم بعد إتمام الشراء.",
     },
   ];
 
