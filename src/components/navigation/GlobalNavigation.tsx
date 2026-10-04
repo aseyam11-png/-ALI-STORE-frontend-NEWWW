@@ -22,7 +22,7 @@ import { getTopLevelCategories } from "@/features/catalog/services/category-api.
 const navigation = [
   { label: "الرئيسية", href: "/" },
   { label: "المنتجات", href: "/shop/products" },
-  { label: "العروض", href: "/shop/deals", badge: "جديد" },
+  { label: "العروض", href: "/shop/deals" },
   { label: "البحث بالصور", href: "/shop/visual-search", icon: Camera },
 ] as const;
 
