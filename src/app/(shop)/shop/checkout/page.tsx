@@ -199,7 +199,7 @@ export default function CheckoutPage() {
   const cartSubtotal =
     serverCartTotal ?? subtotal;
 
-  const couponالخصم =
+  const couponDiscount =
     appliedCoupon?.finalDiscount ?? 0;
 
   const total = Math.max(
