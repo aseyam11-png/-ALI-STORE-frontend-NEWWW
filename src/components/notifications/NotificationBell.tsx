@@ -80,10 +80,10 @@ export function NotificationBell() {
         state.markAllAsRead,
     );
 
-  const غير مقروءCount =
+  const unreadCount =
     useNotificationStore(
       (state) =>
-        state.غير مقروءCount(),
+        state.unreadCount(),
     );
 
   const locale =
@@ -147,12 +147,12 @@ export function NotificationBell() {
       >
         <Bell className="h-5 w-5" />
 
-        {غير مقروءCount > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-discount px-1 text-[9px] font-black text-white">
-            {غير مقروءCount >
+            {unreadCount >
             9
               ? "9+"
-              : غير مقروءCount}
+              : unreadCount}
           </span>
         )}
       </button>
@@ -168,23 +168,23 @@ export function NotificationBell() {
               </p>
 
               <p className="mt-1 text-[10px] text-neutral-400">
-                {غير مقروءCount} غير مقروء
+                {unreadCount} غير مقروء
               </p>
             </div>
 
-            {غير مقروءCount > 0 && (
+            {unreadCount > 0 && (
               <button
                 type="button"
                 disabled={session.status !== "authenticated"}
                 onClick={() => {
                   if (session.status !== "authenticated") return;
 
-                  const غير مقروءIds = notifications
+                  const unreadIds = notifications
                     .filter((item) => !item.read)
                     .map((item) => item.id);
 
                   void Promise.all(
-                    غير مقروءIds.map((id) =>
+                    unreadIds.map((id) =>
                       markNotificationAsRead(id),
                     ),
                   )
@@ -209,7 +209,7 @@ export function NotificationBell() {
 
                 <Bell className="mx-auto h-7 w-7 text-neutral-300" />
 
-                <p className="mt-3 text-sm font-bold text-slate-600">
+                <p className="mt-3 text-sm font-bold text-neutral-600">
                   لا توجد إشعارات
                 </p>
 
@@ -273,7 +273,7 @@ export function NotificationBell() {
                                   }
                                 </p>
 
-                                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                                <p className="mt-1 text-[11px] leading-5 text-neutral-500">
                                   {
                                     notification.message
                                   }
@@ -287,7 +287,7 @@ export function NotificationBell() {
                                   }
                                 </p>
 
-                                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                                <p className="mt-1 text-[11px] leading-5 text-neutral-500">
                                   {
                                     notification.message
                                   }
