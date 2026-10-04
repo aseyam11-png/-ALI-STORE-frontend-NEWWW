@@ -174,7 +174,7 @@ export function VisualSearch() {
 
       <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
 
           <div className="flex items-center gap-3">
 
@@ -183,11 +183,11 @@ export function VisualSearch() {
             </div>
 
             <div>
-              <h2 className="text-lg font-black text-slate-900">
+              <h2 className="text-lg font-black text-foreground">
                 البحث بالصورة
               </h2>
 
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-neutral-400">
                 ارفع صورة منتج لاكتشاف منتجات مشابهة.
               </p>
             </div>
@@ -196,7 +196,7 @@ export function VisualSearch() {
 
           <label
             htmlFor="visual-search-file"
-            className="mt-5 flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-primary-200 hover:bg-info-surface"
+            className="mt-5 flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-neutral-50 p-5 text-center transition hover:border-primary-200 hover:bg-info-surface"
           >
 
             {preview ? (
@@ -216,15 +216,15 @@ export function VisualSearch() {
               </div>
             ) : (
               <>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface text-neutral-400 shadow-sm">
                   <ImageIcon className="h-7 w-7" />
                 </div>
 
-                <p className="mt-4 text-sm font-black text-slate-800">
+                <p className="mt-4 text-sm font-black text-neutral-800">
                   رفع صورة
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-slate-400">
+                <p className="mt-1 text-xs leading-5 text-neutral-400">
                   JPG, PNG or WEBP · الحد الأقصى 10 ميجابايت
                 </p>
 
@@ -253,17 +253,17 @@ export function VisualSearch() {
           </label>
 
           {selectedFile && (
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-neutral-50 px-3 py-2">
 
               <div className="min-w-0">
 
-                <p className="truncate text-xs font-black text-slate-700">
+                <p className="truncate text-xs font-black text-neutral-700">
                   {
                     selectedFile.name
                   }
                 </p>
 
-                <p className="mt-1 text-[10px] text-slate-400">
+                <p className="mt-1 text-[10px] text-neutral-400">
                   {(
                     selectedFile.size /
                     1024 /
@@ -280,7 +280,7 @@ export function VisualSearch() {
                   clear
                 }
                 aria-label="إزالة الصورة المحددة"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 hover:bg-surface"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -291,7 +291,7 @@ export function VisualSearch() {
           {error && (
             <div
               role="alert"
-              className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
+              className="mt-4 rounded-xl border border-danger-100 bg-danger-surface px-3 py-2 text-xs font-bold text-danger-600"
             >
               {error}
             </div>
@@ -323,7 +323,7 @@ export function VisualSearch() {
 
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
 
           <div className="flex items-center justify-between gap-4">
 
@@ -332,14 +332,14 @@ export function VisualSearch() {
                 نتائج البحث بالصورة
               </p>
 
-              <h2 className="mt-2 text-xl font-black text-slate-900">
+              <h2 className="mt-2 text-xl font-black text-foreground">
                 منتجات مشابهة
               </h2>
             </div>
 
             {results.length >
               0 && (
-              <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-brand">
+              <span className="rounded-full bg-info-surface px-3 py-1.5 text-[10px] font-black text-brand">
                 {results.length} نتيجة
               </span>
             )}
@@ -352,15 +352,15 @@ export function VisualSearch() {
 
               <div className="max-w-sm text-center">
 
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-50 text-neutral-300">
                   <Camera className="h-7 w-7" />
                 </div>
 
-                <h3 className="mt-5 text-lg font-black text-slate-800">
+                <h3 className="mt-5 text-lg font-black text-neutral-800">
                   ارفع صورة لمنتج
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="mt-2 text-sm leading-6 text-neutral-400">
                   ستظهر هنا المنتجات الأقرب بصريًا إلى الصورة المرفوعة.
                 </p>
 
@@ -379,10 +379,10 @@ export function VisualSearch() {
                     href={`/shop/products/${encodeURIComponent(
                       result.productId,
                     )}`}
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-lg"
+                    className="group overflow-hidden rounded-2xl border border-neutral-200 bg-surface transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-lg"
                   >
 
-                    <div className="relative flex aspect-square items-center justify-center bg-slate-50">
+                    <div className="relative flex aspect-square items-center justify-center bg-neutral-50">
 
                       {result.image ? (
                         <Image
@@ -397,7 +397,7 @@ export function VisualSearch() {
                           className="object-contain p-7 transition group-hover:scale-105"
                         />
                       ) : (
-                        <Camera className="h-8 w-8 text-slate-300" />
+                        <Camera className="h-8 w-8 text-neutral-300" />
                       )}
 
                     </div>
@@ -412,7 +412,7 @@ export function VisualSearch() {
                           }
                         </span>
 
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black text-emerald-700">
+                        <span className="rounded-full bg-success-surface px-2 py-1 text-[9px] font-black text-success-700">
                           {
                             result.similarity
                           }% تطابق
@@ -420,13 +420,13 @@ export function VisualSearch() {
 
                       </div>
 
-                      <h3 className="mt-2 line-clamp-2 text-sm font-black leading-5 text-slate-900">
+                      <h3 className="mt-2 line-clamp-2 text-sm font-black leading-5 text-foreground">
                         {
                           result.productName
                         }
                       </h3>
 
-                      <p className="mt-1 text-[10px] text-slate-400">
+                      <p className="mt-1 text-[10px] text-neutral-400">
                         {
                           result.category
                         }
