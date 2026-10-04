@@ -304,7 +304,7 @@ export default function CheckoutPage() {
       const paymentIsAccepted =
         payment.status === "COMPLETED" ||
         (payment.method === "CASH_ON_DELIVERY" &&
-          payment.status === "بانتظار الدفع");
+          payment.status === "PENDING");
 
       if (!paymentIsAccepted) {
         setPaymentRecoveryOrderId(createdOrderId);
