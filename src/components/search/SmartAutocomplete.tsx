@@ -2,6 +2,7 @@
 
 import type { Route } from "next";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -91,6 +92,8 @@ export function SmartAutocomplete({
   placeholder = "ابحث عن منتج، قسم أو رقم...",
   className = "",
 }: SmartAutocompleteProps) {
+  const router = useRouter();
+
   const [
     open,
     setOpen,
@@ -206,16 +209,13 @@ export function SmartAutocomplete({
     onSubmit?.(normalized);
   };
 
-  const selectSuggestion =
-    (
-      suggestion: AutocompleteSuggestion,
-    ) => {
-      onChange(
-        suggestion.title,
-      );
-
-      setOpen(false);
-    };
+  const selectSuggestion = (
+    suggestion: AutocompleteSuggestion,
+  ) => {
+    onChange(suggestion.title);
+    setOpen(false);
+    router.push(suggestion.href as Route);
+  };
 
   const handleKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>,
@@ -476,9 +476,7 @@ export function SmartAutocomplete({
                 ) => (
                   <Link
                     key={`${suggestion.type}-${suggestion.id}`}
-                    href={
-                      suggestion.href as Route
-                    }
+                    href={suggestion.href as Route}
                     role="option"
                     aria-selected={
                       highlighted ===
@@ -489,11 +487,10 @@ export function SmartAutocomplete({
                         index,
                       )
                     }
-                    onClick={() =>
-                      selectSuggestion(
-                        suggestion,
-                      )
-                    }
+                    onClick={(event) => {
+                      event.preventDefault();
+                      selectSuggestion(suggestion);
+                    }}
                     className={`flex items-center gap-3 rounded-md px-3 py-3 transition-colors duration-200 ease-brand ${
                       highlighted ===
                       index
