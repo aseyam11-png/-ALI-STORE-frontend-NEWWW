@@ -20,14 +20,14 @@ import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import { getMyAddresses } from "@/features/addresses/services/address-api.service";
 import { useSession } from "@/features/auth/session";
 import { useRouter } from "next/navigation";
-import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
+import { إتمام الطلبAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
   createBackendOrder,
   getBackendCart,
   mapBackendCartToLocal,
-  processBackendPayment,
+  processBackendالدفع,
   replaceBackendCart,
   type BackendPayment,
 } from "@/features/commerce/services/checkout-api.service";
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
     useState("card");
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [serverCartTotal, setServerCartTotal] =
+  const [serverCartالإجمالي, setServerCartTotal] =
     useState<number | null>(null);
   const [serverCartCurrency, setServerCartCurrency] =
     useState<string | undefined>(undefined);
@@ -91,7 +91,7 @@ export default function CheckoutPage() {
     useState("");
   const idempotencyKeyRef = useRef<string | null>(null);
   const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<BackendPayment["status"]>("PENDING");
+    useState<BackendPayment["status"]>("بانتظار الدفع");
 
   useEffect(() => {
     if (session.status !== "authenticated") {
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
           address: [
             defaultAddress.street,
             defaultAddress.building,
-            defaultAddress.apartment ? `Apt ${defaultAddress.apartment}` : "",
+            defaultAddress.apartment ? `شقة ${defaultAddress.apartment}` : "",
             defaultAddress.area,
           ].filter(Boolean).join(", "),
           city: defaultAddress.city,
@@ -196,10 +196,10 @@ export default function CheckoutPage() {
     0,
   );
 
-  const cartSubtotal =
+  const cartالمجموع الفرعي =
     serverCartTotal ?? subtotal;
 
-  const couponDiscount =
+  const couponالخصم =
     appliedCoupon?.finalDiscount ?? 0;
 
   const total = Math.max(
@@ -242,12 +242,12 @@ export default function CheckoutPage() {
     let createdOrderId = "";
 
     if (items.length === 0) {
-      setError("Your cart is empty.");
+      setError("سلتك فارغة.");
       return;
     }
 
     if (!validate()) {
-      setError("Please complete all required shipping information.");
+      setError("أكمل جميع بيانات التوصيل المطلوبة.");
       return;
     }
 
@@ -351,23 +351,23 @@ export default function CheckoutPage() {
               </div>
 
               <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
-                Payment attention needed
+                تنبيه بشأن الدفع
               </p>
 
               <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
-                Your order is already on the server
+                طلبك موجود بالفعل على الخادم
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-neutral-500">
-                We could not confirm the payment in this checkout attempt.
-                Do not submit a second order. The existing order is preserved
-                and its payment state can be verified from the server.
+                تعذر تأكيد الدفع في محاولة إتمام الطلب الحالية.
+                لا ترسل طلبًا ثانيًا. تم الحفاظ على الطلب الحالي
+                ويمكن التحقق من حالة دفعه من الخادم.
               </p>
 
               <div className="mt-7 rounded-2xl bg-neutral-50 p-5">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs text-neutral-400">
-                    Order number
+                    رقم الطلب
                   </span>
                   <span className="text-sm font-black text-brand-ink">
                     {paymentRecoveryOrderId}
@@ -380,7 +380,7 @@ export default function CheckoutPage() {
                   href={`/buyer/orders/${paymentRecoveryOrderId}/confirmation`}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
                 >
-                  Review order & payment
+                  مراجعة الطلب والدفع
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
@@ -388,13 +388,13 @@ export default function CheckoutPage() {
                   href="/buyer/orders"
                   className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-200 px-5 text-sm font-bold text-neutral-700"
                 >
-                  My orders
+                  طلباتي
                 </Link>
               </div>
 
               <p className="mt-5 text-center text-[11px] leading-5 text-neutral-400">
-                The cart was not recreated because the server has already
-                consumed it for this order.
+                لم تتم إعادة إنشاء السلة لأن الخادم قام بالفعل
+                باستخدامها لإنشاء هذا الطلب.
               </p>
             </section>
           </div>
@@ -416,16 +416,15 @@ export default function CheckoutPage() {
               </div>
 
               <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-success-600">
-                Order confirmed
+                تم تأكيد الطلب
               </p>
 
               <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
-                Thank you for your order
+                شكرًا لطلبك
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-neutral-500">
-                Your order has been created and the payment status below comes directly
-                from the payment service. Tracking appears after fulfillment begins.
+                تم إنشاء طلبك، وحالة الدفع أدناه مأخوذة مباشرة من خدمة الدفع. يظهر التتبع بعد بدء تنفيذ الطلب.
               </p>
 
               <div className="mx-auto mt-7 max-w-md rounded-2xl bg-neutral-50 p-5 text-start">
@@ -447,8 +446,8 @@ export default function CheckoutPage() {
 
                   <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
                     {successPaymentStatus === "COMPLETED"
-                      ? "PAID"
-                      : successPaymentStatus === "FAILED"
+                      ? "تم الدفع"
+                      : successPaymentStatus === "فشل الدفع"
                         ? "FAILED"
                         : "PENDING"}
                   </span>
@@ -462,7 +461,7 @@ export default function CheckoutPage() {
                   href="/buyer"
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
                 >
-                  View my orders
+                  عرض طلباتي
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
@@ -470,7 +469,7 @@ export default function CheckoutPage() {
                   href="/shop/products"
                   className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-200 px-5 text-sm font-bold text-neutral-700"
                 >
-                  Continue shopping
+                  متابعة التسوق
                 </Link>
 
               </div>
@@ -494,7 +493,7 @@ export default function CheckoutPage() {
               className="inline-flex items-center gap-2 text-xs font-black text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              Back to cart
+              العودة إلى السلة
             </Link>
 
             <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
@@ -502,7 +501,7 @@ export default function CheckoutPage() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-              One secure payment for your order.
+              إتمام دفع آمن لطلبك.
             </p>
 
           </div>
@@ -516,14 +515,14 @@ export default function CheckoutPage() {
               <Package className="mx-auto h-8 w-8 text-neutral-300" />
 
               <h2 className="mt-5 text-xl font-black text-foreground">
-                Your cart is empty
+                سلتك فارغة
               </h2>
 
               <Link
                 href="/shop/products"
                 className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
               >
-                Browse products
+                تصفح المنتجات
                 <ArrowRight className="h-4 w-4" />
               </Link>
 
@@ -546,7 +545,7 @@ export default function CheckoutPage() {
                       address: [
                         selected.street,
                         selected.building,
-                        selected.apartment ? `Apt ${selected.apartment}` : "",
+                        selected.apartment ? `شقة ${selected.apartment}` : "",
                         selected.area,
                       ].filter(Boolean).join(", "),
                       city: selected.city,
@@ -566,11 +565,11 @@ export default function CheckoutPage() {
 
                     <div>
                       <h2 className="text-lg font-black text-foreground">
-                        Delivery information
+                        بيانات التوصيل
                       </h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        Where should we deliver your order?
+                        أين تريد استلام طلبك؟
                       </p>
                     </div>
                   </div>
@@ -582,7 +581,7 @@ export default function CheckoutPage() {
                         htmlFor="full-name"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Full name *
+                        الاسم الكامل *
                       </label>
 
                       <input
@@ -607,7 +606,7 @@ export default function CheckoutPage() {
                         htmlFor="email"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Email *
+                        البريد الإلكتروني *
                       </label>
 
                       <input
@@ -633,7 +632,7 @@ export default function CheckoutPage() {
                         htmlFor="phone"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Phone *
+                        رقم الهاتف *
                       </label>
 
                       <input
@@ -659,7 +658,7 @@ export default function CheckoutPage() {
                         htmlFor="address"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Address *
+                        العنوان *
                       </label>
 
                       <input
@@ -684,7 +683,7 @@ export default function CheckoutPage() {
                         htmlFor="city"
                         className="text-xs font-black text-neutral-600"
                       >
-                        City *
+                        المدينة *
                       </label>
 
                       <input
@@ -709,7 +708,7 @@ export default function CheckoutPage() {
                         htmlFor="country"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Country *
+                        الدولة *
                       </label>
 
                       <input
@@ -734,7 +733,7 @@ export default function CheckoutPage() {
                         htmlFor="postal-code"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Postal code
+                        الرمز البريدي
                       </label>
 
                       <input
@@ -765,11 +764,11 @@ export default function CheckoutPage() {
 
                     <div>
                       <h2 className="text-lg font-black text-foreground">
-                        Payment
+                        الدفع
                       </h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        Choose how you&apos;d like to pay.
+                        اختر طريقة الدفع المناسبة لك.
                       </p>
                     </div>
                   </div>
@@ -779,7 +778,7 @@ export default function CheckoutPage() {
                     {[
                       {
                         value: "card",
-                        label: "Credit / Debit Card",
+                        label: "بطاقة ائتمان / خصم",
                       },
                       {
                         value: "wallet",
@@ -787,7 +786,7 @@ export default function CheckoutPage() {
                       },
                       {
                         value: "cod",
-                        label: "Cash on Delivery",
+                        label: "الدفع عند الاستلام",
                       },
                     ].map(
                       (option) => (
@@ -837,7 +836,7 @@ export default function CheckoutPage() {
                   <Package className="h-5 w-5 text-brand" />
 
                   <h2 className="text-lg font-black text-foreground">
-                    Your order
+                    طلبك
                   </h2>
                 </div>
 
@@ -869,7 +868,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
-                  Shipping is calculated and confirmed by the backend when the
+                  الشحن is calculated and confirmed by the backend when the
                   order is created.
                 </div>
 
@@ -901,7 +900,7 @@ export default function CheckoutPage() {
                     </span>
 
                     <span className="font-bold text-neutral-800">
-                      Confirmed by backend at order creation
+                      يتم تأكيده عند إنشاء الطلب
                     </span>
                   </div>
 
@@ -943,10 +942,10 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
-                  Place order
+                  تأكيد الطلب
                 </button>
 
                 <div className="mt-4 rounded-xl bg-success-surface p-3">
@@ -954,7 +953,7 @@ export default function CheckoutPage() {
                     <ShieldCheck className="mt-0.5 h-4 w-4 text-success-600" />
 
                     <p className="text-[11px] leading-5 text-success-700">
-                      Your payment is processed securely by ALI STORE.
+                      تتم معالجة الدفع بأمان عبر ALI STORE.
                     </p>
                   </div>
                 </div>
