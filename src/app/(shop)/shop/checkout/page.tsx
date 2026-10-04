@@ -20,16 +20,16 @@ import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import { getMyAddresses } from "@/features/addresses/services/address-api.service";
 import { useSession } from "@/features/auth/session";
 import { useRouter } from "next/navigation";
-import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
+import { إتمام الطلبAddressSelector } from "@/components/checkout/إتمام الطلبAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
   createBackendOrder,
   getBackendCart,
   mapBackendCartToLocal,
-  processBackendPayment,
+  processBackendالدفع,
   replaceBackendCart,
-  type BackendPayment,
+  type Backendالدفع,
 } from "@/features/commerce/services/checkout-api.service";
 
 interface FormState {
@@ -52,7 +52,7 @@ const initialForm: FormState = {
   postalCode: "",
 };
 
-export default function CheckoutPage() {
+export default function إتمام الطلبPage() {
   const items = useCartStore(
     (state) => state.items,
   );
@@ -73,7 +73,7 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
-  const [paymentMethod, setPaymentMethod] =
+  const [paymentMethod, setالدفعMethod] =
     useState("card");
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
@@ -87,11 +87,11 @@ export default function CheckoutPage() {
 
   const [successOrderId, setSuccessOrderId] =
     useState("");
-  const [paymentRecoveryOrderId, setPaymentRecoveryOrderId] =
+  const [paymentRecoveryOrderId, setالدفعRecoveryOrderId] =
     useState("");
   const idempotencyKeyRef = useRef<string | null>(null);
-  const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<BackendPayment["status"]>("PENDING");
+  const [successالدفعStatus, setSuccessالدفعStatus] =
+    useState<Backendالدفع["status"]>("PENDING");
 
   useEffect(() => {
     if (session.status !== "authenticated") {
@@ -196,15 +196,15 @@ export default function CheckoutPage() {
     0,
   );
 
-  const cartSubtotal =
+  const cartالمجموع الفرعي =
     serverCartTotal ?? subtotal;
 
-  const couponDiscount =
-    appliedCoupon?.finalDiscount ?? 0;
+  const couponالخصم =
+    appliedCoupon?.finalالخصم ?? 0;
 
   const total = Math.max(
     0,
-    cartSubtotal - couponDiscount,
+    cartالمجموع الفرعي - couponالخصم,
   );
 
   const setField = (
@@ -239,11 +239,11 @@ export default function CheckoutPage() {
 
   const placeOrder = async () => {
     setError("");
-    setPaymentRecoveryOrderId("");
+    setالدفعRecoveryOrderId("");
     let createdOrderId = "";
 
     if (items.length === 0) {
-      setError("Your cart is empty.");
+      setError("سلتك فارغة.");
       return;
     }
 
@@ -283,7 +283,7 @@ export default function CheckoutPage() {
 
       createdOrderId = String(order.id);
 
-      const backendPaymentMethod =
+      const backendالدفعMethod =
         paymentMethod === "cod"
           ? "CASH_ON_DELIVERY"
           : paymentMethod === "wallet"
@@ -296,10 +296,10 @@ export default function CheckoutPage() {
       // the same order from an already-consumed backend cart.
       replaceItems([]);
 
-      const payment = await processBackendPayment({
+      const payment = await processBackendالدفع({
         orderId: order.id,
         amount: order.totalAmount,
-        method: backendPaymentMethod,
+        method: backendالدفعMethod,
       });
 
       const paymentIsAccepted =
@@ -308,7 +308,7 @@ export default function CheckoutPage() {
           payment.status === "PENDING");
 
       if (!paymentIsAccepted) {
-        setPaymentRecoveryOrderId(createdOrderId);
+        setالدفعRecoveryOrderId(createdOrderId);
         setError(
           "The order was created, but the payment was not confirmed. "
           + "Do not place a second order; review the existing order status.",
@@ -318,7 +318,7 @@ export default function CheckoutPage() {
 
       clearCart();
       setSuccessOrderId(createdOrderId);
-      setSuccessPaymentStatus(payment.status);
+      setSuccessالدفعStatus(payment.status);
     } catch (caughtError) {
       const message =
         caughtError instanceof Error
@@ -326,7 +326,7 @@ export default function CheckoutPage() {
           : "Unable to place the order. Please try again.";
 
       if (createdOrderId) {
-        setPaymentRecoveryOrderId(createdOrderId);
+        setالدفعRecoveryOrderId(createdOrderId);
         setError(
           "The order was created, but the payment could not be confirmed. "
           + "Do not place a second order; review the existing order status.",
@@ -352,11 +352,11 @@ export default function CheckoutPage() {
               </div>
 
               <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
-                Payment attention needed
+                الدفع attention needed
               </p>
 
               <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
-                Your order is already on the server
+                طلبك is already on the server
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-neutral-500">
@@ -425,7 +425,7 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-neutral-500">
-                Your order has been created and the payment status below comes directly
+                طلبك has been created and the payment status below comes directly
                 from the payment service. Tracking appears after fulfillment begins.
               </p>
 
@@ -443,13 +443,13 @@ export default function CheckoutPage() {
 
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs text-neutral-400">
-                    Payment
+                    الدفع
                   </span>
 
                   <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
-                    {successPaymentStatus === "COMPLETED"
+                    {successالدفعStatus === "COMPLETED"
                       ? "PAID"
-                      : successPaymentStatus === "FAILED"
+                      : successالدفعStatus === "FAILED"
                         ? "FAILED"
                         : "PENDING"}
                   </span>
@@ -499,11 +499,11 @@ export default function CheckoutPage() {
             </Link>
 
             <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
-              Checkout
+              إتمام الطلب
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-              One secure payment for your order.
+              دفع آمن واحد لطلبك.
             </p>
 
           </div>
@@ -517,14 +517,14 @@ export default function CheckoutPage() {
               <Package className="mx-auto h-8 w-8 text-neutral-300" />
 
               <h2 className="mt-5 text-xl font-black text-foreground">
-                Your cart is empty
+                سلتك فارغة
               </h2>
 
               <Link
                 href="/shop/products"
                 className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
               >
-                Browse products
+                تصفح المنتجات
                 <ArrowRight className="h-4 w-4" />
               </Link>
 
@@ -535,7 +535,7 @@ export default function CheckoutPage() {
               <div className="space-y-6">
 
                 {/* Saved addresses */}
-                          <CheckoutAddressSelector
+                          <إتمام الطلبAddressSelector
                   addresses={addresses}
                   selectedAddressId={selectedAddressId}
                   onSelect={(selected) => {
@@ -567,11 +567,11 @@ export default function CheckoutPage() {
 
                     <div>
                       <h2 className="text-lg font-black text-foreground">
-                        Delivery information
+                        بيانات التوصيل
                       </h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        Where should we deliver your order?
+                        أين تريد استلام طلبك؟
                       </p>
                     </div>
                   </div>
@@ -583,7 +583,7 @@ export default function CheckoutPage() {
                         htmlFor="full-name"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Full name *
+                        الاسم الكامل *
                       </label>
 
                       <input
@@ -608,7 +608,7 @@ export default function CheckoutPage() {
                         htmlFor="email"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Email *
+                        البريد الإلكتروني *
                       </label>
 
                       <input
@@ -634,7 +634,7 @@ export default function CheckoutPage() {
                         htmlFor="phone"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Phone *
+                        رقم الهاتف *
                       </label>
 
                       <input
@@ -660,7 +660,7 @@ export default function CheckoutPage() {
                         htmlFor="address"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Address *
+                        العنوان *
                       </label>
 
                       <input
@@ -685,7 +685,7 @@ export default function CheckoutPage() {
                         htmlFor="city"
                         className="text-xs font-black text-neutral-600"
                       >
-                        City *
+                        المدينة *
                       </label>
 
                       <input
@@ -710,7 +710,7 @@ export default function CheckoutPage() {
                         htmlFor="country"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Country *
+                        الدولة *
                       </label>
 
                       <input
@@ -735,7 +735,7 @@ export default function CheckoutPage() {
                         htmlFor="postal-code"
                         className="text-xs font-black text-neutral-600"
                       >
-                        Postal code
+                        الرمز البريدي
                       </label>
 
                       <input
@@ -758,7 +758,7 @@ export default function CheckoutPage() {
                   </div>
                 </section>
 
-                {/* Payment */}
+                {/* الدفع */}
                 <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                   <div className="flex items-center gap-3">
@@ -766,7 +766,7 @@ export default function CheckoutPage() {
 
                     <div>
                       <h2 className="text-lg font-black text-foreground">
-                        Payment
+                        الدفع
                       </h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
@@ -780,7 +780,7 @@ export default function CheckoutPage() {
                     {[
                       {
                         value: "card",
-                        label: "Credit / Debit Card",
+                        label: "بطاقة ائتمان / خصم",
                       },
                       {
                         value: "wallet",
@@ -788,7 +788,7 @@ export default function CheckoutPage() {
                       },
                       {
                         value: "cod",
-                        label: "Cash on Delivery",
+                        label: "الدفع عند الاستلام",
                       },
                     ].map(
                       (option) => (
@@ -798,7 +798,7 @@ export default function CheckoutPage() {
                           }
                           type="button"
                           onClick={() =>
-                            setPaymentMethod(
+                            setالدفعMethod(
                               option.value,
                             )
                           }
@@ -838,7 +838,7 @@ export default function CheckoutPage() {
                   <Package className="h-5 w-5 text-brand" />
 
                   <h2 className="text-lg font-black text-foreground">
-                    Your order
+                    طلبك
                   </h2>
                 </div>
 
@@ -870,13 +870,13 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
-                  Shipping is calculated and confirmed by the backend when the
+                  الشحن is calculated and confirmed by the backend when the
                   order is created.
                 </div>
 
                 <div className="mt-5">
                   <CouponInput
-                    subtotal={cartSubtotal}
+                    subtotal={cartالمجموع الفرعي}
                     onApply={setAppliedCoupon}
                     onRemove={() => setAppliedCoupon(null)}
                   />
@@ -886,11 +886,11 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">
-                      Subtotal
+                      المجموع الفرعي
                     </span>
 
                     <LocalizedPrice
-                      amountUSD={cartSubtotal}
+                      amountUSD={cartالمجموع الفرعي}
                       currency={serverCartCurrency}
                       className="font-bold text-neutral-800"
                     />
@@ -898,23 +898,23 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">
-                      Shipping
+                      الشحن
                     </span>
 
                     <span className="font-bold text-neutral-800">
-                      Confirmed by backend at order creation
+                      يؤكدها الخادم عند إنشاء الطلب
                     </span>
                   </div>
 
-                  {couponDiscount > 0 && (
+                  {couponالخصم > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-neutral-500">
-                        Discount
+                        الخصم
                       </span>
 
                       <span className="font-bold text-success-600">
                         −<LocalizedPrice
-                          amountUSD={couponDiscount}
+                          amountUSD={couponالخصم}
                           currency={serverCartCurrency}
                         />
                       </span>
@@ -947,7 +947,7 @@ export default function CheckoutPage() {
                   className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
                 >
                   <LockKeyhole className="h-4 w-4" />
-                  Place order
+                  تأكيد الطلب
                 </button>
 
                 <div className="mt-4 rounded-xl bg-success-surface p-3">
@@ -955,7 +955,7 @@ export default function CheckoutPage() {
                     <ShieldCheck className="mt-0.5 h-4 w-4 text-success-600" />
 
                     <p className="text-[11px] leading-5 text-success-700">
-                      Your payment is processed securely by ALI STORE.
+                      تتم معالجة دفعتك بأمان عبر ALI STORE.
                     </p>
                   </div>
                 </div>
