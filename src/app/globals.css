@@ -229,3 +229,96 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
 }
+
+
+/* ---------- Interaction primitives ---------- */
+html {
+  scroll-behavior: smooth;
+  background: var(--color-background);
+}
+
+::selection {
+  background: var(--color-primary-100);
+  color: var(--color-brand-ink);
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  user-select: none;
+}
+
+:where(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (pointer: fine) {
+  :where(button, a) {
+    touch-action: manipulation;
+  }
+}
+
+/* Keep shared containers aligned across storefront and admin. */
+.container-shell {
+  width: min(100% - 2rem, 1440px);
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .container-shell {
+    width: min(100% - 3rem, 1440px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-shell {
+    width: min(100% - 4rem, 1440px);
+  }
+}
+
+/* Native scrolling surfaces should feel deliberate rather than browser-default. */
+.scroll-surface {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-300) transparent;
+  overscroll-behavior: contain;
+}
+
+.scroll-surface::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-surface::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-surface::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-neutral-300);
+}
+
+.scroll-surface::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+}
+
+/* Stable media frame prevents layout shifts while remote catalog images resolve. */
+.media-frame {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 320px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .interactive-lift {
+    transition:
+      transform 220ms var(--ease-brand),
+      box-shadow 220ms var(--ease-brand),
+      border-color 220ms var(--ease-brand);
+  }
+
+  .interactive-lift:hover {
+    transform: translateY(-2px);
+  }
+}

@@ -404,7 +404,7 @@ test("admin review routes use the consolidated dashboard", async () => {
   const dashboard = await read("src/app/(admin)/admin/page.tsx");
   assert.match(page, /redirect\(["']\/admin["']\)/);
   assert.match(detail, /redirect\(["']\/admin\/reviews["']\)/);
-  assert.match(dashboard, /Review moderation/);
+  assert.match(dashboard, /مراجعة التقييمات/);
   assert.doesNotMatch(dashboard, /REV-1001|REV-1004/);
 });
 
@@ -412,7 +412,7 @@ test("system monitoring uses the consolidated dashboard instead of a standalone 
   const source = await read("src/app/(system)/system/page.tsx");
   const dashboard = await read("src/app/(admin)/admin/page.tsx");
   assert.match(source, /redirect\(["']\/admin["']\)/);
-  assert.match(dashboard, /System monitoring/);
+  assert.match(dashboard, /المراقبة/);
   assert.doesNotMatch(dashboard, /99\.98%|99\.99%|99\.95%|99\.91%|48ms|100%/);
 });
 
@@ -432,16 +432,75 @@ test("shipments are consolidated into order operations while preserving the old 
   const orders = await read("src/app/(admin)/admin/orders/page.tsx");
   const shipments = await read("src/app/(admin)/admin/shipments/page.tsx");
   const dashboard = await read("src/app/(admin)/admin/page.tsx");
-  assert.match(orders, /Shipments/);
+  assert.match(orders, /الشحنات/);
   assert.match(orders, /order\.shipments\.map/);
   assert.match(shipments, /redirect\(["']\/admin\/orders["']\)/);
-  assert.match(dashboard, /Orders & shipments/);
+  assert.match(dashboard, /الطلبات والشحن/);
 });
 
 test("support is consolidated into the admin dashboard instead of keeping an unavailable full page", async () => {
   const support = await read("src/app/(admin)/admin/support/page.tsx");
   const dashboard = await read("src/app/(admin)/admin/page.tsx");
   assert.match(support, /redirect\(["']\/admin["']\)/);
-  assert.match(dashboard, /title="Support"/);
-  assert.match(dashboard, /There is no persisted support conversation API/);
+  assert.match(dashboard, /الدعم/);
+  assert.match(dashboard, /لا توجد محادثات دعم محفوظة/);
+});
+
+test("customer pages use one storefront shell with shared header, navigation and footer", async () => {
+  const shell = await read("src/components/commerce/CustomerShell.tsx");
+  assert.match(shell, /<TopBar \/>/);
+  assert.match(shell, /<Header \/>/);
+  assert.match(shell, /<GlobalNavigation \/>/);
+  assert.match(shell, /<Footer \/>/);
+  assert.match(shell, /<PageTransition>/);
+});
+
+test("admin navigation contains only consolidated live modules", async () => {
+  const shell = await read("src/components/layout/AdminShell.tsx");
+  assert.match(shell, /href: "\/admin\/orders"/);
+  assert.match(shell, /href: "\/admin\/finance"/);
+  assert.match(shell, /href: "\/warehouse"/);
+  assert.doesNotMatch(shell, /href: "\/admin\/reviews"/);
+  assert.doesNotMatch(shell, /href: "\/admin\/shipments"/);
+  assert.doesNotMatch(shell, /href: "\/admin\/support"/);
+  assert.doesNotMatch(shell, /href: "\/system"/);
+});
+
+test("shared storefront header exposes the core discovery actions without changing routes", async () => {
+  const header = await read("src/components/layout/Header.tsx");
+  assert.match(header, /\/shop\/visual-search/);
+  assert.match(header, /\/buyer\/wishlist/);
+  assert.match(header, /\/shop\/cart/);
+  assert.match(header, /NotificationBell/);
+  assert.match(header, /bg-primary-50/);
+});
+
+test("storefront purchase pages use the shared visual token system", async () => {
+  const files = [
+    "src/app/(shop)/shop/products/page.tsx",
+    "src/app/(shop)/shop/categories/[slug]/page.tsx",
+    "src/app/(shop)/shop/cart/page.tsx",
+    "src/app/(shop)/shop/checkout/page.tsx",
+    "src/app/(shop)/shop/deals/page.tsx",
+    "src/app/(shop)/shop/visual-search/page.tsx",
+    "src/components/commerce/product/ProductInfo.tsx",
+  ];
+
+  for (const path of files) {
+    const source = await read(path);
+    assert.doesNotMatch(source, /#2563EB|#0F2747|#0F172A|#F8FAFC/);
+    assert.match(source, /bg-background|bg-surface|text-brand|text-brand-ink/);
+  }
+});
+
+test("product detail does not show a fake zero rating", async () => {
+  const source = await read("src/components/commerce/product/ProductInfo.tsx");
+  assert.match(source, /product.reviewCount > 0/);
+  assert.match(source, /No reviews yet/);
+  const ratingOccurrences = source.match(/product\.rating\.toFixed\(1\)/g) ?? [];
+  assert.equal(ratingOccurrences.length, 1);
+  assert.ok(
+    source.indexOf("product.reviewCount > 0") <
+      source.indexOf("product.rating.toFixed(1)"),
+  );
 });
