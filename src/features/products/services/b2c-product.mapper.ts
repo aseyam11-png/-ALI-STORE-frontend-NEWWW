@@ -64,9 +64,9 @@ export function normalizeB2CProduct(
       free: false,
       method:
         product.shipping ||
-        "Calculated at checkout",
+        "يُحدد الشحن عند إتمام الطلب",
       estimatedDelivery:
-        "Calculated at checkout",
+        "يُحدد موعد التوصيل عند إتمام الطلب",
     },
 
     returnPolicy: undefined,
