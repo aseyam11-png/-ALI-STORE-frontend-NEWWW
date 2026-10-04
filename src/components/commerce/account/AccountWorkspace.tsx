@@ -18,7 +18,27 @@ import { CustomerShell } from "@/components/commerce/CustomerShell";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 
-const ACCOUNT_NAV_GROUPS = [
+type AccountNavItem = {
+  id:
+    | "overview"
+    | "profile"
+    | "security"
+    | "notifications"
+    | "orders"
+    | "wishlist"
+    | "addresses"
+    | "support";
+  label: string;
+  href: string;
+  icon: typeof UserRound;
+};
+
+type AccountNavGroup = {
+  label: string;
+  items: AccountNavItem[];
+};
+
+const ACCOUNT_NAV_GROUPS: AccountNavGroup[] = [
   {
     label: "حسابي",
     items: [
@@ -42,9 +62,9 @@ const ACCOUNT_NAV_GROUPS = [
       { id: "support", label: "الدعم", href: "/buyer/support", icon: MessageCircle },
     ],
   },
-] as const;
+];
 
-type AccountTabId = (typeof ACCOUNT_NAV_GROUPS)[number]["items"][number]["id"];
+type AccountTabId = AccountNavItem["id"];
 export type { AccountTabId };
 
 interface AccountWorkspaceProps {
