@@ -74,7 +74,12 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
   const [paymentMethod, setPaymentMethod] =
-    useState("card");
+    useState("cod");
+
+  // The production backend intentionally does not register MockPaymentProvider
+  // for online methods. Keep those methods disabled until a real gateway is configured.
+  const onlinePaymentsEnabled =
+    process.env.NEXT_PUBLIC_ONLINE_PAYMENTS_ENABLED === "true";
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [serverCartTotal, setServerCartTotal] =
@@ -249,6 +254,13 @@ export default function CheckoutPage() {
 
     if (!validate()) {
       setError("Please complete all required shipping information.");
+      return;
+    }
+
+    if (paymentMethod !== "cod" && !onlinePaymentsEnabled) {
+      setError(
+        "الدفع الإلكتروني غير متاح حاليًا. اختر الدفع عند الاستلام.",
+      );
       return;
     }
 
@@ -781,37 +793,46 @@ export default function CheckoutPage() {
                       {
                         value: "card",
                         label: "Credit / Debit Card",
+                        available: onlinePaymentsEnabled,
                       },
                       {
                         value: "wallet",
                         label: "PayPal",
+                        available: onlinePaymentsEnabled,
                       },
                       {
                         value: "cod",
                         label: "Cash on Delivery",
+                        available: true,
                       },
                     ].map(
                       (option) => (
                         <button
-                          key={
-                            option.value
-                          }
+                          key={option.value}
                           type="button"
-                          onClick={() =>
-                            setPaymentMethod(
-                              option.value,
-                            )
-                          }
+                          onClick={() => {
+                            if (option.available) {
+                              setPaymentMethod(option.value);
+                            }
+                          }}
+                          disabled={!option.available}
+                          aria-disabled={!option.available}
                           className={`rounded-2xl border p-4 text-start transition ${
-                            paymentMethod ===
-                            option.value
-                              ? "border-brand bg-info-surface"
-                              : "border-neutral-200 hover:bg-neutral-50"
+                            !option.available
+                              ? "cursor-not-allowed border-neutral-100 bg-neutral-50 opacity-60"
+                              : paymentMethod === option.value
+                                ? "border-brand bg-info-surface"
+                                : "border-neutral-200 hover:bg-neutral-50"
                           }`}
                         >
                           <p className="text-xs font-black text-foreground">
                             {option.label}
                           </p>
+                          {!option.available && (
+                            <p className="mt-1 text-[10px] font-bold text-neutral-400">
+                              غير متاح حاليًا
+                            </p>
+                          )}
                         </button>
                       ),
                     )}
