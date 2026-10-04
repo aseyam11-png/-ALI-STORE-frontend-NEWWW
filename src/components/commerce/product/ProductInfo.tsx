@@ -126,7 +126,7 @@ export function ProductInfo({
                 <span className="text-xs font-black text-success-700">
                   {stock <= 5
                     ? t("onlyXLeft", { count: stock })
-                    : stock + " available"}
+                    : `${stock} ${t("available")}`}
                 </span>
               </>
             ) : (
@@ -162,7 +162,7 @@ export function ProductInfo({
               <span className="text-sm text-neutral-500">{t("returns")}</span>
             </div>
             <span className="text-end text-sm font-black text-foreground">
-              {product.returnPolicy ?? "{t("returnsUnavailable")}"}
+              {product.returnPolicy ?? t("returnsUnavailable")}
             </span>
           </div>
         </div>
