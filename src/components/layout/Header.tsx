@@ -66,7 +66,7 @@ function HeaderSearch({ mobile = false }: { mobile?: boolean }) {
         title="البحث بالصورة"
         description="ارفع صورة للعثور على منتجات مشابهة في كتالوج ALI STORE."
       >
-        <VisualSearch />
+        <VisualSearch layout="dialog" />
       </Dialog>
     </div>
   );
