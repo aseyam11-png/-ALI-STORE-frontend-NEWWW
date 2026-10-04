@@ -208,6 +208,12 @@ export default function CartPage() {
   };
 
   const handleClear = async () => {
+    const confirmed =
+      typeof window === "undefined" ||
+      window.confirm("هل أنت متأكد من حذف جميع المنتجات من السلة؟");
+
+    if (!confirmed) return;
+
     if (session.status !== "authenticated") {
       replaceItems([]);
       return;
@@ -319,7 +325,7 @@ export default function CartPage() {
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        In your cart
+                        في السلة
                       </p>
                     </div>
 
@@ -330,7 +336,7 @@ export default function CartPage() {
                       className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-danger transition hover:bg-danger-surface"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Clear cart
+                      إفراغ السلة
                     </button>
 
                   </div>
