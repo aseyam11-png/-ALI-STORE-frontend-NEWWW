@@ -2,7 +2,12 @@
 
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
+import Link from "next/link";
+import type { Route } from "next";
+import { ArrowLeft } from "lucide-react";
+
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import {
   getProducts,
@@ -89,20 +94,31 @@ export function ProductDiscovery() {
 
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-[1600px] px-4 py-14 sm:px-6 lg:px-10 lg:py-20">
-        <div className="flex items-end justify-between gap-5">
-          <h2 className="text-h2 font-bold tracking-tight text-foreground lg:text-h1">
-            اكتشف المنتجات
-          </h2>
-          {query.isFetching && !query.isPending && (
-            <span
-              className="text-xs font-bold text-neutral-400"
-              aria-live="polite"
-            >
-              تحديث…
-            </span>
-          )}
-        </div>
+      <div className="container-shell py-14 sm:py-16 lg:py-20">
+        <SectionHeading
+          eyebrow="مختارات من الكتالوج"
+          title="اكتشف المنتجات"
+          description="منتجات متاحة من الكتالوج الحالي مع معلومات السعر والتوفر كما يعرضها النظام."
+          action={
+            <div className="flex items-center gap-2">
+              {query.isFetching && !query.isPending ? (
+                <span
+                  className="hidden text-caption font-medium text-muted-foreground sm:block"
+                  aria-live="polite"
+                >
+                  تحديث…
+                </span>
+              ) : null}
+              <Link
+                href={"/shop/products" as Route}
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition-all duration-200 ease-brand hover:border-primary-200 hover:bg-primary-50 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+              >
+                عرض الكل
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+              </Link>
+            </div>
+          }
+        />
 
         <div className="mt-8">
           {renderGrid()}
