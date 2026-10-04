@@ -130,13 +130,13 @@ export default function WishlistPage() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-danger-surface text-danger-400">
                 <Heart className="h-8 w-8" fill="currentColor" />
               </div>
-              <h2 className="mt-5 text-xl font-black text-foreground">قائمة المفضلة فارغة</h2>
+              <h2 className="mt-5 text-xl font-bold text-foreground">قائمة المفضلة فارغة</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                Save products you like and come back to them later.
+                احفظ المنتجات التي تعجبك وارجع إليها لاحقًا.
               </p>
               <Link
                 href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white"
               >
                 <ShoppingCart className="h-4 w-4" />
                 تصفح المنتجات
@@ -170,16 +170,16 @@ export default function WishlistPage() {
 
                     <div className="p-4">
                       {product.brandName && (
-                        <p className="text-[10px] font-black text-brand">{product.brandName}</p>
+                        <p className="text-[10px] font-bold text-brand">{product.brandName}</p>
                       )}
 
                       <Link href={`/shop/products/${encodeURIComponent(productId)}`}>
-                        <h2 className="mt-1 line-clamp-2 min-h-[42px] text-sm font-black leading-5 text-foreground">
+                        <h2 className="mt-1 line-clamp-2 min-h-[42px] text-sm font-bold leading-5 text-foreground">
                           {name}
                         </h2>
                       </Link>
 
-                      <LocalizedPrice amountUSD={price} currency={product.currency} className="mt-3 text-xl font-black text-brand-ink" />
+                      <LocalizedPrice amountUSD={price} currency={product.currency} className="mt-3 text-xl font-bold text-brand-ink" />
 
                       <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
                         <button
@@ -236,7 +236,7 @@ export default function WishlistPage() {
                             }
                           }}
                           aria-busy={cartBusyId === productId}
-                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <ShoppingCart className="h-4 w-4" />
                           {cartBusyId === productId
@@ -247,7 +247,7 @@ export default function WishlistPage() {
                         <button
                           type="button"
                           onClick={() => void remove(productId)}
-                          aria-label={`Remove ${name} from wishlist`}
+                          aria-label={`إزالة ${name} من المفضلة`}
                           className="flex h-10 w-10 items-center justify-center rounded-xl border border-danger-100 text-danger-600 hover:bg-danger-surface"
                         >
                           <Trash2 className="h-4 w-4" />
