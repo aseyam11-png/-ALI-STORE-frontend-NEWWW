@@ -108,28 +108,6 @@ export default function NotificationsPage() {
       title="الإشعارات"
       description="تابع تحديثات الحساب والطلبات والتنبيهات المهمة من مكان واحد."
     >
-        <section className="border-b border-neutral-200 bg-surface">
-          <div className="mx-auto max-w-[1000px] px-4 py-10 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-brand">
-                <Bell className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-label font-medium uppercase tracking-[0.16em] text-brand">
-                  Account
-                </p>
-                <h1 className="mt-2 text-h1 font-bold tracking-tight text-foreground">
-                  الإشعارات
-                </h1>
-              </div>
-            </div>
-            <p className="mt-4 max-w-2xl text-body leading-7 text-muted-foreground">
-              الإشعارات المعروضة هنا تأتي من حسابك الفعلي في ALI STORE.
-            </p>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-[1000px] px-4 py-8 sm:px-6 lg:px-8">
           {session.status === "loading" ? (
             <section
               className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm"
@@ -241,7 +219,6 @@ export default function NotificationsPage() {
               </section>
             </>
           )}
-        </div>
     </AccountWorkspace>
   );
 }
