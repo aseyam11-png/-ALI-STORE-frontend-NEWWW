@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { Heart, Home, Search, ShoppingBag, Camera } from "lucide-react";
+import { Heart, Home, Search, ShoppingBag, UserRound } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
@@ -18,7 +18,7 @@ type MobileNavItem = {
 const items: readonly MobileNavItem[] = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/shop/products", label: "المنتجات", icon: Search },
-  { href: "/shop/visual-search", label: "بحث بالصورة", icon: Camera },
+  { href: "/buyer", label: "حسابي", icon: UserRound },
   { href: "/buyer/wishlist", label: "المفضلة", icon: Heart, count: "wishlist" },
   { href: "/shop/cart", label: "السلة", icon: ShoppingBag, count: "cart" },
 ];
