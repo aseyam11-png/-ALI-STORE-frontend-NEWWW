@@ -73,7 +73,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
       setCartError(
         error instanceof Error
           ? error.message
-          : "Unable to add this product to the cart.",
+          : "تعذر إضافة هذا المنتج إلى السلة.",
       );
     } finally {
       setCartBusy(false);
