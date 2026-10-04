@@ -547,7 +547,7 @@ export default function CartPage() {
 
                       <div className="flex items-end justify-between">
                         <span className="font-bold text-neutral-500">
-                          Total
+                          Subtotal
                         </span>
 
                         <span className="text-3xl font-black text-brand-ink">
