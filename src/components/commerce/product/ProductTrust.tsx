@@ -59,7 +59,7 @@ export function ProductTrust({
 
   return (
     <section
-      aria-label="Shipping and trust information"
+      aria-label="معلومات الشحن والثقة"
       className="rounded-2xl border border-neutral-200 bg-surface p-6 sm:p-8"
     >
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
