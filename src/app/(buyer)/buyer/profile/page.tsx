@@ -29,6 +29,103 @@ type ProfileForm = {
 
 export default function BuyerProfilePage() {
   const session = useSession();
+
+  if (session.status === "loading") {
+    return (
+      <AccountWorkspace
+        activeTab="profile"
+        title="الملف الشخصي"
+        description="إدارة معلومات التواصل المرتبطة بحسابك."
+      >
+        <div
+          className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm"
+          aria-busy="true"
+        >
+          <div className="animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-neutral-100" />
+              <div className="space-y-2">
+                <div className="h-5 w-44 rounded bg-neutral-100" />
+                <div className="h-3 w-28 rounded bg-neutral-100" />
+              </div>
+            </div>
+            <div className="mt-7 grid gap-4 sm:grid-cols-2">
+              <div className="h-12 rounded-xl bg-neutral-100" />
+              <div className="h-12 rounded-xl bg-neutral-100" />
+              <div className="h-12 rounded-xl bg-neutral-100 sm:col-span-2" />
+            </div>
+          </div>
+          <p className="mt-5 text-body-sm text-muted-foreground">
+            جارٍ التحقق من الجلسة...
+          </p>
+        </div>
+      </AccountWorkspace>
+    );
+  }
+
+  if (session.status !== "authenticated") {
+    return (
+      <AccountWorkspace
+        activeTab="profile"
+        title="الملف الشخصي"
+        description="إدارة معلومات التواصل المرتبطة بحسابك."
+      >
+        <div className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-brand">
+            <UserRound className="h-6 w-6" />
+          </span>
+          <h2 className="mt-4 text-h3 font-bold text-foreground">
+            سجّل الدخول للوصول إلى ملفك الشخصي
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-body-sm leading-6 text-muted-foreground">
+            بيانات الملف الشخصي محفوظة في حسابك ولا يمكن عرضها قبل التحقق من الجلسة.
+          </p>
+          <Link
+            href="/login?next=/buyer/profile"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-brand px-6 text-body font-medium text-white transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          >
+            <LogIn className="me-2 h-4 w-4" />
+            تسجيل الدخول
+          </Link>
+        </div>
+      </AccountWorkspace>
+    );
+  }
+
+  if (!session.user) {
+    return (
+      <AccountWorkspace
+        activeTab="profile"
+        title="الملف الشخصي"
+        description="تعذر قراءة بيانات الحساب الحالية."
+      >
+        <div
+          role="alert"
+          className="rounded-2xl border border-danger-100 bg-danger-surface p-8 text-center text-body-sm text-danger-700"
+        >
+          تعذر قراءة بيانات الحساب الحالية. أعد تحميل الصفحة وحاول مرة أخرى.
+        </div>
+      </AccountWorkspace>
+    );
+  }
+
+  return <AuthenticatedProfile user={session.user} />;
+}
+
+function AuthenticatedProfile({
+  user,
+}: {
+  user: NonNullable<ReturnType<typeof useSession>["user"]>;
+}) {
+  const [form, setForm] = useState<ProfileForm>({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phoneNumber: user.phoneNumber ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const displayName = useMemo(() => {
     const name = [form.firstName.trim(), form.lastName.trim()]
       .filter(Boolean)
@@ -193,18 +290,6 @@ export default function BuyerProfilePage() {
     );
   }
 
-  return <AuthenticatedProfile user={user} />;
-}
-
-function AuthenticatedProfile({ user }: { user: NonNullable<ReturnType<typeof useSession>["user"]> }) {
-  const [form, setForm] = useState<ProfileForm>({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    phoneNumber: user.phoneNumber ?? "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   return (
     <AccountWorkspace
@@ -372,6 +457,7 @@ function AuthenticatedProfile({ user }: { user: NonNullable<ReturnType<typeof us
     </AccountWorkspace>
   );
 }
+
 
 function Field({
   id,
