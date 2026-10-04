@@ -10,14 +10,14 @@ import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { getOrder, type BackendOrder } from "@/features/orders/services/order.service";
 
 function statusLabel(status: BackendOrder["status"]) {
-  return {
+  return ({
     PENDING: "بانتظار الدفع",
     PROCESSING: "قيد التجهيز",
     SHIPPED: "تم الشحن",
     DELIVERED: "تم التوصيل",
     CANCELLED: "ملغي",
-    FULFILLMENT_FAILED: "فشل تنفيذ الطلب",
-  }[status];
+    FULFILLMENT_FAILED: "تعذر تنفيذ الطلب",
+  } as Record<BackendOrder["status"], string>)[status] ?? "قيد المعالجة";
 }
 
 function aggregateShipmentStatus(order: BackendOrder): string {
@@ -138,7 +138,15 @@ export default function BuyerOrderTrackingPage() {
                     <h2 className="text-lg font-bold text-foreground">الشحن</h2>
                   </div>
                   <span className="rounded-full bg-info-surface px-3 py-1 text-[10px] font-bold text-brand">
-                    {({ PENDING: "بانتظار الدفع", PROCESSING: "قيد التجهيز", SHIPPED: "تم الشحن", IN_TRANSIT: "في الطريق", DELIVERED: "تم التوصيل", CANCELLED: "ملغي", FULFILLMENT_FAILED: "فشل تنفيذ الطلب" } as Record<string, string>)[aggregateShipmentStatus(order)] ?? aggregateShipmentStatus(order)}
+                    {({
+                      PENDING: "بانتظار الدفع",
+                      PROCESSING: "قيد التجهيز",
+                      SHIPPED: "تم الشحن",
+                      IN_TRANSIT: "في الطريق",
+                      DELIVERED: "تم التوصيل",
+                      CANCELLED: "ملغي",
+                      FULFILLMENT_FAILED: "تعذر تنفيذ الطلب",
+                    } as Record<string, string>)[aggregateShipmentStatus(order)] ?? "قيد المعالجة"}
                   </span>
                 </div>
 
