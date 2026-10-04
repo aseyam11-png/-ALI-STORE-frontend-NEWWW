@@ -8,7 +8,8 @@ import {
   Truck,
 } from "lucide-react";
 
-import type { B2CProduct } from "@/features/products/types/b2c-product.types";
+import type { B2CProduct, B2CProductVariant } from "@/features/products/types/b2c-product.types";
+import { useState } from "react";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { ProductActions } from "./ProductActions";
@@ -23,8 +24,11 @@ interface ProductInfoProps {
 export function ProductInfo({
   product,
 }: ProductInfoProps) {
-  const stock = product.stock;
-  const activePrice = product.price;
+  const [selectedVariant, setSelectedVariant] =
+    useState<B2CProductVariant | undefined>(undefined);
+
+  const stock = selectedVariant?.stock ?? product.stock;
+  const activePrice = selectedVariant?.price ?? product.price;
   const galleryImages = product.images.map(
     (image) => image.url,
   );
@@ -134,7 +138,11 @@ export function ProductInfo({
         </div>
 
         {product.variants.length > 0 && (
-          <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm"><VariantSelector variants={product.variants} selectedVariantId={undefined} onChange={() => undefined} /></div>
+          <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm"><VariantSelector
+            variants={product.variants}
+            selectedVariantId={selectedVariant?.id}
+            onChange={setSelectedVariant}
+          /></div>
         )}
 
         <div className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface divide-y divide-neutral-100 shadow-sm">
@@ -191,8 +199,12 @@ export function ProductInfo({
 
         <ProductActions
           product={product}
+          selectedVariant={selectedVariant}
         />
-        <StickyAddToCart product={product} />
+        <StickyAddToCart
+          product={product}
+          selectedVariant={selectedVariant}
+        />
       </div>
     </div>
   );
