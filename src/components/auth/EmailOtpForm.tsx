@@ -13,9 +13,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+function resolveSafeNextPath(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/buyer/profile";
+  }
+  return value;
+}
+
 export function EmailOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const nextPath = resolveSafeNextPath(searchParams.get("next"));
 
   const queryChallengeId = searchParams.get("challenge") ?? "";
   const queryMaskedEmail = searchParams.get("email") ?? "";
@@ -72,7 +80,7 @@ export function EmailOtpForm() {
       return;
     }
 
-    router.replace("/buyer/profile");
+    router.replace(nextPath);
   };
 
   const handleResend = async () => {
@@ -95,6 +103,7 @@ export function EmailOtpForm() {
       challenge: nextChallenge.challengeId,
       email: nextChallenge.maskedEmail,
       purpose: nextChallenge.purpose,
+      next: nextPath,
     });
 
     router.replace(("/verify-email?" + query.toString()) as Route, {
