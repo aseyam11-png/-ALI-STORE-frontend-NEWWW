@@ -77,8 +77,7 @@ export default function CheckoutPage() {
     useState("cod");
 
   // Online payments stay disabled until a real production gateway is configured.
-  const onlinePaymentsEnabled =
-    process.env.NEXT_PUBLIC_ONLINE_PAYMENTS_ENABLED === "true";
+  const onlinePaymentsEnabled = false;
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [serverCartTotal, setServerCartTotal] =
@@ -349,13 +348,13 @@ export default function CheckoutPage() {
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
             <section
               role="alert"
-              className="rounded-3xl border border-amber-200 bg-surface p-8 shadow-sm sm:p-12"
+              className="rounded-3xl border border-warning-100 bg-surface p-8 shadow-sm sm:p-12"
             >
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-warning-surface text-warning-700">
                 <CreditCard className="h-8 w-8" />
               </div>
 
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
+              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-warning-700">
                 تنبيه بشأن الدفع
               </p>
 
@@ -937,7 +936,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
                   <LockKeyhole className="h-4 w-4" />تأكيد الطلب</button>
 
