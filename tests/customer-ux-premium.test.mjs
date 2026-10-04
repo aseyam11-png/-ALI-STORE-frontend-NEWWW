@@ -12,7 +12,7 @@ function read(file) {
 test("customer UX: checkout exposes only truthful online payment options", () => {
   const source = read("src/app/(shop)/shop/checkout/page.tsx");
   assert.match(source, /useState\("cod"\)/);
-  assert.match(source, /NEXT_PUBLIC_ONLINE_PAYMENTS_ENABLED/);
+  assert.match(source, /const onlinePaymentsEnabled = false/);
   assert.match(source, /disabled=!option\.enabled/);
   assert.match(source, /غير متاح حاليًا/);
   assert.match(source, /role="radiogroup"/);
