@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -299,7 +300,7 @@ export default function BuyerOrdersPage() {
                     </div>
 
                     <Link
-                      href={"/buyer/orders/" + order.id}
+                      href={("/buyer/orders/" + order.id) as Route}
                       className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-neutral-200 px-4 text-body-sm font-bold text-foreground transition-all duration-200 ease-brand hover:border-primary-200 hover:text-brand"
                     >
                       التفاصيل
