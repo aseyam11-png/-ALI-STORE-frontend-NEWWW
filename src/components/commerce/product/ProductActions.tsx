@@ -62,9 +62,18 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
         quantity,
         image: selectedVariant?.image ?? product.images[0]?.url,
         minOrderQuantity: 1,
+        variantId: selectedVariant?.id,
+        variantLabel: selectedVariant?.name
+          ? `${selectedVariant.name}: ${selectedVariant.value}`
+          : undefined,
       };
 
       if (session.status === "authenticated") {
+        if (selectedVariant) {
+          throw new Error(
+            "This product has variants, but the current cart API does not persist variants yet.",
+          );
+        }
         const numericId = Number(product.id);
         if (!Number.isInteger(numericId) || numericId < 1) {
           throw new Error("Invalid product id.");
