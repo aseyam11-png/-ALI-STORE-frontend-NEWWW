@@ -271,25 +271,6 @@ function AuthenticatedProfile({
     );
   }
 
-  const user = session.user;
-
-  if (!user) {
-    return (
-      <AccountWorkspace
-        activeTab="profile"
-        title="الملف الشخصي"
-        description="تعذر قراءة بيانات الحساب الحالية."
-      >
-        <div
-          role="alert"
-          className="rounded-2xl border border-danger-100 bg-danger-surface p-8 text-center text-body-sm text-danger-700"
-        >
-          تعذر قراءة بيانات الحساب الحالية. أعد تحميل الصفحة وحاول مرة أخرى.
-        </div>
-      </AccountWorkspace>
-    );
-  }
-
 
   return (
     <AccountWorkspace
