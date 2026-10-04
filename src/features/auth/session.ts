@@ -54,19 +54,40 @@ export function useSession(): Session {
   useEffect(() => {
     let mounted = true;
 
-    getSession()
-      .then((user) => {
+    const loadSession = async () => {
+      try {
+        const user = await getSession();
         if (!mounted) return;
-        setSession(user
-          ? { status: "authenticated", user }
-          : { status: "unauthenticated" });
-      })
-      .catch(() => {
+        setSession(
+          user
+            ? { status: "authenticated", user }
+            : { status: "unauthenticated" },
+        );
+      } catch {
         if (mounted) setSession({ status: "unauthenticated" });
-      });
+      }
+    };
+
+    void loadSession();
+
+    const handleProfileUpdated = () => {
+      void loadSession();
+    };
+
+    const handleLogout = () => {
+      if (mounted) setSession({ status: "unauthenticated" });
+    };
+
+    window.addEventListener("alistore:profile-updated", handleProfileUpdated);
+    window.addEventListener("alistore:logout", handleLogout);
 
     return () => {
       mounted = false;
+      window.removeEventListener(
+        "alistore:profile-updated",
+        handleProfileUpdated,
+      );
+      window.removeEventListener("alistore:logout", handleLogout);
     };
   }, []);
 
@@ -217,6 +238,31 @@ export async function resendEmailCode(
 
 export function loginWithGoogle(): void {
   window.location.assign(API_BASE_URL + "/api/v1/auth/google");
+}
+
+export type UpdateProfileInput = {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+};
+
+export async function updateProfile(
+  input: UpdateProfileInput,
+): Promise<SessionUser> {
+  const response = await apiClient.requestData<SessionUser>("/api/v1/me", {
+    method: "PUT",
+    body: JSON.stringify({
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      phoneNumber: input.phoneNumber?.trim() || null,
+    }),
+  });
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("alistore:profile-updated"));
+  }
+
+  return response;
 }
 
 export async function logout(): Promise<void> {
