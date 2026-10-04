@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CategoryNode } from "@/features/catalog/types/category.types";
-import { ArrowLeft, Camera, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
@@ -44,13 +44,6 @@ export async function HomeHero() {
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </Link>
 
-            <Link
-              href="/shop/visual-search"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 text-body-sm font-medium text-white/90 transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-white/10 focus-visible:ring-4 focus-visible:ring-primary-100/30"
-            >
-              <Camera className="h-4 w-4" aria-hidden="true" />
-              البحث بصورة
-            </Link>
           </div>
 
           {categories.length > 0 ? (
