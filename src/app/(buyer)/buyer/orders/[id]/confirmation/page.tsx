@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  AlertCircle,
   ArrowRight,
   CheckCircle2,
   CreditCard,
@@ -133,6 +134,16 @@ export default function OrderConfirmationPage() {
     payment?.method === "CASH_ON_DELIVERY" &&
     payment?.status === "PENDING";
 
+  const paymentNeedsAttention =
+    !paymentSucceeded && !codPending;
+
+  const statusTitle =
+    paymentSucceeded
+      ? "Order confirmed"
+      : codPending
+        ? "Order confirmed — payment due on delivery"
+        : "Order created — payment needs attention";
+
   return (
     <AppShell>
       <main className="min-h-screen bg-[#F8FAFC]">
@@ -147,12 +158,30 @@ export default function OrderConfirmationPage() {
             </Link>
 
             <div className="mt-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-[#2563EB]">
-                <CheckCircle2 className="h-8 w-8" />
+              <div
+                className={
+                  "flex h-14 w-14 items-center justify-center rounded-2xl " +
+                  (paymentNeedsAttention
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-blue-50 text-[#2563EB]")
+                }
+              >
+                {paymentNeedsAttention ? (
+                  <AlertCircle className="h-8 w-8" />
+                ) : (
+                  <CheckCircle2 className="h-8 w-8" />
+                )}
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
-                  Order status
+                <p
+                  className={
+                    "text-[10px] font-black uppercase tracking-[0.18em] " +
+                    (paymentNeedsAttention
+                      ? "text-amber-700"
+                      : "text-blue-600")
+                  }
+                >
+                  {statusTitle}
                 </p>
                 <h1 className="mt-1 text-3xl font-black tracking-tight text-[#0F172A]">
                   Order #{order.id}
@@ -269,10 +298,35 @@ export default function OrderConfirmationPage() {
                     Order lifecycle: {order.status}
                   </div>
 
-                  <div className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                    {payment
-                      ? `Payment #${payment.id}: ${payment.status}`
-                      : "No payment record is available for this order."}
+                  <div
+                    className={
+                      "rounded-xl p-3 text-xs leading-5 " +
+                      (paymentNeedsAttention
+                        ? "border border-amber-200 bg-amber-50 text-amber-800"
+                        : "bg-slate-50 text-slate-600")
+                    }
+                  >
+                    {payment ? (
+                      <>
+                        <p>
+                          Payment #{payment.id}: {payment.status}
+                        </p>
+                        {payment.status === "REQUIRES_RECONCILIATION" && (
+                          <p className="mt-2 font-bold">
+                            The server preserved this payment attempt for reconciliation.
+                            Do not create a duplicate order.
+                          </p>
+                        )}
+                        {payment.status === "FAILED" && (
+                          <p className="mt-2 font-bold">
+                            This payment attempt failed. The existing order remains
+                            the authoritative checkout record.
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      "No payment record is available for this order."
+                    )}
                   </div>
                 </div>
               </section>
