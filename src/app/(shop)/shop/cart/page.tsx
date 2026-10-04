@@ -251,15 +251,15 @@ export default function CartPage() {
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand">
-              Shopping cart
+              السلة
             </p>
 
             <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
-              Your cart
+              سلتك
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-neutral-500">
-              Review your items and continue to checkout when you&apos;re ready.
+              راجع منتجاتك وأكمل إتمام الطلب عندما تكون جاهزًا للشراء.
             </p>
 
           </div>
@@ -277,7 +277,7 @@ export default function CartPage() {
                 </div>
 
                 <h2 className="mt-5 text-2xl font-black text-foreground">
-                  Your cart is empty
+                  سلتك فارغة
                 </h2>
 
                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
@@ -287,7 +287,7 @@ export default function CartPage() {
 
                 <Link
                   href="/shop/products"
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--color-primary-500)] px-6 text-sm font-medium text-white"
+                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-medium text-white"
                 >
                   Browse products
                   <ArrowRight className="h-4 w-4" />
@@ -297,8 +297,8 @@ export default function CartPage() {
 
               <RecommendationSection
                 type="TRENDING"
-                title="Trending products"
-                description="Popular products customers are exploring right now."
+                title="منتجات رائجة"
+                description="منتجات يكتشفها العملاء حاليًا."
               />
 
             </div>
@@ -324,7 +324,7 @@ export default function CartPage() {
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        In your cart
+                        في سلتك
                       </p>
                     </div>
 
@@ -335,14 +335,14 @@ export default function CartPage() {
                       className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-danger transition hover:bg-danger-surface"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Clear cart
+                      إفراغ السلة
                     </button>
 
                   </div>
 
                   <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
 
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-neutral-100">
 
                       {items.map(
                         (item) => {
@@ -488,15 +488,15 @@ export default function CartPage() {
                     <div className="border-t border-neutral-100 bg-neutral-50 px-5 py-4">
                       <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
                         <Truck className="h-4 w-4 text-success-600" />
-                        Shipping is calculated and confirmed at checkout.
+                        يتم احتساب الشحن وتأكيده عند إتمام الطلب.
                       </div>
                     </div>
                   </section>
 
                   <RecommendationSection
                     type="FREQUENTLY_BOUGHT_TOGETHER"
-                    title="Frequently bought together"
-                    description="Complete your purchase with products customers often add."
+                    title="يُشترى عادةً مع هذا المنتج"
+                    description="أكمل مشترياتك بمنتجات يضيفها العملاء عادةً."
                   />
 
                 </section>
@@ -506,14 +506,14 @@ export default function CartPage() {
                   <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                     <h2 className="text-lg font-black text-foreground">
-                      Order summary
+                      ملخص الطلب
                     </h2>
 
                     <div className="mt-6 space-y-4">
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Items
+                          المنتجات
                         </span>
 
                         <span className="font-bold">
@@ -523,7 +523,7 @@ export default function CartPage() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="font-bold">
@@ -533,11 +533,11 @@ export default function CartPage() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Shipping
+                          الشحن
                         </span>
 
                         <span className="font-bold">
-                          Confirmed at checkout
+                          يُؤكد عند إتمام الطلب
                         </span>
                       </div>
 
@@ -547,7 +547,7 @@ export default function CartPage() {
 
                       <div className="flex items-end justify-between">
                         <span className="font-bold text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="text-3xl font-black text-brand-ink">
@@ -562,9 +562,9 @@ export default function CartPage() {
 
                     <Link
                       href="/shop/checkout"
-                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary-500)] text-sm font-medium text-white"
+                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-medium text-white"
                     >
-                      Continue to checkout
+                      متابعة إتمام الطلب
                       <ChevronRight className="h-4 w-4" />
                     </Link>
 
@@ -572,8 +572,8 @@ export default function CartPage() {
 
                   <RecommendationSection
                     type="BASED_ON_BROWSING"
-                    title="Recommended for you"
-                    description="Suggestions based on products you may like."
+                    title="مقترح لك"
+                    description="اقتراحات بناءً على منتجات قد تعجبك."
                   />
 
                 </aside>
