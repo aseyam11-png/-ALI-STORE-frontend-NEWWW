@@ -28,9 +28,9 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
   const price = getVariantPrice(product, selectedVariant);
   const stock = getVariantStock(product, selectedVariant);
-  const available =
-    product.stockStatus === "in_stock" ||
-    product.stockStatus === "low_stock";
+  const available = selectedVariant
+    ? selectedVariant.available && stock > 0
+    : product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
 
   const subtotal = price * quantity;
 
