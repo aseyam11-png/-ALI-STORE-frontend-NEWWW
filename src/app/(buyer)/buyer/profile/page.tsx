@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import {
@@ -405,7 +406,7 @@ function Field({
   autoComplete?: string;
   inputMode?: "text" | "tel";
   placeholder?: string;
-  icon?: typeof Phone;
+  icon?: LucideIcon;
 }) {
   return (
     <label htmlFor={id} className="block">
@@ -448,7 +449,7 @@ function ReadOnlyField({
   label: string;
   value: string;
   hint: string;
-  icon: typeof Mail;
+  icon: LucideIcon;
 }) {
   return (
     <label htmlFor={id} className="block">
