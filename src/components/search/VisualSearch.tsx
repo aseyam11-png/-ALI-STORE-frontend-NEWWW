@@ -6,8 +6,8 @@ import {
   Camera,
   ImageIcon,
   Loader2,
-  Search,
-  Upload,
+  بحث,
+  رفع,
   X,
 } from "lucide-react";
 import {
@@ -20,12 +20,12 @@ import {
 } from "@/features/visual-search/services/visual-search.service";
 
 import type {
-  VisualSearchResult,
+  VisualبحثResult,
 } from "@/features/visual-search/types/visual-search.types";
 
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 
-export function VisualSearch() {
+export function Visualبحث() {
   const [
     preview,
     setPreview,
@@ -42,14 +42,14 @@ export function VisualSearch() {
 
   const [
     results,
-    setResults,
+    setالنتائج,
   ] = useState<
-    VisualSearchResult[]
+    VisualبحثResult[]
   >([]);
 
   const [
     searching,
-    setSearching,
+    setبحثing,
   ] = useState(false);
 
   const [
@@ -75,7 +75,7 @@ export function VisualSearch() {
     }
 
     setError("");
-    setResults([]);
+    setالنتائج([]);
 
     if (
       !file.type.startsWith(
@@ -124,17 +124,17 @@ export function VisualSearch() {
         return;
       }
 
-      setSearching(true);
+      setبحثing(true);
       setError("");
 
       try {
-        const nextResults =
+        const nextالنتائج =
           await searchByImage(
             selectedFile,
           );
 
-        setResults(
-          nextResults,
+        setالنتائج(
+          nextالنتائج,
         );
       } catch (
         searchError
@@ -146,7 +146,7 @@ export function VisualSearch() {
             : "Visual search failed.",
         );
       } finally {
-        setSearching(
+        setبحثing(
           false,
         );
       }
@@ -165,7 +165,7 @@ export function VisualSearch() {
     setSelectedFile(
       undefined,
     );
-    setResults([]);
+    setالنتائج([]);
     setError("");
   };
 
@@ -209,7 +209,7 @@ export function VisualSearch() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview}
-                  alt="Selected search image"
+                  alt="صورة البحث المحددة"
                   className="mx-auto max-h-[230px] w-full rounded-xl object-contain"
                 />
 
@@ -229,7 +229,7 @@ export function VisualSearch() {
                 </p>
 
                 <span className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-xs font-black text-white">
-                  <Upload className="h-4 w-4" />
+                  <رفع className="h-4 w-4" />
                   اختيار الصورة
                 </span>
               </>
@@ -315,7 +315,7 @@ export function VisualSearch() {
               </>
             ) : (
               <>
-                <Search className="h-4 w-4" />
+                <بحث className="h-4 w-4" />
                 البحث بالصورة
               </>
             )}
