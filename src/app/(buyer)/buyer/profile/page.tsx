@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CheckCircle2,
   Loader2,
@@ -29,33 +29,6 @@ type ProfileForm = {
 
 export default function BuyerProfilePage() {
   const session = useSession();
-  const [form, setForm] = useState<ProfileForm>({
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  useEffect(() => {
-    if (session.status !== "authenticated" || !session.user) return;
-
-    setForm({
-      firstName: session.user.firstName,
-      lastName: session.user.lastName,
-      phoneNumber: session.user.phoneNumber ?? "",
-    });
-    setError("");
-    setSuccess("");
-  }, [
-    session.status,
-    session.user?.id,
-    session.user?.firstName,
-    session.user?.lastName,
-    session.user?.phoneNumber,
-  ]);
-
   const displayName = useMemo(() => {
     const name = [form.firstName.trim(), form.lastName.trim()]
       .filter(Boolean)
@@ -219,6 +192,19 @@ export default function BuyerProfilePage() {
       </AccountWorkspace>
     );
   }
+
+  return <AuthenticatedProfile user={user} />;
+}
+
+function AuthenticatedProfile({ user }: { user: NonNullable<ReturnType<typeof useSession>["user"]> }) {
+  const [form, setForm] = useState<ProfileForm>({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phoneNumber: user.phoneNumber ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   return (
     <AccountWorkspace
