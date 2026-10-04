@@ -93,13 +93,19 @@ export async function clearBackendCart(): Promise<BackendCart> {
 }
 
 export async function replaceBackendCart(
-  items: Array<{ productId: string; quantity: number }>,
+  items: Array<{ productId: string; quantity: number; variantId?: string }>,
 ): Promise<BackendCart> {
   const seenProductIds = new Set<number>();
 
   const requestItems = items.map((item) => {
     const productId = toPositiveProductId(item.productId);
     const quantity = toPositiveQuantity(item.quantity);
+
+    if (item.variantId) {
+      throw new Error(
+        "The current cart API cannot persist product variants. Please select the base product before continuing.",
+      );
+    }
 
     if (seenProductIds.has(productId)) {
       throw new Error(
