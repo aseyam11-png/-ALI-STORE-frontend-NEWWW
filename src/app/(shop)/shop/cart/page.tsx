@@ -49,6 +49,7 @@ export default function CartPage() {
   const replaceItems = useCartStore((state) => state.replaceItems);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
     if (session.status !== "authenticated") return;
@@ -109,6 +110,8 @@ export default function CartPage() {
       1,
       Math.floor(quantity),
     );
+
+    setConfirmClear(false);
 
     if (session.status !== "authenticated") {
       const nextItems = useCartStore.getState().items.map(
@@ -251,15 +254,15 @@ export default function CartPage() {
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand">
-              Shopping cart
+              السلة
             </p>
 
             <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
-              Your cart
+              سلتك
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-neutral-500">
-              Review your items and continue to checkout when you&apos;re ready.
+              راجع منتجاتك وانتقل إلى إتمام الطلب عندما تكون جاهزًا.
             </p>
 
           </div>
@@ -287,9 +290,9 @@ export default function CartPage() {
 
                 <Link
                   href="/shop/products"
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--color-primary-500)] px-6 text-sm font-medium text-white"
+                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-medium text-white"
                 >
-                  Browse products
+                  تصفح المنتجات
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
@@ -317,26 +320,47 @@ export default function CartPage() {
 
                     <div>
                       <p className="text-sm font-black text-foreground">
-                        {itemCount} item
-                        {itemCount !== 1
-                          ? "s"
-                          : ""}
+                        {itemCount} منتج
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        In your cart
+                        داخل السلة
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => void handleClear()}
-                      disabled={syncing}
-                      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-danger transition hover:bg-danger-surface"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Clear cart
-                    </button>
+                    {confirmClear ? (
+                      <div className="flex items-center gap-2 rounded-xl border border-danger-100 bg-danger-surface p-1.5">
+                        <span className="px-2 text-caption font-medium text-danger-700">
+                          هل تريد إفراغ السلة بالكامل؟
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void handleClear()}
+                          disabled={syncing}
+                          className="inline-flex min-h-9 items-center rounded-lg bg-danger px-3 text-caption font-bold text-white transition hover:bg-danger-700 disabled:opacity-50"
+                        >
+                          نعم، أفرغها
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmClear(false)}
+                          disabled={syncing}
+                          className="inline-flex min-h-9 items-center rounded-lg px-3 text-caption font-bold text-neutral-700 transition hover:bg-surface"
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmClear(true)}
+                        disabled={syncing}
+                        className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-caption font-bold text-danger transition hover:bg-danger-surface"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        إفراغ السلة
+                      </button>
+                    )}
 
                   </div>
 
@@ -488,7 +512,7 @@ export default function CartPage() {
                     <div className="border-t border-neutral-100 bg-neutral-50 px-5 py-4">
                       <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
                         <Truck className="h-4 w-4 text-success-600" />
-                        Shipping is calculated and confirmed at checkout.
+                        يتم تأكيد تكلفة الشحن عند إتمام الطلب.
                       </div>
                     </div>
                   </section>
@@ -506,14 +530,14 @@ export default function CartPage() {
                   <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                     <h2 className="text-lg font-black text-foreground">
-                      Order summary
+                      ملخص الطلب
                     </h2>
 
                     <div className="mt-6 space-y-4">
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Items
+                          المنتجات
                         </span>
 
                         <span className="font-bold">
@@ -523,7 +547,7 @@ export default function CartPage() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="font-bold">
@@ -533,11 +557,11 @@ export default function CartPage() {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Shipping
+                          الشحن
                         </span>
 
                         <span className="font-bold">
-                          Confirmed at checkout
+                          يُؤكَّد عند إتمام الطلب
                         </span>
                       </div>
 
@@ -547,7 +571,7 @@ export default function CartPage() {
 
                       <div className="flex items-end justify-between">
                         <span className="font-bold text-neutral-500">
-                          Total
+                          الإجمالي
                         </span>
 
                         <span className="text-3xl font-black text-brand-ink">
@@ -564,7 +588,7 @@ export default function CartPage() {
                       href="/shop/checkout"
                       className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary-500)] text-sm font-medium text-white"
                     >
-                      Continue to checkout
+                      متابعة إتمام الطلب
                       <ChevronRight className="h-4 w-4" />
                     </Link>
 
