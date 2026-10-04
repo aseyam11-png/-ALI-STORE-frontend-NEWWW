@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Heart, ShoppingCart, Trash2 } from "lucide-react";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import { useCartStore } from "@/stores/cart-store";
 import {
@@ -109,8 +109,11 @@ export default function WishlistPage() {
   };
 
   return (
-    <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
+    <AccountWorkspace
+      activeTab="wishlist"
+      title="المفضلة"
+      description="احتفظ بالمنتجات التي تهمك وارجع إليها أو أضفها إلى السلة عندما تكون جاهزًا للشراء."
+    >
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
             <Link
@@ -289,7 +292,6 @@ export default function WishlistPage() {
             </div>
           )}
         </div>
-      </main>
-    </AppShell>
+    </AccountWorkspace>
   );
 }
