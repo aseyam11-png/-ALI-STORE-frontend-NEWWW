@@ -29,7 +29,15 @@ type AccountNavItem = {
     | "addresses"
     | "support";
   label: string;
-  href: string;
+  href:
+    | "/buyer"
+    | "/buyer/profile"
+    | "/buyer/security"
+    | "/buyer/notifications"
+    | "/buyer/orders"
+    | "/buyer/wishlist"
+    | "/buyer/addresses"
+    | "/buyer/support";
   icon: typeof UserRound;
 };
 
