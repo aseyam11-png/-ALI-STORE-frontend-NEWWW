@@ -1,8 +1,28 @@
-# ALI STORE — DESIGN SYSTEM & EXPERIENCE SPECIFICATION
+# ALI STORE — DESIGN CONTRACT v2
+## Design System, UX Responsibilities, Current State, Target Experience & AI Coding Contract
 
-> Product design contract for the ALI STORE storefront.
-> This document defines the visual language, UX behavior, responsive rules, accessibility requirements, component patterns, and page-level experience expectations.
-> It is a design/experience contract, not a business-logic replacement.
+> **Document purpose:** canonical customer-facing design and UX contract for ALI STORE.
+> **Document status:** normative design specification + implementation alignment guide.
+> **Scope:** storefront, customer authentication, buyer account, commerce flows, search/discovery, support surfaces, and shared customer-facing UI.
+> **Language / direction:** Arabic-first, RTL-first.
+> **Business model:** B2C, single-merchant, supplier-based commerce.
+> **Version:** 2.0
+> **Audit snapshot:** 2026-10-04
+
+### How to read this document
+
+This document separates four concerns:
+
+1. **Design System** — how the interface should look and behave visually.
+2. **Responsibility** — what each route, feature, component, and data layer owns.
+3. **Current Implementation** — what exists now and should be preserved unless explicitly changed.
+4. **Target Experience / Known Gaps** — the intended UX as real integrations mature.
+
+A **Target UX** requirement is not proof that the backend capability already exists.
+A **Current Implementation** statement is not permission to change business logic.
+A design rule never overrides domain truth.
+
+**Precedence:** Domain truth → API contract → existing business behavior → design contract → visual preference.
 
 ---
 
@@ -361,6 +381,77 @@ Do not introduce motion that cannot degrade gracefully.
 
 ---
 
+# 10A. Responsibility Architecture
+
+This section defines ownership so future UI work does not blur presentation, feature, and domain responsibilities.
+
+## Design system owns
+
+- Colors.
+- Typography.
+- Spacing.
+- Radius.
+- Elevation.
+- Motion.
+- Focus treatment.
+- Responsive visual primitives.
+
+## Shared UI components own
+
+- Reusable presentation patterns.
+- Interaction affordances.
+- Accessibility behavior.
+- Shared loading / empty / error presentation.
+
+Shared UI components **must not own domain truth**.
+
+## Feature components own
+
+- Feature-specific presentation.
+- Mapping real domain data into customer language.
+- Feature-specific interactions.
+- Feature-specific states.
+
+They must not silently alter business rules.
+
+## Pages / routes own
+
+- Page composition.
+- Layout order.
+- Route-level metadata.
+- Selection of feature components.
+- Existing route-level orchestration.
+
+Pages must not duplicate services, stores, or domain rules.
+
+## Services / stores / backend own
+
+- Fetching.
+- Mutations.
+- Validation.
+- Calculations.
+- Authentication semantics.
+- Inventory truth.
+- Pricing truth.
+- Order transitions.
+- Payment transitions.
+- Supplier synchronization.
+
+The UI represents these results; it does not invent them.
+
+## Classification rule for new work
+
+Every substantial UI requirement must be classifiable as:
+
+- **SYSTEM RULE**
+- **PAGE RESPONSIBILITY**
+- **CURRENT IMPLEMENTATION**
+- **TARGET UX**
+- **BACKEND-DEPENDENT**
+- **ACCESSIBILITY**
+- **PERFORMANCE**
+- **QA / DEFINITION OF DONE**
+
 # 11. Global Storefront Shell
 
 The current shell is conceptually:
@@ -674,6 +765,8 @@ Bad:
 
 # 16. Visual Search Experience
 
+> **Architecture rule:** Visual Search is a shopping capability. A standalone route is optional; it must not remain a duplicate primary destination once contextual search becomes the canonical customer entry point.
+
 Visual search is a discovery tool.
 
 ### Entry points
@@ -712,7 +805,7 @@ Avoid making visual search look like a generic chatbot.
 
 ---
 
-# 17. Ask Ali / AI Discovery
+# 17. Ask Ali / AI Discovery — Backend-Dependent
 
 AI should be presented as a shopping assistant, not as the identity of the store.
 
@@ -728,6 +821,8 @@ AI should be presented as a shopping assistant, not as the identity of the store
 ### Rules
 
 AI output must remain grounded in real catalog/system data.
+
+**BACKEND-DEPENDENT:** do not present Ask Ali as operational until a real grounded service and contract are connected.
 
 Never let AI invent:
 
@@ -816,6 +911,14 @@ Recommended structure:
 - Validate at field and submission levels appropriately.
 - Provide actionable errors.
 
+### Shipping contract boundary
+
+Shipping method selection, delivery dates, carrier names, and shipping prices are **BACKEND-DEPENDENT**.
+
+Render them only when supplied by a real contract.
+
+Never simulate shipping options, carrier choices, delivery dates, or shipping prices.
+
 ### Error language
 
 Bad:
@@ -861,6 +964,52 @@ Avoid dense BI-style metrics unless they actually help customers.
 
 ---
 
+# 20A. Authentication Experience
+
+Authentication is a customer journey, not a generic form collection.
+
+## Login responsibility
+
+- Customer sign-in.
+- Password visibility control.
+- Actionable errors.
+- Registration path.
+- Guest shopping continuation where appropriate.
+- Third-party authentication only when the real provider integration exists.
+
+## Register responsibility
+
+- Customer identity input.
+- Contact information.
+- Password creation / confirmation.
+- Actionable validation.
+- Verification handoff when required by the actual flow.
+
+## Verify Email responsibility
+
+- Verification context.
+- OTP entry.
+- Validation.
+- Resend only when supported by the real backend contract.
+- Clear route back to authentication.
+
+## Security responsibility
+
+Only expose real controls such as:
+
+- Current session state.
+- Secure logout.
+- Backend-supported credential actions.
+
+Do not invent:
+
+- 2FA toggles;
+- device lists;
+- security scores;
+- password-health features;
+
+without real backend support.
+
 # 21. Orders Page
 
 Orders are customer history and reassurance.
@@ -883,6 +1032,10 @@ Example:
 تم استلام الطلب → قيد المعالجة → تم الشحن → في الطريق → تم التسليم
 
 Do not expose raw internal event names or technical enum values.
+
+### Customer shell rule
+
+Buyer order details and order confirmation should use the same customer account visual language / AccountWorkspace where the route architecture permits it. Do not expose internal operational styling on customer order pages.
 
 ### Order details
 
@@ -929,6 +1082,8 @@ Wishlist state should remain visually consistent across product cards, product p
 ---
 
 # 23. Support Experience
+
+> **BACKEND-DEPENDENT:** When ticket / conversation APIs are unavailable, show a truthful unavailable or guidance state. Never fabricate tickets, messages, agents, or conversations.
 
 Support is a trust mechanism.
 
@@ -1344,6 +1499,18 @@ Before adding decoration, fix:
 
 # 38. Anti-Patterns — Explicitly Forbidden
 
+### Product-integrity prohibitions
+
+Do not:
+
+- Reintroduce B2B marketplace semantics.
+- Treat suppliers as customer-facing sellers.
+- Invent seller profiles, ratings, or storefronts.
+- Invent stock, discounts, shipping, delivery dates, reviews, ratings, order counts, or payment success.
+- Invent support tickets / conversations.
+- Invent AI answers or visual-search confidence.
+- Replace backend truth with client-side guesses.
+
 Do not introduce:
 
 - random gradients;
@@ -1506,9 +1673,10 @@ Do not copy the admin dashboard visual language into the buyer experience.
 
 ---
 
-# 45. Buyer vs Seller/Admin Separation
+# 45. Buyer vs Admin / Operations Separation
 
 ALI STORE customer UX and operational/admin UX have different visual goals.
+The storefront does not contain a customer-facing Seller role.
 
 ### Buyer
 
@@ -1517,7 +1685,7 @@ ALI STORE customer UX and operational/admin UX have different visual goals.
 - simplicity;
 - decision-making.
 
-### Seller/Admin/Operations
+### Admin / Operations
 
 - density;
 - monitoring;
@@ -1751,6 +1919,63 @@ After implementation, ask:
 
 ---
 
+# 52A. Current Implementation Snapshot — 2026-10-04
+
+This is an audit snapshot, not a feature promise.
+
+## Confirmed customer-facing route inventory
+
+### Discovery
+
+- /
+- /shop/products
+- /shop/products/:id
+- /shop/categories/:slug
+- /shop/deals
+- /shop/visual-search
+
+### Commerce
+
+- /shop/cart
+- /shop/checkout
+
+### Buyer
+
+- /buyer
+- /buyer/profile
+- /buyer/security
+- /buyer/notifications
+- /buyer/wishlist
+- /buyer/addresses
+- /buyer/orders
+- /buyer/orders/:id
+- /buyer/orders/:id/confirmation
+- /buyer/support
+
+### Authentication
+
+- /login
+- /register
+- /verify-email
+
+## Current implementation direction
+
+The repository already has a semantic design-token foundation, Arabic/RTL base, shared storefront shell, backend-driven catalog / orders / account flows, persisted customer cart / wishlist behavior according to the existing architecture, and a shared account workspace for migrated customer pages.
+
+## Known alignment gaps
+
+These are design / consistency gaps, not permission to invent functionality:
+
+1. Some customer pages still use older raw color utilities instead of semantic tokens.
+2. Order detail and order confirmation should align more closely with the shared AccountWorkspace.
+3. Some customer-facing copy remains English or mixed Arabic/English.
+4. Global notification UI should match the semantic-token and Arabic localization treatment used by the account notifications page.
+5. Visual Search should not become a duplicate primary destination once contextual search is canonical.
+6. Ask Ali remains conditional on a real grounded AI backend.
+7. Deals remain conditional on genuine promotion data.
+8. Support remains conditional on genuine support contracts.
+9. Shipping methods, dates, carriers, and prices remain conditional on real backend data.
+
 # 53. Recommended Page Inventory
 
 The customer-facing system should have dedicated, coherent experiences for:
@@ -1796,6 +2021,54 @@ The customer-facing system should have dedicated, coherent experiences for:
 
 ---
 
+# 53A. Current vs Target — Explicit Separation
+
+## Current
+
+Current describes what the repository already implements and what can be safely relied on.
+
+It must not be inferred from mockups, product wishes, or future roadmap items.
+
+## Target
+
+Target describes intended UX improvements that may require:
+
+- frontend work;
+- backend support;
+- integration work;
+- data-contract changes;
+- performance verification.
+
+A target feature is not complete until its real data / service dependency is available.
+
+### Required progression
+
+**Backend capability → contract verification → frontend state design → visual polish → QA**
+
+Never:
+
+**visual mockup → fake data → feature claim**
+
+---
+
+# 53B. Design Change Management
+
+When implementation changes materially:
+
+1. Update the affected responsibility section.
+2. Update **Current Implementation Snapshot**.
+3. Remove obsolete requirements.
+4. Mark backend-dependent features explicitly.
+5. Keep B2C / single-merchant boundaries explicit.
+6. Record the audit date.
+7. Do not turn this contract into a generic visual mood board.
+
+Every new requirement must be classified as:
+
+**SYSTEM RULE / PAGE RESPONSIBILITY / CURRENT IMPLEMENTATION / TARGET UX / BACKEND-DEPENDENT / ACCESSIBILITY / PERFORMANCE / QA**
+
+---
+
 # 54. Final Design Rule
 
 When a visual decision is uncertain, prefer this sequence:
@@ -1815,7 +2088,10 @@ A clean interface that makes the customer understand, trust, and buy is the targ
 This specification is aligned with the current storefront foundation and should evolve with the real product. When implementation changes, update this document so that the design contract remains an accurate reference for future development.
 
 Document: DESIGN.md
+Version: 2.0
+Audit date: 2026-10-04
 Scope: ALI STORE customer-facing frontend
 Language/Direction: Arabic / RTL first
 Primary design system: Existing ALI STORE semantic tokens
-Business model constraint: B2C supplier-based commerce; no customer-facing B2B presentation
+Business model constraint: B2C single-merchant supplier-based commerce; no customer-facing B2B / seller marketplace presentation
+Source of truth rule: Domain / backend truth wins over visual ambition
