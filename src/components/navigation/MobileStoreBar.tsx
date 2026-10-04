@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { Heart, Home, Search, ShoppingBag, Camera } from "lucide-react";
 
@@ -53,7 +54,7 @@ export function MobileStoreBar() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href as Route}
               aria-current={active ? "page" : undefined}
               className={
                 "relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-1 text-label transition-colors " +
