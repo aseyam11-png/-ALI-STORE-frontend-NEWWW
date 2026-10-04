@@ -319,7 +319,7 @@ export function ProductsPageContent() {
                 title="البحث بالصورة"
                 description="استخدم صورة للوصول مباشرة إلى المنتجات المشابهة في الكتالوج."
               >
-                <VisualSearch />
+                <VisualSearch layout="dialog" />
               </Dialog>
             </div>
           </div>
