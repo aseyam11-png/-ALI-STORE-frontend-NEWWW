@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { Heart, Home, Search, ShoppingBag, UserRound } from "lucide-react";
+import { Camera, Heart, Home, Search, ShoppingBag, UserRound } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
@@ -18,6 +18,7 @@ type MobileNavItem = {
 const items: readonly MobileNavItem[] = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/shop/products", label: "المنتجات", icon: Search },
+  { href: "/shop/visual-search", label: "البحث بالصورة", icon: Camera },
   { href: "/buyer", label: "حسابي", icon: UserRound },
   { href: "/buyer/wishlist", label: "المفضلة", icon: Heart, count: "wishlist" },
   { href: "/shop/cart", label: "السلة", icon: ShoppingBag, count: "cart" },
@@ -40,7 +41,7 @@ export function MobileStoreBar() {
       aria-label="تنقل المتجر على الهاتف"
       className="fixed inset-x-0 bottom-0 z-[var(--z-sticky)] border-t border-neutral-200 bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-floating backdrop-blur-xl md:hidden"
     >
-      <div className="mx-auto grid max-w-xl grid-cols-5">
+      <div className="mx-auto grid max-w-2xl grid-cols-6">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
