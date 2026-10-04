@@ -59,7 +59,7 @@ export function ProductGallery({
         </button>
 
         <div className="absolute bottom-4 start-4 rounded-full bg-surface/95 px-3 py-1.5 text-[11px] font-bold text-neutral-500 shadow-sm">
-          معاينة المنتج
+          Product preview
         </div>
       </div>
 
@@ -72,7 +72,7 @@ export function ProductGallery({
               key={`${image}-${index}`}
               type="button"
               onClick={() => setSelectedImage(image)}
-              aria-label={`View ${productName} image ${index + 1}`}
+              aria-label={`عرض صورة ${productName} ${index + 1}`}
               aria-pressed={isSelected}
               className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-surface transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 ${
                 isSelected
