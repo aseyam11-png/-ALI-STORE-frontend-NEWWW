@@ -27,10 +27,10 @@ export default function HomePage() {
   return (
     <AppShell>
       <HomeHero />
+      <TrustStrip />
       <CategoryGrid />
       <ProductDiscovery />
       <FlashDeals />
-      <TrustStrip />
     </AppShell>
   );
 }
