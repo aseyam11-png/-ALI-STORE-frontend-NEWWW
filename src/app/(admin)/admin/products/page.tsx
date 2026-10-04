@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Camera } from "lucide-react";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 import { Edit3, Package, RefreshCcw, Search } from "lucide-react";
@@ -67,15 +68,24 @@ export default function AdminProductsPage() {
           title="المنتجات"
           description="كتالوج B2C حي يعتمد على مصدر المورد. البحث هنا محلي فوق النتائج التي يعيدها الـBackend، دون تغيير منطق الكتالوج."
           actions={
-            <button
-              type="button"
-              onClick={() => void refresh()}
-              disabled={loading}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
-              تحديث
-            </button>
+            <>
+              <Link
+                href="/admin/products/visual-search"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-4 text-body-sm font-medium text-brand transition hover:bg-primary-100"
+              >
+                <Camera className="h-4 w-4" aria-hidden="true" />
+                بحث بالصورة
+              </Link>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                disabled={loading}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
+                تحديث
+              </button>
+            </>
           }
         />
 
