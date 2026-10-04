@@ -137,13 +137,6 @@ export default function OrderConfirmationPage() {
     payment?.method === "CASH_ON_DELIVERY" &&
     payment?.status === "PENDING";
   const paymentNeedsAttention = !paymentSucceeded && !codPending;
-
-  const statusTitle = paymentSucceeded
-    ? "تم تأكيد طلبك"
-    : codPending
-      ? "تم تأكيد الطلب والدفع عند الاستلام"
-      : "تم إنشاء الطلب ويحتاج الدفع إلى إجراء";
-
   const statusDescription = paymentSucceeded
     ? "تم تأكيد الطلب والدفع من الخادم."
     : codPending
