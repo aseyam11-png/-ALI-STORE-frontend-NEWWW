@@ -306,7 +306,7 @@ export function VisualSearch() {
               !selectedFile ||
               searching
             }
-            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-neutral-300"
           >
             {searching ? (
               <>
