@@ -8,8 +8,16 @@ import { login, loginWithGoogle } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+function resolveSafeNextPath(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/buyer/profile";
+  }
+  return value;
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams();
+  const nextPath = resolveSafeNextPath(searchParams.get("next"));
   const googleError =
     searchParams.get("error") === "google"
       ? "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى."
@@ -59,6 +67,7 @@ export function LoginForm() {
           challenge: result.challengeId,
           email: result.maskedEmail,
           purpose: result.purpose,
+          next: nextPath,
         });
         window.location.assign("/verify-email?" + query.toString());
         return;
@@ -68,7 +77,7 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign("/buyer/profile");
+    window.location.assign(nextPath);
   };
 
   return (
