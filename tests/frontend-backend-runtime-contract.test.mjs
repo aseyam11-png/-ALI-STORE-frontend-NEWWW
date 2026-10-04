@@ -32,3 +32,17 @@ test("frontend runtime environment keeps the public API base same-origin by defa
   assert.match(source, /BACKEND_INTERNAL_URL=http:\/\/localhost:8080/);
   assert.match(source, /NEXT_PUBLIC_MEDIA_BASE_URL=/);
 });
+
+
+test("brand suggestions keep the backend numeric brand identity", async () => {
+  const autocomplete = await read("src/features/search/services/autocomplete.service.ts");
+  const search = await read("src/features/search/services/search.service.ts");
+
+  assert.match(autocomplete, /product\.brand\?\.id/);
+  assert.match(autocomplete, /encodeURIComponent\(brand\.id\)/);
+  assert.doesNotMatch(autocomplete, /encodeURIComponent\(brand\)/);
+
+  assert.match(search, /product\.brand\?\.id/);
+  assert.match(search, /encodeURIComponent\(id\)/);
+  assert.doesNotMatch(search, /encodeURIComponent\(brand\)/);
+});
