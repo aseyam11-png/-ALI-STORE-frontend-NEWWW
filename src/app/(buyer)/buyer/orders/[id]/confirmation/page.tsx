@@ -49,7 +49,7 @@ function paymentClass(payment: BackendPayment | null): string {
       return "bg-success-surface text-success-700";
     case "FAILED":
     case "REFUNDED":
-      return "bg-red-50 text-red-700";
+      return "bg-danger-surface text-danger-700";
     default:
       return "bg-warning-surface text-warning-700";
   }
@@ -117,7 +117,7 @@ export default function OrderConfirmationPage() {
             </p>
             <Link
               href="/buyer/orders"
-              className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
             >
               طلباتي
               <ArrowRight className="h-4 w-4" />
@@ -178,12 +178,12 @@ export default function OrderConfirmationPage() {
                     "text-[10px] font-black uppercase tracking-[0.18em] " +
                     (paymentNeedsAttention
                       ? "text-warning-700"
-                      : "text-blue-600")
+                      : "text-brand")
                   }
                 >
                   {statusTitle}
                 </p>
-                <h1 className="mt-1 text-3xl font-black tracking-tight text-[#0F172A]">
+                <h1 className="mt-1 text-3xl font-black tracking-tight text-foreground">
                   Order #{order.id}
                 </h1>
                 <p className="mt-2 text-sm text-neutral-500">
@@ -207,7 +207,7 @@ export default function OrderConfirmationPage() {
                     <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
                       Order number
                     </p>
-                    <p className="mt-1 text-xl font-black text-[#0F2747]">
+                    <p className="mt-1 text-xl font-black text-brand-ink">
                       #{order.id}
                     </p>
                   </div>
@@ -240,10 +240,10 @@ export default function OrderConfirmationPage() {
                   {order.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
+                      className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 p-3"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-slate-800">
+                        <p className="truncate text-xs font-bold text-neutral-800">
                           {item.productName}
                         </p>
                         <p className="mt-1 text-[10px] text-neutral-400">
@@ -276,25 +276,25 @@ export default function OrderConfirmationPage() {
                     <LocalizedPrice
                       amountUSD={Number(order.totalAmount)}
                       currency={order.currency}
-                      className="font-bold text-slate-800"
+                      className="font-bold text-neutral-800"
                     />
                   </div>
 
                   {Number(order.discountAmount) > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-600">
+                      <span className="inline-flex items-center gap-1 font-bold text-success-600">
                         <Tag className="h-3.5 w-3.5" />
                         Coupon discount
                       </span>
                       <LocalizedPrice
                         amountUSD={-Number(order.discountAmount)}
                         currency={order.currency}
-                        className="font-black text-emerald-600"
+                        className="font-black text-success-600"
                       />
                     </div>
                   )}
 
-                  <div className="border-t border-slate-100 pt-4 text-xs text-neutral-500">
+                  <div className="border-t border-neutral-100 pt-4 text-xs text-neutral-500">
                     Order lifecycle: {order.status}
                   </div>
 
@@ -302,8 +302,8 @@ export default function OrderConfirmationPage() {
                     className={
                       "rounded-xl p-3 text-xs leading-5 " +
                       (paymentNeedsAttention
-                        ? "border border-amber-200 bg-warning-surface text-amber-800"
-                        : "bg-slate-50 text-slate-600")
+                        ? "border border-warning-100 bg-warning-surface text-warning-800"
+                        : "bg-neutral-50 text-neutral-600")
                     }
                   >
                     {payment ? (
@@ -333,7 +333,7 @@ export default function OrderConfirmationPage() {
 
               <Link
                 href={`/buyer/orders/${order.id}`}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] text-sm font-black text-white"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white"
               >
                 Track this order
                 <ArrowRight className="h-4 w-4" />
