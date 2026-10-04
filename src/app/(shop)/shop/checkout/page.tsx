@@ -87,6 +87,8 @@ export default function CheckoutPage() {
 
   const [successOrderId, setSuccessOrderId] =
     useState("");
+  const [paymentRecoveryOrderId, setPaymentRecoveryOrderId] =
+    useState("");
   const idempotencyKeyRef = useRef<string | null>(null);
   const [successPaymentStatus, setSuccessPaymentStatus] =
     useState<BackendPayment["status"]>("PENDING");
@@ -236,6 +238,7 @@ export default function CheckoutPage() {
 
   const placeOrder = async () => {
     setError("");
+    setPaymentRecoveryOrderId("");
 
     if (items.length === 0) {
       setError("Your cart is empty.");
@@ -284,8 +287,9 @@ export default function CheckoutPage() {
             : "CREDIT_CARD";
 
       // The backend order creation consumes the persisted cart. Clear the
-      // local presentation copy immediately so a later retry cannot recreate
-      // a cart that no longer exists server-side.
+      // local presentation copy only after the order exists, while retaining
+      // the order id separately so a later payment failure cannot recreate
+      // the same order from an already-consumed backend cart.
       replaceItems([]);
 
       const payment = await processBackendPayment({
@@ -302,9 +306,88 @@ export default function CheckoutPage() {
         caughtError instanceof Error
           ? caughtError.message
           : "Unable to place the order. Please try again.";
+
+      const currentOrderId =
+        typeof order !== "undefined" ? String(order.id) : "";
+
+      if (currentOrderId) {
+        setPaymentRecoveryOrderId(currentOrderId);
+        setError(
+          "The order was created, but the payment was not confirmed. "
+          + "Do not place a second order; review the existing order status.",
+        );
+        return;
+      }
+
       setError(message);
     }
   };
+
+  if (paymentRecoveryOrderId) {
+    return (
+      <AppShell>
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+            <section
+              role="alert"
+              className="rounded-3xl border border-amber-200 bg-surface p-8 shadow-sm sm:p-12"
+            >
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                <CreditCard className="h-8 w-8" />
+              </div>
+
+              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
+                Payment attention needed
+              </p>
+
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
+                Your order is already on the server
+              </h1>
+
+              <p className="mt-3 text-sm leading-6 text-neutral-500">
+                We could not confirm the payment in this checkout attempt.
+                Do not submit a second order. The existing order is preserved
+                and its payment state can be verified from the server.
+              </p>
+
+              <div className="mt-7 rounded-2xl bg-neutral-50 p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-neutral-400">
+                    Order number
+                  </span>
+                  <span className="text-sm font-black text-brand-ink">
+                    {paymentRecoveryOrderId}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href={`/buyer/orders/${paymentRecoveryOrderId}/confirmation`}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                >
+                  Review order & payment
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+
+                <Link
+                  href="/buyer/orders"
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-200 px-5 text-sm font-bold text-neutral-700"
+                >
+                  My orders
+                </Link>
+              </div>
+
+              <p className="mt-5 text-center text-[11px] leading-5 text-neutral-400">
+                The cart was not recreated because the server has already
+                consumed it for this order.
+              </p>
+            </section>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
 
   if (successOrderId) {
     return (
