@@ -18,7 +18,7 @@ export async function HomeHero() {
 
   return (
     <section className="relative isolate overflow-hidden bg-ink-950 lg:min-h-[640px]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_34%,rgba(255,107,0,0.18),transparent_28%)]" aria-hidden="true" />
+      <div className="pointer-events-none absolute -end-20 top-12 h-72 w-72 rounded-full bg-brand/15 blur-3xl" aria-hidden="true" />
 
       <div className="container-shell relative grid gap-8 py-10 sm:py-14 lg:min-h-[640px] lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-12 lg:py-16">
         <div className="relative z-10 max-w-xl lg:pe-8">
