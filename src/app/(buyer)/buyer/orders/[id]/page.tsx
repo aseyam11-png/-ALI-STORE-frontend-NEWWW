@@ -83,16 +83,14 @@ export default function BuyerOrderTrackingPage() {
         <main className="min-h-screen bg-background">
           <div className="mx-auto max-w-4xl px-4 py-12 text-center">
             <Package className="mx-auto h-8 w-8 text-neutral-300" />
-            <h1 className="mt-4 text-2xl font-black text-foreground">Order not found</h1>
+            <h1 className="mt-4 text-2xl font-black text-foreground">الطلب غير موجود</h1>
             <p className="mt-2 text-sm text-neutral-500">
               {error || "This order is not available for your account."}
             </p>
             <Link
               href="/buyer/orders"
               className="mt-6 inline-flex h-11 items-center rounded-xl bg-brand px-5 text-sm font-black text-white"
-            >
-              My orders
-            </Link>
+            >طلباتي</Link>
           </div>
         </main>
       </AppShell>
@@ -108,9 +106,7 @@ export default function BuyerOrderTrackingPage() {
               href="/buyer/orders"
               className="inline-flex items-center gap-2 text-xs font-black text-brand"
             >
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              My orders
-            </Link>
+              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />طلباتي</Link>
 
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -141,7 +137,7 @@ export default function BuyerOrderTrackingPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <Truck className="h-5 w-5 text-brand" />
-                    <h2 className="text-lg font-black text-foreground">Shipping</h2>
+                    <h2 className="text-lg font-black text-foreground">الشحن</h2>
                   </div>
                   <span className="rounded-full bg-info-surface px-3 py-1 text-[10px] font-black text-brand">
                     {aggregateShipmentStatus(order)}
