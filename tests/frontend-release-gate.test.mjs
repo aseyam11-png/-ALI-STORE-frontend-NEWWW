@@ -188,6 +188,16 @@ test("release gate: no obvious B2B/mock supplier truth leaks into storefront sou
   }
 });
 
+test("release gate: legacy seeded review/support/finance stores are removed", () => {
+  for (const file of [
+    "src/stores/review-store.ts",
+    "src/stores/support-chat-store.ts",
+    "src/stores/store-finance-store.ts",
+  ]) {
+    assert.equal(exists(file), false, "Legacy seeded store must be absent: " + file);
+  }
+});
+
 test("release gate: customer-facing surfaces do not expose internal supplier or marketplace-seller fields", () => {
   const customerFiles = [
     ...walk("src/components/commerce"),
