@@ -165,14 +165,14 @@ export function ProductQuickView({
                 {product.stockStatus === "unknown"
                   ? "جارٍ التحقق من التوفر"
                   : available
-                    ? product.stock + " available"
-                    : "غير متوفر"}
+                    ? `${product.stock} ${t("available")}`
+                    : t("outOfStock")}
               </p>
             </div>
 
             <div className="rounded-xl bg-neutral-50 p-4">
               <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
-                SKU
+                {t("sku")}
               </p>
               <p className="mt-1 truncate font-mono text-xs font-bold text-neutral-700">
                 {product.sku}
