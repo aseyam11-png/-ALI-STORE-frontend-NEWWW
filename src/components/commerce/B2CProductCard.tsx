@@ -83,6 +83,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
   };
 
   return (
+    <>
     <article className="interactive-lift group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
       <div className="media-frame relative aspect-square overflow-hidden bg-neutral-50">
         <Link
@@ -262,5 +263,6 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
       onAddToCart={() => void handleCart()}
       addBusy={cartBusy}
     />
+    </>
   );
 }
