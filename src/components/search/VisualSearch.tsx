@@ -29,12 +29,14 @@ export interface VisualSearchProps {
   resultHref?: (productId: string) => string;
   resultActionLabel?: string;
   resultContext?: "storefront" | "admin";
+  layout?: "page" | "dialog";
 }
 
 export function VisualSearch({
   resultHref = (productId) => `/shop/products/${encodeURIComponent(productId)}`,
   resultActionLabel = "عرض المنتج",
   resultContext = "storefront",
+  layout = "page",
 }: VisualSearchProps) {
   const [
     preview,
@@ -180,9 +182,8 @@ export function VisualSearch({
   };
 
   return (
-    <div className="mx-auto max-w-[1050px]">
-
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+    <div className={layout === "dialog" ? "mx-auto w-full" : "mx-auto max-w-[1050px]"}>
+      <div className={layout === "dialog" ? "grid gap-4" : "grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]"}>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
@@ -378,7 +379,7 @@ export function VisualSearch({
 
             </div>
           ) : (
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className={layout === "dialog" ? "mt-5 grid gap-3 sm:grid-cols-2" : "mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
 
               {results.map(
                 (result) => (
