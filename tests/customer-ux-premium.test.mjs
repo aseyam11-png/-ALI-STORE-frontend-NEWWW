@@ -120,3 +120,33 @@ test("customer UX: product card and catalog shipping fallbacks are Arabic", () =
     /يُحدد موعد التوصيل عند إتمام الطلب/,
   );
 });
+
+
+test("customer UX: keyboard autocomplete selection navigates to the selected live result", () => {
+  const source = read("src/components/search/SmartAutocomplete.tsx");
+  assert.match(source, /useRouter/);
+  assert.match(source, /router\.push\(suggestion\.href/);
+  assert.match(source, /selectSuggestion\(\s*suggestions\[highlighted\],\s*true/);
+});
+
+test("customer UX: clearing a cart requires explicit confirmation", () => {
+  const source = read("src/app/(shop)/shop/cart/page.tsx");
+  assert.match(source, /window\.confirm\("هل أنت متأكد من حذف جميع المنتجات من السلة؟"/);
+  assert.match(source, /if \(!confirmed\) return/);
+});
+
+test("customer UX: order confirmation hides internal order and payment lifecycle details", () => {
+  const source = read("src/app/(buyer)/buyer/orders/[id]/confirmation/page.tsx");
+  assert.doesNotMatch(source, /Order lifecycle:/);
+  assert.doesNotMatch(source, /Payment #\{payment\.id\}/);
+  assert.doesNotMatch(source, /payment\.status\}/);
+  assert.doesNotMatch(source, /REQUIRES_RECONCILIATION/);
+  assert.doesNotMatch(source, /authoritative checkout record/);
+});
+
+test("customer UX: footer routes account and catalog links to real customer pages", () => {
+  const source = read("src/components/layout/Footer.tsx");
+  assert.match(source, /\["Categories", "\/shop\/products"\]/);
+  assert.match(source, /href="\/buyer\/orders"/);
+  assert.doesNotMatch(source, /Account &amp; orders<\/Link>/);
+});
