@@ -27,7 +27,7 @@ The consolidated tree retains the latest validated application state, with only 
 - Consolidated live modules: dashboard, products, orders/shipping, pricing, finance and fulfillment.
 - Shared page header, metric card and status pill primitives.
 - Loading, error and empty-state treatment.
-- Removal of legacy admin modules from the live navigation.
+- Removal of legacy admin modules from the live navigation.\n- Removal of unused seeded review, support-chat and finance stores that could reintroduce fake customer/financial state.
 
 ## Business-logic safety
 
