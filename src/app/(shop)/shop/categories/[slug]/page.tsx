@@ -42,14 +42,14 @@ export default async function CategoryPage({
         <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
             <nav
-              aria-label="Category breadcrumb"
+              aria-label="مسار التصنيف"
               className="flex flex-wrap items-center gap-2 text-xs text-neutral-400"
             >
               <Link
                 href="/"
                 className="font-bold hover:text-brand"
               >
-                Home
+                الرئيسية
               </Link>
 
               {path.map((item, index) => (
@@ -78,7 +78,7 @@ export default async function CategoryPage({
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-info-surface px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-brand">
                   <FolderTree className="h-3.5 w-3.5" />
-                  Category
+                  التصنيف
                 </div>
 
                 <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
@@ -97,7 +97,7 @@ export default async function CategoryPage({
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
               >
                 <ShoppingBag className="h-4 w-4" />
-                Shop this category
+                تسوق هذا التصنيف
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -109,10 +109,10 @@ export default async function CategoryPage({
             <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
               <div className="mb-5">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-neutral-400">
-                  Browse
+                  تصفح
                 </p>
                 <h2 className="mt-1 text-lg font-black text-foreground">
-                  Categories
+                  التصنيفات
                 </h2>
               </div>
 
@@ -124,10 +124,10 @@ export default async function CategoryPage({
                 <>
                   <div className="mb-5">
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-neutral-400">
-                      Explore
+                      استكشف
                     </p>
                     <h2 className="mt-1 text-xl font-black text-foreground">
-                      Shop by subcategory
+                      تسوق حسب التصنيف الفرعي
                     </h2>
                   </div>
 
@@ -156,7 +156,7 @@ export default async function CategoryPage({
                         )}
 
                         <div className="mt-5 text-xs font-black text-brand">
-                          Explore category
+                          استكشف التصنيف
                         </div>
                       </Link>
                     ))}
@@ -169,18 +169,18 @@ export default async function CategoryPage({
                   </div>
 
                   <h2 className="mt-5 text-xl font-black text-foreground">
-                    Products in {category.name}
+                    المنتجات في {category.name}
                   </h2>
 
                   <p className="mt-2 max-w-xl text-sm leading-6 text-neutral-500">
-                    Browse the live catalog for this category.
+                    تصفح الكتالوج الفعلي لهذا التصنيف.
                   </p>
 
                   <Link
                     href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
                     className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
                   >
-                    View products
+                    عرض المنتجات
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
