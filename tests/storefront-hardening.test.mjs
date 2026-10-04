@@ -142,4 +142,9 @@ test("storefront hardening: homepage exposes real catalog sections for core fash
   assert.match(section, /getProducts/);
   assert.match(section, /inStockOnly: true/);
   assert.doesNotMatch(section, /MOCK_|supplierPrice|sellerId/i);
+  assert.match(sections, /categoryMatchesGroup/);
+  assert.match(sections, /clothing|fashion|apparel/);
+  assert.match(sections, /watch|watches/);
+  assert.match(sections, /accessor|jewelry|sunglasses/);
+  assert.match(sections, /shoe|shoes|footwear/);
 });
