@@ -61,11 +61,11 @@ export function CategoryTree({
 
                 <Link
                   href={`/shop/categories/${encodeURIComponent(category.slug)}`}
-                  className="min-w-0 flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-[#2563EB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                  className="min-w-0 flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-info-surface hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
                   <span className="flex items-center gap-2">
                     {level === 0 && (
-                      <FolderTree className="h-4 w-4 shrink-0 text-[#2563EB]" />
+                      <FolderTree className="h-4 w-4 shrink-0 text-brand" />
                     )}
 
                     <span className="truncate">
@@ -88,13 +88,13 @@ export function CategoryTree({
                     }
                     aria-label={
                       isExpanded
-                        ? `Collapse ${category.name}`
-                        : `Expand ${category.name}`
+                        ? `طي ${category.name}`
+                        : `فتح ${category.name}`
                     }
                     aria-expanded={
                       isExpanded
                     }
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2563EB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                   >
                     {isExpanded ? (
                       <ChevronDown className="h-4 w-4" />
