@@ -145,11 +145,9 @@ function AuthenticatedProfile({
   );
 
   const isDirty =
-    session.status === "authenticated" &&
-    session.user != null &&
-    (form.firstName.trim() !== session.user.firstName ||
-      form.lastName.trim() !== session.user.lastName ||
-      form.phoneNumber.trim() !== (session.user.phoneNumber ?? "").trim());
+    form.firstName.trim() !== user.firstName ||
+    form.lastName.trim() !== user.lastName ||
+    form.phoneNumber.trim() !== (user.phoneNumber ?? "").trim();
 
   const validate = () => {
     if (!form.firstName.trim()) return "الاسم الأول مطلوب.";
@@ -208,69 +206,6 @@ function AuthenticatedProfile({
       setError("");
       setSuccess("");
     };
-
-  if (session.status === "loading") {
-    return (
-      <AccountWorkspace
-        activeTab="profile"
-        title="الملف الشخصي"
-        description="إدارة معلومات التواصل المرتبطة بحسابك."
-      >
-        <div
-          className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm"
-          aria-busy="true"
-        >
-          <div className="animate-pulse">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-neutral-100" />
-              <div className="space-y-2">
-                <div className="h-5 w-44 rounded bg-neutral-100" />
-                <div className="h-3 w-28 rounded bg-neutral-100" />
-              </div>
-            </div>
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <div className="h-12 rounded-xl bg-neutral-100" />
-              <div className="h-12 rounded-xl bg-neutral-100" />
-              <div className="h-12 rounded-xl bg-neutral-100 sm:col-span-2" />
-            </div>
-          </div>
-          <p className="mt-5 text-body-sm text-muted-foreground">
-            جارٍ التحقق من الجلسة...
-          </p>
-        </div>
-      </AccountWorkspace>
-    );
-  }
-
-  if (session.status !== "authenticated") {
-    return (
-      <AccountWorkspace
-        activeTab="profile"
-        title="الملف الشخصي"
-        description="إدارة معلومات التواصل المرتبطة بحسابك."
-      >
-        <div className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center shadow-sm">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-brand">
-            <UserRound className="h-6 w-6" />
-          </span>
-          <h2 className="mt-4 text-h3 font-bold text-foreground">
-            سجّل الدخول للوصول إلى ملفك الشخصي
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-body-sm leading-6 text-muted-foreground">
-            بيانات الملف الشخصي محفوظة في حسابك ولا يمكن عرضها قبل التحقق من الجلسة.
-          </p>
-          <Link
-            href="/login?next=/buyer/profile"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-brand px-6 text-body font-medium text-white transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
-          >
-            <LogIn className="me-2 h-4 w-4" />
-            تسجيل الدخول
-          </Link>
-        </div>
-      </AccountWorkspace>
-    );
-  }
-
 
   return (
     <AccountWorkspace
