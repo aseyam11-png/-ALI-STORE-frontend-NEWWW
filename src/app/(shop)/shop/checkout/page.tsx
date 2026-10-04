@@ -327,8 +327,7 @@ export default function CheckoutPage() {
       if (createdOrderId) {
         setPaymentRecoveryOrderId(createdOrderId);
         setError(
-          "The order was created, but the payment could not be confirmed. "
-          + "Do not place a second order; review the existing order status.",
+          "تم إنشاء الطلب، لكن تعذر تأكيد الدفع. لا تنشئ طلبًا مكررًا؛ راجع حالة الطلب الحالي.",
         );
         return;
       }
