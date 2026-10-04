@@ -104,7 +104,7 @@ export function ProductDiscovery() {
           )}
         </div>
         {renderGrid()}
-</div>
+      </div>
     </section>
   );
 }
