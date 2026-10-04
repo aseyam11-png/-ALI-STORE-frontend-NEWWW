@@ -870,8 +870,8 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
-                  Shipping is calculated and confirmed by the backend when the
-                  order is created.
+                  تكلفة الشحن غير متاحة كقيمة مؤكدة في هذه المرحلة، وتُحدد عند
+                  توفر بيانات الشحن النهائية.
                 </div>
 
                 <div className="mt-5">
@@ -902,7 +902,7 @@ export default function CheckoutPage() {
                     </span>
 
                     <span className="font-bold text-neutral-800">
-                      Confirmed by backend at order creation
+                      تُحدد عند تأكيد بيانات الشحن
                     </span>
                   </div>
 
