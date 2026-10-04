@@ -103,19 +103,8 @@ export function ProductDiscovery() {
             </span>
           )}
         </div>
-
-        <Tabs
-          className="mt-8"
-          ariaLabel="اكتشف المنتجات"
-          items={[
-            {
-              id: "catalog",
-              label: "المنتجات",
-              content: renderGrid(),
-            },
-          ]}
-        />
-      </div>
+        {renderGrid()}
+</div>
     </section>
   );
 }
