@@ -111,8 +111,6 @@ export default function CartPage() {
       Math.floor(quantity),
     );
 
-    setConfirmClear(false);
-
     if (session.status !== "authenticated") {
       const nextItems = useCartStore.getState().items.map(
         (candidate) =>
@@ -211,6 +209,8 @@ export default function CartPage() {
   };
 
   const handleClear = async () => {
+    setConfirmClear(false);
+
     if (session.status !== "authenticated") {
       replaceItems([]);
       return;
