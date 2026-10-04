@@ -56,7 +56,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
 
       if (session) {
         if (!Number.isInteger(numericId) || numericId < 1) {
-          throw new Error("Invalid product id.");
+          throw new Error(t("invalidProductId"));
         }
 
         const currentItems = useCartStore.getState().items;
@@ -75,7 +75,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
       setCartError(
         error instanceof Error
           ? error.message
-          : "Unable to add this product to the cart.",
+          : t("unableToAddToCart"),
       );
     } finally {
       setCartBusy(false);
