@@ -180,7 +180,7 @@ export default function CartPage() {
     }
 
     if (!item.backendItemId) {
-      setError("Cart item identity is missing. Refresh the cart and try again.");
+      setError("تعذر تحديد عنصر السلة. حدّث السلة ثم حاول مرة أخرى.");
       return;
     }
 
