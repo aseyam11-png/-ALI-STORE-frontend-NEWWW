@@ -117,12 +117,15 @@ export function Header() {
           </Link>
 
           <div className="hidden min-w-0 flex-1 lg:block">
-            <div className="rounded-2xl">
+            <div className="relative rounded-2xl">
               <HeaderSearch />
+              <div className="pointer-events-none absolute end-4 top-full mt-1 hidden text-[10px] text-neutral-400 xl:block">
+                بحث بالاسم أو SKU أو القسم
+              </div>
             </div>
           </div>
 
-          <div className="ms-auto flex items-center gap-0.5 rounded-2xl border border-neutral-200 bg-neutral-50/80 p-1">
+          <div className="ms-auto flex items-center gap-0.5 rounded-2xl border border-neutral-200/80 bg-neutral-50/70 p-1 shadow-sm">
             <button
               type="button"
               onClick={() => setMobileSearchOpen((current) => !current)}
@@ -215,7 +218,7 @@ export function Header() {
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-brand ring-1 ring-primary-100">
                 <User className="h-4 w-4" />
               </span>
-              <span className="hidden xl:block">
+              <span className="hidden lg:block">
                 <span className="block text-label font-medium text-neutral-400">
                   حسابي
                 </span>
@@ -237,6 +240,17 @@ export function Header() {
               className="overflow-hidden lg:hidden"
             >
               <div className="border-t border-neutral-100 py-3">
+                <div className="mb-2 flex items-center justify-between px-1">
+                  <span className="text-label font-medium text-neutral-400">
+                    بحث سريع
+                  </span>
+                  <Link
+                    href="/shop/visual-search"
+                    className="text-label font-medium text-brand hover:underline"
+                  >
+                    البحث بصورة
+                  </Link>
+                </div>
                 <HeaderSearch mobile />
               </div>
             </motion.div>

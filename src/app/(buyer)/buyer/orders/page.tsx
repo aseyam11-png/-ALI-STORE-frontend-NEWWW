@@ -36,6 +36,17 @@ function progressFor(order: BackendOrder) {
   }
 }
 
+function shipmentStatusLabel(status: ReturnType<typeof aggregateShipmentStatus>) {
+  return {
+    PROCESSING: "قيد التجهيز",
+    SHIPPED: "تم الشحن",
+    IN_TRANSIT: "في الطريق",
+    DELIVERED: "تم التوصيل",
+    CANCELLED: "ملغي",
+    FULFILLMENT_FAILED: "تعذر التنفيذ",
+  }[status] ?? status;
+}
+
 function statusLabel(status: BackendOrder["status"]) {
   return {
     PENDING: "بانتظار الدفع",
@@ -144,7 +155,7 @@ export default function BuyerOrdersPage() {
                 key={order.id}
                 className="overflow-hidden rounded-md border border-neutral-200 bg-surface"
               >
-                <div className="border-b border-neutral-100 p-5">
+                <div className="border-b border-neutral-100 bg-neutral-50/60 p-5 sm:p-6">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +166,7 @@ export default function BuyerOrdersPage() {
                           {statusLabel(order.status)}
                         </span>
                         <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-label font-medium text-muted-foreground">
-                          {shipmentStatus}
+                          {shipmentStatusLabel(shipmentStatus)}
                         </span>
                       </div>
                       <p className="mt-2 text-caption text-muted-foreground">
@@ -182,16 +193,16 @@ export default function BuyerOrdersPage() {
                         {progress}%
                       </span>
                     </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-neutral-100">
-                      <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+                    <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-neutral-200">
+                      <div className="h-full rounded-full bg-brand transition-all duration-500 ease-brand" style={{ width: `${progress}%` }} />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 sm:p-6">
                   <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                     <div className="flex min-w-0 items-start gap-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary-50 text-brand">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-brand ring-1 ring-primary-100">
                         <Truck className="h-5 w-5" />
                       </span>
                       <div className="min-w-0">
@@ -210,7 +221,7 @@ export default function BuyerOrdersPage() {
 
                     <Link
                       href={`/buyer/orders/${order.id}`}
-                      className="inline-flex h-10 items-center gap-2 rounded-md border border-neutral-200 px-4 text-body-sm font-medium text-foreground hover:bg-neutral-100"
+                      className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-foreground transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-brand"
                     >
                       التفاصيل
                       <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
@@ -219,7 +230,7 @@ export default function BuyerOrdersPage() {
 
                   <div className="mt-5 flex flex-wrap gap-2">
                     {order.items.map((item) => (
-                      <div key={item.id} className="inline-flex items-center gap-2 rounded-md bg-neutral-100 px-3 py-2">
+                      <div key={item.id} className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
                         <Package className="h-3.5 w-3.5 text-neutral-400" />
                         <span className="max-w-xs truncate text-caption font-medium text-foreground">
                           {item.productName} — {item.quantity}
