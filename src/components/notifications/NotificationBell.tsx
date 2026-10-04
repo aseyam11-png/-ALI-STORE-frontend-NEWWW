@@ -80,10 +80,10 @@ export function NotificationBell() {
         state.markAllAsRead,
     );
 
-  const غير مقروءCount =
+  const unreadCount =
     useNotificationStore(
       (state) =>
-        state.غير مقروءCount(),
+        state.unreadCount(),
     );
 
   const locale =
@@ -139,7 +139,7 @@ export function NotificationBell() {
               !value,
           )
         }
-        aria-label="الإشعارات"
+        aria-label="Notifications"
         aria-expanded={
           open
         }
@@ -147,12 +147,12 @@ export function NotificationBell() {
       >
         <Bell className="h-5 w-5" />
 
-        {غير مقروءCount > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger-500 px-1 text-[9px] font-black text-white">
-            {غير مقروءCount >
+            {unreadCount >
             9
               ? "9+"
-              : غير مقروءCount}
+              : unreadCount}
           </span>
         )}
       </button>
@@ -164,27 +164,27 @@ export function NotificationBell() {
 
             <div>
               <p className="text-sm font-black text-foreground">
-                الإشعارات
+                Notifications
               </p>
 
               <p className="mt-1 text-[10px] text-neutral-400">
-                {غير مقروءCount} غير مقروء
+                {unreadCount} unread
               </p>
             </div>
 
-            {غير مقروءCount > 0 && (
+            {unreadCount > 0 && (
               <button
                 type="button"
                 disabled={session.status !== "authenticated"}
                 onClick={() => {
                   if (session.status !== "authenticated") return;
 
-                  const غير مقروءIds = notifications
+                  const unreadIds = notifications
                     .filter((item) => !item.read)
                     .map((item) => item.id);
 
                   void Promise.all(
-                    غير مقروءIds.map((id) =>
+                    unreadIds.map((id) =>
                       markNotificationAsRead(id),
                     ),
                   )
@@ -195,7 +195,7 @@ export function NotificationBell() {
                 }}
                 className="text-[10px] font-black text-brand hover:underline disabled:cursor-not-allowed disabled:opacity-50"
               >
-                تحديد الكل كمقروء
+                Mark all read
               </button>
             )}
 
@@ -210,7 +210,7 @@ export function NotificationBell() {
                 <Bell className="mx-auto h-7 w-7 text-neutral-300" />
 
                 <p className="mt-3 text-sm font-bold text-neutral-600">
-                  لا توجد إشعارات
+                  No notifications
                 </p>
 
               </div>
@@ -329,7 +329,7 @@ export function NotificationBell() {
                                   )
                                   .catch(() => undefined);
                               }}
-                              aria-label="تحديد الإشعار كمقروء"
+                              aria-label="Mark notification as read"
                               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-brand hover:bg-surface"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -355,7 +355,7 @@ export function NotificationBell() {
               }
               className="flex items-center justify-center text-xs font-black text-brand"
             >
-              عرض جميع الإشعارات
+              View all notifications
             </Link>
 
           </div>
