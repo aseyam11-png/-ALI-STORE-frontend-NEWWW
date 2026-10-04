@@ -188,7 +188,7 @@ export default function NotificationsPage() {
                             {notification.message}
                           </p>
                           <p className="mt-2 text-caption text-muted-foreground">
-                            {new Date(notification.createdAt).toLocaleString()}
+                            {new Date(notification.createdAt).toLocaleString("ar-SA")}
                           </p>
                         </div>
 
