@@ -156,6 +156,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <button
+          id="primary-product-add-to-cart"
           type="button"
           onClick={() => void addToCart()}
           disabled={busy || !available}
