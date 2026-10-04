@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { SmartAutocomplete } from "@/components/search/SmartAutocomplete";
+import { VisualSearch } from "@/components/search/VisualSearch";
+import { Dialog } from "@/components/ui/dialog";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
@@ -23,6 +25,7 @@ import { useWishlistStore } from "@/stores/wishlist-store";
 function HeaderSearch({ mobile = false }: { mobile?: boolean }) {
   const router = useRouter();
   const [value, setValue] = useState("");
+  const [imageSearchOpen, setImageSearchOpen] = useState(false);
 
   const handleSubmit = () => {
     const query = value.trim();
@@ -34,18 +37,37 @@ function HeaderSearch({ mobile = false }: { mobile?: boolean }) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center gap-2">
       <SmartAutocomplete
         value={value}
         onChange={setValue}
         onSubmit={handleSubmit}
-        className="w-full"
+        className="min-w-0 flex-1"
         placeholder={
           mobile
             ? "ابحث باسم المنتج أو القسم…"
             : "ابحث عن منتج، علامة أو تصنيف…"
         }
       />
+
+      <button
+        type="button"
+        onClick={() => setImageSearchOpen(true)}
+        aria-label="البحث بالصورة"
+        title="البحث بالصورة"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-surface text-neutral-500 transition-colors duration-200 ease-brand hover:border-primary-200 hover:bg-primary-50 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+      >
+        <Camera className="h-5 w-5" aria-hidden="true" />
+      </button>
+
+      <Dialog
+        open={imageSearchOpen}
+        onClose={() => setImageSearchOpen(false)}
+        title="البحث بالصورة"
+        description="ارفع صورة للعثور على منتجات مشابهة في كتالوج ALI STORE."
+      >
+        <VisualSearch />
+      </Dialog>
     </div>
   );
 }
@@ -135,16 +157,6 @@ export function Header() {
             </button>
 
             <span className="hidden h-6 w-px bg-neutral-200 lg:block" />
-
-            <span className="hidden sm:inline-flex">
-              <ActionButton
-                href="/shop/visual-search"
-                label="البحث بالصور"
-                active={pathname.startsWith("/shop/visual-search")}
-              >
-                <Camera className="h-4 w-4" />
-              </ActionButton>
-            </span>
 
             <span className="hidden sm:inline-flex">
               <ActionButton
