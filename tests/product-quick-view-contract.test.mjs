@@ -23,7 +23,7 @@ test("B2C product cards expose quick view without changing the existing add-to-c
   const source = await readFile("src/components/commerce/B2CProductCard.tsx", "utf8");
 
   assert.match(source, /ProductQuickView/);
-  assert.match(source, /setQuickViewOpen(true)/);
-  assert.match(source, /onAddToCart={() => void handleCart()}/);
-  assert.match(source, /disabled={!available || cartBusy}/);
+  assert.ok(source.includes("setQuickViewOpen(true)"));
+  assert.ok(source.includes("onAddToCart={() => void handleCart()}"));
+  assert.ok(source.includes("disabled={!available || cartBusy}"));
 });
