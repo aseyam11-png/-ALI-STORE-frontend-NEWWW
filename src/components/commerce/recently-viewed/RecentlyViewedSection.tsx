@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { Clock3, Trash2, X } from "lucide-react";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import {
@@ -29,15 +29,26 @@ export function RecentlyViewedSection({
     () => [],
   );
 
+  const recordableProduct = useMemo(
+    () => ({
+      id: product.id,
+      name: product.name,
+      imageUrl: product.imageUrl,
+      price: product.price,
+      currency: product.currency,
+    }),
+    [
+      product.id,
+      product.name,
+      product.imageUrl,
+      product.price,
+      product.currency,
+    ],
+  );
+
   useEffect(() => {
-    recordRecentlyViewed(product);
-  }, [
-    product.id,
-    product.name,
-    product.imageUrl,
-    product.price,
-    product.currency,
-  ]);
+    recordRecentlyViewed(recordableProduct);
+  }, [recordableProduct]);
 
   const visibleItems = items.filter((item) => item.id !== product.id);
 
@@ -52,7 +63,7 @@ export function RecentlyViewedSection({
         <div>
           <div className="inline-flex items-center gap-2 text-label font-medium uppercase tracking-[0.12em] text-neutral-400">
             <Clock3 className="h-4 w-4" aria-hidden="true" />
-            Recently viewed
+            شاهدت مؤخرًا
           </div>
           <h2
             id="recently-viewed-title"
