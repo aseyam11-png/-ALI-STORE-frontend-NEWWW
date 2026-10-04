@@ -163,7 +163,7 @@ export function ProductQuickView({
                 (available ? "text-success-700" : "text-danger-700")
               }>
                 {product.stockStatus === "unknown"
-                  ? "جارٍ التحقق من التوفر"
+                  ? t("availabilityChecking")
                   : available
                     ? `${product.stock} ${t("available")}`
                     : t("outOfStock")}
