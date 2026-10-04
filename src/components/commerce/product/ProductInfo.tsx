@@ -12,6 +12,7 @@ import type { B2CProduct } from "@/features/products/types/b2c-product.types";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { ProductActions } from "./ProductActions";
+import { StickyAddToCart } from "./StickyAddToCart";
 import { ProductGallery } from "./ProductGallery";
 import { VariantSelector } from "./VariantSelector";
 
@@ -33,7 +34,7 @@ export function ProductInfo({
     product.stockStatus === "low_stock";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+    <div className="grid gap-8 pb-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:pb-0">
       <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
         <ProductGallery
           images={galleryImages}
@@ -191,6 +192,7 @@ export function ProductInfo({
         <ProductActions
           product={product}
         />
+        <StickyAddToCart product={product} />
       </div>
     </div>
   );
