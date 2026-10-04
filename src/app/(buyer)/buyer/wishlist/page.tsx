@@ -130,7 +130,7 @@ export default function WishlistPage() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-400">
                 <Heart className="h-8 w-8" fill="currentColor" />
               </div>
-              <h2 className="mt-5 text-xl font-black text-slate-900">Your wishlist is empty</h2>
+              <h2 className="mt-5 text-xl font-black text-slate-900">قائمة المفضلة فارغة</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
                 Save products you like and come back to them later.
               </p>
@@ -139,7 +139,7 @@ export default function WishlistPage() {
                 className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-black text-white"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Browse products
+                تصفح المنتجات
               </Link>
             </section>
           ) : (
@@ -241,7 +241,7 @@ export default function WishlistPage() {
                           <ShoppingCart className="h-4 w-4" />
                           {cartBusyId === productId
                             ? "جارٍ الإضافة..."
-                            : "Add to cart"}
+                            : "أضف إلى السلة"}
                         </button>
 
                         <button
