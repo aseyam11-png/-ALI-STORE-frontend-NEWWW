@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3, Plus, RefreshCcw, Trash2 } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
