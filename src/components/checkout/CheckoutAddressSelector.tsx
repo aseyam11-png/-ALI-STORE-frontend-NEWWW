@@ -159,7 +159,7 @@ export function CheckoutAddressSelector({
           0 && (
           <div className="rounded-xl border border-dashed border-neutral-300 p-7 text-center">
 
-            <MapPin className="mx-auto h-6 w-6 text-slate-300" />
+            <MapPin className="mx-auto h-6 w-6 text-neutral-300" />
 
             <p className="mt-3 text-sm font-black text-neutral-700">
               No shipping address
@@ -167,7 +167,7 @@ export function CheckoutAddressSelector({
 
             <Link
               href="/buyer/addresses"
-              className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#2563EB] px-4 text-xs font-black text-white"
+              className="mt-4 inline-flex h-10 items-center rounded-lg bg-brand px-4 text-xs font-black text-white"
             >
               Add address
             </Link>
