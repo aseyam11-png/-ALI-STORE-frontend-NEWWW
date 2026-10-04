@@ -158,7 +158,7 @@ export function CouponInput({
 
       <div className="flex items-center gap-3">
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-brand">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-surface text-brand">
           <Tag className="h-4 w-4" />
         </div>
 
@@ -205,7 +205,7 @@ export function CouponInput({
           type="button"
           onClick={apply}
           disabled={!code.trim() || applying}
-          className="h-11 rounded-xl bg-[#2563EB] px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-neutral-300"
+          className="h-11 rounded-xl bg-brand px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-neutral-300"
         >
           {applying ? "Checking..." : "Apply"}
         </button>
@@ -222,7 +222,7 @@ export function CouponInput({
           className={`mt-3 text-xs font-bold ${
             valid
               ? "text-success-600"
-              : "text-red-600"
+              : "text-danger-600"
           }`}
         >
           {message}
