@@ -119,7 +119,7 @@ export function ProductQuickView({
 
         <div className="flex flex-col p-7 sm:p-9">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand">
-            Quick view
+            عرض سريع
           </p>
 
           {product.brand ? (
@@ -154,17 +154,17 @@ export function ProductQuickView({
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-neutral-50 p-4">
               <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
-                Availability
+                التوفر
               </p>
               <p className={
                 "mt-1 text-sm font-black " +
                 (available ? "text-success-700" : "text-danger-700")
               }>
                 {product.stockStatus === "unknown"
-                  ? "Checking availability"
+                  ? "جارٍ التحقق من التوفر"
                   : available
                     ? product.stock + " available"
-                    : "Out of stock"}
+                    : "غير متوفر"}
               </p>
             </div>
 
@@ -180,13 +180,13 @@ export function ProductQuickView({
 
           <div className="mt-3 rounded-xl border border-neutral-200 p-4">
             <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
-              Delivery
+              التوصيل
             </p>
             <p className="mt-1 text-sm font-bold text-foreground">
               {product.shipping.method}
             </p>
             <p className="mt-1 text-xs text-neutral-400">
-              {product.shipping.estimatedDelivery}
+              {product.shipping.estimatedالتوصيل}
             </p>
           </div>
 
@@ -196,7 +196,7 @@ export function ProductQuickView({
               onClick={onClose}
               className="inline-flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-surface px-5 text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              View full details
+              عرض التفاصيل
             </Link>
 
             <button
@@ -206,7 +206,7 @@ export function ProductQuickView({
               aria-busy={addBusy}
               className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-5 text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              {addBusy ? "Adding…" : "Add to cart"}
+              {addBusy ? "جارٍ الإضافة…" : "أضف إلى السلة"}
             </button>
           </div>
         </div>
