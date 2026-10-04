@@ -448,11 +448,8 @@ test("support is consolidated into the admin dashboard instead of keeping an una
 
 test("customer pages use one storefront shell with shared header, navigation and footer", async () => {
   const shell = await read("src/components/commerce/CustomerShell.tsx");
-  assert.match(shell, /<TopBar \/>/);
-  assert.match(shell, /<Header \/>/);
-  assert.match(shell, /<GlobalNavigation \/>/);
-  assert.match(shell, /<Footer \/>/);
-  assert.match(shell, /<PageTransition>/);
+  assert.match(shell, /import \{ AppShell \}/);
+  assert.match(shell, /return <AppShell>\{children\}<\/AppShell>/);
 });
 
 test("admin navigation contains only consolidated live modules", async () => {
