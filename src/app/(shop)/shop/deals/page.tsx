@@ -22,15 +22,15 @@ export default function DealsPage() {
                   الحقيقي. ستظهر العروض هنا عند توفر بيانات Promotions من الخادم.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-slate-200">
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-neutral-200">
                     <Tag className="h-4 w-4 text-brand" />
                     خصومات موثقة
                   </span>
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-slate-200">
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-neutral-200">
                     <ShieldCheck className="h-4 w-4 text-success-600" />
                     من مصدر الخادم
                   </span>
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-slate-200">
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-neutral-200">
                     <Timer className="h-4 w-4 text-brand" />
                     بدون عروض وهمية
                   </span>
