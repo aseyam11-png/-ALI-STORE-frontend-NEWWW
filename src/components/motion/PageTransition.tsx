@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { DURATION, EASE_BRAND } from "@/lib/motion-tokens";
 
 export function PageTransition({
@@ -8,20 +8,23 @@ export function PageTransition({
 }: {
   children: React.ReactNode;
 }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <motion.div
       initial={{
         opacity: 0,
-        y: 10,
+        y: shouldReduceMotion ? 0 : 10,
       }}
       animate={{
         opacity: 1,
         y: 0,
       }}
-      transition={{
-        duration: DURATION.slow,
-        ease: EASE_BRAND,
-      }}
+      transition={
+        shouldReduceMotion
+          ? { duration: 0 }
+          : { duration: DURATION.slow, ease: EASE_BRAND }
+      }
     >
       {children}
     </motion.div>
