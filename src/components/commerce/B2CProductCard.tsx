@@ -84,7 +84,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
 
   return (
     <>
-    <article className="interactive-lift group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
+    <article className="interactive-lift group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised hover:border-neutral-300">
       <div className="media-frame relative aspect-square overflow-hidden bg-neutral-50">
         <Link
           href={("/shop/products/" + encodeURIComponent(product.id)) as Route}
@@ -115,7 +115,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
               </span>
             ) : null}
             {product.discountPercentage !== undefined ? (
-              <span className="rounded-lg bg-warning-500 px-2.5 py-1 text-label font-medium text-white shadow-sm">
+              <span className="rounded-lg bg-discount px-2.5 py-1 text-label font-medium text-white shadow-sm">
                 -{product.discountPercentage}%
               </span>
             ) : null}
@@ -220,7 +220,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
           )}
         </div>
 
-        <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+        <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50/80 p-3 transition-colors duration-200 group-hover:border-neutral-300">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 shrink-0 text-success-600" aria-hidden="true" />
             <span className="truncate text-caption font-medium text-foreground">
@@ -244,7 +244,7 @@ export function B2CProductCard({ product }: B2CProductCardProps) {
           onClick={() => void handleCart()}
           disabled={!available || cartBusy}
           aria-busy={cartBusy}
-          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-body-sm font-medium text-white transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100 disabled:cursor-not-allowed disabled:transform-none disabled:bg-neutral-300"
+          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-body-sm font-medium text-white shadow-sm transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-raised focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 disabled:cursor-not-allowed disabled:transform-none disabled:bg-neutral-300 disabled:shadow-none"
         >
           <ShoppingCart className="h-4 w-4" aria-hidden="true" />
           {cartBusy
