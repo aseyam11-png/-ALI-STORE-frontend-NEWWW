@@ -28,9 +28,9 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
   const price = getVariantPrice(product, selectedVariant);
   const stock = getVariantStock(product, selectedVariant);
-  const available =
-    product.stockStatus === "in_stock" ||
-    product.stockStatus === "low_stock";
+  const available = selectedVariant
+    ? selectedVariant.available && stock > 0
+    : product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
 
   const subtotal = price * quantity;
 
@@ -62,9 +62,18 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
         quantity,
         image: selectedVariant?.image ?? product.images[0]?.url,
         minOrderQuantity: 1,
+        variantId: selectedVariant?.id,
+        variantLabel: selectedVariant?.name
+          ? `${selectedVariant.name}: ${selectedVariant.value}`
+          : undefined,
       };
 
       if (session.status === "authenticated") {
+        if (selectedVariant) {
+          throw new Error(
+            "This product has variants, but the current cart API does not persist variants yet.",
+          );
+        }
         const numericId = Number(product.id);
         if (!Number.isInteger(numericId) || numericId < 1) {
           throw new Error("Invalid product id.");

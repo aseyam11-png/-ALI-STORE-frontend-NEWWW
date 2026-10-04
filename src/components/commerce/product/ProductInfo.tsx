@@ -8,7 +8,8 @@ import {
   Truck,
 } from "lucide-react";
 
-import type { B2CProduct } from "@/features/products/types/b2c-product.types";
+import type { B2CProduct, B2CProductVariant } from "@/features/products/types/b2c-product.types";
+import { useState } from "react";
 import { formatCurrency } from "@/features/localization/services/currency.service";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { ProductActions } from "./ProductActions";
@@ -23,15 +24,16 @@ interface ProductInfoProps {
 export function ProductInfo({
   product,
 }: ProductInfoProps) {
-  const stock = product.stock;
-  const activePrice = product.price;
+  const [selectedVariant, setSelectedVariant] = useState<B2CProductVariant | undefined>(undefined);
+  const stock = selectedVariant?.stock ?? product.stock;
+  const activePrice = selectedVariant?.price ?? product.price;
+  const available =
+    selectedVariant
+      ? selectedVariant.available && stock > 0
+      : product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
   const galleryImages = product.images.map(
     (image) => image.url,
   );
-
-  const available =
-    product.stockStatus === "in_stock" ||
-    product.stockStatus === "low_stock";
 
   return (
     <div className="grid gap-8 pb-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:pb-0">
@@ -112,7 +114,7 @@ export function ProductInfo({
           </div>
 
           <div className="mt-3 flex items-center gap-2">
-            {product.stockStatus === "unknown" ? (
+            {product.stockStatus === "unknown" && !selectedVariant ? (
               <span className="text-xs font-bold text-neutral-500">
                 Availability is being confirmed
               </span>
@@ -134,7 +136,11 @@ export function ProductInfo({
         </div>
 
         {product.variants.length > 0 && (
-          <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm"><VariantSelector variants={product.variants} selectedVariantId={undefined} onChange={() => undefined} /></div>
+          <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm"><VariantSelector
+              variants={product.variants}
+              selectedVariantId={selectedVariant?.id}
+              onChange={setSelectedVariant}
+            /></div>
         )}
 
         <div className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface divide-y divide-neutral-100 shadow-sm">
@@ -191,8 +197,12 @@ export function ProductInfo({
 
         <ProductActions
           product={product}
+          selectedVariant={selectedVariant}
         />
-        <StickyAddToCart product={product} />
+        <StickyAddToCart
+          product={product}
+          selectedVariant={selectedVariant}
+        />
       </div>
     </div>
   );

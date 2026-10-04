@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Eye, X } from "lucide-react";
 
 import type { B2CProduct } from "@/features/products/types/b2c-product.types";
@@ -25,16 +25,49 @@ export function ProductQuickView({
   addBusy,
 }: ProductQuickViewProps) {
   const titleId = useId();
+  const panelRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const triggerRef = useRef<Element | null>(null);
 
   useEffect(() => {
     if (!open) return;
 
+    triggerRef.current = document.activeElement;
+    closeButtonRef.current?.focus();
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !panelRef.current) return;
+
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
 
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      if (triggerRef.current instanceof HTMLElement) {
+        triggerRef.current.focus();
+      }
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -52,12 +85,14 @@ export function ProductQuickView({
       }}
     >
       <section
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative grid max-h-[90vh] w-full max-w-4xl overflow-auto rounded-3xl border border-neutral-200 bg-surface shadow-2xl md:grid-cols-2"
+        className="relative grid max-h-[90vh] w-full max-w-4xl overflow-auto rounded-3xl border border-neutral-200 bg-surface shadow-modal md:grid-cols-2"
       >
         <button
+          ref={closeButtonRef}
           type="button"
           onClick={onClose}
           aria-label="Close quick view"
@@ -84,7 +119,7 @@ export function ProductQuickView({
 
         <div className="flex flex-col p-7 sm:p-9">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand">
-            Quick view
+            عرض سريع
           </p>
 
           {product.brand ? (
@@ -119,17 +154,17 @@ export function ProductQuickView({
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-neutral-50 p-4">
               <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
-                Availability
+                التوفر
               </p>
               <p className={
                 "mt-1 text-sm font-black " +
                 (available ? "text-success-700" : "text-danger-700")
               }>
                 {product.stockStatus === "unknown"
-                  ? "Checking availability"
+                  ? "جارٍ التحقق من التوفر"
                   : available
                     ? product.stock + " available"
-                    : "Out of stock"}
+                    : "غير متوفر"}
               </p>
             </div>
 
@@ -145,7 +180,7 @@ export function ProductQuickView({
 
           <div className="mt-3 rounded-xl border border-neutral-200 p-4">
             <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
-              Delivery
+              التوصيل
             </p>
             <p className="mt-1 text-sm font-bold text-foreground">
               {product.shipping.method}
@@ -161,7 +196,7 @@ export function ProductQuickView({
               onClick={onClose}
               className="inline-flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-surface px-5 text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              View full details
+              عرض التفاصيل
             </Link>
 
             <button
@@ -171,7 +206,7 @@ export function ProductQuickView({
               aria-busy={addBusy}
               className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-5 text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              {addBusy ? "Adding…" : "Add to cart"}
+              {addBusy ? "جارٍ الإضافة…" : "أضف إلى السلة"}
             </button>
           </div>
         </div>

@@ -15,7 +15,8 @@ test("shared experience primitives are wired into both app shells", () => {
   const mobileBar = read("src/components/navigation/MobileStoreBar.tsx");
 
   assert.match(appShell, /MobileStoreBar/);
-  assert.match(customerShell, /MobileStoreBar/);
+  assert.match(customerShell, /import \{ AppShell \}/);
+  assert.match(customerShell, /return <AppShell>\{children\}<\/AppShell>/);
   assert.match(mobileBar, /aria-current/);
   assert.match(mobileBar, /useCartStore/);
   assert.match(mobileBar, /useWishlistStore/);

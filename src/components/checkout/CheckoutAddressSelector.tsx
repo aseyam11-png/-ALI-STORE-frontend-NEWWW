@@ -22,22 +22,22 @@ export function CheckoutAddressSelector({
 }: CheckoutAddressSelectorProps) {
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
         <div className="flex items-center gap-3">
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-surface text-brand">
             <MapPin className="h-5 w-5" />
           </div>
 
           <div>
-            <h2 className="text-lg font-black text-slate-900">
+            <h2 className="text-lg font-black text-foreground">
               Delivery address
             </h2>
 
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-neutral-400">
               Choose where your order should be delivered.
             </p>
           </div>
@@ -46,7 +46,7 @@ export function CheckoutAddressSelector({
 
         <Link
           href="/buyer/addresses"
-          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 text-[10px] font-black text-slate-600"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 text-[10px] font-black text-neutral-600"
         >
           <Plus className="h-3.5 w-3.5" />
           Manage addresses
@@ -71,8 +71,8 @@ export function CheckoutAddressSelector({
                 onClick={() => onSelect(address)}
                 className={`w-full rounded-xl border p-4 text-start transition ${
                   selected
-                    ? "border-blue-300 bg-blue-50"
-                    : "border-slate-200 bg-white hover:bg-slate-50"
+                    ? "border-primary-300 bg-info-surface"
+                    : "border-neutral-200 bg-surface hover:bg-neutral-50"
                 }`}
               >
 
@@ -81,8 +81,8 @@ export function CheckoutAddressSelector({
                   <div
                     className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                       selected
-                        ? "border-[#2563EB] bg-[#2563EB] text-white"
-                        : "border-slate-300 text-transparent"
+                        ? "border-brand bg-brand text-white"
+                        : "border-neutral-300 text-transparent"
                     }`}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -92,27 +92,27 @@ export function CheckoutAddressSelector({
 
                     <div className="flex flex-wrap items-center gap-2">
 
-                      <p className="text-sm font-black text-slate-900">
+                      <p className="text-sm font-black text-foreground">
                         {
                           address.label
                         }
                       </p>
 
                       {address.isDefault && (
-                        <span className="rounded-full bg-white px-2 py-1 text-[9px] font-black text-[#2563EB]">
+                        <span className="rounded-full bg-surface px-2 py-1 text-[9px] font-black text-brand">
                           Default
                         </span>
                       )}
 
                     </div>
 
-                    <p className="mt-1 text-xs font-bold text-slate-700">
+                    <p className="mt-1 text-xs font-bold text-neutral-700">
                       {
                         address.recipientName
                       }
                     </p>
 
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="mt-1 text-xs leading-5 text-neutral-500">
 
                       {
                         address.street
@@ -140,7 +140,7 @@ export function CheckoutAddressSelector({
 
                     </p>
 
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[10px] text-neutral-400">
                       {
                         address.phone
                       }
@@ -157,17 +157,17 @@ export function CheckoutAddressSelector({
 
         {addresses.length ===
           0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 p-7 text-center">
+          <div className="rounded-xl border border-dashed border-neutral-300 p-7 text-center">
 
-            <MapPin className="mx-auto h-6 w-6 text-slate-300" />
+            <MapPin className="mx-auto h-6 w-6 text-neutral-300" />
 
-            <p className="mt-3 text-sm font-black text-slate-700">
+            <p className="mt-3 text-sm font-black text-neutral-700">
               No shipping address
             </p>
 
             <Link
               href="/buyer/addresses"
-              className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#2563EB] px-4 text-xs font-black text-white"
+              className="mt-4 inline-flex h-10 items-center rounded-lg bg-brand px-4 text-xs font-black text-white"
             >
               Add address
             </Link>

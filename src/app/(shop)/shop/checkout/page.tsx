@@ -222,6 +222,7 @@ export default function CheckoutPage() {
       keyof FormState
     > = [
       "fullName",
+      "email",
       "phone",
       "address",
       "city",

@@ -99,21 +99,21 @@ export function CouponInput({
 
   if (applied) {
     return (
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+      <section className="rounded-2xl border border-success-100 bg-success-surface p-4">
 
         <div className="flex items-start gap-3">
 
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-success-600">
             <CheckCircle2 className="h-5 w-5" />
           </div>
 
           <div className="min-w-0 flex-1">
 
-            <p className="text-sm font-black text-emerald-800">
+            <p className="text-sm font-black text-success-800">
               Coupon applied
             </p>
 
-            <p className="mt-1 text-xs text-emerald-700">
+            <p className="mt-1 text-xs text-success-700">
               Code:{" "}
               <span className="font-black">
                 {
@@ -122,7 +122,7 @@ export function CouponInput({
               </span>
             </p>
 
-            <div className="mt-2 flex items-center gap-2 text-[10px] font-black text-emerald-700">
+            <div className="mt-2 flex items-center gap-2 text-[10px] font-black text-success-700">
 
               Discount:
 
@@ -142,7 +142,7 @@ export function CouponInput({
               remove
             }
             aria-label="Remove coupon"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-success-600 hover:bg-surface"
           >
             <X className="h-4 w-4" />
           </button>
@@ -154,20 +154,20 @@ export function CouponInput({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5">
+    <section className="rounded-2xl border border-neutral-200 bg-surface p-5">
 
       <div className="flex items-center gap-3">
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-surface text-brand">
           <Tag className="h-4 w-4" />
         </div>
 
         <div>
-          <h2 className="text-sm font-black text-slate-900">
+          <h2 className="text-sm font-black text-foreground">
             Coupon or promo code
           </h2>
 
-          <p className="mt-1 text-[10px] text-slate-400">
+          <p className="mt-1 text-[10px] text-neutral-400">
             Enter your discount code before placing the order.
           </p>
         </div>
@@ -198,14 +198,14 @@ export function CouponInput({
           }}
           placeholder="e.g. WELCOME10"
           aria-label="Coupon code"
-          className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm font-bold uppercase outline-none focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
+          className="h-11 min-w-0 flex-1 rounded-xl border border-neutral-200 px-3 text-sm font-bold uppercase outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
         />
 
         <button
           type="button"
           onClick={apply}
           disabled={!code.trim() || applying}
-          className="h-11 rounded-xl bg-[#2563EB] px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="h-11 rounded-xl bg-brand px-5 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-neutral-300"
         >
           {applying ? "Checking..." : "Apply"}
         </button>
@@ -221,15 +221,15 @@ export function CouponInput({
           }
           className={`mt-3 text-xs font-bold ${
             valid
-              ? "text-emerald-600"
-              : "text-red-600"
+              ? "text-success-600"
+              : "text-danger-600"
           }`}
         >
           {message}
         </p>
       )}
 
-      <div className="mt-3 text-[9px] text-slate-400">
+      <div className="mt-3 text-[9px] text-neutral-400">
         Coupon availability is checked securely with ALI STORE.
       </div>
 

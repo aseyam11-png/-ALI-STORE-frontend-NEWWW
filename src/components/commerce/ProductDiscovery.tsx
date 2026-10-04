@@ -2,7 +2,6 @@
 
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
-import { Tabs } from "@/components/ui/tabs";
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import {
@@ -105,17 +104,9 @@ export function ProductDiscovery() {
           )}
         </div>
 
-        <Tabs
-          className="mt-8"
-          ariaLabel="اكتشف المنتجات"
-          items={[
-            {
-              id: "catalog",
-              label: "المنتجات",
-              content: renderGrid(),
-            },
-          ]}
-        />
+        <div className="mt-8">
+          {renderGrid()}
+        </div>
       </div>
     </section>
   );
