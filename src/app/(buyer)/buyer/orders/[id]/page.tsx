@@ -83,13 +83,13 @@ export default function BuyerOrderTrackingPage() {
         <main className="min-h-screen bg-background">
           <div className="mx-auto max-w-4xl px-4 py-12 text-center">
             <Package className="mx-auto h-8 w-8 text-neutral-300" />
-            <h1 className="mt-4 text-2xl font-black text-foreground">الطلب غير موجود</h1>
+            <h1 className="mt-4 text-2xl font-bold text-foreground">الطلب غير موجود</h1>
             <p className="mt-2 text-sm text-neutral-500">
               {error || "هذا الطلب غير متاح لهذا الحساب."}
             </p>
             <Link
               href="/buyer/orders"
-              className="mt-6 inline-flex h-11 items-center rounded-xl bg-brand px-5 text-sm font-black text-white"
+              className="mt-6 inline-flex h-11 items-center rounded-xl bg-brand px-5 text-sm font-bold text-white"
             >طلباتي</Link>
           </div>
         </main>
@@ -104,17 +104,17 @@ export default function BuyerOrderTrackingPage() {
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
             <Link
               href="/buyer/orders"
-              className="inline-flex items-center gap-2 text-xs font-black text-brand"
+              className="inline-flex items-center gap-2 text-xs font-bold text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />طلباتي</Link>
 
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-neutral-400">الطلب</p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400">الطلب</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                   #{order.id}
                 </h1>
-                <span className="mt-2 inline-flex rounded-full bg-info-surface px-3 py-1.5 text-[10px] font-black text-brand">
+                <span className="mt-2 inline-flex rounded-full bg-info-surface px-3 py-1.5 text-[10px] font-bold text-brand">
                   {statusLabel(order.status)}
                 </span>
               </div>
@@ -122,7 +122,7 @@ export default function BuyerOrderTrackingPage() {
               <LocalizedPrice
                 amountUSD={Number(order.totalAmount)}
                 currency={order.currency}
-                className="text-2xl font-black text-brand-ink"
+                className="text-2xl font-bold text-brand-ink"
               />
             </div>
           </div>
@@ -135,9 +135,9 @@ export default function BuyerOrderTrackingPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <Truck className="h-5 w-5 text-brand" />
-                    <h2 className="text-lg font-black text-foreground">الشحن</h2>
+                    <h2 className="text-lg font-bold text-foreground">الشحن</h2>
                   </div>
-                  <span className="rounded-full bg-info-surface px-3 py-1 text-[10px] font-black text-brand">
+                  <span className="rounded-full bg-info-surface px-3 py-1 text-[10px] font-bold text-brand">
                     {({ PENDING: "بانتظار الدفع", PROCESSING: "قيد التجهيز", SHIPPED: "تم الشحن", IN_TRANSIT: "في الطريق", DELIVERED: "تم التوصيل", CANCELLED: "ملغي", FULFILLMENT_FAILED: "فشل تنفيذ الطلب" } as Record<string, string>)[aggregateShipmentStatus(order)] ?? aggregateShipmentStatus(order)}
                   </span>
                 </div>
@@ -155,7 +155,7 @@ export default function BuyerOrderTrackingPage() {
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <p className="text-xs font-black text-foreground">الشحنة #{shipment.id}</p>
+                            <p className="text-xs font-bold text-foreground">الشحنة #{shipment.id}</p>
                             <p className="mt-1 text-xs font-bold text-neutral-500">
                               {({ PENDING: "قيد الانتظار", PROCESSING: "قيد التجهيز", SHIPPED: "تم الشحن", IN_TRANSIT: "في الطريق", DELIVERED: "تم التوصيل", CANCELLED: "ملغي" } as Record<string, string>)[shipment.status] ?? shipment.status}
                             </p>
@@ -167,13 +167,13 @@ export default function BuyerOrderTrackingPage() {
 
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">شركة الشحن</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400">شركة الشحن</p>
                             <p className="mt-1 text-xs font-bold text-neutral-700">
                               {shipment.carrier ?? "لم يتم التحديد بعد"}
                             </p>
                           </div>
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">موعد التوصيل المتوقع</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400">موعد التوصيل المتوقع</p>
                             <p className="mt-1 text-xs font-bold text-neutral-700">
                               {shipment.estimatedDeliveryDate
                                 ? new Date(shipment.estimatedDeliveryDate).toLocaleDateString("ar-SA")
@@ -190,20 +190,20 @@ export default function BuyerOrderTrackingPage() {
               <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-brand" />
-                  <h2 className="text-lg font-black text-foreground">منتجات الطلب</h2>
+                  <h2 className="text-lg font-bold text-foreground">منتجات الطلب</h2>
                 </div>
 
                 <div className="mt-5 space-y-2">
                   {order.items.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 p-4">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-neutral-800">{item.productName}</p>
+                        <p className="truncate text-sm font-bold text-neutral-800">{item.productName}</p>
                         <p className="mt-1 text-xs text-neutral-400">الكمية: {item.quantity}</p>
                       </div>
                       <LocalizedPrice
                         amountUSD={Number(item.subTotal)}
                         currency={order.currency}
-                        className="shrink-0 text-sm font-black text-neutral-800"
+                        className="shrink-0 text-sm font-bold text-neutral-800"
                       />
                     </div>
                   ))}
@@ -213,7 +213,7 @@ export default function BuyerOrderTrackingPage() {
               <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <MapPin className="h-5 w-5 text-brand" />
-                  <h2 className="text-lg font-black text-foreground">عنوان التوصيل</h2>
+                  <h2 className="text-lg font-bold text-foreground">عنوان التوصيل</h2>
                 </div>
                 <p className="mt-5 rounded-xl bg-neutral-50 p-4 text-sm leading-6 text-neutral-700">
                   {order.shippingAddress}
@@ -222,7 +222,7 @@ export default function BuyerOrderTrackingPage() {
             </div>
 
             <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm lg:sticky lg:top-24">
-              <h2 className="text-lg font-black text-foreground">ملخص الطلب</h2>
+              <h2 className="text-lg font-bold text-foreground">ملخص الطلب</h2>
               <div className="mt-5 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-500">الخصم</span>
@@ -230,7 +230,7 @@ export default function BuyerOrderTrackingPage() {
                 </div>
                 <div className="flex justify-between border-t border-neutral-100 pt-4 text-base">
                   <span className="font-bold text-neutral-500">الإجمالي</span>
-                  <LocalizedPrice amountUSD={Number(order.totalAmount)} currency={order.currency} className="font-black text-brand-ink" />
+                  <LocalizedPrice amountUSD={Number(order.totalAmount)} currency={order.currency} className="font-bold text-brand-ink" />
                 </div>
               </div>
             </aside>
