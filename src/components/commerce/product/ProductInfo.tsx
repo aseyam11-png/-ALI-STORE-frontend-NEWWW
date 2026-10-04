@@ -35,10 +35,6 @@ export function ProductInfo({
     (image) => image.url,
   );
 
-  const available =
-    product.stockStatus === "in_stock" ||
-    product.stockStatus === "low_stock";
-
   return (
     <div className="grid gap-8 pb-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:pb-0">
       <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
