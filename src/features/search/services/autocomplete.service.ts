@@ -53,23 +53,27 @@ function brandSuggestions(
   products: ProductSummary[],
   query: string,
 ): AutocompleteSuggestion[] {
-  const brands = new Map<string, string>();
+  const brands = new Map<string, { id: string; name: string }>();
 
   for (const product of products) {
     const name = product.brand?.name?.trim();
     if (!name) continue;
 
-    brands.set(name.toLocaleLowerCase(), name);
+    const brandId = product.brand?.id;
+    const numericBrandId = Number(brandId);
+    if (!brandId || !Number.isInteger(numericBrandId) || numericBrandId < 1) continue;
+
+    brands.set(name.toLocaleLowerCase(), { id: brandId, name });
   }
 
   return Array.from(brands.values())
     .map((brand) => ({
-      id: `brand-${brand.toLocaleLowerCase()}`,
+      id: `brand-${brand.id}`,
       type: "BRAND" as const,
-      title: brand,
+      title: brand.name,
       subtitle: "Brand",
-      href: `/shop/products?brand=${encodeURIComponent(brand)}`,
-      score: scoreText(brand, query) + 3,
+      href: `/shop/products?brand=${encodeURIComponent(brand.id)}`,
+      score: scoreText(brand.name, query) + 3,
     }))
     .filter((suggestion) => suggestion.score > 3);
 }

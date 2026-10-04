@@ -58,22 +58,24 @@ export async function searchSuggestions(
     href: `/shop/products/${encodeURIComponent(product.id)}`,
   }));
 
-  const brands: SearchSuggestion[] = Array.from(
-    new Map(
-      response.items
-        .map((product) => product.brand?.name?.trim())
-        .filter((brand): brand is string => Boolean(brand))
-        .map((brand) => [brand.toLocaleLowerCase(), brand]),
-    ).values(),
-  )
-    .filter((brand) => scoreText(brand, cleanQuery) > 0)
+  const brandMap = new Map<string, string>();
+  for (const product of response.items) {
+    const name = product.brand?.name?.trim();
+    const id = product.brand?.id;
+    const numericId = Number(id);
+    if (!name || !id || !Number.isInteger(numericId) || numericId < 1) continue;
+    brandMap.set(name.toLocaleLowerCase(), id);
+  }
+
+  const brands: SearchSuggestion[] = Array.from(brandMap.entries())
+    .filter(([name]) => scoreText(name, cleanQuery) > 0)
     .slice(0, 3)
-    .map((brand) => ({
-      id: `brand-${brand.toLocaleLowerCase()}`,
-      label: brand,
+    .map(([name, id]) => ({
+      id: `brand-${id}`,
+      label: name,
       subtitle: "Brand",
       type: "BRAND" as const,
-      href: `/shop/products?brand=${encodeURIComponent(brand)}`,
+      href: `/shop/products?brand=${encodeURIComponent(id)}`,
     }));
 
   const categories = flattenCategoryTree(
