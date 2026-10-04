@@ -28,25 +28,25 @@ import {
 } from "@/features/cart/services/cart-api.service";
 
 export default function CartPage() {
-  const items = useCartStore(
-    (state) => state.items,
+  const منتجs = useCartStore(
+    (state) => state.منتجs,
   );
 
-  const subtotal = items.reduce(
-    (total, item) =>
+  const subtotal = منتجs.reduce(
+    (total, منتج) =>
       total +
-      item.price * item.quantity,
+      منتج.price * منتج.quantity,
     0,
   );
 
-  const itemCount = items.reduce(
-    (total, item) =>
-      total + item.quantity,
+  const منتجCount = منتجs.reduce(
+    (total, منتج) =>
+      total + منتج.quantity,
     0,
   );
 
   const session = useSession();
-  const replaceItems = useCartStore((state) => state.replaceItems);
+  const replaceالمنتجات = useCartStore((state) => state.replaceالمنتجات);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
 
@@ -60,17 +60,17 @@ export default function CartPage() {
       setError("");
 
       try {
-        const localItems = useCartStore.getState().items;
+        const localالمنتجات = useCartStore.getState().منتجs;
         const backend = await getBackendCart();
 
         if (!active) return;
 
-        if (backend.items.length === 0 && localItems.length > 0) {
-          const migrated = await replaceBackendCart(localItems);
+        if (backend.منتجs.length === 0 && localالمنتجات.length > 0) {
+          const migrated = await replaceBackendCart(localالمنتجات);
           if (!active) return;
-          replaceItems(mapBackendCartToLocal(migrated, localItems));
+          replaceالمنتجات(mapBackendCartToLocal(migrated, localالمنتجات));
         } else {
-          replaceItems(mapBackendCartToLocal(backend, localItems));
+          replaceالمنتجات(mapBackendCartToLocal(backend, localالمنتجات));
         }
       } catch (caughtError) {
         if (active) {
@@ -90,20 +90,20 @@ export default function CartPage() {
     return () => {
       active = false;
     };
-  }, [session.status, replaceItems]);
+  }, [session.status, replaceالمنتجات]);
 
   const handleQuantityChange = async (
     productId: string,
     variantId: string | undefined,
     quantity: number,
   ) => {
-    const item = useCartStore.getState().items.find(
+    const منتج = useCartStore.getState().منتجs.find(
       (candidate) =>
         candidate.productId === productId &&
         candidate.variantId === variantId,
     );
 
-    if (!item) return;
+    if (!منتج) return;
 
     const safeQuantity = Math.max(
       1,
@@ -111,19 +111,19 @@ export default function CartPage() {
     );
 
     if (session.status !== "authenticated") {
-      const nextItems = useCartStore.getState().items.map(
+      const nextالمنتجات = useCartStore.getState().منتجs.map(
         (candidate) =>
           candidate.productId === productId &&
           candidate.variantId === variantId
             ? { ...candidate, quantity: safeQuantity }
             : candidate,
       );
-      replaceItems(nextItems);
+      replaceالمنتجات(nextالمنتجات);
       return;
     }
 
-    if (!item.backendItemId) {
-      setError("Cart item identity is missing. Refresh the cart and try again.");
+    if (!منتج.backendItemId) {
+      setError("Cart منتج identity is missing. Refresh the cart and try again.");
       return;
     }
 
@@ -132,14 +132,14 @@ export default function CartPage() {
 
     try {
       const backend = await updateBackendCartItem(
-        item.backendItemId,
+        منتج.backendItemId,
         safeQuantity,
         Number(productId),
       );
-      replaceItems(
+      replaceالمنتجات(
         mapBackendCartToLocal(
           backend,
-          useCartStore.getState().items,
+          useCartStore.getState().منتجs,
         ),
       );
     } catch (caughtError) {
@@ -153,21 +153,21 @@ export default function CartPage() {
     }
   };
 
-  const handleRemove = async (
+  const handleإزالة = async (
     productId: string,
     variantId: string | undefined,
   ) => {
-    const item = useCartStore.getState().items.find(
+    const منتج = useCartStore.getState().منتجs.find(
       (candidate) =>
         candidate.productId === productId &&
         candidate.variantId === variantId,
     );
 
-    if (!item) return;
+    if (!منتج) return;
 
     if (session.status !== "authenticated") {
-      replaceItems(
-        useCartStore.getState().items.filter(
+      replaceالمنتجات(
+        useCartStore.getState().منتجs.filter(
           (candidate) =>
             !(
               candidate.productId === productId &&
@@ -178,8 +178,8 @@ export default function CartPage() {
       return;
     }
 
-    if (!item.backendItemId) {
-      setError("Cart item identity is missing. Refresh the cart and try again.");
+    if (!منتج.backendItemId) {
+      setError("Cart منتج identity is missing. Refresh the cart and try again.");
       return;
     }
 
@@ -188,12 +188,12 @@ export default function CartPage() {
 
     try {
       const backend = await removeBackendCartItem(
-        item.backendItemId,
+        منتج.backendItemId,
       );
-      replaceItems(
+      replaceالمنتجات(
         mapBackendCartToLocal(
           backend,
-          useCartStore.getState().items,
+          useCartStore.getState().منتجs,
         ),
       );
     } catch (caughtError) {
@@ -209,7 +209,7 @@ export default function CartPage() {
 
   const handleClear = async () => {
     if (session.status !== "authenticated") {
-      replaceItems([]);
+      replaceالمنتجات([]);
       return;
     }
 
@@ -218,10 +218,10 @@ export default function CartPage() {
 
     try {
       const backend = await clearBackendCart();
-      replaceItems(
+      replaceالمنتجات(
         mapBackendCartToLocal(
           backend,
-          useCartStore.getState().items,
+          useCartStore.getState().منتجs,
         ),
       );
     } catch (caughtError) {
@@ -259,7 +259,7 @@ export default function CartPage() {
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-neutral-500">
-              Review your items and continue to checkout when you&apos;re ready.
+              Review your منتجs and continue to checkout when you&apos;re ready.
             </p>
 
           </div>
@@ -267,17 +267,17 @@ export default function CartPage() {
 
         <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
 
-          {items.length === 0 ? (
+          {منتجs.length === 0 ? (
             <div className="space-y-6">
 
               <section className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-12 text-center">
 
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-500">
+                <div className="mx-auto flex h-16 w-16 منتجs-center justify-center rounded-2xl bg-neutral-100 text-neutral-500">
                   <ShoppingBag className="h-7 w-7" />
                 </div>
 
                 <h2 className="mt-5 text-2xl font-black text-foreground">
-                  Your cart is empty
+                  سلتك فارغة
                 </h2>
 
                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
@@ -287,9 +287,9 @@ export default function CartPage() {
 
                 <Link
                   href="/shop/products"
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--color-primary-500)] px-6 text-sm font-medium text-white"
+                  className="mt-6 inline-flex h-11 منتجs-center gap-2 rounded-xl bg-[var(--color-primary-500)] px-6 text-sm font-medium text-white"
                 >
-                  Browse products
+                  تصفح المنتجات
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
@@ -297,7 +297,7 @@ export default function CartPage() {
 
               <RecommendationSection
                 type="TRENDING"
-                title="Trending products"
+                title="المنتجات الرائجة"
                 description="Popular products customers are exploring right now."
               />
 
@@ -313,18 +313,18 @@ export default function CartPage() {
 
                 <section className="space-y-5">
 
-                  <div className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
+                  <div className="flex منتجs-center justify-between rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
 
                     <div>
                       <p className="text-sm font-black text-foreground">
-                        {itemCount} item
-                        {itemCount !== 1
+                        {منتجCount} منتج
+                        {منتجCount !== 1
                           ? "s"
                           : ""}
                       </p>
 
                       <p className="mt-1 text-xs text-neutral-400">
-                        In your cart
+                        في سلتك
                       </p>
                     </div>
 
@@ -332,10 +332,10 @@ export default function CartPage() {
                       type="button"
                       onClick={() => void handleClear()}
                       disabled={syncing}
-                      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-danger transition hover:bg-danger-surface"
+                      className="inline-flex منتجs-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-danger transition hover:bg-danger-surface"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Clear cart
+                      تفريغ السلة
                     </button>
 
                   </div>
@@ -344,29 +344,29 @@ export default function CartPage() {
 
                     <div className="divide-y divide-slate-100">
 
-                      {items.map(
-                        (item) => {
-                          const itemTotal =
-                            item.price *
-                            item.quantity;
+                      {منتجs.map(
+                        (منتج) => {
+                          const منتجTotal =
+                            منتج.price *
+                            منتج.quantity;
 
                           return (
                             <article
-                              key={`${item.productId}-${item.variantId ?? "default"}`}
+                              key={`${منتج.productId}-${منتج.variantId ?? "default"}`}
                               className="p-5"
                             >
 
                               <div className="flex flex-col gap-4 sm:flex-row">
 
-                                <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-50">
+                                <div className="relative flex h-28 w-28 shrink-0 منتجs-center justify-center overflow-hidden rounded-xl bg-neutral-50">
 
-                                  {item.image ? (
+                                  {منتج.image ? (
                                     <Image
                                       src={
-                                        item.image
+                                        منتج.image
                                       }
                                       alt={
-                                        item.name
+                                        منتج.name
                                       }
                                       fill
                                       sizes="112px"
@@ -381,54 +381,54 @@ export default function CartPage() {
                                 <div className="min-w-0 flex-1">
 
                                   <Link
-                                    href={`/shop/products/${encodeURIComponent(item.productId)}`}
+                                    href={`/shop/products/${encodeURIComponent(منتج.productId)}`}
                                     className="text-sm font-black text-foreground hover:text-brand"
                                   >
                                     {
-                                      item.name
+                                      منتج.name
                                     }
                                   </Link>
 
-                                  {item.variantLabel && (
+                                  {منتج.variantLabel && (
                                     <p className="mt-1 text-xs font-semibold text-brand">
                                       {
-                                        item.variantLabel
+                                        منتج.variantLabel
                                       }
                                     </p>
                                   )}
 
                                   <p className="mt-2 text-lg font-black text-brand-ink">
                                     <LocalizedPrice
-                                      amountUSD={item.price}
-                                      currency={item.currency}
+                                      amountUSD={منتج.price}
+                                      currency={منتج.currency}
                                     />
                                   </p>
 
-                                  <div className="mt-4 flex items-center gap-3">
+                                  <div className="mt-4 flex منتجs-center gap-3">
 
-                                    <div className="flex items-center overflow-hidden rounded-xl border border-neutral-200">
+                                    <div className="flex منتجs-center overflow-hidden rounded-xl border border-neutral-200">
 
                                       <button
                                         type="button"
                                         onClick={() =>
                                           handleQuantityChange(
-                                            item.productId,
-                                            item.variantId,
-                                            item.quantity - 1,
+                                            منتج.productId,
+                                            منتج.variantId,
+                                            منتج.quantity - 1,
                                           )
                                         }
                                         disabled={
-                                          item.quantity <=
+                                          منتج.quantity <=
                                           1
                                         }
-                                        className="flex h-10 w-10 items-center justify-center text-neutral-600 disabled:opacity-40"
+                                        className="flex h-10 w-10 منتجs-center justify-center text-neutral-600 disabled:opacity-40"
                                       >
                                         <Minus className="h-4 w-4" />
                                       </button>
 
-                                      <span className="flex h-10 min-w-12 items-center justify-center border-x border-neutral-200 px-3 text-sm font-black">
+                                      <span className="flex h-10 min-w-12 منتجs-center justify-center border-x border-neutral-200 px-3 text-sm font-black">
                                         {
-                                          item.quantity
+                                          منتج.quantity
                                         }
                                       </span>
 
@@ -436,12 +436,12 @@ export default function CartPage() {
                                         type="button"
                                         onClick={() =>
                                           handleQuantityChange(
-                                            item.productId,
-                                            item.variantId,
-                                            item.quantity + 1,
+                                            منتج.productId,
+                                            منتج.variantId,
+                                            منتج.quantity + 1,
                                           )
                                         }
-                                        className="flex h-10 w-10 items-center justify-center text-neutral-600 hover:bg-neutral-50"
+                                        className="flex h-10 w-10 منتجs-center justify-center text-neutral-600 hover:bg-neutral-50"
                                       >
                                         <Plus className="h-4 w-4" />
                                       </button>
@@ -452,26 +452,26 @@ export default function CartPage() {
 
                                 </div>
 
-                                <div className="flex items-end justify-between gap-5 sm:flex-col sm:items-end">
+                                <div className="flex منتجs-end justify-between gap-5 sm:flex-col sm:منتجs-end">
 
                                   <p className="text-xl font-black text-brand-ink">
                                     <LocalizedPrice
-                                      amountUSD={itemTotal}
-                                      currency={item.currency}
+                                      amountUSD={منتجTotal}
+                                      currency={منتج.currency}
                                     />
                                   </p>
 
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      handleRemove(
-                                        item.productId,
-                                        item.variantId,
+                                      handleإزالة(
+                                        منتج.productId,
+                                        منتج.variantId,
                                       )
                                     }
                                     className="text-xs font-bold text-danger hover:underline"
                                   >
-                                    Remove
+                                    إزالة
                                   </button>
 
                                 </div>
@@ -486,17 +486,17 @@ export default function CartPage() {
                     </div>
 
                     <div className="border-t border-neutral-100 bg-neutral-50 px-5 py-4">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500">
+                      <div className="flex منتجs-center gap-2 text-xs font-semibold text-neutral-500">
                         <Truck className="h-4 w-4 text-success-600" />
-                        Shipping is calculated and confirmed at checkout.
+                        تُحسب تكلفة الشحن وتُؤكد عند إتمام الطلب.
                       </div>
                     </div>
                   </section>
 
                   <RecommendationSection
                     type="FREQUENTLY_BOUGHT_TOGETHER"
-                    title="Frequently bought together"
-                    description="Complete your purchase with products customers often add."
+                    title="يُشترى معه غالبًا"
+                    description="أكمل مشترياتك بمنتجات يضيفها العملاء غالبًا."
                   />
 
                 </section>
@@ -506,38 +506,38 @@ export default function CartPage() {
                   <div className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                     <h2 className="text-lg font-black text-foreground">
-                      Order summary
+                      ملخص الطلب
                     </h2>
 
                     <div className="mt-6 space-y-4">
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Items
+                          المنتجات
                         </span>
 
                         <span className="font-bold">
-                          {itemCount}
+                          {منتجCount}
                         </span>
                       </div>
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="font-bold">
-                          <LocalizedPrice amountUSD={subtotal} currency={items[0]?.currency} />
+                          <LocalizedPrice amountUSD={subtotal} currency={منتجs[0]?.currency} />
                         </span>
                       </div>
 
                       <div className="flex justify-between text-sm">
                         <span className="text-neutral-500">
-                          Shipping
+                          الشحن
                         </span>
 
                         <span className="font-bold">
-                          Confirmed at checkout
+                          يُؤكد عند الدفع
                         </span>
                       </div>
 
@@ -545,15 +545,15 @@ export default function CartPage() {
 
                     <div className="mt-6 border-t border-neutral-100 pt-5">
 
-                      <div className="flex items-end justify-between">
+                      <div className="flex منتجs-end justify-between">
                         <span className="font-bold text-neutral-500">
-                          Subtotal
+                          المجموع الفرعي
                         </span>
 
                         <span className="text-3xl font-black text-brand-ink">
                           <LocalizedPrice
                             amountUSD={subtotal}
-                            currency={items[0]?.currency}
+                            currency={منتجs[0]?.currency}
                           />
                         </span>
                       </div>
@@ -562,9 +562,9 @@ export default function CartPage() {
 
                     <Link
                       href="/shop/checkout"
-                      className="mt-6 flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary-500)] text-sm font-medium text-white"
+                      className="mt-6 flex h-12 منتجs-center justify-center gap-2 rounded-xl bg-[var(--color-primary-500)] text-sm font-medium text-white"
                     >
-                      Continue to checkout
+                      المتابعة إلى الدفع
                       <ChevronRight className="h-4 w-4" />
                     </Link>
 
@@ -572,8 +572,8 @@ export default function CartPage() {
 
                   <RecommendationSection
                     type="BASED_ON_BROWSING"
-                    title="Recommended for you"
-                    description="Suggestions based on products you may like."
+                    title="مقترح لك"
+                    description="اقتراحات بناءً على المنتجات التي قد تهمك."
                   />
 
                 </aside>
