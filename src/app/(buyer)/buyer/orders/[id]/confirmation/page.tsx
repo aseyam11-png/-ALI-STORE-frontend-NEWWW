@@ -17,6 +17,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
 import {
   getBackendPaymentByOrderId,
+  processBackendPayment,
   type BackendPayment,
 } from "@/features/commerce/services/checkout-api.service";
 import {
@@ -63,6 +64,8 @@ export default function OrderConfirmationPage() {
   const [payment, setPayment] = useState<BackendPayment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryBusy, setRetryBusy] = useState(false);
+  const [retryError, setRetryError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -136,6 +139,42 @@ export default function OrderConfirmationPage() {
 
   const paymentNeedsAttention =
     !paymentSucceeded && !codPending;
+
+  const canRetryPayment =
+    payment?.status === "FAILED" &&
+    payment.method !== "CASH_ON_DELIVERY";
+
+  const retryPayment = async () => {
+    if (!payment || !order || !canRetryPayment || retryBusy) {
+      return;
+    }
+
+    setRetryBusy(true);
+    setRetryError("");
+
+    try {
+      const nextPayment = await processBackendPayment({
+        orderId: order.id,
+        amount: Number(order.totalAmount),
+        method: payment.method,
+      });
+
+      setPayment(nextPayment);
+
+      if (nextPayment.status === "COMPLETED") {
+        const nextOrder = await getOrder(String(order.id));
+        setOrder(nextOrder);
+      }
+    } catch (caughtError) {
+      setRetryError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "تعذر إعادة محاولة الدفع.",
+      );
+    } finally {
+      setRetryBusy(false);
+    }
+  };
 
   const statusTitle =
     paymentSucceeded
@@ -311,6 +350,22 @@ export default function OrderConfirmationPage() {
                           <p className="mt-2">
                             طلبك محفوظ لدينا. لا تنشئ طلبًا ثانيًا، وراجع حالة الطلب من صفحة طلباتك.
                           </p>
+                          {canRetryPayment ? (
+                            <button
+                              type="button"
+                              onClick={() => void retryPayment()}
+                              disabled={retryBusy}
+                              aria-busy={retryBusy}
+                              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-brand px-4 text-xs font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+                            >
+                              {retryBusy ? "جارٍ إعادة المحاولة…" : "إعادة محاولة الدفع"}
+                            </button>
+                          ) : null}
+                          {retryError ? (
+                            <p role="alert" className="mt-2 text-[11px] font-bold text-danger-700">
+                              {retryError}
+                            </p>
+                          ) : null}
                         </>
                       ) : (
                         <p>تم حفظ حالة الدفع المرتبطة بهذا الطلب على الخادم.</p>
