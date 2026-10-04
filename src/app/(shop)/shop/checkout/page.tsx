@@ -74,7 +74,9 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
   const [paymentMethod, setPaymentMethod] =
-    useState("card");
+    useState("cod");
+
+  const onlinePaymentsEnabled = false;
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [serverCartTotal, setServerCartTotal] =
@@ -249,6 +251,11 @@ export default function CheckoutPage() {
 
     if (!validate()) {
       setError("Please complete all required shipping information.");
+      return;
+    }
+
+    if (paymentMethod !== "cod" && !onlinePaymentsEnabled) {
+      setError("الدفع الإلكتروني غير متاح حاليًا. اختر الدفع عند الاستلام.");
       return;
     }
 
@@ -781,14 +788,17 @@ export default function CheckoutPage() {
                       {
                         value: "card",
                         label: "Credit / Debit Card",
+                        available: onlinePaymentsEnabled,
                       },
                       {
                         value: "wallet",
                         label: "PayPal",
+                        available: onlinePaymentsEnabled,
                       },
                       {
                         value: "cod",
                         label: "Cash on Delivery",
+                        available: true,
                       },
                     ].map(
                       (option) => (
@@ -797,11 +807,13 @@ export default function CheckoutPage() {
                             option.value
                           }
                           type="button"
-                          onClick={() =>
-                            setPaymentMethod(
-                              option.value,
-                            )
-                          }
+                          onClick={() => {
+                            if (option.available) {
+                              setPaymentMethod(option.value);
+                            }
+                          }}
+                          disabled={!option.available}
+                          aria-disabled={!option.available}
                           className={`rounded-2xl border p-4 text-start transition ${
                             paymentMethod ===
                             option.value
@@ -812,6 +824,11 @@ export default function CheckoutPage() {
                           <p className="text-xs font-black text-foreground">
                             {option.label}
                           </p>
+                          {!option.available && (
+                            <p className="mt-1 text-[10px] font-bold text-neutral-400">
+                              غير متاح حاليًا
+                            </p>
+                          )}
                         </button>
                       ),
                     )}
