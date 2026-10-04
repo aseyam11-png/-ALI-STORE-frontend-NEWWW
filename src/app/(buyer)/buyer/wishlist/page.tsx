@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
 import { LocalizedPrice } from "@/components/localization/LocalizedPrice";
@@ -132,7 +132,7 @@ export default function WishlistPage() {
               </div>
               <h2 className="mt-5 text-xl font-black text-foreground">قائمة المفضلة فارغة</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                Save products you like and come back to them later.
+                احفظ المنتجات التي تعجبك وارجع إليها لاحقًا.
               </p>
               <Link
                 href="/shop/products"
@@ -247,7 +247,7 @@ export default function WishlistPage() {
                         <button
                           type="button"
                           onClick={() => void remove(productId)}
-                          aria-label={`Remove ${name} from wishlist`}
+                          aria-label={`إزالة ${name} من المفضلة`}
                           className="flex h-10 w-10 items-center justify-center rounded-xl border border-danger-100 text-danger-600 hover:bg-danger-surface"
                         >
                           <Trash2 className="h-4 w-4" />
