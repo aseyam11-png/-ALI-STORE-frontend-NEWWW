@@ -20,14 +20,14 @@ import type { CustomerAddress } from "@/features/addresses/types/address.types";
 import { getMyAddresses } from "@/features/addresses/services/address-api.service";
 import { useSession } from "@/features/auth/session";
 import { useRouter } from "next/navigation";
-import { إتمام الطلبAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
+import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
   createBackendOrder,
   getBackendCart,
   mapBackendCartToLocal,
-  processBackendالدفع,
+  processBackendPayment,
   replaceBackendCart,
   type BackendPayment,
 } from "@/features/commerce/services/checkout-api.service";
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
     useState("card");
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [serverCartالإجمالي, setServerCartTotal] =
+  const [serverCartTotal, setServerCartTotal] =
     useState<number | null>(null);
   const [serverCartCurrency, setServerCartCurrency] =
     useState<string | undefined>(undefined);
@@ -91,7 +91,7 @@ export default function CheckoutPage() {
     useState("");
   const idempotencyKeyRef = useRef<string | null>(null);
   const [successPaymentStatus, setSuccessPaymentStatus] =
-    useState<BackendPayment["status"]>("بانتظار الدفع");
+    useState<BackendPayment["status"]>("PENDING");
 
   useEffect(() => {
     if (session.status !== "authenticated") {
@@ -309,7 +309,7 @@ export default function CheckoutPage() {
       if (!paymentIsAccepted) {
         setPaymentRecoveryOrderId(createdOrderId);
         setError(
-          "The order was created, but the payment was not confirmed. "
+          "تم إنشاء الطلب، لكن لم يتم تأكيد الدفع. "
           + "Do not place a second order; review the existing order status.",
         );
         return;
@@ -322,7 +322,7 @@ export default function CheckoutPage() {
       const message =
         caughtError instanceof Error
           ? caughtError.message
-          : "Unable to place the order. Please try again.";
+          : "تعذر إنشاء الطلب. حاول مرة أخرى.";
 
       if (createdOrderId) {
         setPaymentRecoveryOrderId(createdOrderId);
@@ -447,7 +447,7 @@ export default function CheckoutPage() {
                   <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
                     {successPaymentStatus === "COMPLETED"
                       ? "تم الدفع"
-                      : successPaymentStatus === "فشل الدفع"
+                      : successPaymentStatus === "FAILED"
                         ? "FAILED"
                         : "PENDING"}
                   </span>
@@ -868,8 +868,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
-                  الشحن is calculated and confirmed by the backend when the
-                  order is created.
+                  يتم حساب وتأكيد تكلفة الشحن من الخادم عند إنشاء الطلب.
                 </div>
 
                 <div className="mt-5">
