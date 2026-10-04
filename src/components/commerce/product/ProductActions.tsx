@@ -67,7 +67,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       if (session.status === "authenticated") {
         const numericId = Number(product.id);
         if (!Number.isInteger(numericId) || numericId < 1) {
-          throw new Error("Invalid product id.");
+          throw new Error("معرّف المنتج غير صالح.");
         }
 
         const currentItems = useCartStore.getState().items;
@@ -122,7 +122,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
             type="button"
             onClick={decrease}
             disabled={busy || quantity <= 1}
-            aria-label="Decrease quantity"
+            aria-label="تقليل الكمية"
             className="flex h-11 w-11 items-center justify-center text-neutral-600 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Minus className="h-4 w-4" />
@@ -139,7 +139,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
             type="button"
             onClick={increase}
             disabled={busy || !available || quantity >= stock}
-            aria-label="Increase quantity"
+            aria-label="زيادة الكمية"
             className="flex h-11 w-11 items-center justify-center text-neutral-600 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus className="h-4 w-4" />
