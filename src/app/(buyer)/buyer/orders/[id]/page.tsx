@@ -55,9 +55,19 @@ function getTrackingSteps(order: BackendOrder): TrackingStep[] {
   );
   const sequence = ["PENDING", "PROCESSING", "SHIPPED", "IN_TRANSIT", "DELIVERED"] as const;
 
-  let activeIndex = sequence.indexOf(
-    hasInTransit ? "IN_TRANSIT" : order.status,
-  );
+  const activeKey =
+    hasInTransit
+      ? "IN_TRANSIT"
+      : order.status === "PENDING" ||
+          order.status === "PROCESSING" ||
+          order.status === "SHIPPED" ||
+          order.status === "DELIVERED"
+        ? order.status
+        : undefined;
+
+  let activeIndex = activeKey
+    ? sequence.indexOf(activeKey)
+    : -1;
 
   if (activeIndex < 0 && order.status === "CANCELLED") activeIndex = 0;
   if (activeIndex < 0 && order.status === "FULFILLMENT_FAILED") activeIndex = 1;
@@ -193,7 +203,8 @@ export default function BuyerOrderTrackingPage() {
               <Truck className="h-6 w-6 text-brand" aria-hidden="true" />
             </div>
 
-            <div className="mt-7 grid grid-cols-5 gap-2">
+            <div className="mt-7 overflow-x-auto px-1 pb-2 scroll-surface">
+              <div className="grid min-w-[680px] grid-cols-5 gap-2 sm:min-w-0">
               {trackingSteps.map((step, index) => (
                 <div key={step.label} className="min-w-0">
                   <div className="flex items-center">
@@ -228,6 +239,7 @@ export default function BuyerOrderTrackingPage() {
                   </p>
                 </div>
               ))}
+              </div>
             </div>
           </section>
         )}
