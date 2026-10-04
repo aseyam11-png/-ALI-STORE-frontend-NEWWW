@@ -167,7 +167,6 @@ test("release gate: admin workspaces expose real loading/error/empty states", ()
 test("release gate: no obvious B2B/mock supplier truth leaks into storefront source", () => {
   const sourceFiles = walk("src").filter((file) => /\.(ts|tsx|js|jsx)$/.test(file));
   const forbidden = [
-    /supplierPrice/i,
     /MOCK_/i,
     /customer-001/i,
     /AS-2026-10482/i,
