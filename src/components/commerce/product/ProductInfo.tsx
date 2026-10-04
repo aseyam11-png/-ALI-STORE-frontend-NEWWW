@@ -27,6 +27,10 @@ export function ProductInfo({
   const [selectedVariant, setSelectedVariant] = useState<B2CProductVariant | undefined>(undefined);
   const stock = selectedVariant?.stock ?? product.stock;
   const activePrice = selectedVariant?.price ?? product.price;
+  const available =
+    selectedVariant
+      ? selectedVariant.available && stock > 0
+      : product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
   const galleryImages = product.images.map(
     (image) => image.url,
   );
@@ -114,7 +118,7 @@ export function ProductInfo({
           </div>
 
           <div className="mt-3 flex items-center gap-2">
-            {product.stockStatus === "unknown" ? (
+            {product.stockStatus === "unknown" && !selectedVariant ? (
               <span className="text-xs font-bold text-neutral-500">
                 Availability is being confirmed
               </span>
