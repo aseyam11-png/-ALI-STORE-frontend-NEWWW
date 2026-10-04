@@ -19,7 +19,7 @@ export default function DealsPage() {
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-neutral-500 sm:text-base">
                   لا نعرض خصومات أو أسعارًا ترويجية غير موجودة في مصدر الأسعار
-                  الحقيقي. ستظهر العروض هنا عند توفر بيانات Promotions من الخادم.
+                  الحقيقي. ستظهر العروض هنا عند توفر بيانات العروض من الخادم.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
                   <span className="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 text-xs font-bold text-neutral-700 shadow-sm ring-1 ring-neutral-200">
