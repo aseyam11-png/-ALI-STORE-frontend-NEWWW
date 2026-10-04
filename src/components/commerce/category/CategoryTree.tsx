@@ -37,7 +37,7 @@ export function CategoryTree({
       className={
         level === 0
           ? "space-y-1"
-          : "mt-1 space-y-1 border-s border-slate-100 ps-3"
+          : "mt-1 space-y-1 border-s border-neutral-100 ps-3"
       }
     >
       {categories.map(
