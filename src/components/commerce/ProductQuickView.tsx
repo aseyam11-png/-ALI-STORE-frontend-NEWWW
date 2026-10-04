@@ -186,7 +186,7 @@ export function ProductQuickView({
               {product.shipping.method}
             </p>
             <p className="mt-1 text-xs text-neutral-400">
-              {product.shipping.estimatedالتوصيل}
+              {product.shipping.estimatedDelivery}
             </p>
           </div>
 
