@@ -124,7 +124,7 @@ export default function CartPage() {
     }
 
     if (!item.backendItemId) {
-      setError("Cart item identity is missing. Refresh the cart and try again.");
+      setError("تعذر تحديد عنصر السلة. حدّث السلة ثم حاول مرة أخرى.");
       return;
     }
 
@@ -280,12 +280,11 @@ export default function CartPage() {
                 </div>
 
                 <h2 className="mt-5 text-2xl font-black text-foreground">
-                  Your cart is empty
+                  سلتك فارغة
                 </h2>
 
                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                  Discover products from our catalog and add them to your
-                  cart.
+                  اكتشف المنتجات من الكتالوج وأضف ما يناسبك إلى السلة.
                 </p>
 
                 <Link
@@ -300,8 +299,8 @@ export default function CartPage() {
 
               <RecommendationSection
                 type="TRENDING"
-                title="Trending products"
-                description="Popular products customers are exploring right now."
+                title="منتجات رائجة"
+                description="منتجات يكتشفها العملاء بكثرة حاليًا."
               />
 
             </div>
@@ -366,7 +365,7 @@ export default function CartPage() {
 
                   <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
 
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-neutral-100">
 
                       {items.map(
                         (item) => {
@@ -519,8 +518,8 @@ export default function CartPage() {
 
                   <RecommendationSection
                     type="FREQUENTLY_BOUGHT_TOGETHER"
-                    title="Frequently bought together"
-                    description="Complete your purchase with products customers often add."
+                    title="يُشترى معها عادةً"
+                    description="أكمل طلبك بمنتجات يضيفها العملاء عادةً."
                   />
 
                 </section>
