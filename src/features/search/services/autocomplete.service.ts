@@ -21,12 +21,70 @@ function scoreText(text: string, query: string) {
   return 0;
 }
 
+function editDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let i = 1; i <= left.length; i += 1) {
+    const current = [i];
+
+    for (let j = 1; j <= right.length; j += 1) {
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + (left[i - 1] === right[j - 1] ? 0 : 1),
+      );
+    }
+
+    for (let j = 0; j < current.length; j += 1) {
+      previous[j] = current[j];
+    }
+  }
+
+  return previous[right.length];
+}
+
+function fuzzyTextScore(text: string, query: string): number {
+  const normalizedText = normalize(text);
+  const normalizedQuery = normalize(query);
+
+  if (normalizedQuery.length < 3 || !normalizedText) return 0;
+
+  const tokens = normalizedText.split(/[\s\-_/.]+/).filter(Boolean);
+  const candidates = [normalizedText, ...tokens];
+
+  const maxDistance =
+    normalizedQuery.length <= 5
+      ? 1
+      : Math.max(1, Math.floor(normalizedQuery.length / 4));
+
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const candidate of candidates) {
+    if (
+      Math.abs(candidate.length - normalizedQuery.length) >
+      maxDistance + 1
+    ) {
+      continue;
+    }
+
+    bestDistance = Math.min(
+      bestDistance,
+      editDistance(normalizedQuery, candidate),
+    );
+  }
+
+  if (bestDistance > maxDistance) return 0;
+  return 58 - bestDistance * 12;
+}
+
 function productScore(product: ProductSummary, query: string) {
   return Math.max(
     scoreText(product.name, query),
     scoreText(product.sku, query),
     scoreText(product.brand?.name ?? "", query),
     scoreText(product.category?.name ?? "", query) - 10,
+    fuzzyTextScore(product.name, query),
+    fuzzyTextScore(product.sku, query),
+    fuzzyTextScore(product.brand?.name ?? "", query) - 3,
   );
 }
 
@@ -88,26 +146,49 @@ export async function getAutocompleteSuggestions(
 
   const [response, categories] = await Promise.all([
     getProducts({
-    search: normalizedQuery,
-    categoryId: undefined,
-    subcategoryId: undefined,
-    brand: undefined,
-    supplierId: undefined,
-    minPrice: undefined,
-    maxPrice: undefined,
-    minRating: undefined,
-    verifiedSupplierOnly: false,
-    discountOnly: false,
-    inStockOnly: true,
-    featuredOnly: false,
-    bestsellerOnly: false,
-    newArrivalOnly: false,
-    sort: "relevance",
-    page: 1,
-    pageSize: Math.min(24, Math.max(8, limit * 2)),
+      search: normalizedQuery,
+      categoryId: undefined,
+      subcategoryId: undefined,
+      brand: undefined,
+        minPrice: undefined,
+      maxPrice: undefined,
+      minRating: undefined,
+      verifiedSupplierOnly: false,
+      discountOnly: false,
+      inStockOnly: true,
+      featuredOnly: false,
+      bestsellerOnly: false,
+      newArrivalOnly: false,
+      sort: "relevance",
+      page: 1,
+      pageSize: Math.min(24, Math.max(8, limit * 2)),
     }),
     getCategories(),
   ]);
+
+  const fuzzyCandidates =
+    response.items.length > 0
+      ? response.items
+      : (
+          await getProducts({
+            search: "",
+            categoryId: undefined,
+            subcategoryId: undefined,
+            brand: undefined,
+            minPrice: undefined,
+            maxPrice: undefined,
+            minRating: undefined,
+            verifiedSupplierOnly: false,
+            discountOnly: false,
+            inStockOnly: true,
+            featuredOnly: false,
+            bestsellerOnly: false,
+            newArrivalOnly: false,
+            sort: "relevance",
+            page: 1,
+            pageSize: 100,
+          })
+        ).items;
 
   const liveCategories = flattenCategoryTree(categories);
 
@@ -127,8 +208,8 @@ export async function getAutocompleteSuggestions(
 
   return [
     ...categoryResults,
-    ...productSuggestions(response.items, normalizedQuery),
-    ...brandSuggestions(response.items, normalizedQuery),
+    ...productSuggestions(fuzzyCandidates, normalizedQuery),
+    ...brandSuggestions(fuzzyCandidates, normalizedQuery),
   ]
     .sort((a, b) => b.score - a.score)
     .slice(0, Math.max(1, Math.min(20, limit)));

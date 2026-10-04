@@ -868,8 +868,8 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
-                  يتم احتساب الشحن وتأكيده من الخادم عند إنشاء
-                  الطلب.
+                  تكلفة الشحن غير متاحة كقيمة مؤكدة في هذه المرحلة، وتُحدد عند
+                  توفر بيانات الشحن النهائية.
                 </div>
 
                 <div className="mt-5">
@@ -896,7 +896,7 @@ export default function CheckoutPage() {
                     <span className="text-neutral-500">الشحن</span>
 
                     <span className="font-bold text-neutral-800">
-                      يُؤكد عند إنشاء الطلب عبر الخادم
+                      تُحدد عند تأكيد بيانات الشحن
                     </span>
                   </div>
 
