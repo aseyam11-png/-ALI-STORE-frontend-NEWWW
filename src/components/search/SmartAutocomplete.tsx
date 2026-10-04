@@ -5,9 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowLeft,
+  Clock3,
   FolderSearch,
   Search,
   Tag,
+  Trash2,
   X,
 } from "lucide-react";
 import {
@@ -19,6 +21,12 @@ import {
 import {
   getAutocompleteSuggestions,
 } from "@/features/search/services/autocomplete.service";
+import {
+  addSearchHistory,
+  clearSearchHistory,
+  getSearchHistory,
+  removeSearchHistory,
+} from "@/features/search/services/search-history.service";
 
 import type {
   AutocompleteSuggestion,
@@ -31,7 +39,7 @@ interface SmartAutocompleteProps {
     value: string,
   ) => void;
 
-  onSubmit?: () => void;
+  onSubmit?: (query?: string) => void;
 
   placeholder?: string;
 
@@ -115,6 +123,7 @@ export function SmartAutocomplete({
     );
 
   const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [history, setHistory] = useState<string[]>(() => getSearchHistory());
   const [suggestionsLoading, setSuggestionsLoading] = useState(
     () => value.trim().length >= 2,
   );
@@ -178,10 +187,24 @@ export function SmartAutocomplete({
 
   const submit =
     () => {
-      setOpen(false);
+      const query = value.trim();
+      if (query) {
+        setHistory(addSearchHistory(query));
+      }
 
-      onSubmit?.();
+      setOpen(false);
+      onSubmit?.(query);
     };
+
+  const selectHistoryItem = (query: string) => {
+    const normalized = query.trim();
+    if (!normalized) return;
+
+    onChange(normalized);
+    setHistory(addSearchHistory(normalized));
+    setOpen(false);
+    onSubmit?.(normalized);
+  };
 
   const selectSuggestion =
     (
@@ -295,7 +318,7 @@ export function SmartAutocomplete({
             onChange(nextValue);
             setHighlighted(0);
             setSuggestionsError(false);
-            setOpen(hasQuery);
+            setOpen(hasQuery || history.length > 0);
             setSuggestionsLoading(hasQuery);
 
             if (!hasQuery) {
@@ -303,15 +326,12 @@ export function SmartAutocomplete({
             }
           }}
           onFocus={() => {
-            if (
-              value.trim()
-                .length >=
-              2
-            ) {
-              setOpen(
-                true,
-              );
+            if (value.trim().length >= 2) {
+              setOpen(true);
+              return;
             }
+
+            setOpen(history.length > 0);
           }}
           onKeyDown={
             handleKeyDown
@@ -323,11 +343,8 @@ export function SmartAutocomplete({
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
-          aria-expanded={
-            open &&
-            suggestions.length >
-              0
-          }
+          aria-expanded={open}
+
           aria-controls="smart-search-suggestions"
           className="h-full min-w-0 flex-1 rounded-md border border-neutral-200 bg-neutral-50 ps-12 pe-28 text-body text-neutral-900 outline-none transition-colors duration-200 ease-brand placeholder:text-neutral-400 focus:border-brand focus:bg-surface focus:ring-4 focus:ring-primary-100"
         />
@@ -361,6 +378,57 @@ export function SmartAutocomplete({
         </button>
 
       </div>
+
+      {open && value.trim().length < 2 && history.length > 0 ? (
+        <div
+          className="absolute start-0 end-0 top-[calc(100%+8px)] z-[80] overflow-hidden rounded-lg border border-neutral-200 bg-surface shadow-floating"
+        >
+          <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Clock3 className="h-4 w-4 text-neutral-400" aria-hidden="true" />
+              <p className="text-label font-medium uppercase tracking-[0.1em] text-neutral-400">
+                عمليات البحث الأخيرة
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                clearSearchHistory();
+                setHistory([]);
+              }}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-caption font-medium text-neutral-500 transition hover:bg-neutral-50 hover:text-danger-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              مسح
+            </button>
+          </div>
+
+          <div className="p-2">
+            {history.map((query) => (
+              <div key={query} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => selectHistoryItem(query)}
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-3 text-start transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+                >
+                  <Clock3 className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-neutral-800">
+                    {query}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistory(removeSearchHistory(query))}
+                  aria-label={"حذف البحث " + query}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-50 hover:text-danger-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {open &&
         value.trim().length >= 2 &&

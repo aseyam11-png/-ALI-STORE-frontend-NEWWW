@@ -21,8 +21,8 @@ export function HomeSearchBar({
   const [value, setValue] = useState("");
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
 
-  const submit = () => {
-    const query = value.trim();
+  const submit = (submittedQuery = value) => {
+    const query = submittedQuery.trim();
 
     router.push(
       query
