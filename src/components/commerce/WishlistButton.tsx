@@ -72,23 +72,23 @@ export function WishlistButton({
         aria-busy={busy}
         aria-label={
           isInWishlist
-            ? "Remove " + product.name + " from wishlist"
-            : "Add " + product.name + " to wishlist"
+            ? "إزالة " + product.name + " من المفضلة"
+            : "إضافة " + product.name + " إلى المفضلة"
         }
         aria-pressed={isInWishlist}
         title={
           error ||
           (isInWishlist
-            ? "Remove from wishlist"
-            : "Add to wishlist")
+            ? "إزالة من المفضلة"
+            : "إضافة إلى المفضلة")
         }
         className={
           "flex " +
           buttonSize +
-          " items-center justify-center rounded-full border bg-white/95 shadow-sm backdrop-blur transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 " +
+          " items-center justify-center rounded-full border bg-surface/95 shadow-sm backdrop-blur transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 " +
           (isInWishlist
-            ? "border-red-200 text-red-500"
-            : "border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500")
+            ? "border-discount/30 text-discount-600"
+            : "border-neutral-200 text-neutral-500 hover:border-discount/30 hover:text-discount-600")
         }
       >
         <Heart
