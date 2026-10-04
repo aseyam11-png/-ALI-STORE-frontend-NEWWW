@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Camera } from "lucide-react";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
-import { Edit3, Package, RefreshCcw, Search } from "lucide-react";
+import { Camera, Edit3, Package, RefreshCcw, Search } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
