@@ -354,11 +354,11 @@ export default function CheckoutPage() {
                 <CreditCard className="h-8 w-8" />
               </div>
 
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-warning-700">
+              <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-warning-700">
                 تنبيه بشأن الدفع
               </p>
 
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-brand-ink">
                 تم حفظ طلبك على الخادم
               </h1>
 
@@ -373,7 +373,7 @@ export default function CheckoutPage() {
                   <span className="text-xs text-neutral-400">
                     Order number
                   </span>
-                  <span className="text-sm font-black text-brand-ink">
+                  <span className="text-sm font-bold text-brand-ink">
                     {paymentRecoveryOrderId}
                   </span>
                 </div>
@@ -382,7 +382,7 @@ export default function CheckoutPage() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
                 <Link
                   href={`/buyer/orders/${paymentRecoveryOrderId}/confirmation`}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white"
                 >
                   مراجعة الطلب والدفع
                   <ArrowRight className="h-4 w-4" />
@@ -419,11 +419,11 @@ export default function CheckoutPage() {
                 <CheckCircle2 className="h-8 w-8" />
               </div>
 
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-success-600">
+              <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.18em] text-success-600">
                 تم تأكيد الطلب
               </p>
 
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-brand-ink">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-brand-ink">
                 شكرًا لطلبك
               </h1>
 
@@ -439,7 +439,7 @@ export default function CheckoutPage() {
                     Order number
                   </span>
 
-                  <span className="text-sm font-black text-brand-ink">
+                  <span className="text-sm font-bold text-brand-ink">
                     {successOrderId}
                   </span>
                 </div>
@@ -447,7 +447,7 @@ export default function CheckoutPage() {
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs text-neutral-400">الدفع</span>
 
-                  <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-black text-success-700">
+                  <span className="rounded-full bg-success-surface px-2.5 py-1 text-[10px] font-bold text-success-700">
                     {successPaymentStatus === "COMPLETED"
                       ? "PAID"
                       : successPaymentStatus === "FAILED"
@@ -462,7 +462,7 @@ export default function CheckoutPage() {
 
                 <Link
                   href="/buyer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white"
                 >
                   عرض طلباتي
                   <ArrowRight className="h-4 w-4" />
@@ -493,13 +493,13 @@ export default function CheckoutPage() {
 
             <Link
               href="/shop/cart"
-              className="inline-flex items-center gap-2 text-xs font-black text-brand"
+              className="inline-flex items-center gap-2 text-xs font-bold text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
               العودة إلى السلة
             </Link>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">إتمام الطلب</h1>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">إتمام الطلب</h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
               أكمل طلبك من خلال عملية شراء آمنة.
@@ -515,11 +515,11 @@ export default function CheckoutPage() {
 
               <Package className="mx-auto h-8 w-8 text-neutral-300" />
 
-              <h2 className="mt-5 text-xl font-black text-foreground">سلتك فارغة</h2>
+              <h2 className="mt-5 text-xl font-bold text-foreground">سلتك فارغة</h2>
 
               <Link
                 href="/shop/products"
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-black text-white"
+                className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white"
               >
                 تصفح المنتجات
                 <ArrowRight className="h-4 w-4" />
@@ -563,7 +563,7 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <h2 className="text-lg font-black text-foreground">
+                      <h2 className="text-lg font-bold text-foreground">
                         بيانات التوصيل
                       </h2>
 
@@ -578,7 +578,7 @@ export default function CheckoutPage() {
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="full-name"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         الاسم الكامل *
                       </label>
@@ -603,7 +603,7 @@ export default function CheckoutPage() {
                     <div>
                       <label
                         htmlFor="email"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         البريد الإلكتروني *
                       </label>
@@ -629,7 +629,7 @@ export default function CheckoutPage() {
                     <div>
                       <label
                         htmlFor="phone"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         رقم الهاتف *
                       </label>
@@ -655,7 +655,7 @@ export default function CheckoutPage() {
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="address"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         العنوان *
                       </label>
@@ -680,7 +680,7 @@ export default function CheckoutPage() {
                     <div>
                       <label
                         htmlFor="city"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         المدينة *
                       </label>
@@ -705,7 +705,7 @@ export default function CheckoutPage() {
                     <div>
                       <label
                         htmlFor="country"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         الدولة *
                       </label>
@@ -730,7 +730,7 @@ export default function CheckoutPage() {
                     <div>
                       <label
                         htmlFor="postal-code"
-                        className="text-xs font-black text-neutral-600"
+                        className="text-xs font-bold text-neutral-600"
                       >
                         الرمز البريدي
                       </label>
@@ -762,7 +762,7 @@ export default function CheckoutPage() {
                     <CreditCard className="h-5 w-5 text-brand" />
 
                     <div>
-                      <h2 className="text-lg font-black text-foreground">الدفع</h2>
+                      <h2 className="text-lg font-bold text-foreground">الدفع</h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
                         اختر طريقة الدفع المناسبة لك.
@@ -837,7 +837,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-brand" />
 
-                  <h2 className="text-lg font-black text-foreground">ملخص طلبك</h2>
+                  <h2 className="text-lg font-bold text-foreground">ملخص طلبك</h2>
                 </div>
 
                 <div className="mt-6 space-y-2">
@@ -855,7 +855,7 @@ export default function CheckoutPage() {
                           </span>
                         </p>
 
-                        <p className="shrink-0 text-xs font-black text-foreground">
+                        <p className="shrink-0 text-xs font-bold text-foreground">
                           <LocalizedPrice
                             amountUSD={item.price * item.quantity}
                             currency={item.currency ?? serverCartCurrency}
@@ -924,7 +924,7 @@ export default function CheckoutPage() {
                     <LocalizedPrice
                       amountUSD={total}
                       currency={serverCartCurrency}
-                      className="text-3xl font-black text-brand-ink"
+                      className="text-3xl font-bold text-brand-ink"
                     />
 
                   </div>
@@ -934,7 +934,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={placeOrder}
-                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+                  className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-bold text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
                   <LockKeyhole className="h-4 w-4" />تأكيد الطلب</button>
 
