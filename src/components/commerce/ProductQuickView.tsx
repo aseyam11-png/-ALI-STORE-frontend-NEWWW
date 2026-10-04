@@ -164,7 +164,7 @@ export function ProductQuickView({
                   ? "جارٍ التحقق من التوفر"
                   : available
                     ? product.stock + " available"
-                    : "غير available"}
+                    : "غير متوفر"}
               </p>
             </div>
 
