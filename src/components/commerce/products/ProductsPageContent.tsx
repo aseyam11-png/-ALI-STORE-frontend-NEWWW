@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
-import { Filter, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { Camera, Filter, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
@@ -14,6 +14,8 @@ import { getProducts } from "@/features/products/services/product.service";
 import type { ProductFilters, ProductSort } from "@/features/products/types/product-filter.types";
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
+import { VisualSearch } from "@/components/search/VisualSearch";
+import { Dialog } from "@/components/ui/dialog";
 
 function parseNumber(value: string | null) {
   if (!value) return undefined;
@@ -48,6 +50,7 @@ export function ProductsPageContent() {
     maxPriceParam === undefined ? "" : String(maxPriceParam),
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [imageSearchOpen, setImageSearchOpen] = useState(false);
 
   const categoriesQuery = useQuery({
     queryKey: ["catalog", "categories"],
@@ -294,12 +297,30 @@ export function ProductsPageContent() {
                 )}
                 <button
                   type="button"
+                  onClick={() => setImageSearchOpen(true)}
+                  aria-label="البحث بالصورة"
+                  title="البحث بالصورة"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 text-neutral-500 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+                >
+                  <Camera className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
                   onClick={submitSearch}
                   className="hidden h-10 rounded-xl bg-brand px-6 text-sm font-black text-white hover:bg-brand-hover sm:block"
                 >
                   بحث
                 </button>
               </div>
+
+              <Dialog
+                open={imageSearchOpen}
+                onClose={() => setImageSearchOpen(false)}
+                title="البحث بالصورة"
+                description="استخدم صورة للوصول مباشرة إلى المنتجات المشابهة في الكتالوج."
+              >
+                <VisualSearch />
+              </Dialog>
             </div>
           </div>
         </section>
