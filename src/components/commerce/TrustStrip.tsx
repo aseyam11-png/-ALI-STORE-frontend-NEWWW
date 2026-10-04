@@ -27,14 +27,14 @@ const items = [
 export function TrustStrip() {
   return (
     <section className="border-y border-neutral-200 bg-surface">
-      <div className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-10 lg:py-12">
-        <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-10">
+      <div className="container-shell py-8 sm:py-9">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-neutral-200 lg:rtl:divide-x-reverse">
           {items.map((item) => {
             const Icon = item.icon;
 
             return (
-              <div key={item.title} className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary-50 text-brand">
+              <div key={item.title} className="flex items-start gap-3 rounded-2xl px-2 py-2 lg:px-5 first:lg:ps-0 last:lg:pe-0">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-brand ring-1 ring-primary-100">
                   <Icon className="h-5 w-5" />
                 </span>
 
