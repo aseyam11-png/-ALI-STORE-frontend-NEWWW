@@ -10,6 +10,7 @@ import { ProductReviews } from "@/components/commerce/reviews/ProductReviews";
 import { ProductSpecifications } from "@/components/commerce/product/ProductSpecifications";
 import { ProductTrust } from "@/components/commerce/product/ProductTrust";
 import { RelatedProducts } from "@/components/commerce/product/RelatedProducts";
+import { RecentlyViewedSection } from "@/components/commerce/recently-viewed/RecentlyViewedSection";
 
 import {
   getProductById,
@@ -128,6 +129,16 @@ export default async function ProductDetailPage({
           <section className="mt-8">
             <ProductReviews productId={productDetails.id} />
           </section>
+
+          <RecentlyViewedSection
+            product={{
+              id: product.id,
+              name: product.name,
+              imageUrl: product.images[0]?.url,
+              price: product.price,
+              currency: product.currency,
+            }}
+          />
 
           <RelatedProducts
             products={relatedProducts}
