@@ -21,6 +21,6 @@ test("mobile sticky add-to-cart delegates to the canonical product action", asyn
   assert.match(sticky, /button.click()/);
   assert.match(sticky, /disabled={!available}/);
   assert.match(actions, /id="primary-product-add-to-cart"/);
-  assert.match(info, /<StickyAddToCart product={product} \/>/);
+  assert.match(info, /<StickyAddToCart[\\s\\S]*selectedVariant=\\{selectedVariant\\}/);
   assert.match(info, /pb-20/);
 });
