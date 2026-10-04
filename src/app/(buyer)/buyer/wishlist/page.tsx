@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -206,7 +207,7 @@ export default function WishlistPage() {
                   className="group overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised transition-all duration-200 ease-brand hover:-translate-y-1 hover:border-neutral-300 hover:shadow-floating"
                 >
                   <Link
-                    href={"/shop/products/" + encodeURIComponent(productId)}
+                    href={("/shop/products/" + encodeURIComponent(productId)) as Route}
                     className="block"
                     aria-label={"عرض " + name}
                   >
@@ -238,7 +239,7 @@ export default function WishlistPage() {
                     )}
 
                     <Link
-                      href={"/shop/products/" + encodeURIComponent(productId)}
+                      href={("/shop/products/" + encodeURIComponent(productId)) as Route}
                       className="block"
                     >
                       <h2 className="mt-1 line-clamp-2 min-h-[44px] text-body-sm font-bold leading-6 text-foreground transition-colors hover:text-brand">
