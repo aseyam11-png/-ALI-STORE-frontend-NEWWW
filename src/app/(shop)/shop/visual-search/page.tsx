@@ -20,9 +20,7 @@ export default function VisualSearchPage() {
               href="/shop/products"
               className="inline-flex items-center gap-2 text-xs font-black text-brand"
             >
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              Products
-            </Link>
+              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />المنتجات</Link>
 
             <div className="mt-5 flex items-center gap-3">
 
@@ -35,9 +33,7 @@ export default function VisualSearchPage() {
                   Visual discovery
                 </p>
 
-                <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-ink">
-                  Find products by image
-                </h1>
+                <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-ink">ابحث عن المنتجات بالصورة</h1>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
                   Upload a photo and discover visually similar products in the
