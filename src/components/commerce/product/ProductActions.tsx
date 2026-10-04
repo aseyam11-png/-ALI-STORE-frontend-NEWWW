@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CheckCircle2, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle2, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
 import { addBackendCartItem, mapBackendCartToLocal } from "@/features/cart/services/cart-api.service";
@@ -24,6 +24,8 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] =
+    useState<"success" | "error">("success");
   const [busy, setBusy] = useState(false);
 
   const price = getVariantPrice(product, selectedVariant);
@@ -51,6 +53,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
 
     setBusy(true);
     setMessage("");
+    setMessageTone("success");
 
     try {
       const localLine = {
@@ -84,6 +87,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       }
 
       setMessage("Product added to cart.");
+      setMessageTone("success");
       return true;
     } catch (error) {
       setMessage(
@@ -91,6 +95,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
           ? error.message
           : "Unable to add this product to the cart.",
       );
+      setMessageTone("error");
       return false;
     } finally {
       setBusy(false);
@@ -104,7 +109,7 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
   };
 
   return (
-    <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm sm:p-6">
+    <div className="mt-7 rounded-2xl border border-neutral-200 bg-surface p-5 pb-24 shadow-sm sm:p-6 sm:pb-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-black text-foreground">Quantity</p>
@@ -184,12 +189,46 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       {message && (
         <div
           role="status"
-          className="mt-4 flex items-center gap-2 rounded-xl bg-success-surface px-4 py-3 text-sm font-semibold text-success-700"
+          className={
+            "mt-4 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold " +
+            (messageTone === "success"
+              ? "bg-success-surface text-success-700"
+              : "bg-danger-surface text-danger-700")
+          }
         >
-          <CheckCircle2 className="h-4 w-4" />
+          {messageTone === "success" ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
           {message}
         </div>
       )}
+
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-surface/95 px-3 pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-xl gap-2 pb-[env(safe-area-inset-bottom)]">
+          <button
+            type="button"
+            onClick={() => void addToCart()}
+            disabled={busy || !available}
+            aria-busy={busy}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-surface text-sm font-black text-neutral-800 transition hover:border-primary-200 hover:bg-info-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            {busy ? "Adding..." : "Add to cart"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleBuyNow()}
+            disabled={busy || !available}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-black text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          >
+            <Zap className="h-4 w-4" />
+            Buy now
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
