@@ -68,8 +68,8 @@ export default function BuyerOrderTrackingPage() {
   if (loading) {
     return (
       <AppShell>
-        <main className="min-h-screen bg-[#F8FAFC]">
-          <div className="mx-auto max-w-4xl px-4 py-12 text-center text-sm text-slate-500">
+        <main className="min-h-screen bg-background">
+          <div className="mx-auto max-w-4xl px-4 py-12 text-center text-sm text-neutral-500">
             جارٍ تحميل الطلب...
           </div>
         </main>
@@ -80,11 +80,11 @@ export default function BuyerOrderTrackingPage() {
   if (error || !order) {
     return (
       <AppShell>
-        <main className="min-h-screen bg-[#F8FAFC]">
+        <main className="min-h-screen bg-background">
           <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-            <Package className="mx-auto h-8 w-8 text-slate-300" />
+            <Package className="mx-auto h-8 w-8 text-neutral-300" />
             <h1 className="mt-4 text-2xl font-black text-slate-900">Order not found</h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-neutral-500">
               {error || "This order is not available for your account."}
             </p>
             <Link
@@ -101,12 +101,12 @@ export default function BuyerOrderTrackingPage() {
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-[#F8FAFC]">
-        <section className="border-b border-slate-200 bg-white">
+      <main className="min-h-screen bg-background">
+        <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
             <Link
               href="/buyer/orders"
-              className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"
+              className="inline-flex items-center gap-2 text-xs font-black text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
               My orders
@@ -114,13 +114,13 @@ export default function BuyerOrderTrackingPage() {
 
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-neutral-400">
                   Order
                 </p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground">
                   #{order.id}
                 </h1>
-                <span className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black text-[#2563EB]">
+                <span className="mt-2 inline-flex rounded-full bg-info-surface px-3 py-1.5 text-[10px] font-black text-brand">
                   {statusLabel(order.status)}
                 </span>
               </div>
@@ -128,7 +128,7 @@ export default function BuyerOrderTrackingPage() {
               <LocalizedPrice
                 amountUSD={Number(order.totalAmount)}
                 currency={order.currency}
-                className="text-2xl font-black text-[#0F2747]"
+                className="text-2xl font-black text-brand-ink"
               />
             </div>
           </div>
@@ -137,56 +137,56 @@ export default function BuyerOrderTrackingPage() {
         <div className="mx-auto max-w-[1200px] px-4 py-7 sm:px-6 lg:px-8">
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <Truck className="h-5 w-5 text-[#2563EB]" />
+                    <Truck className="h-5 w-5 text-brand" />
                     <h2 className="text-lg font-black text-slate-900">Shipping</h2>
                   </div>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black text-[#2563EB]">
+                  <span className="rounded-full bg-info-surface px-3 py-1 text-[10px] font-black text-brand">
                     {aggregateShipmentStatus(order)}
                   </span>
                 </div>
 
                 <div className="mt-5 space-y-4">
                   {order.shipments.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
+                    <div className="rounded-xl border border-dashed border-neutral-300 p-5 text-sm text-neutral-500">
                       لم يتم إنشاء شحنة بعد.
                     </div>
                   ) : (
                     order.shipments.map((shipment) => (
                       <article
                         key={shipment.id}
-                        className="rounded-xl border border-slate-200 p-4"
+                        className="rounded-xl border border-neutral-200 p-4"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <p className="text-xs font-black text-slate-900">
                               Shipment #{shipment.id}
                             </p>
-                            <p className="mt-1 text-xs font-bold text-slate-500">
+                            <p className="mt-1 text-xs font-bold text-neutral-500">
                               {shipment.status}
                             </p>
                           </div>
-                          <p className="font-mono text-[10px] text-slate-500" dir="ltr">
+                          <p className="font-mono text-[10px] text-neutral-500" dir="ltr">
                             {shipment.trackingNumber ?? "Tracking pending"}
                           </p>
                         </div>
 
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                            <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
                               Carrier
                             </p>
-                            <p className="mt-1 text-xs font-bold text-slate-700">
+                            <p className="mt-1 text-xs font-bold text-neutral-700">
                               {shipment.carrier ?? "لم يتم التحديد بعد"}
                             </p>
                           </div>
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                            <p className="text-[10px] font-black uppercase tracking-wide text-neutral-400">
                               Estimated delivery
                             </p>
-                            <p className="mt-1 text-xs font-bold text-slate-700">
+                            <p className="mt-1 text-xs font-bold text-neutral-700">
                               {shipment.estimatedDeliveryDate
                                 ? new Date(shipment.estimatedDeliveryDate).toLocaleDateString("ar-SA")
                                 : "Pending"}
@@ -199,18 +199,18 @@ export default function BuyerOrderTrackingPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-[#2563EB]" />
+                  <Package className="h-5 w-5 text-brand" />
                   <h2 className="text-lg font-black text-slate-900">Order items</h2>
                 </div>
 
                 <div className="mt-5 space-y-2">
                   {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-4">
+                    <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 p-4">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black text-slate-800">{item.productName}</p>
-                        <p className="mt-1 text-xs text-slate-400">Quantity: {item.quantity}</p>
+                        <p className="mt-1 text-xs text-neutral-400">Quantity: {item.quantity}</p>
                       </div>
                       <LocalizedPrice
                         amountUSD={Number(item.subTotal)}
@@ -222,27 +222,27 @@ export default function BuyerOrderTrackingPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-[#2563EB]" />
+                  <MapPin className="h-5 w-5 text-brand" />
                   <h2 className="text-lg font-black text-slate-900">Delivery address</h2>
                 </div>
-                <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+                <p className="mt-5 rounded-xl bg-neutral-50 p-4 text-sm leading-6 text-neutral-700">
                   {order.shippingAddress}
                 </p>
               </section>
             </div>
 
-            <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
+            <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm lg:sticky lg:top-24">
               <h2 className="text-lg font-black text-slate-900">Order summary</h2>
               <div className="mt-5 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Discount</span>
+                  <span className="text-neutral-500">Discount</span>
                   <LocalizedPrice amountUSD={Number(order.discountAmount)} currency={order.currency} className="font-bold text-emerald-600" />
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-4 text-base">
-                  <span className="font-bold text-slate-500">Total</span>
-                  <LocalizedPrice amountUSD={Number(order.totalAmount)} currency={order.currency} className="font-black text-[#0F2747]" />
+                  <span className="font-bold text-neutral-500">Total</span>
+                  <LocalizedPrice amountUSD={Number(order.totalAmount)} currency={order.currency} className="font-black text-brand-ink" />
                 </div>
               </div>
             </aside>
