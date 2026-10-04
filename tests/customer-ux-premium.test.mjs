@@ -85,3 +85,38 @@ test("customer UX: gallery labels are Arabic and touch-safe", () => {
   assert.match(source, /عرض صورة/);
   assert.match(source, /لا توجد صور للمنتج/);
 });
+
+
+test("customer UX: product and deals surfaces do not leak English customer copy", () => {
+  assert.doesNotMatch(
+    read("src/components/commerce/product/ProductInfo.tsx"),
+    />\s*(Delivery|Returns|Secure payment|Fulfillment|No reviews yet)\s*</,
+  );
+  assert.doesNotMatch(
+    read("src/app/(shop)/shop/deals/page.tsx"),
+    />\s*Active deals\s*</,
+  );
+  assert.match(
+    read("src/app/(shop)/shop/deals/page.tsx"),
+    /العروض النشطة/,
+  );
+});
+
+test("customer UX: product card and catalog shipping fallbacks are Arabic", () => {
+  assert.doesNotMatch(
+    read("src/components/commerce/B2CProductCard.tsx"),
+    /Unable to add this product to the cart\./,
+  );
+  assert.doesNotMatch(
+    read("src/components/commerce/ProductCard.tsx"),
+    /Unable to add the product to your cart\./,
+  );
+  assert.match(
+    read("src/features/products/services/b2c-product.mapper.ts"),
+    /يُحدد الشحن عند إتمام الطلب/,
+  );
+  assert.match(
+    read("src/features/products/services/b2c-product.mapper.ts"),
+    /يُحدد موعد التوصيل عند إتمام الطلب/,
+  );
+});
