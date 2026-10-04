@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
@@ -238,6 +238,24 @@ export function ProductsPageContent() {
     setFiltersOpen(false);
   };
 
+  useEffect(() => {
+    if (!filtersOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [filtersOpen]);
+
   const activeFilterCount = [
     query,
     category,
@@ -337,6 +355,9 @@ export function ProductsPageContent() {
           <div className="grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
             <aside
               id="catalog-filters"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setFiltersOpen(false);
+              }}
               className={`fixed inset-0 z-[var(--z-overlay)] overflow-y-auto bg-ink-950/40 p-4 ${filtersOpen ? "block" : "hidden"} lg:static lg:z-auto lg:block lg:overflow-visible lg:bg-transparent lg:p-0`}
             >
               <div className="min-h-full rounded-2xl border border-neutral-200 bg-surface p-5 shadow-modal lg:min-h-0 lg:shadow-sm">
