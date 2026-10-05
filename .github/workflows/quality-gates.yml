@@ -116,13 +116,13 @@ jobs:
         run: npm ci
 
       - name: Snyk dependency scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
+        if: ${{ env.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: npx --yes snyk@latest test --severity-threshold=high
 
       - name: FOSSA license/compliance scan
-        if: ${{ secrets.FOSSA_API_KEY != '' }}
+        if: ${{ env.FOSSA_API_KEY != '' }}
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
         run: npx --yes fossa-cli@latest analyze
