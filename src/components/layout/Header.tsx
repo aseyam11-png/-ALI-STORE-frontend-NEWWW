@@ -223,7 +223,7 @@ export function Header() {
                   حسابي
                 </span>
                 <span className="block text-body-sm font-medium">
-                  الملف الشخصي
+                  مركز الحساب
                 </span>
               </span>
             </Link>
