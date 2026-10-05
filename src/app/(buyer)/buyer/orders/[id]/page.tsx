@@ -16,13 +16,11 @@ function statusLabel(status: BackendOrder["status"]) {
     SHIPPED: "تم الشحن",
     DELIVERED: "تم التوصيل",
     CANCELLED: "ملغي",
-    FULFILLMENT_FAILED: "تعذر تنفيذ الطلب",
   } as Record<BackendOrder["status"], string>)[status] ?? "قيد المعالجة";
 }
 
 function aggregateShipmentStatus(order: BackendOrder): string {
   if (order.status === "CANCELLED") return "CANCELLED";
-  if (order.status === "FULFILLMENT_FAILED") return "FULFILLMENT_FAILED";
 
   const statuses = order.shipments.map((shipment) => shipment.status);
   if (statuses.length === 0) return order.status;
@@ -145,7 +143,6 @@ export default function BuyerOrderTrackingPage() {
                       IN_TRANSIT: "في الطريق",
                       DELIVERED: "تم التوصيل",
                       CANCELLED: "ملغي",
-                      FULFILLMENT_FAILED: "تعذر تنفيذ الطلب",
                     } as Record<string, string>)[aggregateShipmentStatus(order)] ?? "قيد المعالجة"}
                   </span>
                 </div>
