@@ -208,80 +208,57 @@ export default function BuyerAccountPage() {
     >
       <div className="space-y-7">
         <section className="overflow-hidden rounded-2xl bg-brand-ink text-white shadow-raised">
-          <div className="relative p-6 sm:p-8">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -end-16 -top-20 h-52 w-52 rounded-full bg-brand/15 blur-3xl"
-            />
+          <div className="p-6 sm:p-7">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-center gap-4">
+                <span
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-base font-black ring-1 ring-white/15"
+                  aria-hidden="true"
+                >
+                  {session.user ? (
+                    (
+                      (session.user.firstName?.[0] ?? "") +
+                      (session.user.lastName?.[0] ?? "")
+                    ).toUpperCase()
+                  ) : (
+                    <UserRound className="h-6 w-6" />
+                  )}
+                </span>
 
-            <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-lg font-black ring-1 ring-white/15">
-                    {session.user ? (
-                      (
-                        (session.user.firstName?.[0] ?? "") +
-                        (session.user.lastName?.[0] ?? "")
-                      ).toUpperCase()
-                    ) : (
-                      <UserRound className="h-6 w-6" aria-hidden="true" />
-                    )}
-                  </span>
+                <div className="min-w-0">
+                  <p className="text-caption font-medium text-white/60">
+                    {session.status === "authenticated"
+                      ? "مرحبًا بعودتك"
+                      : "حسابك في ALI STORE"}
+                  </p>
 
-                  <div className="min-w-0">
-                    <p className="text-caption font-medium text-white/60">
-                      مساحة العميل
-                    </p>
-                    <h2 className="mt-1 truncate text-2xl font-black tracking-tight sm:text-3xl">
-                      {session.status === "authenticated" && session.user
-                        ? "مرحبًا، " + session.user.firstName
-                        : "أهلًا بك في حسابك"}
-                    </h2>
-                    {session.status === "authenticated" && session.user ? (
-                      <p className="mt-1 truncate text-body-sm text-white/65">
-                        {session.user.email}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-body-sm text-white/65">
-                        سجّل الدخول لتجمع مشترياتك وإعداداتك في مكان واحد.
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  <h2 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">
+                    {session.status === "authenticated" && session.user
+                      ? session.user.firstName + " " + session.user.lastName
+                      : "سجّل الدخول لإدارة حسابك"}
+                  </h2>
 
-                <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 text-caption text-white/70">
-                  <span className="inline-flex items-center gap-2">
-                    <ShieldCheck
-                      className="h-4 w-4 text-white/80"
-                      aria-hidden="true"
-                    />
-                    بيانات الحساب من الجلسة الفعلية
-                  </span>
-                  {session.status === "authenticated" ? (
-                    <span className="inline-flex items-center gap-2">
-                      <PackageCheck
-                        className="h-4 w-4 text-white/80"
-                        aria-hidden="true"
-                      />
-                      الطلبات مرتبطة بحسابك
-                    </span>
-                  ) : null}
+                  <p className="mt-1 truncate text-body-sm text-white/65">
+                    {session.status === "authenticated" && session.user
+                      ? session.user.email
+                      : "الطلبات والمفضلة والعناوين في مكان واحد."}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex shrink-0 flex-wrap gap-2.5">
                 {session.status === "authenticated" ? (
                   <Link
-                    href="/buyer/profile"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-body-sm font-bold text-brand-ink transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                    href="/buyer/orders"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-body-sm font-bold text-brand-ink transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
                   >
-                    <UserRound className="h-4 w-4" aria-hidden="true" />
-                    الملف الشخصي
+                    <Package className="h-4 w-4" aria-hidden="true" />
+                    طلباتي
                   </Link>
                 ) : (
                   <Link
                     href="/login?next=/buyer"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-body-sm font-bold text-white transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+                    className="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-body-sm font-bold text-white transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                   >
                     تسجيل الدخول
                   </Link>
@@ -289,7 +266,7 @@ export default function BuyerAccountPage() {
 
                 <Link
                   href="/shop/products"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 text-body-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-body-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                   متابعة التسوق

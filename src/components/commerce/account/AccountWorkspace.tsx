@@ -95,32 +95,30 @@ export function AccountWorkspace({
 
   return (
     <CustomerShell>
-      <section className="border-b border-neutral-200 bg-background">
-        <div className="container-shell py-6 sm:py-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <section className="border-b border-neutral-200 bg-surface">
+        <div className="container-shell py-5 sm:py-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-caption font-medium text-muted-foreground">
                 <span
-                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-brand"
+                  className="h-1.5 w-1.5 rounded-full bg-brand"
                   aria-hidden="true"
-                >
-                  <UserRound className="h-3.5 w-3.5" />
-                </span>
-                الحساب
+                />
+                حساب العميل
               </div>
 
-              <h1 className="mt-2 text-h1 font-bold tracking-tight text-foreground">
+              <h1 className="mt-1.5 text-h1 font-bold tracking-tight text-foreground">
                 {title}
               </h1>
 
-              <p className="mt-2 max-w-2xl text-body leading-7 text-muted-foreground">
+              <p className="mt-1.5 max-w-xl text-body-sm leading-6 text-muted-foreground">
                 {description}
               </p>
             </div>
 
             <Link
               href="/shop/products"
-              className="inline-flex h-11 w-fit shrink-0 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-5 text-body-sm font-bold text-neutral-700 shadow-sm transition-[border-color,background-color,color] duration-200 ease-brand hover:border-primary-200 hover:bg-primary-50 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+              className="inline-flex h-10 w-fit shrink-0 items-center gap-2 rounded-xl border border-neutral-200 bg-background px-4 text-body-sm font-bold text-neutral-700 transition-[border-color,background-color,color] duration-200 ease-brand hover:border-primary-200 hover:bg-primary-50 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
               <Store className="h-4 w-4" aria-hidden="true" />
               متابعة التسوق
@@ -129,38 +127,8 @@ export function AccountWorkspace({
 
           <nav
             aria-label="أقسام الحساب"
-            className="mt-6 flex gap-1 overflow-x-auto scroll-surface border-t border-neutral-100 pt-2 pb-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="mt-5 flex gap-1 overflow-x-auto border-t border-neutral-100 pt-2 pb-0 scroll-surface [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:hidden"
           >
-            {ACCOUNT_NAV_GROUPS.flatMap((group) => group.items).map((item) => {
-              const active = item.id === activeTab;
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={
-                    "relative flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-caption font-medium transition-all duration-200 ease-brand " +
-                    (active
-                      ? "bg-primary-50 text-brand"
-                      : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800")
-                  }
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {item.label}
-                  {item.id === "wishlist" && wishlistCount > 0 ? (
-                    <span className="rounded-full bg-discount px-1.5 py-0.5 text-[9px] font-bold text-white">
-                      {wishlistCount > 99 ? "99+" : wishlistCount}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      </section>
-
       <div className="bg-background">
         <div className="container-shell py-7 sm:py-8">
           <div className="grid gap-7 lg:grid-cols-[250px_minmax(0,1fr)] lg:items-start">
