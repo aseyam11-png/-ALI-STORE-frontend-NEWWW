@@ -110,7 +110,7 @@ export function AuthShell({
                     {title}
                   </h1>
 
-                  <p className="mx-auto mt-3 max-w-xl text-body leading-7 text-text-muted">
+                  <p className="mx-auto mt-3 max-w-xl text-body leading-7 text-muted-foreground">
                     {description}
                   </p>
                 </div>
