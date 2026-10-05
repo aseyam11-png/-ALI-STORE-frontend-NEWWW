@@ -90,6 +90,8 @@ jobs:
     name: Dependency & Supply Chain Security
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -111,15 +113,13 @@ jobs:
         run: sfw npm ci
 
       - name: Snyk dependency scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        if: env.SNYK_TOKEN != ''
         run: |
           sfw npm install --no-save --no-package-lock snyk@latest
           npx snyk test --severity-threshold=high
 
       - name: Snyk not configured
-        if: ${{ secrets.SNYK_TOKEN == '' }}
+        if: env.SNYK_TOKEN == ''
         run: echo "Snyk scan skipped — add SNYK_TOKEN as a GitHub Actions secret to enable it."
 
       - name: OSV-Scanner
