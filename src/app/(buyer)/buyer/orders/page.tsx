@@ -37,6 +37,7 @@ function progressFor(order: BackendOrder) {
 
 function shipmentStatusLabel(status: ReturnType<typeof aggregateShipmentStatus>) {
   return {
+    PENDING: "بانتظار الدفع",
     PROCESSING: "قيد التجهيز",
     SHIPPED: "تم الشحن",
     IN_TRANSIT: "في الطريق",
