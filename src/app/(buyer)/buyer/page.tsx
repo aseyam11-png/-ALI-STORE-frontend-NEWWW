@@ -452,7 +452,7 @@ export default function BuyerAccountPage() {
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-50 text-neutral-500 transition-colors group-hover:bg-primary-50 group-hover:text-brand">
                         <Package
-                          className="h-4.5 w-4.5"
+                          className="h-4 w-4"
                           aria-hidden="true"
                         />
                       </span>
