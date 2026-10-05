@@ -3,10 +3,20 @@ name: ALI STORE Authorized Active Security Scan
 on:
   workflow_dispatch:
     inputs:
+      authorized:
+        description: I confirm this target is owned by ALI STORE or I have explicit authorization to test it.
+        required: true
+        default: false
+        type: boolean
       target_url:
-        description: Authorized local/staging URL
+        description: Authorized local/staging URL for ZAP, Nuclei, Wapiti, and Nikto
         required: true
         default: http://127.0.0.1:3000
+        type: string
+      target_host:
+        description: Authorized host/IP for Nmap
+        required: true
+        default: 127.0.0.1
         type: string
       run_sqlmap:
         description: Run sqlmap against the supplied authorized target
@@ -19,17 +29,20 @@ permissions:
 
 jobs:
   active-scan:
-    name: ZAP / Nmap / optional sqlmap
+    if: ${{ inputs.authorized }}
+    name: ZAP / Nuclei / Wapiti / Nikto / Nmap / optional sqlmap
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -38,42 +51,83 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Start frontend
+      - name: Start local frontend when target is local
+        shell: bash
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
         run: |
-          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-next.log 2>&1 &
-          echo $! > /tmp/ali-store-next.pid
-          npx --yes wait-on@9 http://127.0.0.1:3000
+          if [[ "$TARGET_URL" == "http://127.0.0.1:3000" || "$TARGET_URL" == "http://localhost:3000" ]]; then
+            nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-next.log 2>&1 &
+            echo $! > /tmp/ali-store-next.pid
+            npx --yes wait-on@9 http://127.0.0.1:3000
+          else
+            echo "Remote/staging target selected; no local server will be started."
+          fi
 
       - name: OWASP ZAP baseline
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
         run: |
-          docker run --rm --network host             -v "$PWD:/zap/wrk/:rw"             ghcr.io/zaproxy/zaproxy:stable             zap-baseline.py             -t "${{ inputs.target_url }}"             -r zap-report.html             -J zap-report.json
+          mkdir -p artifacts/security
+          docker run --rm --network host             -v "${PWD}:/zap/wrk/:rw"             ghcr.io/zaproxy/zaproxy:stable             zap-baseline.py             -t "$TARGET_URL"             -r /zap/wrk/artifacts/security/zap-report.html             -J /zap/wrk/artifacts/security/zap-report.json
 
-      - name: Nmap local exposure check
+      - name: Nuclei high/critical scan
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
         run: |
+          mkdir -p artifacts/security
+          docker run --rm             -v "${PWD}:/work:rw"             projectdiscovery/nuclei:latest             -u "$TARGET_URL"             -severity high,critical             -jsonl             -silent             -o /work/artifacts/security/nuclei.jsonl
+
+      - name: Set up Python for Wapiti
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Wapiti web application scan
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install wapiti3
+          mkdir -p artifacts/security/wapiti
+          wapiti -u "$TARGET_URL" -f json -o artifacts/security/wapiti/
+
+      - name: Nikto web server scan
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          mkdir -p artifacts/security
+          docker run --rm             -v "${PWD}:/tmp:rw"             ghcr.io/sullo/nikto:latest             -h "$TARGET_URL"             -nointeractive             -o /tmp/artifacts/security/nikto.json             -Format json
+
+      - name: Nmap authorized exposure scan
+        env:
+          TARGET_HOST: ${{ inputs.target_host }}
+        run: |
+          mkdir -p artifacts/security
           sudo apt-get update
           sudo apt-get install -y nmap
-          nmap -Pn -sV --top-ports 1000 127.0.0.1 -oN nmap-local.txt
+          nmap -Pn -sV --top-ports 1000 "$TARGET_HOST"             -oN artifacts/security/nmap.txt
 
-      - name: Optional sqlmap
+      - name: Optional sqlmap authorized injection assessment
         if: ${{ inputs.run_sqlmap }}
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
         run: |
+          mkdir -p artifacts/security/sqlmap
           sudo apt-get update
           sudo apt-get install -y sqlmap
-          sqlmap -u "${{ inputs.target_url }}" --batch --level=1 --risk=1 --output-dir=sqlmap-output
+          sqlmap -u "$TARGET_URL"             --batch             --level=1             --risk=1             --output-dir=artifacts/security/sqlmap
 
-      - name: Upload active scan artifacts
+      - name: Upload active security evidence
         uses: actions/upload-artifact@v6
         if: always()
         with:
           name: frontend-active-security
-          path: |
-            zap-report.html
-            zap-report.json
-            nmap-local.txt
-            sqlmap-output/
+          path: artifacts/security/
           if-no-files-found: ignore
+          retention-days: 30
 
-      - name: Stop frontend
+      - name: Stop local frontend
         if: always()
         run: |
           if [ -f /tmp/ali-store-next.pid ]; then
