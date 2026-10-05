@@ -33,10 +33,10 @@ export default function BuyerAccountPage() {
     <AccountWorkspace
       activeTab="overview"
       title="حسابي"
-      description="تسوّق واستعرض المفضلة والسلة — سجّل الدخول للوصول إلى طلباتك."
+      description="مركز واحد للمفضلة والسلة والطلبات وإعدادات حسابك."
     >
           {!isAuthenticated && (
-            <div className="mt-8 flex flex-col items-start gap-4 rounded-md border border-neutral-200 bg-surface p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto mt-7 flex max-w-4xl flex-col items-start gap-4 rounded-xl border border-neutral-200 bg-surface p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-neutral-100 text-neutral-500">
                   <LogIn className="h-5 w-5" />
@@ -60,7 +60,7 @@ export default function BuyerAccountPage() {
             </div>
           )}
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto mt-7 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               href="/buyer/wishlist"
               className="group rounded-md border border-neutral-200 bg-surface p-5 transition-colors duration-200 ease-brand hover:border-primary-200 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
@@ -109,7 +109,7 @@ export default function BuyerAccountPage() {
 
           <Link
             href={isAuthenticated ? "/buyer/orders" : "/login?next=/buyer/orders"}
-            className="mt-10 block rounded-md border border-neutral-200 bg-surface p-6 transition-colors duration-200 hover:border-primary-200 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+            className="mx-auto mt-7 block max-w-4xl rounded-xl border border-neutral-200 bg-surface p-5 transition-colors duration-200 hover:border-primary-200 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-sm bg-neutral-100 text-neutral-500">
@@ -128,7 +128,7 @@ export default function BuyerAccountPage() {
             </div>
           </Link>
 
-          <div className="mt-6 flex items-center gap-3 text-body-sm text-muted-foreground">
+          <div className="mx-auto mt-5 flex max-w-4xl items-center gap-3 border-t border-neutral-100 pt-4 text-body-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 shrink-0 text-success" />
             بياناتك وطلباتك محمية — لا نعرض إلا المعلومات الحقيقية لحسابك.
           </div>
