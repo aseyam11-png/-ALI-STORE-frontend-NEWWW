@@ -99,7 +99,9 @@ jobs:
     name: Optional SCA/compliance
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ secrets.SNYK_TOKEN != '' || secrets.FOSSA_API_KEY != '' }}
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
