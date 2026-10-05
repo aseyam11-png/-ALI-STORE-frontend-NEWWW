@@ -7,17 +7,23 @@ assert.match(page, /getOrders\(0, 8\)/, "buyer dashboard should use the real ord
 assert.match(page, /useSession\(\)/, "buyer dashboard should derive identity from the real session");
 assert.match(page, /useCartStore/, "buyer dashboard should derive cart state from the existing cart store");
 assert.match(page, /useWishlistStore/, "buyer dashboard should derive wishlist state from the existing wishlist store");
+assert.match(page, /ordersTotal/, "order KPI should use the server-reported total");
 
 assert.match(page, /أحدث طلباتك/, "dashboard should expose a recent-orders section");
 assert.match(page, /اختصارات الحساب/, "dashboard should expose account quick actions");
-assert.match(page, /الطلبات النشطة/, "dashboard should expose active-order KPI");
+assert.match(page, /إجمالي الطلبات/, "dashboard should expose the total-orders KPI");
 assert.match(page, /لا نعرض بيانات تجريبية/, "dashboard should keep false-data protection in its UX");
 
-assert.match(page, /\/buyer\/orders/, "dashboard should connect to the orders page");
-assert.match(page, /\/buyer\/profile/, "dashboard should connect to the profile page");
-assert.match(page, /\/buyer\/addresses/, "dashboard should connect to the addresses page");
-assert.match(page, /\/buyer\/wishlist/, "dashboard should connect to the wishlist page");
-assert.match(page, /\/shop\/products/, "dashboard should preserve the return-to-store journey");
+for (const href of [
+  "/buyer/orders",
+  "/buyer/profile",
+  "/buyer/addresses",
+  "/buyer/wishlist",
+  "/buyer/support",
+  "/shop/products",
+]) {
+  assert.ok(page.includes(href), "dashboard should preserve navigation to " + href);
+}
 
 assert.doesNotMatch(
   page,
