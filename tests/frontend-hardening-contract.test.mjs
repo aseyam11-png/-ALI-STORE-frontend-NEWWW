@@ -74,3 +74,11 @@ test("production SSR cannot silently fall back to localhost", async () => {
   assert.match(source, /Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL/);
   assert.match(source, /http://localhost:8080/);
 });
+
+
+test("frontend repository does not carry a second backend source tree", async () => {
+  await assert.rejects(
+    () => read("backend/pom.xml"),
+    /ENOENT|no such file/i,
+  );
+});
