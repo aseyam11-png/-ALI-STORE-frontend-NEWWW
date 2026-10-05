@@ -19,6 +19,10 @@ assert.match(page, /\\/buyer\\/addresses/, "dashboard should connect to the addr
 assert.match(page, /\\/buyer\\/wishlist/, "dashboard should connect to the wishlist page");
 assert.match(page, /\\/shop\\/products/, "dashboard should preserve the return-to-store journey");
 
-assert.doesNotMatch(page, /MOCK_PRODUCTS|fake.*order|supplierPrice|sellerId/, "dashboard must not introduce mock or B2B commerce data");
+assert.doesNotMatch(
+  page,
+  /MOCK_PRODUCTS|fake.*order|supplierPrice|sellerId/,
+  "dashboard must not introduce mock or B2B commerce data",
+);
 
 console.log("buyer-dashboard contract checks passed");
