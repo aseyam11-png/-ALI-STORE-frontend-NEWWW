@@ -35,7 +35,18 @@
     "**/*.tsx",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "unpacked_files", "frontend-final-backup", "uiux-backup-20260814-155817", "references"]
+  "exclude": [
+    "node_modules",
+    "unpacked_files",
+    "frontend-final-backup",
+    "uiux-backup-20260814-155817",
+    "references",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "tests/e2e",
+    "tests/unit",
+    "tests/integration",
+    "tests/mocks",
+    "tests/vitest.setup.ts"
+  ]
 }
-
-
