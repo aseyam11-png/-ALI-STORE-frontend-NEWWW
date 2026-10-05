@@ -7,6 +7,7 @@ import { ProductDiscovery } from "@/components/commerce/ProductDiscovery";
 import { FlashDeals } from "@/components/commerce/FlashDeals";
 import { TrustStrip } from "@/components/commerce/TrustStrip";
 import { HomeCategorySections } from "@/components/commerce/HomeCategorySections";
+import { AliAiPanel } from "@/components/commerce/AliAiPanel";
 
 export const metadata: Metadata = {
   title: "ALI STORE — تسوّق مباشر من المصدر",
@@ -30,9 +31,10 @@ export default function HomePage() {
       <HomeHero />
       <TrustStrip />
       <CategoryGrid />
+      <FlashDeals />
+      <AliAiPanel mode="discover" />
       <ProductDiscovery />
       <HomeCategorySections />
-      <FlashDeals />
     </AppShell>
   );
 }
