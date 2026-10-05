@@ -56,9 +56,6 @@ function formatOrderDate(value: string) {
   }).format(new Date(value));
 }
 
-function isActiveOrder(order: BackendOrder) {
-  return !["DELIVERED", "CANCELLED", "FULFILLMENT_FAILED"].includes(order.status);
-}
 
 function DashboardMetric({
   label,
@@ -156,6 +153,7 @@ export default function BuyerAccountPage() {
 
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const [orders, setOrders] = useState<BackendOrder[]>([]);
+  const [ordersTotal, setOrdersTotal] = useState(0);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState("");
 
@@ -173,6 +171,7 @@ export default function BuyerAccountPage() {
       .then((page) => {
         if (!active) return;
 
+        setOrdersTotal(page.totalElements);
         setOrders(
           [...page.content].sort(
             (a, b) =>
@@ -198,16 +197,6 @@ export default function BuyerAccountPage() {
       active = false;
     };
   }, [session.status]);
-
-  const activeOrders = useMemo(
-    () => orders.filter(isActiveOrder).length,
-    [orders],
-  );
-
-  const deliveredOrders = useMemo(
-    () => orders.filter((order) => order.status === "DELIVERED").length,
-    [orders],
-  );
 
   const recentOrders = useMemo(() => orders.slice(0, 4), [orders]);
 
@@ -325,20 +314,9 @@ export default function BuyerAccountPage() {
         ) : (
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <DashboardMetric
-              label="الطلبات النشطة"
-              value={activeOrders}
+              label="إجمالي الطلبات"
+              value={ordersTotal}
               icon={Truck}
-              href={
-                session.status === "authenticated"
-                  ? "/buyer/orders"
-                  : "/login?next=/buyer/orders"
-              }
-              tone="brand"
-            />
-            <DashboardMetric
-              label="طلبات مكتملة"
-              value={deliveredOrders}
-              icon={PackageCheck}
               href={
                 session.status === "authenticated"
                   ? "/buyer/orders"
