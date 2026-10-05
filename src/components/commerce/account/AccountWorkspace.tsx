@@ -129,6 +129,35 @@ export function AccountWorkspace({
             aria-label="أقسام الحساب"
             className="mt-5 flex gap-1 overflow-x-auto border-t border-neutral-100 pt-2 pb-0 scroll-surface [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:hidden"
           >
+            {ACCOUNT_NAV_GROUPS.flatMap((group) => group.items).map((item) => {
+              const active = item.id === activeTab;
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={
+                    "relative flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 text-caption font-medium transition-all duration-200 ease-brand " +
+                    (active
+                      ? "bg-primary-50 text-brand"
+                      : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800")
+                  }
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span>{item.label}</span>
+                  {item.id === "wishlist" && wishlistCount > 0 ? (
+                    <span className="rounded-full bg-discount px-1.5 py-0.5 text-[9px] font-bold text-white">
+                      {wishlistCount > 99 ? "99+" : wishlistCount}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
       <div className="bg-background">
         <div className="container-shell py-7 sm:py-8">
           <div className="grid gap-7 lg:grid-cols-[250px_minmax(0,1fr)] lg:items-start">
