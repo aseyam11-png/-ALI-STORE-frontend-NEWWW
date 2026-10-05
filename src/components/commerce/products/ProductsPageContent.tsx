@@ -8,7 +8,6 @@ import {
   Filter,
   Search,
   SlidersHorizontal,
-  Sparkles,
   X,
 } from "lucide-react";
 
@@ -292,10 +291,10 @@ export function ProductsPageContent() {
     <AppShell>
       <main className="min-h-screen bg-background">
         <section className="border-b border-border bg-surface">
-          <div className="container-shell py-7 sm:py-9">
+          <div className="container-shell mx-auto max-w-[1240px] py-5 sm:py-6">
             <nav
               aria-label="مسار الصفحة"
-              className="mb-5 text-caption text-muted-foreground"
+              className="mb-4 text-caption text-muted-foreground"
             >
               <span>الرئيسية</span>
               <span className="mx-2 text-neutral-300" aria-hidden="true">
@@ -304,76 +303,53 @@ export function ProductsPageContent() {
               <span className="font-medium text-foreground">المنتجات</span>
             </nav>
 
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-md bg-info-surface px-3 py-1.5 text-label font-medium text-brand">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                  كتالوج ALI STORE
-                </div>
-                <h1 className="mt-3 text-h1 text-foreground sm:text-display">
-                  المنتجات
-                </h1>
-                <p className="mt-2 max-w-2xl text-body leading-7 text-text-muted">
-                  استكشف المنتجات المنشورة مع أسعار وتوفر وشحن وفق البيانات
-                  المتاحة من الكتالوج.
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-h1 text-foreground sm:text-display">المنتجات</h1>
+                <p className="mt-1 text-body-sm text-muted-foreground">
+                  {totalItems.toLocaleString("en-US")} منتج متاح
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 shadow-raised sm:min-w-48">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-brand"
-                  aria-hidden="true"
-                >
-                  <SlidersHorizontal className="h-4.5 w-4.5" />
-                </div>
-                <div>
-                  <p className="text-caption font-medium text-muted-foreground">
-                    إجمالي النتائج
-                  </p>
-                  <p className="mt-0.5 text-h4 text-foreground" aria-live="polite">
-                    {totalItems.toLocaleString("en-US")} منتج
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-7">
-              <div className="flex min-h-14 items-center rounded-lg border border-border bg-background p-1.5 shadow-raised transition-[border-color,box-shadow] duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100">
-                <Search
-                  className="ms-3 h-5 w-5 shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <input
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      submitSearch();
-                    }
-                  }}
-                  type="search"
-                  placeholder="ابحث بالاسم أو SKU..."
-                  aria-label="البحث عن المنتجات"
-                  className="min-w-0 flex-1 bg-transparent px-3 text-body text-foreground outline-none placeholder:text-neutral-400"
-                />
-                {searchDraft ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchDraft("");
-                      updateParams({ q: undefined, page: "1" });
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+                <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-md border border-border bg-background px-1 transition-[border-color,box-shadow] duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100 sm:w-[min(420px,42vw)] sm:flex-none">
+                  <Search
+                    className="ms-3 h-4.5 w-4.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <input
+                    value={searchDraft}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        submitSearch();
+                      }
                     }}
-                    aria-label="مسح البحث"
-                    className="me-1 flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-100 hover:text-foreground focus-visible:ring-4 focus-visible:ring-primary-100"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : null}
+                    type="search"
+                    placeholder="ابحث عن منتج أو SKU"
+                    aria-label="البحث عن المنتجات"
+                    className="min-w-0 flex-1 bg-transparent px-3 text-body-sm text-foreground outline-none placeholder:text-neutral-400"
+                  />
+                  {searchDraft ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchDraft("");
+                        updateParams({ q: undefined, page: "1" });
+                      }}
+                      aria-label="مسح البحث"
+                      className="me-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-100 hover:text-foreground focus-visible:ring-4 focus-visible:ring-primary-100"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
+
                 <button
                   type="button"
                   onClick={submitSearch}
-                  className="hidden h-11 rounded-md bg-brand px-6 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100 sm:block"
+                  className="h-11 rounded-md bg-brand px-5 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
                   بحث
                 </button>
@@ -382,7 +358,7 @@ export function ProductsPageContent() {
 
             {activeFilterCount > 0 ? (
               <div
-                className="mt-4 flex flex-wrap items-center gap-2"
+                className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3"
                 aria-label="الفلاتر المطبقة"
               >
                 <span className="me-1 text-caption font-medium text-muted-foreground">
@@ -430,7 +406,7 @@ export function ProductsPageContent() {
           </div>
         </section>
 
-        <div className="container-shell py-6 sm:py-8 lg:py-10">
+        <div className="container-shell mx-auto max-w-[1240px] py-6 sm:py-8 lg:py-10">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:hidden">
             <button
               type="button"
@@ -476,7 +452,7 @@ export function ProductsPageContent() {
             </div>
           </div>
 
-          <div className="grid items-start gap-6 lg:grid-cols-[248px_minmax(0,1fr)] xl:gap-8">
+          <div className="grid items-start gap-5 lg:grid-cols-[224px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)] xl:gap-7">
             <aside
               id="catalog-filters"
               onMouseDown={(event) => {
@@ -488,7 +464,7 @@ export function ProductsPageContent() {
                 " lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-visible lg:bg-transparent lg:p-0"
               }
             >
-              <div className="min-h-full rounded-lg border border-border bg-surface p-4 shadow-modal lg:min-h-0 lg:shadow-raised">
+              <div className="min-h-full rounded-lg border border-border bg-surface p-4 shadow-modal lg:min-h-0 lg:shadow-sm">
                 <div className="mb-4 flex items-center justify-between border-b border-neutral-100 pb-4 lg:hidden">
                   <h2 className="text-h4 text-foreground">الفلاتر</h2>
                   <button
@@ -711,8 +687,8 @@ export function ProductsPageContent() {
                 </div>
               ) : (
                 <>
-                  <div className="mb-5 rounded-lg border border-border bg-surface shadow-raised">
-                    <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="mb-5 border-b border-border pb-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p
                           className="text-body-sm font-medium text-foreground"
@@ -776,7 +752,7 @@ export function ProductsPageContent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-5 xl:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 xl:gap-5">
                     {products.map((product) => (
                       <B2CProductCard key={product.id} product={product} />
                     ))}
