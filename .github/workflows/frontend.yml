@@ -21,8 +21,28 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - name: Runtime diagnostics
+        run: |
+          node --version
+          npm --version
+          npm config get registry
+          node -e "const p=require('./package.json'); const l=require('./package-lock.json'); console.log(JSON.stringify({package:p.name,version:p.version,lock:l.name,lockVersion:l.lockfileVersion,root:l.packages?.['']?.name},null,2))"
       - name: Install dependencies
-        run: npm ci
+        id: install
+        run: |
+          set +e
+          npm ci > npm-ci.log 2>&1
+          status=$?
+          cat npm-ci.log
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit $status
+      - name: Upload npm install diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-npm-ci-diagnostics
+          path: npm-ci.log
+          if-no-files-found: warn
 
   lint:
     runs-on: ubuntu-latest
