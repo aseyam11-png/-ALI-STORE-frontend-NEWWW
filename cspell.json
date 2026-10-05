@@ -1,0 +1,37 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "useGitignore": true,
+  "enableGlobDot": true,
+  "files": [
+    "**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "coverage/**",
+    "playwright-report/**",
+    "backstop_data/**",
+    "unpacked_files/**",
+    "frontend-final-backup/**",
+    "uiux-backup-20260814-155817/**",
+    "references/**",
+    "package-lock.json"
+  ],
+  "words": [
+    "ALI",
+    "Storefront",
+    "Nextjs",
+    "Next.js",
+    "Vitest",
+    "Playwright",
+    "Chromatic",
+    "Pa11y",
+    "MSW",
+    "Sentry",
+    "CodeQL",
+    "WebKit",
+    "Lucide"
+  ]
+}
