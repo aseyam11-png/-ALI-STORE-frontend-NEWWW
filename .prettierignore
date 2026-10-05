@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+coverage/
+storybook-static/
+unpacked_files/
+frontend-final-backup/
+uiux-backup-20260814-155817/
+references/
