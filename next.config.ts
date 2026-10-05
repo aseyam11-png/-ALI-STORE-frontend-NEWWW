@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
-const backendInternalUrl = process.env.BACKEND_INTERNAL_URL?.replace(/\/$/, "");
+const backendInternalUrl =
+  process.env.BACKEND_INTERNAL_URL?.replace(/\/$/, "") ??
+  (process.env.NODE_ENV === "development" ? "http://localhost:8080" : undefined);
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
