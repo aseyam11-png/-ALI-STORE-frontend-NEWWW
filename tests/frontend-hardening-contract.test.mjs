@@ -78,7 +78,7 @@ test("authentication loss restores guest state instead of leaking authenticated 
   assert.match(provider, /session.status === "unauthenticated"/);
   assert.match(provider, /replaceCart(readGuestCart())/);
   assert.match(provider, /replaceWishlist(readGuestWishlist())/);
-  assert.match(provider, /replaceNotifications([])/);
+  assert.match(provider, /replaceNotifications\(\[\]\)/);
   assert.match(provider, /Never carry authenticated client state into a guest session/);
 });
 
