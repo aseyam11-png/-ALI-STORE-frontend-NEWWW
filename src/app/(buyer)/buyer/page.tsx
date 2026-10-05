@@ -204,7 +204,7 @@ export default function BuyerAccountPage() {
     <AccountWorkspace
       activeTab="overview"
       title="حسابي"
-      description="تابع طلباتك وأدر بياناتك من مكان واحد."
+      description="مركز واحد لإدارة طلباتك والمفضلة والعناوين وتفاصيل حسابك."
     >
       <div className="space-y-7">
         <section className="overflow-hidden rounded-2xl bg-brand-ink text-white shadow-raised">
