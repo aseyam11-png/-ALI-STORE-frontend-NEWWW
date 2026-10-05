@@ -41,6 +41,9 @@ jobs:
             msw@latest \
             axe-core@latest
 
+      - name: Typecheck tooling and test suite
+        run: npx tsc -p tsconfig.quality.json
+
       - name: Run Vitest
         run: npx vitest run
 
@@ -68,12 +71,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Start production server
-        run: |
-          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-playwright.log 2>&1 &
-          echo $! > /tmp/ali-store-playwright.pid
-          npx --yes wait-on@latest http://127.0.0.1:3000
-
       - name: Run Playwright
         run: npx playwright test
 
@@ -85,13 +82,6 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 30
-
-      - name: Stop server
-        if: always()
-        run: |
-          if [ -f /tmp/ali-store-playwright.pid ]; then
-            kill $(cat /tmp/ali-store-playwright.pid) || true
-          fi
 
   pa11y:
     name: Pa11y accessibility
