@@ -97,16 +97,16 @@ export function AccountWorkspace({
     <CustomerShell>
       <section className="border-b border-neutral-200 bg-surface">
         <div className="container-shell mx-auto max-w-[1240px] pt-6 sm:pt-8">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-label font-medium text-brand">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-label font-semibold text-brand">
                 <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
-                مساحة حسابك
-              </span>
-              <h1 className="mt-3 text-h1 font-bold tracking-tight text-foreground">
+                <span>مساحة حسابك</span>
+              </div>
+              <h1 className="mt-2 text-h1 font-bold leading-tight tracking-tight text-foreground">
                 {title}
               </h1>
-              <p className="mt-2 max-w-2xl text-body text-muted-foreground">
+              <p className="mt-2 max-w-none text-body leading-6 text-muted-foreground sm:whitespace-nowrap">
                 {description}
               </p>
             </div>
