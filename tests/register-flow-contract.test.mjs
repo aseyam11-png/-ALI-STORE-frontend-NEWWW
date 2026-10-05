@@ -5,6 +5,7 @@ const form = await readFile("src/components/auth/RegisterForm.tsx", "utf8");
 const client = await readFile("src/lib/api/http-client.ts", "utf8");
 const session = await readFile("src/features/auth/session.ts", "utf8");
 const dev = await readFile("backend/src/main/resources/application-dev.yml", "utf8");
+const nextConfig = await readFile("next.config.ts", "utf8");
 
 assert.match(form, /\/api\/v1\/auth\/register|register\(\{/, "registration form must use the auth registration flow");
 assert.match(form, /TextEncoder/, "registration should validate password UTF-8 byte length");
@@ -19,5 +20,16 @@ assert.match(client, /Object\.values\(fieldErrors\)/, "HTTP client should surfac
 assert.match(session, /["']\/api\/v1\/auth\/register["']/, "auth session should call the canonical register endpoint");
 assert.match(dev, /email-verification-enabled:\s*\$\{AUTH_EMAIL_VERIFICATION_ENABLED:false\}/, "dev verification should be opt-in");
 assert.match(dev, /login-email-otp-enabled:\s*\$\{AUTH_LOGIN_EMAIL_OTP_ENABLED:false\}/, "dev login OTP should be opt-in");
+
+assert.match(
+  nextConfig,
+  /process\.env\.NODE_ENV === "development" \? "http:\/\/localhost:8080" : undefined/,
+  "local development should default API rewrites to localhost:8080 when BACKEND_INTERNAL_URL is absent",
+);
+assert.doesNotMatch(
+  nextConfig,
+  /process\.env\.NODE_ENV === "production" \? "http:\/\/localhost:8080"/,
+  "production must never fall back to localhost",
+);
 
 console.log("register flow contract checks passed");
