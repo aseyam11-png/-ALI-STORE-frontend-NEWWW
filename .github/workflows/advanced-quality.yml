@@ -1,0 +1,194 @@
+name: ALI STORE Advanced Frontend Quality
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: advanced-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-integration:
+    name: Vitest + RTL + MSW
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Install test tooling without changing lockfiles
+        run: |
+          npm install --no-save --no-package-lock             vitest@latest             jsdom@latest             @testing-library/react@latest             @testing-library/jest-dom@latest             @testing-library/user-event@latest             msw@latest
+
+      - name: Run Vitest
+        run: npx vitest run
+
+  playwright:
+    name: Playwright cross-browser E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@latest
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Build
+        run: npm run build
+
+      - name: Start production server
+        run: |
+          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-playwright.log 2>&1 &
+          echo $! > /tmp/ali-store-playwright.pid
+          npx --yes wait-on@latest http://127.0.0.1:3000
+
+      - name: Run Playwright
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/ali-store-playwright.pid ]; then
+            kill $(cat /tmp/ali-store-playwright.pid) || true
+          fi
+
+  pa11y:
+    name: Pa11y accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Start production server
+        run: |
+          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-pa11y.log 2>&1 &
+          echo $! > /tmp/ali-store-pa11y.pid
+          npx --yes wait-on@latest http://127.0.0.1:3000
+
+      - name: Install Pa11y CI
+        run: npm install --no-save --no-package-lock pa11y-ci@latest
+
+      - name: Run accessibility crawl
+        run: npx pa11y-ci http://127.0.0.1:3000/
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/ali-store-pa11y.pid ]; then
+            kill $(cat /tmp/ali-store-pa11y.pid) || true
+          fi
+
+  content-quality:
+    name: Secretlint + cspell
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install content tooling
+        run: |
+          npm install --no-save --no-package-lock             secretlint@latest             @secretlint/secretlint-rule-preset-recommend@latest             cspell@latest
+
+      - name: Secretlint
+        run: npx secretlint "**/*" --secretlintrc .secretlintrc.json
+
+      - name: cspell
+        run: npx cspell --config cspell.json
+
+  lighthouse-ci:
+    name: Lighthouse CI regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Install Lighthouse CI
+        run: npm install --no-save --no-package-lock @lhci/cli@latest
+
+      - name: Run Lighthouse CI
+        run: npx lhci autorun --config=.lighthouserc.cjs
+
+  chromatic:
+    name: Chromatic visual regression (when configured)
+    if: ${{ secrets.CHROMATIC_PROJECT_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check Storybook
+        run: |
+          test -d .storybook
+          test -f .storybook/main.ts || test -f .storybook/main.js || test -f .storybook/main.mjs
+
+      - name: Install Chromatic
+        run: npm install --no-save --no-package-lock chromatic@latest
+
+      - name: Publish visual test
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        run: npx chromatic --project-token "${CHROMATIC_PROJECT_TOKEN}" --exit-zero-on-changes
