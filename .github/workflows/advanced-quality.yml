@@ -177,15 +177,12 @@ jobs:
 
   chromatic:
     name: Chromatic visual regression (when configured)
+    if: ${{ secrets.CHROMATIC_PROJECT_TOKEN != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     steps:
-      - name: Skip when Chromatic is not configured
-        if: ${{ env.CHROMATIC_PROJECT_TOKEN == '' }}
-        run: echo "Chromatic skipped: configure Storybook and CHROMATIC_PROJECT_TOKEN first."
-
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
