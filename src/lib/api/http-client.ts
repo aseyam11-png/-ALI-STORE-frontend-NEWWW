@@ -22,10 +22,23 @@ export class HttpApiError extends Error implements ApiError {
   }
 }
 
+const configuredServerApiBase =
+  process.env.BACKEND_INTERNAL_URL?.trim() ||
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+  null;
+
+if (
+  typeof window === "undefined" &&
+  process.env.NODE_ENV === "production" &&
+  !configuredServerApiBase
+) {
+  throw new Error(
+    "Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL for production server rendering.",
+  );
+}
+
 const SERVER_API_BASE_URL =
-  process.env.BACKEND_INTERNAL_URL ??
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "http://localhost:8080";
+  configuredServerApiBase ?? "http://localhost:8080";
 
 const BROWSER_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
