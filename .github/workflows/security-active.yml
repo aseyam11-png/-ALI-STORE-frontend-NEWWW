@@ -1,0 +1,81 @@
+name: ALI STORE Authorized Active Security Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: Authorized local/staging URL
+        required: true
+        default: http://127.0.0.1:3000
+        type: string
+      run_sqlmap:
+        description: Run sqlmap against the supplied authorized target
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  active-scan:
+    name: ZAP / Nmap / optional sqlmap
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Start frontend
+        run: |
+          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-next.log 2>&1 &
+          echo $! > /tmp/ali-store-next.pid
+          npx --yes wait-on@9 http://127.0.0.1:3000
+
+      - name: OWASP ZAP baseline
+        run: |
+          docker run --rm --network host             -v "$PWD:/zap/wrk/:rw"             ghcr.io/zaproxy/zaproxy:stable             zap-baseline.py             -t "${{ inputs.target_url }}"             -r zap-report.html             -J zap-report.json
+
+      - name: Nmap local exposure check
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nmap
+          nmap -Pn -sV --top-ports 1000 127.0.0.1 -oN nmap-local.txt
+
+      - name: Optional sqlmap
+        if: ${{ inputs.run_sqlmap }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlmap
+          sqlmap -u "${{ inputs.target_url }}" --batch --level=1 --risk=1 --output-dir=sqlmap-output
+
+      - name: Upload active scan artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: frontend-active-security
+          path: |
+            zap-report.html
+            zap-report.json
+            nmap-local.txt
+            sqlmap-output/
+          if-no-files-found: ignore
+
+      - name: Stop frontend
+        if: always()
+        run: |
+          if [ -f /tmp/ali-store-next.pid ]; then
+            kill $(cat /tmp/ali-store-next.pid) || true
+          fi
