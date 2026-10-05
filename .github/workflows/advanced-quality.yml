@@ -177,28 +177,40 @@ jobs:
 
   chromatic:
     name: Chromatic visual regression (when configured)
-    if: ${{ secrets.CHROMATIC_PROJECT_TOKEN != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Skip when not configured
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN == '' }}
+        run: echo "Chromatic skipped: configure Storybook and CHROMATIC_PROJECT_TOKEN."
 
-      - uses: actions/setup-node@v6
+      - name: Checkout
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: npm
 
-      - run: npm ci
+      - name: Install application dependencies
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
+        run: npm ci
 
       - name: Check Storybook
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
         run: |
           test -d .storybook
           test -f .storybook/main.ts || test -f .storybook/main.js || test -f .storybook/main.mjs
 
       - name: Install Chromatic
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
         run: npm install --no-save --no-package-lock chromatic@latest
 
       - name: Publish visual test
+        if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
         run: npx chromatic --project-token "${CHROMATIC_PROJECT_TOKEN}" --exit-zero-on-changes
