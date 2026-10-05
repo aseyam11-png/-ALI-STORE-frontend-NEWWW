@@ -54,6 +54,9 @@ jobs:
             --exclude .next
             .
 
+      - name: Prepare security artifacts
+        run: mkdir -p artifacts/security
+
       - name: Bearer security scan
         uses: bearer/bearer-action@v2
         with:
