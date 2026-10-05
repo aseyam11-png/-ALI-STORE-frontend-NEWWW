@@ -1,0 +1,15 @@
+name: "ALI STORE CodeQL Configuration"
+
+queries:
+  - security-and-quality
+
+paths:
+  - src
+paths-ignore:
+  - .next
+  - node_modules
+  - tests
+  - unpacked_files
+  - frontend-final-backup
+  - uiux-backup-20260814-155817
+  - references
