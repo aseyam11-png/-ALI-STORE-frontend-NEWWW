@@ -31,10 +31,10 @@ export default function HomePage() {
       <HomeHero />
       <TrustStrip />
       <CategoryGrid />
-      <ProductDiscovery />
-      <AliAiPanel mode="discover" />
-      <HomeCategorySections />
       <FlashDeals />
+      <AliAiPanel mode="discover" />
+      <ProductDiscovery />
+      <HomeCategorySections />
     </AppShell>
   );
 }
