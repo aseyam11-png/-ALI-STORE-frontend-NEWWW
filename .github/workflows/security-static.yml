@@ -1,0 +1,210 @@
+name: ALI STORE Security Static & Supply Chain
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "20 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-static-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code-and-secrets:
+    name: Code + Secrets Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Socket Firewall
+        uses: SocketDev/action@2d3f25590c6ed6ba11a9a14c064d962a3a04698f # v1.3.1
+        with:
+          mode: firewall-free
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install application dependencies through Socket Firewall
+        run: sfw npm ci
+
+      - name: Semgrep JavaScript/TypeScript scan
+        uses: docker://semgrep/semgrep:latest
+        with:
+          args: >
+            semgrep scan
+            --config p/javascript
+            --config p/nodejs
+            --error
+            --exclude node_modules
+            --exclude .next
+            .
+
+      - name: Bearer security scan
+        uses: bearer/bearer-action@v2
+        with:
+          path: .
+          scanner: sast,secrets
+          severity: critical,high,medium
+          format: sarif
+          output: artifacts/security/bearer.sarif
+          exit-code: "1"
+
+      - name: TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified,unknown --fail
+
+      - name: Secretlint
+        run: |
+          sfw npm install --no-save --no-package-lock             secretlint@latest             @secretlint/secretlint-rule-preset-recommend@latest
+          npx secretlint "**/*" --secretlintrc .secretlintrc.json
+
+      - name: Upload code/security reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: static-code-security
+          path: artifacts/security/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  dependency-security:
+    name: Dependency & Supply Chain Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Socket Firewall
+        uses: SocketDev/action@2d3f25590c6ed6ba11a9a14c064d962a3a04698f # v1.3.1
+        with:
+          mode: firewall-free
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies through Socket Firewall
+        run: sfw npm ci
+
+      - name: Snyk dependency scan
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          sfw npm install --no-save --no-package-lock snyk@latest
+          npx snyk test --severity-threshold=high
+
+      - name: Snyk not configured
+        if: ${{ secrets.SNYK_TOKEN == '' }}
+        run: echo "Snyk scan skipped — add SNYK_TOKEN as a GitHub Actions secret to enable it."
+
+      - name: OSV-Scanner
+        run: |
+          mkdir -p artifacts/security
+          docker run --rm             -v "${PWD}:/src:ro"             ghcr.io/google/osv-scanner:latest             scan source -r /src
+
+      - name: Retire.js
+        run: |
+          mkdir -p artifacts/security
+          sfw npm install --no-save --no-package-lock retire@latest
+          set +e
+          npx retire --outputformat json > artifacts/security/retire.json
+          status=$?
+          cat artifacts/security/retire.json
+          if [ "$status" -eq 13 ]; then
+            echo "Retire.js found vulnerable JavaScript libraries."
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Trivy dependency/filesystem scan
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+
+  sbom-and-vulnerability:
+    name: SBOM + Vulnerability Correlation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Generate CycloneDX SBOM with Syft
+        run: |
+          mkdir -p artifacts/security
+          docker run --rm             -v "${PWD}:/work"             anchore/syft:latest             dir:/work             -o cyclonedx-json=/work/artifacts/security/sbom.cdx.json
+
+      - name: Scan generated SBOM with Grype
+        run: |
+          docker run --rm             -v "${PWD}:/work"             anchore/grype:latest             sbom:/work/artifacts/security/sbom.cdx.json             --fail-on high
+
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ali-store-frontend-sbom
+          path: artifacts/security/sbom.cdx.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+  infrastructure-security:
+    name: GitHub Actions / IaC Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Checkov GitHub Actions policy scan
+        run: |
+          mkdir -p artifacts/security
+          docker run --rm             -v "${PWD}:/src"             bridgecrew/checkov:latest             -d /src             --framework github_actions             --check HIGH,CRITICAL             --output sarif             --output-file-path /src/artifacts/security/checkov.sarif             --quiet
+
+      - name: Check Terraform/IaC when present
+        shell: bash
+        run: |
+          if find . -type f \( -name "*.tf" -o -name "*.tf.json" \) -not -path "./node_modules/*" | grep -q .; then
+            docker run --rm               -v "${PWD}:/src"               bridgecrew/checkov:latest               -d /src               --framework terraform               --check HIGH,CRITICAL               --output sarif               --output-file-path /src/artifacts/security/checkov-terraform.sarif               --quiet
+          else
+            echo "No Terraform files detected; Terraform Checkov scan not applicable."
+          fi
+
+      - name: Upload Checkov reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: infrastructure-security
+          path: artifacts/security/
+          if-no-files-found: ignore
+          retention-days: 30
