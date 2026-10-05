@@ -1,0 +1,26 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticPrefixFixDepsChoreOthers"
+  ],
+  "rangeStrategy": "pin",
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies", "devDependencies"],
+      "groupName": "npm dependencies",
+      "schedule": ["before 5am on monday"]
+    },
+    {
+      "matchPackageNames": ["next", "react", "react-dom", "typescript"],
+      "groupName": "core frontend stack",
+      "separateMajorMinor": true
+    },
+    {
+      "matchPackageNames": ["@playwright/test", "vitest", "@testing-library/react", "msw"],
+      "groupName": "frontend testing stack"
+    }
+  ]
+}
