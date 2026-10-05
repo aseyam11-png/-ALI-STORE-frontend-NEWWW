@@ -33,7 +33,7 @@ export default function BuyerAccountPage() {
     <AccountWorkspace
       activeTab="overview"
       title="حسابي"
-      description="مركز واحد للمفضلة والسلة والطلبات وإعدادات حسابك."
+      description="مركز واحد لإدارة طلباتك والمفضلة والعناوين وتفاصيل حسابك."
     >
           {!isAuthenticated && (
             <div className="mx-auto mt-7 flex max-w-4xl flex-col items-start gap-4 rounded-xl border border-neutral-200 bg-surface p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
