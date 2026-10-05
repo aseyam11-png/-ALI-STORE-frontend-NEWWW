@@ -32,7 +32,14 @@ jobs:
 
       - name: Install test tooling without changing lockfiles
         run: |
-          npm install --no-save --no-package-lock             vitest@latest             jsdom@latest             @testing-library/react@latest             @testing-library/jest-dom@latest             @testing-library/user-event@latest             msw@latest             axe-core@latest
+          npm install --no-save --no-package-lock \
+            vitest@latest \
+            jsdom@latest \
+            @testing-library/react@latest \
+            @testing-library/jest-dom@latest \
+            @testing-library/user-event@latest \
+            msw@latest \
+            axe-core@latest
 
       - name: Run Vitest
         run: npx vitest run
@@ -136,7 +143,10 @@ jobs:
 
       - name: Install content tooling
         run: |
-          npm install --no-save --no-package-lock             secretlint@latest             @secretlint/secretlint-rule-preset-recommend@latest             cspell@latest
+          npm install --no-save --no-package-lock \
+            secretlint@latest \
+            @secretlint/secretlint-rule-preset-recommend@latest \
+            cspell@latest
 
       - name: Secretlint
         run: npx secretlint "**/*" --secretlintrc .secretlintrc.json
