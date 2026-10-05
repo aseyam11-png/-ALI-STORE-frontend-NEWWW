@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import {
   Filter,
-  Search,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -22,6 +21,7 @@ import type {
 } from "@/features/products/types/product-filter.types";
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
+import { SmartAutocomplete } from "@/components/search/SmartAutocomplete";
 
 function parseNumber(value: string | null) {
   if (!value) return undefined;
@@ -223,10 +223,6 @@ export function ProductsPageContent() {
     );
   };
 
-  const submitSearch = () => {
-    updateParams({ q: searchDraft.trim() || undefined, page: "1" });
-  };
-
   const applyPriceFilters = () => {
     const min = parseNumber(minPriceDraft);
     const max = parseNumber(maxPriceDraft);
@@ -311,48 +307,19 @@ export function ProductsPageContent() {
                 </p>
               </div>
 
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
-                <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-md border border-border bg-background px-1 transition-[border-color,box-shadow] duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100 sm:w-[min(420px,42vw)] sm:flex-none">
-                  <Search
-                    className="ms-3 h-4.5 w-4.5 shrink-0 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <input
-                    value={searchDraft}
-                    onChange={(event) => setSearchDraft(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        submitSearch();
-                      }
-                    }}
-                    type="search"
-                    placeholder="ابحث عن منتج أو SKU"
-                    aria-label="البحث عن المنتجات"
-                    className="min-w-0 flex-1 bg-transparent px-3 text-body-sm text-foreground outline-none placeholder:text-neutral-400"
-                  />
-                  {searchDraft ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchDraft("");
-                        updateParams({ q: undefined, page: "1" });
-                      }}
-                      aria-label="مسح البحث"
-                      className="me-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-100 hover:text-foreground focus-visible:ring-4 focus-visible:ring-primary-100"
-                    >
-                      <X className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  ) : null}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={submitSearch}
-                  className="h-11 rounded-md bg-brand px-5 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
-                >
-                  بحث
-                </button>
+              <div className="flex w-full items-center sm:w-[min(520px,46vw)]">
+                <SmartAutocomplete
+                  value={searchDraft}
+                  onChange={setSearchDraft}
+                  onSubmit={(nextQuery) =>
+                    updateParams({
+                      q: nextQuery?.trim() || undefined,
+                      page: "1",
+                    })
+                  }
+                  placeholder="ابحث عن منتج، SKU، علامة أو قسم…"
+                  className="h-11 w-full"
+                />
               </div>
             </div>
 
