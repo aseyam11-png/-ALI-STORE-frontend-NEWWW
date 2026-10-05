@@ -1,6 +1,7 @@
 import { getProducts } from "@/features/products/services/product.service";
 import { getCategories, flattenCategoryTree } from "@/features/catalog/services/category-api.service";
 import type { ProductSummary } from "@/features/products/types/product.types";
+import { getSearchSuggestionsFromApi } from "./search-suggestions-api.service";
 
 import type {
   AutocompleteSuggestion,
@@ -143,6 +144,9 @@ export async function getAutocompleteSuggestions(
   const normalizedQuery = normalize(query);
 
   if (normalizedQuery.length < 2) return [];
+
+  const backendSuggestions = await getSearchSuggestionsFromApi(normalizedQuery, limit).catch(() => null);
+  if (backendSuggestions) return backendSuggestions;
 
   const [response, categories] = await Promise.all([
     getProducts({
