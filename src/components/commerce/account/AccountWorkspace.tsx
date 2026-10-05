@@ -95,25 +95,32 @@ export function AccountWorkspace({
 
   return (
     <CustomerShell>
-      <section className="border-b border-neutral-200 bg-surface">
-        <div className="container-shell pt-7 sm:pt-9">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+      <section className="border-b border-neutral-200 bg-background">
+        <div className="container-shell py-6 sm:py-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-label font-medium text-brand">
-                <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
-                مساحة حسابك
-              </span>
-              <h1 className="mt-3 text-h1 font-bold tracking-tight text-foreground">
+              <div className="flex items-center gap-2 text-caption font-medium text-muted-foreground">
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-brand"
+                  aria-hidden="true"
+                >
+                  <UserRound className="h-3.5 w-3.5" />
+                </span>
+                الحساب
+              </div>
+
+              <h1 className="mt-2 text-h1 font-bold tracking-tight text-foreground">
                 {title}
               </h1>
-              <p className="mt-2 max-w-2xl text-body text-muted-foreground">
+
+              <p className="mt-2 max-w-2xl text-body leading-7 text-muted-foreground">
                 {description}
               </p>
             </div>
 
             <Link
               href="/shop/products"
-              className="hidden h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-body-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:bg-primary-50 hover:text-brand sm:inline-flex"
+              className="inline-flex h-11 w-fit shrink-0 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-5 text-body-sm font-bold text-neutral-700 shadow-sm transition-[border-color,background-color,color] duration-200 ease-brand hover:border-primary-200 hover:bg-primary-50 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
               <Store className="h-4 w-4" aria-hidden="true" />
               متابعة التسوق
@@ -122,7 +129,7 @@ export function AccountWorkspace({
 
           <nav
             aria-label="أقسام الحساب"
-            className="mt-7 flex gap-1 overflow-x-auto scroll-surface border-t border-neutral-100 pt-2 pb-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="mt-6 flex gap-1 overflow-x-auto scroll-surface border-t border-neutral-100 pt-2 pb-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             {ACCOUNT_NAV_GROUPS.flatMap((group) => group.items).map((item) => {
               const active = item.id === activeTab;
