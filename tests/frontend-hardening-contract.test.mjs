@@ -23,9 +23,24 @@ test("shipping address client matches the complete backend CRUD contract", async
 test("order status client sends only backend-supported order states", async () => {
   const service = await read("src/features/orders/services/order.service.ts");
   const adminPage = await read("src/app/(admin)/admin/orders/page.tsx");
+  const buyerOrdersPage = await read("src/app/(buyer)/buyer/orders/page.tsx");
+  const buyerDashboardPage = await read("src/app/(buyer)/buyer/page.tsx");
+  const buyerOrderDetailPage = await read("src/app/(buyer)/buyer/orders/[id]/page.tsx");
 
-  assert.doesNotMatch(service, /FULFILLMENT_FAILED/);
-  assert.doesNotMatch(adminPage, /FULFILLMENT_FAILED/);
+  for (const [label, source] of [
+    ["order service", service],
+    ["admin orders page", adminPage],
+    ["buyer orders page", buyerOrdersPage],
+    ["buyer dashboard", buyerDashboardPage],
+    ["buyer order detail", buyerOrderDetailPage],
+  ]) {
+    assert.doesNotMatch(
+      source,
+      /FULFILLMENT_FAILED/,
+      `${label} must not reference an unsupported backend order status`,
+    );
+  }
+
   assert.match(service, /"PENDING"/);
   assert.match(service, /"PROCESSING"/);
   assert.match(service, /"SHIPPED"/);
