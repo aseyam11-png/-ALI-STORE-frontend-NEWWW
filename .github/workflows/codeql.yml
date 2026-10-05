@@ -16,6 +16,8 @@ permissions:
 
 jobs:
   analyze:
+    # Enable after confirming GitHub Code Security/Advanced Security is available for this private repository.
+    if: ${{ vars.CODEQL_ENABLED == 'true' }}
     name: Analyze JavaScript/TypeScript
     runs-on: ubuntu-latest
     timeout-minutes: 30
