@@ -3,12 +3,14 @@ export type ApiError = {
   message: string;
   code?: string;
   correlationId?: string;
+  fieldErrors?: Record<string, string>;
 };
 
 export class HttpApiError extends Error implements ApiError {
   status: number;
   code?: string;
   correlationId?: string;
+  fieldErrors?: Record<string, string>;
 
   constructor(init: ApiError) {
     super(init.message);
@@ -16,6 +18,7 @@ export class HttpApiError extends Error implements ApiError {
     this.status = init.status;
     this.code = init.code;
     this.correlationId = init.correlationId;
+    this.fieldErrors = init.fieldErrors;
   }
 }
 
@@ -147,12 +150,24 @@ export class HttpClient {
       const body = await response.json().catch(() => null) as {
         message?: string;
         code?: string;
+        errors?: Record<string, string>;
       } | null;
+
+      const fieldErrors = body?.errors;
+      const fieldMessages = fieldErrors
+        ? Object.values(fieldErrors).filter(
+            (message): message is string => Boolean(message),
+          )
+        : [];
 
       throw new HttpApiError({
         status: response.status,
-        message: body?.message ?? response.statusText,
+        message:
+          fieldMessages.length > 0
+            ? fieldMessages.join(" ")
+            : body?.message ?? response.statusText,
         code: body?.code,
+        fieldErrors,
         correlationId: response.headers.get("X-Correlation-Id") ?? undefined,
       });
     }
