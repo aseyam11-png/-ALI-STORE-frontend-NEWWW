@@ -46,6 +46,11 @@ test("order status client sends only backend-supported order states", async () =
   assert.match(service, /"SHIPPED"/);
   assert.match(service, /"DELIVERED"/);
   assert.match(service, /"CANCELLED"/);
+  assert.match(
+    buyerOrdersPage,
+    /PENDING:\s*"بانتظار الدفع"/,
+    "customer orders must localize a pending shipment/order status",
+  );
 });
 
 test("guest cart uses persistent browser storage and additive authentication migration", async () => {
