@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Search,
   ShoppingCart,
+  Sparkles,
   User,
 } from "lucide-react";
 
@@ -151,6 +152,16 @@ export function Header() {
 
             <span className="hidden sm:inline-flex">
               <ActionButton
+                href="/shop/ask-ali"
+                label="اسأل علي"
+                active={pathname.startsWith("/shop/ask-ali")}
+              >
+                <Sparkles className="h-4 w-4" />
+              </ActionButton>
+            </span>
+
+            <span className="hidden sm:inline-flex">
+              <ActionButton
                 href="/buyer/support"
                 label="الدعم والرسائل"
                 active={pathname.startsWith("/buyer/support")}
@@ -244,12 +255,20 @@ export function Header() {
                   <span className="text-label font-medium text-neutral-400">
                     بحث سريع
                   </span>
-                  <Link
-                    href="/shop/visual-search"
-                    className="text-label font-medium text-brand hover:underline"
-                  >
-                    البحث بصورة
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/shop/visual-search"
+                      className="text-label font-medium text-brand hover:underline"
+                    >
+                      البحث بصورة
+                    </Link>
+                    <Link
+                      href="/shop/ask-ali"
+                      className="text-label font-medium text-brand hover:underline"
+                    >
+                      اسأل علي
+                    </Link>
+                  </div>
                 </div>
                 <HeaderSearch mobile />
               </div>
