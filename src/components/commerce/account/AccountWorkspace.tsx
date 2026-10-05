@@ -157,6 +157,7 @@ export function AccountWorkspace({
             })}
           </nav>
         </div>
+      </section>
 
       <div className="bg-background">
         <div className="container-shell py-7 sm:py-8">
