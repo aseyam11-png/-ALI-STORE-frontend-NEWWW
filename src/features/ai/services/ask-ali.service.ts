@@ -4,12 +4,9 @@ export type AiCatalogProduct = {
   id: number;
   name: string;
   slug: string;
-  description?: string | null;
   price: number | string;
   currency: string;
-  sku: string;
-  status: string;
-  availability: string;
+  availability?: string | null;
   availableQuantity?: number | null;
   categoryId?: number | null;
   categoryName?: string | null;
@@ -18,8 +15,6 @@ export type AiCatalogProduct = {
   brandName?: string | null;
   images?: string[] | null;
   primaryImageUrl?: string | null;
-  createdAt?: string | null;
-  updatedAt?: string | null;
 };
 
 export type AskAliResponse = {
