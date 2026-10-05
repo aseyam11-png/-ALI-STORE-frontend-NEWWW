@@ -7,7 +7,10 @@
         "build": "next build --webpack",
         "start": "next start",
         "lint": "eslint .",
-        "test:contracts": "node --test"
+        "test:contracts": "node --test",
+        "test": "npm run test:contracts",
+        "verify": "npm run lint && npm run test:contracts && npm run build",
+        "verify:ci": "npm run verify"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.1",
