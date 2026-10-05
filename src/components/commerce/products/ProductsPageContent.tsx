@@ -4,14 +4,22 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
-import { Filter, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import {
+  Filter,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { B2CProductCard } from "@/components/commerce/B2CProductCard";
 import { ProductPagination } from "@/components/commerce/products/ProductPagination";
 import { normalizeB2CProduct } from "@/features/products/services/b2c-product.mapper";
 import { getProducts } from "@/features/products/services/product.service";
-import type { ProductFilters, ProductSort } from "@/features/products/types/product-filter.types";
+import type {
+  ProductFilters,
+  ProductSort,
+} from "@/features/products/types/product-filter.types";
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
 
@@ -69,7 +77,14 @@ export function ProductsPageContent() {
 
   const categories = categoriesQuery.data ?? [];
 
-  const categoryIdForApi = !category.trim() ? undefined : /^\d+$/.test(category) ? category : (categories.find((item) => item.slug === category) ? String(categories.find((item) => item.slug === category)?.id) : undefined);
+  const categoryIdForApi =
+    !category.trim()
+      ? undefined
+      : /^\d+$/.test(category)
+        ? category
+        : categories.find((item) => item.slug === category)
+          ? String(categories.find((item) => item.slug === category)?.id)
+          : undefined;
 
   const numericBrandId = /^\d+$/.test(brand) ? brand : undefined;
 
@@ -111,6 +126,7 @@ export function ProductsPageContent() {
         product.brand?.name === brand &&
         /^\d+$/.test(product.brand.id),
     );
+
     return matched?.brand?.id;
   }, [brand, numericBrandId, legacyBrandOptionsQuery.data]);
 
@@ -202,7 +218,9 @@ export function ProductsPageContent() {
       if (requested <= 1) next.delete("page");
     }
 
-    router.push((next.toString() ? pathname + "?" + next.toString() : pathname) as Route);
+    router.push(
+      (next.toString() ? pathname + "?" + next.toString() : pathname) as Route,
+    );
   };
 
   const submitSearch = () => {
@@ -266,248 +284,340 @@ export function ProductsPageContent() {
     sort !== "relevance" ? "1" : "",
   ].filter(Boolean).length;
 
+  const totalItems = productsQuery.data?.pagination.totalItems ?? 0;
+  const totalPages = productsQuery.data?.pagination.totalPages ?? 1;
+
   return (
     <AppShell>
       <main className="min-h-screen bg-background">
-        <section className="border-b border-neutral-200 bg-surface">
-          <div className="container-shell py-8 sm:py-10">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-info-surface px-3 py-1.5 text-[11px] font-black text-brand">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  ALI STORE catalog
-                </div>
-                <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-                  المنتجات
-                </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-                  كتالوج حي من المنتجات المنشورة، مع توفر وأسعار محدثة من المصدر.
+        <section className="border-b border-border bg-surface">
+          <div className="container-shell mx-auto max-w-[1240px] py-5 sm:py-6">
+            <nav
+              aria-label="مسار الصفحة"
+              className="mb-4 text-caption text-muted-foreground"
+            >
+              <span>الرئيسية</span>
+              <span className="mx-2 text-neutral-300" aria-hidden="true">
+                /
+              </span>
+              <span className="font-medium text-foreground">المنتجات</span>
+            </nav>
+
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-h1 text-foreground sm:text-display">المنتجات</h1>
+                <p className="mt-1 text-body-sm text-muted-foreground">
+                  {totalItems.toLocaleString("en-US")} منتج متاح
                 </p>
               </div>
 
-              <div className="text-sm text-neutral-400">
-                <span className="font-black text-foreground">
-                  {productsQuery.data?.pagination.totalItems ?? 0}
-                </span>{" "}
-                منتج
-              </div>
-            </div>
-
-            <div className="mt-7 max-w-5xl">
-              <div className="flex h-13 items-center rounded-2xl border border-neutral-200 bg-surface p-1.5 shadow-sm focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100">
-                <Search className="ms-3 h-5 w-5 shrink-0 text-neutral-400" />
-                <input
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      submitSearch();
-                    }
-                  }}
-                  type="search"
-                  placeholder="ابحث بالاسم أو SKU..."
-                  aria-label="البحث عن المنتجات"
-                  className="min-w-0 flex-1 bg-transparent px-3 text-sm text-foreground outline-none placeholder:text-neutral-400"
-                />
-                {searchDraft && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchDraft("");
-                      updateParams({ q: undefined, page: "1" });
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+                <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-md border border-border bg-background px-1 transition-[border-color,box-shadow] duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-primary-100 sm:w-[min(420px,42vw)] sm:flex-none">
+                  <Search
+                    className="ms-3 h-4.5 w-4.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <input
+                    value={searchDraft}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        submitSearch();
+                      }
                     }}
-                    aria-label="مسح البحث"
-                    className="me-1 flex h-9 w-9 items-center justify-center rounded-xl text-neutral-400 hover:bg-neutral-100"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+                    type="search"
+                    placeholder="ابحث عن منتج أو SKU"
+                    aria-label="البحث عن المنتجات"
+                    className="min-w-0 flex-1 bg-transparent px-3 text-body-sm text-foreground outline-none placeholder:text-neutral-400"
+                  />
+                  {searchDraft ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchDraft("");
+                        updateParams({ q: undefined, page: "1" });
+                      }}
+                      aria-label="مسح البحث"
+                      className="me-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-100 hover:text-foreground focus-visible:ring-4 focus-visible:ring-primary-100"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
+
                 <button
                   type="button"
                   onClick={submitSearch}
-                  className="hidden h-10 rounded-xl bg-brand px-6 text-sm font-black text-white hover:bg-brand-hover sm:block"
+                  className="h-11 rounded-md bg-brand px-5 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
                   بحث
                 </button>
               </div>
             </div>
-          </div>
 
-          {activeFilterCount > 0 ? (
-            <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="الفلاتر المطبقة">
-              <span className="text-caption font-medium text-muted-foreground">مفعّل:</span>
-              {query ? <span className="rounded-full bg-primary-50 px-3 py-1.5 text-caption font-medium text-brand">بحث: {query}</span> : null}
-              {category ? <span className="rounded-full bg-primary-50 px-3 py-1.5 text-caption font-medium text-brand">قسم</span> : null}
-              {brand ? <span className="rounded-full bg-primary-50 px-3 py-1.5 text-caption font-medium text-brand">علامة</span> : null}
-              {inStock ? <span className="rounded-full bg-success-surface px-3 py-1.5 text-caption font-medium text-success-700">متوفر فقط</span> : null}
-              {(minPriceParam !== undefined || maxPriceParam !== undefined) ? (
-                <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-caption font-medium text-neutral-700">نطاق سعر</span>
-              ) : null}
-              {sort !== "relevance" ? <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-caption font-medium text-neutral-700">ترتيب مخصص</span> : null}
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="rounded-full px-3 py-1.5 text-caption font-medium text-brand transition hover:bg-primary-50"
+            {activeFilterCount > 0 ? (
+              <div
+                className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3"
+                aria-label="الفلاتر المطبقة"
               >
-                مسح
-              </button>
-            </div>
-          ) : null}
+                <span className="me-1 text-caption font-medium text-muted-foreground">
+                  الفلاتر الحالية:
+                </span>
+                {query ? (
+                  <span className="rounded-md bg-primary-50 px-2.5 py-1.5 text-caption font-medium text-brand">
+                    بحث: {query}
+                  </span>
+                ) : null}
+                {category ? (
+                  <span className="rounded-md bg-primary-50 px-2.5 py-1.5 text-caption font-medium text-brand">
+                    قسم
+                  </span>
+                ) : null}
+                {brand ? (
+                  <span className="rounded-md bg-primary-50 px-2.5 py-1.5 text-caption font-medium text-brand">
+                    علامة
+                  </span>
+                ) : null}
+                {inStock ? (
+                  <span className="rounded-md bg-success-surface px-2.5 py-1.5 text-caption font-medium text-success-700">
+                    متوفر فقط
+                  </span>
+                ) : null}
+                {minPriceParam !== undefined || maxPriceParam !== undefined ? (
+                  <span className="rounded-md bg-neutral-100 px-2.5 py-1.5 text-caption font-medium text-neutral-700">
+                    نطاق سعر
+                  </span>
+                ) : null}
+                {sort !== "relevance" ? (
+                  <span className="rounded-md bg-neutral-100 px-2.5 py-1.5 text-caption font-medium text-neutral-700">
+                    ترتيب مخصص
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="rounded-md px-2.5 py-1.5 text-caption font-medium text-brand transition-colors duration-200 hover:bg-primary-50 focus-visible:ring-4 focus-visible:ring-primary-100"
+                >
+                  مسح الكل
+                </button>
+              </div>
+            ) : null}
+          </div>
         </section>
 
-        <div className="container-shell py-7 sm:py-8">
-          <div className="mb-5 flex items-center justify-between lg:hidden">
+        <div className="container-shell mx-auto max-w-[1240px] py-6 sm:py-8 lg:py-10">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:hidden">
             <button
               type="button"
               onClick={() => setFiltersOpen((value) => !value)}
               aria-expanded={filtersOpen}
               aria-controls="catalog-filters"
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-neutral-200 bg-surface px-4 text-xs font-black text-neutral-700"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-body-sm font-medium text-foreground shadow-sm transition-colors duration-200 hover:border-border-hover hover:bg-neutral-50 focus-visible:ring-4 focus-visible:ring-primary-100"
             >
-              <Filter className="h-4 w-4" />
-              الفلاتر {activeFilterCount > 0 ? "(" + activeFilterCount + ")" : ""}
+              <Filter className="h-4 w-4" aria-hidden="true" />
+              الفلاتر
+              {activeFilterCount > 0 ? (
+                <span className="inline-flex min-w-6 items-center justify-center rounded-md bg-primary-50 px-1.5 py-0.5 text-label font-medium text-brand">
+                  {activeFilterCount}
+                </span>
+              ) : null}
             </button>
-            <span className="text-xs font-bold text-neutral-400">
-              {productsQuery.isFetching ? "جارٍ التحديث…" : "بيانات مباشرة"}
-            </span>
-          </div>
 
-          <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside
-              id="catalog-filters"
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget) setFiltersOpen(false);
-              }}
-              className={`fixed inset-0 z-[var(--z-overlay)] overflow-y-auto bg-ink-950/40 p-4 ${filtersOpen ? "block" : "hidden"} lg:static lg:z-auto lg:block lg:overflow-visible lg:bg-transparent lg:p-0`}
-            >
-              <div className="min-h-full rounded-2xl border border-neutral-200 bg-surface p-5 shadow-modal lg:min-h-0 lg:shadow-sm">
-                <div className="mb-4 flex items-center justify-between border-b border-neutral-100 pb-4 lg:hidden">
-                  <h2 className="text-base font-bold text-foreground">الفلاتر</h2>
-                  <button
-                    type="button"
-                    onClick={() => setFiltersOpen(false)}
-                    aria-label="إغلاق الفلاتر"
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="h-4 w-4 text-brand" />
-                  <h2 className="text-sm font-black text-foreground">الفلاتر</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-[11px] font-black text-brand hover:underline"
-                >
-                  مسح الكل
-                </button>
-              </div>
-
-              <label className="mt-6 block text-xs font-black text-neutral-500" htmlFor="category-filter">
-                القسم
-              </label>
-              <select
-                id="category-filter"
-                value={category}
-                onChange={(event) => updateParams({ category: event.target.value || undefined, page: "1" })}
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <label
+                htmlFor="mobile-sort-filter"
+                className="text-caption font-medium text-muted-foreground"
               >
-                <option value="">كل الأقسام</option>
-                {categories.map((item) => (
-                  <option key={item.slug} value={item.slug}>
-                    {CATEGORY_LABEL_AR[item.slug] ?? item.name}
-                  </option>
-                ))}
-              </select>
-
-              <label className="mt-5 block text-xs font-black text-neutral-500" htmlFor="brand-filter">
-                العلامة
-              </label>
-              <select
-                id="brand-filter"
-                value={brandIdForApi ?? brand}
-                onChange={(event) => updateParams({ brand: event.target.value || undefined, page: "1" })}
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-              >
-                <option value="">كل العلامات</option>
-                {brandOptions.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-
-              <label className="mt-5 block text-xs font-black text-neutral-500" htmlFor="sort-filter">
                 الترتيب
               </label>
               <select
-                id="sort-filter"
+                id="mobile-sort-filter"
                 value={sort}
-                onChange={(event) => updateParams({ sort: event.target.value === "relevance" ? undefined : event.target.value, page: "1" })}
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                onChange={(event) =>
+                  updateParams({
+                    sort:
+                      event.target.value === "relevance"
+                        ? undefined
+                        : event.target.value,
+                    page: "1",
+                  })
+                }
+                className="h-11 rounded-md border border-border bg-surface px-3 text-body-sm text-foreground outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
               >
                 <option value="relevance">الأكثر صلة</option>
                 <option value="price_asc">السعر: من الأقل</option>
                 <option value="price_desc">السعر: من الأعلى</option>
               </select>
+            </div>
+          </div>
 
-              <div className="mt-5">
-                <p className="text-xs font-black text-neutral-500">السعر</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <input
-                    value={minPriceDraft}
-                    onChange={(event) => setMinPriceDraft(event.target.value)}
-                    type="number"
-                    min="0"
-                    placeholder="من"
-                    aria-label="الحد الأدنى للسعر"
-                    className="h-10 rounded-xl border border-neutral-200 px-3 text-xs outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
-                  <input
-                    value={maxPriceDraft}
-                    onChange={(event) => setMaxPriceDraft(event.target.value)}
-                    type="number"
-                    min="0"
-                    placeholder="إلى"
-                    aria-label="الحد الأعلى للسعر"
-                    className="h-10 rounded-xl border border-neutral-200 px-3 text-xs outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
-                  />
+          <div className="grid items-start gap-5 lg:grid-cols-[224px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)] xl:gap-7">
+            <aside
+              id="catalog-filters"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setFiltersOpen(false);
+              }}
+              className={
+                "fixed inset-0 z-[var(--z-overlay)] overflow-y-auto bg-ink-950/40 p-3 " +
+                (filtersOpen ? "block" : "hidden") +
+                " lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-visible lg:bg-transparent lg:p-0"
+              }
+            >
+              <div className="min-h-full rounded-lg border border-border bg-surface p-4 shadow-modal lg:min-h-0 lg:shadow-sm">
+                <div className="mb-4 flex items-center justify-between border-b border-neutral-100 pb-4 lg:hidden">
+                  <h2 className="text-h4 text-foreground">الفلاتر</h2>
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    aria-label="إغلاق الفلاتر"
+                    className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-neutral-100 focus-visible:ring-4 focus-visible:ring-primary-100"
+                  >
+                    <X className="h-5 w-5" aria-hidden="true" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={applyPriceFilters}
-                  className="mt-2 h-10 w-full rounded-xl border border-neutral-200 text-xs font-black text-neutral-700 hover:bg-neutral-50"
-                >
-                  تطبيق السعر
-                </button>
-              </div>
 
-              <div className="mt-6 border-t border-neutral-100 pt-5">
-                <label className="flex cursor-pointer items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-neutral-700">متوفر فقط</span>
-                  <input
-                    type="checkbox"
-                    checked={inStock}
-                    onChange={(event) => updateParams({ inStock: event.target.checked ? "true" : undefined, page: "1" })}
-                    className="h-5 w-5 accent-brand"
-                  />
-                </label>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal
+                      className="h-4 w-4 text-brand"
+                      aria-hidden="true"
+                    />
+                    <h2 className="text-body-sm font-medium text-foreground">
+                      تصفية النتائج
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-caption font-medium text-brand transition-colors duration-200 hover:text-brand-hover hover:underline focus-visible:ring-4 focus-visible:ring-primary-100"
+                  >
+                    مسح الكل
+                  </button>
+                </div>
 
-              </div>
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <label
+                      className="text-caption font-medium text-muted-foreground"
+                      htmlFor="category-filter"
+                    >
+                      القسم
+                    </label>
+                    <select
+                      id="category-filter"
+                      value={category}
+                      onChange={(event) =>
+                        updateParams({
+                          category: event.target.value || undefined,
+                          page: "1",
+                        })
+                      }
+                      className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 text-body-sm text-foreground outline-none transition-colors duration-200 focus:border-brand focus:ring-4 focus:ring-primary-100"
+                    >
+                      <option value="">كل الأقسام</option>
+                      {categories.map((item) => (
+                        <option key={item.slug} value={item.slug}>
+                          {CATEGORY_LABEL_AR[item.slug] ?? item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      className="text-caption font-medium text-muted-foreground"
+                      htmlFor="brand-filter"
+                    >
+                      العلامة
+                    </label>
+                    <select
+                      id="brand-filter"
+                      value={brandIdForApi ?? brand}
+                      onChange={(event) =>
+                        updateParams({
+                          brand: event.target.value || undefined,
+                          page: "1",
+                        })
+                      }
+                      className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 text-body-sm text-foreground outline-none transition-colors duration-200 focus:border-brand focus:ring-4 focus:ring-primary-100"
+                    >
+                      <option value="">كل العلامات</option>
+                      {brandOptions.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="border-t border-neutral-100 pt-4">
+                    <p className="text-caption font-medium text-muted-foreground">
+                      السعر
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <input
+                        value={minPriceDraft}
+                        onChange={(event) => setMinPriceDraft(event.target.value)}
+                        type="number"
+                        min="0"
+                        placeholder="من"
+                        aria-label="الحد الأدنى للسعر"
+                        className="h-11 rounded-md border border-border bg-background px-3 text-body-sm text-foreground outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                      />
+                      <input
+                        value={maxPriceDraft}
+                        onChange={(event) => setMaxPriceDraft(event.target.value)}
+                        type="number"
+                        min="0"
+                        placeholder="إلى"
+                        aria-label="الحد الأعلى للسعر"
+                        className="h-11 rounded-md border border-border bg-background px-3 text-body-sm text-foreground outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={applyPriceFilters}
+                      className="mt-2 h-10 w-full rounded-md border border-border bg-surface text-caption font-medium text-foreground transition-colors duration-200 hover:border-border-hover hover:bg-neutral-50 focus-visible:ring-4 focus-visible:ring-primary-100"
+                    >
+                      تطبيق السعر
+                    </button>
+                  </div>
+
+                  <div className="border-t border-neutral-100 pt-4">
+                    <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md px-2 transition-colors duration-200 hover:bg-neutral-50">
+                      <span className="text-body-sm font-medium text-foreground">
+                        متوفر فقط
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={inStock}
+                        onChange={(event) =>
+                          updateParams({
+                            inStock: event.target.checked
+                              ? "true"
+                              : undefined,
+                            page: "1",
+                          })
+                        }
+                        className="h-5 w-5 accent-brand"
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
             </aside>
 
             <section className="min-w-0">
               {categoryResolutionError || brandResolutionError ? (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
-                  <h2 className="text-lg font-black text-amber-800">
+                <div className="mx-auto max-w-2xl rounded-lg border border-warning-100 bg-warning-surface p-8 text-center shadow-raised">
+                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-md bg-surface text-warning">
+                    <Filter className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h2 className="mt-4 text-h4 text-foreground">
                     تعذر تطبيق الفلتر
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-amber-700">
+                  <p className="mx-auto mt-2 max-w-lg text-body-sm leading-6 text-muted-foreground">
                     {categoryResolutionError
                       ? "القسم المحدد غير موجود في الكتالوج الحالي."
                       : "العلامة المحددة غير موجودة في الكتالوج الحالي."}
@@ -515,65 +625,134 @@ export function ProductsPageContent() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-5 inline-flex h-10 items-center rounded-xl bg-brand px-5 text-xs font-black text-white"
+                    className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-brand px-5 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
                   >
                     مسح الفلاتر
                   </button>
                 </div>
               ) : productsQuery.isPending ? (
-                <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, index) => (
-                    <div key={index} className="aspect-[0.86] animate-pulse rounded-2xl bg-neutral-100" />
+                    <div
+                      key={index}
+                      className="overflow-hidden rounded-lg border border-border bg-surface p-3 shadow-raised"
+                    >
+                      <div className="aspect-square animate-pulse rounded-md bg-neutral-100" />
+                      <div className="space-y-2 p-2 pt-4">
+                        <div className="h-3 w-1/3 animate-pulse rounded bg-neutral-100" />
+                        <div className="h-4 w-full animate-pulse rounded bg-neutral-100" />
+                        <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-100" />
+                        <div className="mt-4 h-5 w-1/2 animate-pulse rounded bg-neutral-100" />
+                        <div className="h-11 w-full animate-pulse rounded-md bg-neutral-100" />
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : productsQuery.isError ? (
-                <div className="rounded-2xl border border-danger-100 bg-danger-surface p-8 text-center">
-                  <h2 className="text-lg font-black text-danger-700">تعذر تحميل الكتالوج</h2>
-                  <p className="mt-2 text-sm text-danger-600">
-                    تحقق من تشغيل Spring Boot ومن قيمة NEXT_PUBLIC_API_BASE_URL.
+                <div className="mx-auto max-w-2xl rounded-lg border border-danger-100 bg-danger-surface p-8 text-center shadow-raised">
+                  <h2 className="text-h4 text-danger-700">
+                    تعذر تحميل الكتالوج
+                  </h2>
+                  <p className="mx-auto mt-2 max-w-xl text-body-sm leading-6 text-danger-600">
+                    تعذر جلب المنتجات حاليًا. أعد المحاولة، أو تحقق من اتصال
+                    خدمة الكتالوج.
                   </p>
                   <button
                     type="button"
                     onClick={() => void productsQuery.refetch()}
-                    className="mt-5 inline-flex h-10 items-center rounded-xl bg-brand px-5 text-xs font-black text-white"
+                    className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-brand px-5 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
                   >
                     إعادة المحاولة
                   </button>
                 </div>
               ) : products.length === 0 ? (
-                <div className="rounded-2xl border border-neutral-200 bg-surface p-10 text-center">
-                  <h2 className="text-xl font-black text-foreground">لا توجد منتجات مطابقة</h2>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    غيّر الفلاتر أو أعد ضبط البحث.
+                <div className="mx-auto max-w-2xl rounded-lg border border-border bg-surface p-10 text-center shadow-raised">
+                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-md bg-neutral-100 text-muted-foreground">
+                    <Search className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h2 className="mt-4 text-h4 text-foreground">
+                    لا توجد منتجات مطابقة
+                  </h2>
+                  <p className="mx-auto mt-2 max-w-md text-body-sm leading-6 text-muted-foreground">
+                    جرّب إزالة أحد الفلاتر أو تعديل عبارة البحث للوصول إلى
+                    منتجات أكثر.
                   </p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-brand px-5 text-body-sm font-medium text-white transition-colors duration-200 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100"
+                  >
+                    عرض كل المنتجات
+                  </button>
                 </div>
               ) : (
                 <>
-                  <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-surface px-4 py-3 shadow-raised sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-body-sm font-medium text-foreground">
-                        {productsQuery.data?.pagination.totalItems ?? products.length} نتيجة
-                      </p>
-                      <p className="mt-1 text-caption text-muted-foreground">
-                        الصفحة {page} من {productsQuery.data?.pagination.totalPages ?? 1}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {productsQuery.isFetching ? (
-                        <span className="text-caption font-medium text-brand" aria-live="polite">تحديث…</span>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => setFiltersOpen(true)}
-                        className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-neutral-200 px-3 text-caption font-medium text-neutral-700 lg:hidden"
-                      >
-                        <SlidersHorizontal className="h-4 w-4" />
-                        الفلاتر
-                      </button>
+                  <div className="mb-5 border-b border-border pb-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p
+                          className="text-body-sm font-medium text-foreground"
+                          aria-live="polite"
+                        >
+                          {totalItems.toLocaleString("en-US")} نتيجة
+                        </p>
+                        <p className="mt-1 text-caption text-muted-foreground">
+                          الصفحة {page} من {totalPages}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {productsQuery.isFetching ? (
+                          <span
+                            className="inline-flex items-center gap-2 rounded-md bg-primary-50 px-2.5 py-1.5 text-caption font-medium text-brand"
+                            aria-live="polite"
+                          >
+                            <span
+                              className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand"
+                              aria-hidden="true"
+                            />
+                            تحديث النتائج…
+                          </span>
+                        ) : null}
+
+                        <label
+                          htmlFor="desktop-sort-filter"
+                          className="text-caption font-medium text-muted-foreground"
+                        >
+                          ترتيب:
+                        </label>
+                        <select
+                          id="desktop-sort-filter"
+                          value={sort}
+                          onChange={(event) =>
+                            updateParams({
+                              sort:
+                                event.target.value === "relevance"
+                                  ? undefined
+                                  : event.target.value,
+                              page: "1",
+                            })
+                          }
+                          className="h-10 rounded-md border border-border bg-background px-3 text-body-sm text-foreground outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                        >
+                          <option value="relevance">الأكثر صلة</option>
+                          <option value="price_asc">السعر: من الأقل</option>
+                          <option value="price_desc">السعر: من الأعلى</option>
+                        </select>
+
+                        <button
+                          type="button"
+                          onClick={() => setFiltersOpen(true)}
+                          className="inline-flex min-h-10 items-center gap-2 rounded-md border border-border px-3 text-caption font-medium text-foreground transition-colors duration-200 hover:bg-neutral-50 focus-visible:ring-4 focus-visible:ring-primary-100 lg:hidden"
+                        >
+                          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                          الفلاتر
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 xl:gap-5">
                     {products.map((product) => (
                       <B2CProductCard key={product.id} product={product} />
                     ))}
@@ -582,7 +761,11 @@ export function ProductsPageContent() {
                   <ProductPagination
                     page={page}
                     totalPages={productsQuery.data?.pagination.totalPages ?? 0}
-                    onChange={(nextPage) => updateParams({ page: nextPage <= 1 ? undefined : String(nextPage) })}
+                    onChange={(nextPage) =>
+                      updateParams({
+                        page: nextPage <= 1 ? undefined : String(nextPage),
+                      })
+                    }
                   />
                 </>
               )}
