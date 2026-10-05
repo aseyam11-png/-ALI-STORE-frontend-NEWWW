@@ -96,7 +96,7 @@ export function AccountWorkspace({
   return (
     <CustomerShell>
       <section className="border-b border-neutral-200 bg-surface">
-        <div className="container-shell pt-7 sm:pt-9">
+        <div className="container-shell mx-auto max-w-[1240px] pt-6 sm:pt-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
               <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1.5 text-label font-medium text-brand">
@@ -155,11 +155,11 @@ export function AccountWorkspace({
       </section>
 
       <div className="bg-background">
-        <div className="container-shell py-7 sm:py-8">
-          <div className="grid gap-7 lg:grid-cols-[250px_minmax(0,1fr)] lg:items-start">
+        <div className="container-shell mx-auto max-w-[1240px] py-6 sm:py-8">
+          <div className="grid gap-6 lg:grid-cols-[224px_minmax(0,1fr)] lg:items-start xl:gap-8">
             <aside className="hidden lg:sticky lg:top-24 lg:block">
-              <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">
-                <div className="border-b border-neutral-100 bg-gradient-to-br from-primary-50 via-surface to-surface p-5">
+              <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-sm">
+                <div className="border-b border-neutral-100 bg-surface p-4">
                   <div className="flex items-center gap-3">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-sm">
                       <UserRound className="h-5 w-5" aria-hidden="true" />
@@ -262,7 +262,7 @@ export function AccountWorkspace({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl border border-success-100 bg-success-surface p-4">
+              <div className="mt-4 rounded-xl border border-success-100 bg-success-surface p-3.5">
                 <div className="flex items-start gap-2.5">
                   <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
                   <div>
