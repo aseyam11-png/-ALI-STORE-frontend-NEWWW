@@ -15,12 +15,11 @@ const statusOptions: BackendOrder["status"][] = [
   "SHIPPED",
   "DELIVERED",
   "CANCELLED",
-  "FULFILLMENT_FAILED",
 ];
 
 function statusTone(status: BackendOrder["status"]) {
   if (status === "DELIVERED") return "success" as const;
-  if (status === "CANCELLED" || status === "FULFILLMENT_FAILED") return "danger" as const;
+  if (status === "CANCELLED") return "danger" as const;
   if (status === "SHIPPED") return "brand" as const;
   return "warning" as const;
 }
@@ -71,9 +70,7 @@ export default function AdminOrdersPage() {
     total: orders.length,
     processing: orders.filter((order) => order.status === "PROCESSING").length,
     shipped: orders.filter((order) => order.status === "SHIPPED").length,
-    needsAttention: orders.filter((order) =>
-      order.status === "FULFILLMENT_FAILED" || order.status === "CANCELLED",
-    ).length,
+    needsAttention: orders.filter((order) => order.status === "CANCELLED").length,
   }), [orders]);
 
   return (
@@ -107,7 +104,7 @@ export default function AdminOrdersPage() {
             <AdminMetricCard icon={Truck} label="إجمالي الطلبات" value={String(summary.total)} detail="الطلبات المعروضة من الخادم" />
             <AdminMetricCard icon={RefreshCcw} label="قيد المعالجة" value={String(summary.processing)} tone="warning" />
             <AdminMetricCard icon={Truck} label="تم الشحن" value={String(summary.shipped)} tone="brand" />
-            <AdminMetricCard icon={Truck} label="يحتاج انتباه" value={String(summary.needsAttention)} tone="neutral" detail="إلغاء أو فشل تنفيذ" />
+            <AdminMetricCard icon={Truck} label="يحتاج انتباه" value={String(summary.needsAttention)} tone="neutral" detail="الطلبات الملغاة" />
           </div>
 
           <section className="mt-7 overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised">

@@ -6,9 +6,24 @@ import { useEffect, useState } from "react";
 
 import { LocalizationProvider } from "@/components/providers/LocalizationProvider";
 import { useSession } from "@/features/auth/session";
-import { getMyWishlist } from "@/features/wishlist/services/wishlist-api.service";
+import { getMyWishlist, addToWishlist } from "@/features/wishlist/services/wishlist-api.service";
+import {
+  clearGuestWishlist,
+  readGuestWishlist,
+  writeGuestWishlist,
+} from "@/features/wishlist/services/guest-wishlist-storage";
 import { getMyNotifications } from "@/features/notifications/services/notification-api.service";
-import { getBackendCart, mapBackendCartToLocal, replaceBackendCart } from "@/features/cart/services/cart-api.service";
+import {
+  getBackendCart,
+  mapBackendCartToLocal,
+  mergeCartLines,
+  replaceBackendCart,
+} from "@/features/cart/services/cart-api.service";
+import {
+  clearGuestCart,
+  readGuestCart,
+  writeGuestCart,
+} from "@/features/cart/services/guest-cart-storage";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useCartStore } from "@/stores/cart-store";
@@ -23,6 +38,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleLogout = () => {
+      // Never carry authenticated client state into a guest session.
       replaceCart([]);
       replaceWishlist([]);
       replaceNotifications([]);
@@ -38,6 +54,45 @@ export function Providers({ children }: { children: React.ReactNode }) {
     replaceNotifications,
     replaceWishlist,
   ]);
+
+  useEffect(() => {
+    if (session.status === "loading") return;
+
+    if (session.status === "unauthenticated") {
+      replaceCart(readGuestCart());
+      replaceWishlist(readGuestWishlist());
+      replaceNotifications([]);
+    }
+  }, [
+    replaceCart,
+    replaceNotifications,
+    replaceWishlist,
+    session.status,
+  ]);
+
+  useEffect(() => {
+    if (session.status !== "unauthenticated") return;
+
+    const unsubscribe = useCartStore.subscribe((state) => {
+      writeGuestCart(state.items);
+    });
+
+    writeGuestCart(useCartStore.getState().items);
+
+    return unsubscribe;
+  }, [session.status]);
+
+  useEffect(() => {
+    if (session.status !== "unauthenticated") return;
+
+    const unsubscribe = useWishlistStore.subscribe((state) => {
+      writeGuestWishlist(state.items);
+    });
+
+    writeGuestWishlist(useWishlistStore.getState().items);
+
+    return unsubscribe;
+  }, [session.status]);
 
   useEffect(() => {
     if (session.status !== "authenticated") {
@@ -77,26 +132,62 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     let active = true;
 
-    void getMyWishlist()
-      .then((items) => {
+    const hydrateWishlist = async () => {
+      try {
+        const guestItems = readGuestWishlist();
+        const backendItems = await getMyWishlist();
+
         if (!active) return;
 
-        replaceWishlist(
-          items.map((item) => ({
-            id: String(item.productId),
-            name: item.productName ?? "Product",
-            price: Number(item.price ?? 0),
-            image: item.imageUrl ?? undefined,
-            brand: item.brandName ?? undefined,
-            category: item.categoryName ?? undefined,
-            currency: item.currency ?? undefined,
-          })),
+        const backendIds = new Set(
+          backendItems.map((item) => String(item.productId)),
         );
-      })
-      .catch(() => {
-        // Keep the client state untouched on transient wishlist hydration
-        // failures; successful product mutations still update the local UI.
-      });
+        const missingGuestItems = guestItems.filter(
+          (item) => !backendIds.has(item.id),
+        );
+
+        if (missingGuestItems.length > 0) {
+          await Promise.all(
+            missingGuestItems.map((item) => addToWishlist(item.id)),
+          );
+
+          if (!active) return;
+
+          const refreshed = await getMyWishlist();
+          if (!active) return;
+
+          replaceWishlist(
+            refreshed.map((item) => ({
+              id: String(item.productId),
+              name: item.productName ?? "Product",
+              price: Number(item.price ?? 0),
+              image: item.imageUrl ?? undefined,
+              brand: item.brandName ?? undefined,
+              category: item.categoryName ?? undefined,
+              currency: item.currency ?? undefined,
+            })),
+          );
+        } else {
+          replaceWishlist(
+            backendItems.map((item) => ({
+              id: String(item.productId),
+              name: item.productName ?? "Product",
+              price: Number(item.price ?? 0),
+              image: item.imageUrl ?? undefined,
+              brand: item.brandName ?? undefined,
+              category: item.categoryName ?? undefined,
+              currency: item.currency ?? undefined,
+            })),
+          );
+        }
+
+        if (active) clearGuestWishlist();
+      } catch {
+        // Keep the guest wishlist so a later authenticated hydration can retry.
+      }
+    };
+
+    void hydrateWishlist();
 
     return () => {
       active = false;
@@ -110,26 +201,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     const hydrateCart = async () => {
       try {
-        const localItems = useCartStore.getState().items;
+        const guestItems = readGuestCart();
+        const currentLocalItems = useCartStore.getState().items;
+        const localItems = guestItems.length > 0 ? guestItems : currentLocalItems;
         const backend = await getBackendCart();
 
         if (!active) return;
 
-        if (backend.items.length === 0 && localItems.length > 0) {
-          const migrated = await replaceBackendCart(
-            localItems.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-            })),
-          );
+        if (localItems.length > 0) {
+          const merged = mergeCartLines(backend, localItems);
+          const migrated = await replaceBackendCart(merged);
+
           if (!active) return;
+
           replaceCart(mapBackendCartToLocal(migrated, localItems));
+          clearGuestCart();
           return;
         }
 
-        replaceCart(mapBackendCartToLocal(backend, localItems));
+        replaceCart(mapBackendCartToLocal(backend));
       } catch {
-        // Preserve the local UI on transient hydration failure.
+        // Preserve the local UI and guest storage on transient migration failure.
       }
     };
 
@@ -138,7 +230,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
-  }, [replaceCart, session.status]);
+  }, [replaceCart, session.status, session.user?.id]);
 
   const [queryClient] = useState(() =>
     new QueryClient({

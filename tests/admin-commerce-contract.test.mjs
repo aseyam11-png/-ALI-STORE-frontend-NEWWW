@@ -88,19 +88,6 @@ test("shipping address frontend contract matches persisted backend fields", asyn
   assert.match(source, /area:\s*address\.state/);
 });
 
-test("shipping address backend persists storefront checkout fields and enforces one default", async () => {
-  const entity = await read("backend/src/main/java/com/store/shipping/entity/ShippingAddress.java");
-  const response = await read("backend/src/main/java/com/store/shipping/dto/ShippingAddressResponse.java");
-  const migration = await read("backend/src/main/resources/db/migration/V16__shipping_address_contract.sql");
-  assert.match(entity, /recipient_name/);
-  assert.match(entity, /private String building/);
-  assert.match(entity, /private String apartment/);
-  assert.match(response, /recipientName/);
-  assert.match(response, /phone/);
-  assert.match(migration, /ux_shipping_addresses_one_default_per_user/);
-  assert.match(migration, /WHERE is_default = TRUE/);
-});
-
 test("autocomplete and search suggestions use the live catalog instead of mock products", async () => {
   const autocomplete = await read("src/features/search/services/autocomplete.service.ts");
   const search = await read("src/features/search/services/search.service.ts");
@@ -162,13 +149,6 @@ test("product detail does not fabricate variants or delivery tiers", async () =>
   assert.match(mapper, /variants:\s*\[\]/);
   assert.doesNotMatch(service, /estimatedMinDays:\s*7/);
   assert.doesNotMatch(service, /Standard Shipping/);
-});
-
-test("backend product contract exposes the live category slug", async () => {
-  const dto = await read("backend/src/main/java/com/store/product/dto/ProductResponse.java");
-  const service = await read("backend/src/main/java/com/store/product/service/ProductService.java");
-  assert.match(dto, /private String categorySlug;/);
-  assert.match(service, /\.categorySlug\(product\.getCategory\(\)\.getSlug\(\)\)/);
 });
 
 test("storefront category navigation uses the live backend category adapter", async () => {

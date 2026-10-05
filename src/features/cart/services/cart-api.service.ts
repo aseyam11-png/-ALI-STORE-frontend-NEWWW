@@ -126,6 +126,55 @@ export async function replaceBackendCart(
   });
 }
 
+/**
+ * Merge guest/local cart lines into the backend cart by product identity.
+ * Quantities are additive for the same product so neither side is silently
+ * discarded during authentication migration.
+ */
+export function mergeCartLines(
+  backend: BackendCart,
+  localItems: CartItem[],
+): Array<{ productId: string; quantity: number; variantId?: string }> {
+  const merged = new Map<
+    string,
+    { productId: string; quantity: number; variantId?: string }
+  >();
+
+  for (const item of backend.items) {
+    const productId = String(item.productId);
+    merged.set(productId, {
+      productId,
+      quantity: toPositiveQuantity(item.quantity),
+    });
+  }
+
+  for (const item of localItems) {
+    const productId = String(item.productId);
+    const existing = merged.get(productId);
+
+    if (existing) {
+      if (existing.variantId || item.variantId) {
+        throw new Error(
+          "Cannot merge variant cart lines with the current backend cart contract.",
+        );
+      }
+
+      existing.quantity = toPositiveQuantity(
+        existing.quantity + toPositiveQuantity(item.quantity),
+      );
+      continue;
+    }
+
+    merged.set(productId, {
+      productId,
+      quantity: toPositiveQuantity(item.quantity),
+      variantId: item.variantId,
+    });
+  }
+
+  return [...merged.values()];
+}
+
 export function mapBackendCartToLocal(
   backend: BackendCart,
   localItems: CartItem[] = [],

@@ -98,7 +98,7 @@ export function CheckoutAddressSelector({
                         }
                       </p>
 
-                      {address.isافتراضي && (
+                      {address.isDefault && (
                         <span className="rounded-full bg-surface px-2 py-1 text-[9px] font-black text-brand">
                           Default
                         </span>

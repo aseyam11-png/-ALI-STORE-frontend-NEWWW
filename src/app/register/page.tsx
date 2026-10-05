@@ -12,9 +12,10 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <AuthShell
-      eyebrow="ابدأ تجربتك"
-      title="إنشاء حساب"
-      description="أنشئ حسابك واحفظ طلباتك وعناوينك لتجربة شراء أسهل وأكثر تنظيمًا."
+      focused
+      eyebrow="إنشاء حسابك"
+      title="أنشئ حسابك في ALI STORE"
+      description="خطوات قليلة للبدء، ثم يمكنك إدارة طلباتك وعناوينك من مكان واحد."
       formFooter={
         <p className="text-center text-body-sm text-muted-foreground">
           لديك حساب بالفعل؟{" "}

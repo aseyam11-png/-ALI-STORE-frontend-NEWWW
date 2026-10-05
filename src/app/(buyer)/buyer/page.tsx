@@ -35,13 +35,12 @@ function orderStatusLabel(status: BackendOrder["status"]) {
     SHIPPED: "تم الشحن",
     DELIVERED: "تم التوصيل",
     CANCELLED: "ملغي",
-    FULFILLMENT_FAILED: "تعذر التنفيذ",
   }[status];
 }
 
 function orderStatusClass(status: BackendOrder["status"]) {
   if (status === "DELIVERED") return "bg-success-surface text-success";
-  if (status === "CANCELLED" || status === "FULFILLMENT_FAILED") {
+  if (status === "CANCELLED") {
     return "bg-danger-surface text-danger-600";
   }
   if (status === "PENDING") return "bg-warning-surface text-warning-700";
@@ -204,7 +203,7 @@ export default function BuyerAccountPage() {
     <AccountWorkspace
       activeTab="overview"
       title="حسابي"
-      description="تابع طلباتك وأدر بياناتك من مكان واحد."
+      description="مركز واحد لإدارة طلباتك والمفضلة والعناوين وتفاصيل حسابك."
     >
       <div className="space-y-7">
         <section className="overflow-hidden rounded-2xl bg-brand-ink text-white shadow-raised">

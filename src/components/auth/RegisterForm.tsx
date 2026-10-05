@@ -29,6 +29,34 @@ export function RegisterForm() {
     event.preventDefault();
     setFormError(undefined);
 
+    const firstName = form.firstName.trim();
+    const lastName = form.lastName.trim();
+    const email = form.email.trim().toLowerCase();
+    const passwordBytes =
+      typeof TextEncoder !== "undefined"
+        ? new TextEncoder().encode(form.password).length
+        : new Blob([form.password]).size;
+
+    if (!firstName || !lastName || !email || !form.password || !form.confirmPassword) {
+      setFormError("أكمل جميع الحقول المطلوبة.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFormError("أدخل بريدًا إلكترونيًا صالحًا.");
+      return;
+    }
+
+    if (passwordBytes < 8) {
+      setFormError("كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل.");
+      return;
+    }
+
+    if (passwordBytes > 72) {
+      setFormError("كلمة المرور طويلة جدًا. الحد الأقصى 72 بايت.");
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       setFormError("كلمتا المرور غير متطابقتين.");
       return;
@@ -36,9 +64,9 @@ export function RegisterForm() {
 
     setSubmitting(true);
     const result = await register({
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      email: form.email.trim().toLowerCase(),
+      firstName,
+      lastName,
+      email,
       password: form.password,
       phoneNumber: form.phoneNumber.trim() || undefined,
     });

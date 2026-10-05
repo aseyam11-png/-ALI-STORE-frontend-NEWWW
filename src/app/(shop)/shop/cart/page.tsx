@@ -46,7 +46,7 @@ export default function CartPage() {
   );
 
   const session = useSession();
-  const replaceالمنتجات = useCartStore((state) => state.replaceالمنتجات);
+  const replaceItems = useCartStore((state) => state.replaceItems);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
 
@@ -60,17 +60,17 @@ export default function CartPage() {
       setError("");
 
       try {
-        const localالمنتجات = useCartStore.getState().items;
+        const localItems = useCartStore.getState().items;
         const backend = await getBackendCart();
 
         if (!active) return;
 
-        if (backend.items.length === 0 && localالمنتجات.length > 0) {
-          const migrated = await replaceBackendCart(localالمنتجات);
+        if (backend.items.length === 0 && localItems.length > 0) {
+          const migrated = await replaceBackendCart(localItems);
           if (!active) return;
-          replaceالمنتجات(mapBackendCartToLocal(migrated, localالمنتجات));
+          replaceItems(mapBackendCartToLocal(migrated, localItems));
         } else {
-          replaceالمنتجات(mapBackendCartToLocal(backend, localالمنتجات));
+          replaceItems(mapBackendCartToLocal(backend, localItems));
         }
       } catch (caughtError) {
         if (active) {
@@ -90,7 +90,7 @@ export default function CartPage() {
     return () => {
       active = false;
     };
-  }, [session.status, replaceالمنتجات]);
+  }, [session.status, replaceItems]);
 
   const handleQuantityChange = async (
     productId: string,
@@ -111,14 +111,14 @@ export default function CartPage() {
     );
 
     if (session.status !== "authenticated") {
-      const nextالمنتجات = useCartStore.getState().items.map(
+      const nextItems = useCartStore.getState().items.map(
         (candidate) =>
           candidate.productId === productId &&
           candidate.variantId === variantId
             ? { ...candidate, quantity: safeQuantity }
             : candidate,
       );
-      replaceالمنتجات(nextالمنتجات);
+      replaceItems(nextItems);
       return;
     }
 
@@ -136,7 +136,7 @@ export default function CartPage() {
         safeQuantity,
         Number(productId),
       );
-      replaceالمنتجات(
+      replaceItems(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -166,7 +166,7 @@ export default function CartPage() {
     if (!item) return;
 
     if (session.status !== "authenticated") {
-      replaceالمنتجات(
+      replaceItems(
         useCartStore.getState().items.filter(
           (candidate) =>
             !(
@@ -190,7 +190,7 @@ export default function CartPage() {
       const backend = await removeBackendCartItem(
         item.backendItemId,
       );
-      replaceالمنتجات(
+      replaceItems(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,
@@ -215,7 +215,7 @@ export default function CartPage() {
     if (!confirmed) return;
 
     if (session.status !== "authenticated") {
-      replaceالمنتجات([]);
+      replaceItems([]);
       return;
     }
 
@@ -224,7 +224,7 @@ export default function CartPage() {
 
     try {
       const backend = await clearBackendCart();
-      replaceالمنتجات(
+      replaceItems(
         mapBackendCartToLocal(
           backend,
           useCartStore.getState().items,

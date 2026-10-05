@@ -19,7 +19,7 @@ export type BackendOrderItem = {
 
 export type BackendOrder = {
   id: number;
-  status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "FULFILLMENT_FAILED";
+  status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   totalAmount: number;
   currency?: string;
   couponCode?: string | null;
@@ -56,6 +56,7 @@ export async function getOrder(id: string): Promise<BackendOrder | null> {
     throw error;
   }
 }
+
 export async function getAdminOrders(
   page = 0,
   pageSize = 100,
