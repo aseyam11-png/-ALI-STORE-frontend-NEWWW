@@ -21,7 +21,9 @@
         "storybook": "storybook dev -p 6006",
         "storybook:build": "storybook build",
         "design-tokens": "style-dictionary build --config style-dictionary.config.mjs",
-        "design-system:check": "node tools/design-system/check.mjs"
+        "design-system:check": "node tools/design-system/check.mjs",
+        "playroom:start": "playroom start",
+        "playroom:build": "playroom build"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.1",
