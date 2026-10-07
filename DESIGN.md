@@ -1856,7 +1856,8 @@ The homepage discovery area is intentionally split into three independent visual
 - Previous/next controls and pagination dots remain available.
 - Autoplay pauses while the user hovers or focuses the carousel.
 - prefers-reduced-motion disables autoplay.
-- The desktop hero uses a consistent wide landscape proportion around 16:6 rather than a viewport-dependent height.
+- The hero uses a very wide banner proportion, targeting roughly 6:1 on desktop, so it reads as a horizontal storefront strip rather than a large editorial block.
+- Navigation controls (previous/next and pagination) stay inside the image surface as overlay controls; there is no separate navigation band below the image.
 - The mobile hero keeps the same wide visual language while allowing a minimum readable height.
 - The hero is intentionally larger than the previous compact card but still short enough to preserve above-the-fold shopping intent.
 - Hero copy is limited to one eyebrow, one title, and one primary CTA; do not add a second CTA unless there is a clear product need.
