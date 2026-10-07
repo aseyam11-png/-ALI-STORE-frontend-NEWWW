@@ -16,6 +16,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { WishlistButton } from "@/components/commerce/WishlistButton";
 import { getSession } from "@/features/auth/session";
 import { useTranslation } from "@/lib/i18n/dictionary";
+import { trackEcommerceEvent } from "@/lib/ux/analytics";
 
 interface ProductCardProps {
   product: ProductCardModel;
@@ -74,6 +75,21 @@ export function ProductCard({ product }: ProductCardProps) {
       } else {
         addLocalItem(localLine);
       }
+
+      trackEcommerceEvent("add_to_cart", {
+        currency: product.price.currency,
+        value: product.price.amount * product.minOrderQuantity,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price: product.price.amount,
+            quantity: product.minOrderQuantity,
+            item_category: product.category,
+            item_brand: product.brand,
+          },
+        ],
+      });
     } catch (caughtError) {
       setError(
         caughtError instanceof Error

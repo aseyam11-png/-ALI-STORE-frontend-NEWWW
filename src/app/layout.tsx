@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { AnalyticsScripts } from "@/components/ux/AnalyticsScripts";
+import { RouteAnalytics } from "@/components/ux/RouteAnalytics";
 import "./globals.css";
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
@@ -32,6 +34,8 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <AnalyticsScripts />
+        <RouteAnalytics />
       </body>
     </html>
   );

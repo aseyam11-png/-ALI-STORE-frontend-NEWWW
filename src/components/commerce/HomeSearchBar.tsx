@@ -7,6 +7,7 @@ import { useState } from "react";
 import { SmartAutocomplete } from "@/components/search/SmartAutocomplete";
 import { VisualSearch } from "@/components/search/VisualSearch";
 import { Dialog } from "@/components/ui/dialog";
+import { trackEvent } from "@/lib/ux/analytics";
 
 // The Header's search: text search (existing SmartAutocomplete, reused as
 // is) plus the image-search entry point living inside the same control as a
@@ -23,6 +24,13 @@ export function HomeSearchBar({
 
   const submit = (submittedQuery = value) => {
     const query = submittedQuery.trim();
+
+    if (query) {
+      trackEvent("search", {
+        search_term: query,
+        search_mode: "text",
+      });
+    }
 
     router.push(
       query

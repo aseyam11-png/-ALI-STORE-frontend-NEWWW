@@ -22,6 +22,7 @@ import { useSession } from "@/features/auth/session";
 import { useRouter } from "next/navigation";
 import { CheckoutAddressSelector } from "@/components/checkout/CheckoutAddressSelector";
 import { CouponInput } from "@/components/checkout/CouponInput";
+import { trackEcommerceEvent } from "@/lib/ux/analytics";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
   createBackendOrder,
@@ -255,6 +256,17 @@ export default function CheckoutPage() {
       return;
     }
 
+    trackEcommerceEvent("begin_checkout", {
+      currency: serverCartCurrency,
+      value: total,
+      items: items.map((item) => ({
+        item_id: item.productId,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    });
+
     try {
       const synchronizedCart = await replaceBackendCart(items);
       const synchronizedItems = mapBackendCartToLocal(
@@ -299,6 +311,12 @@ export default function CheckoutPage() {
       // the same order from an already-consumed backend cart.
       replaceItems([]);
 
+      trackEcommerceEvent("add_payment_info", {
+        currency: order.currency ?? serverCartCurrency,
+        value: order.totalAmount,
+        payment_type: backendPaymentMethod,
+      });
+
       const payment = await processBackendPayment({
         orderId: order.id,
         amount: order.totalAmount,
@@ -318,6 +336,20 @@ export default function CheckoutPage() {
         );
         return;
       }
+
+      trackEcommerceEvent("purchase", {
+        transaction_id: createdOrderId,
+        currency: order.currency ?? serverCartCurrency,
+        value: order.totalAmount,
+        payment_type: backendPaymentMethod,
+        coupon: appliedCoupon?.coupon.code,
+        items: items.map((item) => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
 
       clearCart();
       setSuccessOrderId(createdOrderId);

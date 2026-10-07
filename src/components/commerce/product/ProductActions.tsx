@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
@@ -11,6 +11,7 @@ import { formatCurrency } from "@/features/localization/services/currency.servic
 import type { B2CProduct, B2CProductVariant } from "@/features/products/types/b2c-product.types";
 import { getVariantPrice, getVariantStock } from "@/features/products/services/variant.utils";
 import { useTranslation } from "@/lib/i18n/dictionary";
+import { trackEcommerceEvent } from "@/lib/ux/analytics";
 
 interface ProductActionsProps {
   product: B2CProduct;
@@ -35,6 +36,30 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
     : product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
 
   const subtotal = price * quantity;
+
+  useEffect(() => {
+    trackEcommerceEvent("view_item", {
+      currency: product.currency,
+      value: price,
+      items: [
+        {
+          item_id: product.id,
+          item_name: product.name,
+          price,
+          quantity: 1,
+          item_category: product.category,
+          item_brand: product.brand,
+        },
+      ],
+    });
+  }, [
+    product.id,
+    product.name,
+    product.category,
+    product.brand,
+    product.currency,
+    price,
+  ]);
 
   const increase = () => {
     if (quantity < stock) {
@@ -95,6 +120,20 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       }
 
       setMessage(t("productAddedToCart"));
+      trackEcommerceEvent("add_to_cart", {
+        currency: product.currency,
+        value: subtotal,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price,
+            quantity,
+            item_category: product.category,
+            item_brand: product.brand,
+          },
+        ],
+      });
       return true;
     } catch (error) {
       setMessage(
