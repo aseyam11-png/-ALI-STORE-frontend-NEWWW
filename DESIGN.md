@@ -1839,3 +1839,26 @@ The implementation is now backed by a component-level tooling layer:
 Every shared UI primitive should have a story covering its normal and material state variants. New styling should consume the existing semantic tokens in \`src/app/globals.css\` rather than introduce one-off colors, radii, shadows, or typography values.
 
 The initial token inventory does not replace the runtime CSS source. Runtime token migration is a separate visual change and must be protected by visual regression checks.
+
+## 21. Homepage Quick Shop Sidebar
+
+The homepage hero uses a dedicated Quick Shop category rail on large screens. In RTL it occupies the right side, while the primary hero content and editorial image remain to its left.
+
+Required category targets:
+
+- الملابس — resolves to the canonical clothing/fashion category when available.
+- الأحذية — resolves to the canonical shoes/footwear category when available.
+- الساعات — resolves to the canonical watches category when available.
+- الإكسسوارات — resolves to the canonical accessories category when available.
+
+The sidebar is catalog-aware. It must not invent category ids, product counts, availability, prices, discounts, or other commerce truth. When a target category cannot be resolved from the real catalog, the item remains visually present but is disabled and marked unavailable rather than linking to an invented route.
+
+Desktop pattern:
+
+`Quick Shop 280px → Hero content/image flexible area`
+
+Mobile pattern:
+
+`Quick Shop 2-column compact grid → Hero content → Hero image`
+
+The sidebar uses existing ALI STORE semantic tokens, shared motion easing, RTL-safe logical positioning, focus-visible treatment, and Storybook coverage. It is a homepage composition pattern, not a second navigation system.
