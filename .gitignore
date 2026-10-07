@@ -12,3 +12,7 @@ graphify-out/
 .env.test.local
 .env.production.local
 *.log
+
+# Design System generated output
+playroom-dist/
+artifacts/design-system/
