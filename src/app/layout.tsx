@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Suspense } from "react";
 import { Providers } from "@/components/providers";
 import { AnalyticsScripts } from "@/components/ux/AnalyticsScripts";
 import { RouteAnalytics } from "@/components/ux/RouteAnalytics";
@@ -28,14 +29,15 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={ibmPlexSansArabic.variable}
     >
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
         <AnalyticsScripts />
-        <RouteAnalytics />
+        <Suspense fallback={null}>
+          <RouteAnalytics />
+        </Suspense>
       </body>
     </html>
   );
