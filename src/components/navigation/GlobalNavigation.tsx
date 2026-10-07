@@ -165,7 +165,7 @@ export function GlobalNavigation() {
           {categories.length > 0 ? (
             categories.map((category) => {
               const active = pathname === category.href || pathname.startsWith(category.href + "/");
-              const image = getCategoryNavImage(category.label, category.label);
+              const image = getCategoryNavImage(category.slug, category.label);
 
               return (
                 <Link
