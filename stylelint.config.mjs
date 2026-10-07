@@ -6,5 +6,11 @@ export default {
     "property-no-unknown": true,
     "unit-no-unknown": true,
   },
-  ignoreFiles: ["**/node_modules/**", "**/.next/**", "**/out/**", "**/coverage/**", "**/artifacts/**"],
+  ignoreFiles: [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/coverage/**",
+    "**/artifacts/**",
+  ],
 };
