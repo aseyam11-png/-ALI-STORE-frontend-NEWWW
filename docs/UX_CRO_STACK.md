@@ -44,6 +44,7 @@ The shared helper in `src/lib/ux/analytics.ts` supports:
 - `remove_from_cart`
 - `view_cart`
 - `add_to_wishlist`
+- `remove_from_wishlist`
 - `begin_checkout`
 - `add_shipping_info`
 - `add_payment_info`
