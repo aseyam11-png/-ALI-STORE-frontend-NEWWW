@@ -242,7 +242,7 @@ export function HomeHero() {
             <ChevronLeft className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
           </button>
 
-          <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-4">
+          <div className="absolute inset-x-0 bottom-[68px] z-30 flex justify-center">
             <div
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/45 px-2 py-1 backdrop-blur-md"
               aria-label="التنقل بين صور البانر"
