@@ -1,7 +1,6 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import {
@@ -99,6 +98,7 @@ export function HomeHero() {
               {HERO_SLIDES.map((slide) => (
                 <article
                   key={slide.id}
+                  role="group"
                   className="relative min-w-0 flex-[0_0_100%]"
                   aria-roledescription="شريحة"
                 >
@@ -131,7 +131,7 @@ export function HomeHero() {
 
                         <div className="mt-4 flex flex-wrap gap-2.5">
                           <Link
-                            href={slide.href}
+                            href={slide.href as Route}
                             className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-4 text-body-sm font-medium text-ink-900 shadow-raised transition hover:-translate-y-0.5 hover:bg-white/95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
                           >
                             اكتشف المجموعة
