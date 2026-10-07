@@ -1856,9 +1856,11 @@ The homepage discovery area is intentionally split into three independent visual
 - Previous/next controls and pagination dots remain available.
 - Autoplay pauses while the user hovers or focuses the carousel.
 - prefers-reduced-motion disables autoplay.
-- Hero height remains intentionally compact.
+- The desktop hero uses a consistent wide landscape proportion around 16:6 rather than a viewport-dependent height.
+- The mobile hero keeps the same wide visual language while allowing a minimum readable height.
+- The hero is intentionally larger than the previous compact card but still short enough to preserve above-the-fold shopping intent.
+- Hero copy is limited to one eyebrow, one title, and one primary CTA; do not add a second CTA unless there is a clear product need.
 - Hero imagery is presentation-only; product truth is never encoded in the banner.
-- Visual search remains available as a secondary action.
 - The implementation reuses the existing embla-carousel-react dependency.
 
 ### Category navigation requirements
@@ -1869,9 +1871,11 @@ Hero → independent Category Rail + independent Horizontal Rail → Products
 
 The vertical rail must remain visually distinct:
 
-- separate card;
-- separate border;
-- separate spacing;
+- independent card surface;
+- neutral background distinct from the main page surface;
+- separate border and spacing;
+- compact item geometry;
+- soft brand-color active state;
 - separate interaction states.
 
 The horizontal rail must remain visually distinct:
@@ -1891,7 +1895,7 @@ The vertical rail selects one of:
 
 The horizontal rail resolves its labels from the active category's real child nodes when available. No category id, count, price, stock, route, or other commerce truth may be fabricated.
 
-Product results continue to use the existing getProducts service and B2CProductCard pattern. The design change must not alter cart, wishlist, authentication, inventory, supplier, pricing, checkout, or API contracts.
+Product results continue to use the existing getProducts service and B2CProductCard pattern. The category explorer shows up to four products at a time to avoid duplicating the full ProductDiscovery shelf immediately below. The design change must not alter cart, wishlist, authentication, inventory, supplier, pricing, checkout, or API contracts.
 
 ### Homepage duplication rule
 
