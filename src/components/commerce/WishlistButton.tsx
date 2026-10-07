@@ -10,6 +10,7 @@ import {
   removeFromWishlist,
 } from "@/features/wishlist/services/wishlist-api.service";
 import { getSession } from "@/features/auth/session";
+import { trackEvent } from "@/lib/ux/analytics";
 
 interface WishlistButtonProps {
   product: WishlistProduct;
@@ -49,6 +50,15 @@ export function WishlistButton({
       }
 
       toggleLocal(product);
+      trackEvent(
+        isInWishlist ? "remove_from_wishlist" : "add_to_wishlist",
+        {
+          item_id: product.id,
+          item_name: product.name,
+          item_category: product.category,
+          item_brand: product.brand,
+        },
+      );
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
