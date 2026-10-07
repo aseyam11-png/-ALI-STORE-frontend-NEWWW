@@ -1833,6 +1833,8 @@ The implementation is now backed by a component-level tooling layer:
 - eslint-plugin-jsx-a11y for static JSX accessibility checks.
 - Stylelint for CSS correctness checks.
 - Chromatic is supported as an optional visual-review gate.
+- Chromatic remains optional and is enabled in CI only with repository variable \`CHROMATIC_ENABLED=true\` plus the \`CHROMATIC_PROJECT_TOKEN\` secret.
+
 
 Every shared UI primitive should have a story covering its normal and material state variants. New styling should consume the existing semantic tokens in \`src/app/globals.css\` rather than introduce one-off colors, radii, shadows, or typography values.
 
