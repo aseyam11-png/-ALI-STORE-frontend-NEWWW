@@ -25,10 +25,12 @@ export function HomeSearchBar({
   const submit = (submittedQuery = value) => {
     const query = submittedQuery.trim();
 
-    trackEvent("search", {
-      search_term: query,
-      search_mode: "text",
-    });
+    if (query) {
+      trackEvent("search", {
+        search_term: query,
+        search_mode: "text",
+      });
+    }
 
     router.push(
       query
