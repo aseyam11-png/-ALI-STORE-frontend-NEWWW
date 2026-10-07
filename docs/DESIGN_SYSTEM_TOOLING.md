@@ -11,7 +11,7 @@ This layer adds tooling around the existing ALI STORE design contract. It does n
 - Style Dictionary 5.5.5 — governed token inventory and CSS export.
 - eslint-plugin-jsx-a11y 6.10.2 — static JSX accessibility checks.
 - Stylelint — CSS correctness and consistency checks.
-- Chromatic — optional component visual review when CHROMATIC_PROJECT_TOKEN is configured.
+- Chromatic — optional component visual review when the repository variable `CHROMATIC_ENABLED=true` and secret `CHROMATIC_PROJECT_TOKEN` are configured.
 - Playroom — optional P2 interactive playground; installed locally by bootstrap only.
 
 ## Runtime truth
@@ -28,7 +28,7 @@ That migration should be a separate visual change with visual regression coverag
 
 `.github/workflows/design-system.yml` checks token structure, Storybook coverage existence, hardcoded hex colors in UI primitives, Style Dictionary generation, JSX accessibility lint, CSS lint, and Storybook production build.
 
-Chromatic is opt-in through the `CHROMATIC_PROJECT_TOKEN` GitHub Actions secret and does not block the normal gate until configured.
+Chromatic is opt-in through the repository variable `CHROMATIC_ENABLED=true` plus the `CHROMATIC_PROJECT_TOKEN` secret; it does not block the normal gate until explicitly enabled.
 
 ## Governance
 
