@@ -11,6 +11,7 @@ import { formatCurrency } from "@/features/localization/services/currency.servic
 import type { B2CProduct, B2CProductVariant } from "@/features/products/types/b2c-product.types";
 import { getVariantPrice, getVariantStock } from "@/features/products/services/variant.utils";
 import { useTranslation } from "@/lib/i18n/dictionary";
+import { trackEcommerceEvent } from "@/lib/ux/analytics";
 
 interface ProductActionsProps {
   product: B2CProduct;
@@ -95,6 +96,20 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       }
 
       setMessage(t("productAddedToCart"));
+      trackEcommerceEvent("add_to_cart", {
+        currency: product.currency,
+        value: subtotal,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price,
+            quantity,
+            item_category: product.category,
+            item_brand: product.brand,
+          },
+        ],
+      });
       return true;
     } catch (error) {
       setMessage(
