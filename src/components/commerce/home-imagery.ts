@@ -56,6 +56,17 @@ export const HERO_SLIDES: HomeHeroSlide[] = [
   },
 ];
 
+export function getCategoryNavImage(slug: string, label: string): string | undefined {
+  const source = (slug + " " + label).toLocaleLowerCase("ar");
+
+  if (/(watch|watches|ساعة|ساعات)/.test(source)) return HERO_SLIDES[0].image;
+  if (/(shoe|shoes|footwear|حذاء|أحذية)/.test(source)) return HERO_SLIDES[2].image;
+  if (/(fashion|clothing|apparel|ملابس|أزياء|موضة)/.test(source)) return HERO_SLIDES[1].image;
+  if (/(accessor|إكسسوارات|مجوهرات|حقائب)/.test(source)) return HERO_SLIDES[3].image;
+
+  return undefined;
+}
+
 export const CATEGORY_IMAGE_URL: Record<string, string> = {
   fashion: HERO_SLIDES[1].image,
   accessories: HERO_SLIDES[3].image,
