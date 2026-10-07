@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
-import { HERO_SLIDES } from "@/components/commerce/home-imagery";
+import { getCategoryNavImage } from "@/components/commerce/home-imagery";
 
 const navigation = [
   { label: "الرئيسية", href: "/" },
@@ -27,16 +27,6 @@ const navigation = [
   { label: "البحث بالصور", href: "/shop/visual-search", icon: Camera },
 ] as const;
 
-function getCategoryNavImage(slug: string, label: string): string | undefined {
-  const source = (slug + " " + label).toLocaleLowerCase("ar");
-
-  if (/(watch|watches|ساعة|ساعات)/.test(source)) return HERO_SLIDES[0].image;
-  if (/(shoe|shoes|footwear|حذاء|أحذية)/.test(source)) return HERO_SLIDES[2].image;
-  if (/(fashion|clothing|apparel|ملابس|أزياء|موضة)/.test(source)) return HERO_SLIDES[1].image;
-  if (/(accessor|إكسسوارات|مجوهرات|حقائب)/.test(source)) return HERO_SLIDES[3].image;
-
-  return undefined;
-}
 
 export function GlobalNavigation() {
   const pathname = usePathname();
@@ -53,6 +43,7 @@ export function GlobalNavigation() {
     label: category.name,
     href: "/shop/categories/" + category.slug,
     id: category.id,
+    slug: category.slug,
   }));
 
   useEffect(() => {
@@ -155,7 +146,7 @@ export function GlobalNavigation() {
         </div>
       </div>
 
-      <div className="border-t border-neutral-200 bg-ink-950">
+      <div className={pathname === "/" ? "hidden" : "border-t border-neutral-200 bg-ink-950"}>
         <div className="container-shell flex min-h-[66px] items-center gap-2 overflow-x-auto py-2 scroll-surface [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex shrink-0 items-center gap-1.5 px-1.5 text-label font-semibold text-white/60">
             <Sparkles className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
