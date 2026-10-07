@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
+import { HERO_SLIDES } from "@/components/commerce/home-imagery";
 
 const navigation = [
   { label: "الرئيسية", href: "/" },
@@ -25,6 +26,17 @@ const navigation = [
   { label: "العروض", href: "/shop/deals", badge: "جديد" },
   { label: "البحث بالصور", href: "/shop/visual-search", icon: Camera },
 ] as const;
+
+function getCategoryNavImage(slug: string, label: string): string | undefined {
+  const source = \`${slug} ${label}\`.toLocaleLowerCase("ar");
+
+  if (/(watch|watches|ساعة|ساعات)/.test(source)) return HERO_SLIDES[0].image;
+  if (/(shoe|shoes|footwear|حذاء|أحذية)/.test(source)) return HERO_SLIDES[2].image;
+  if (/(fashion|clothing|apparel|ملابس|أزياء|موضة)/.test(source)) return HERO_SLIDES[1].image;
+  if (/(accessor|إكسسوارات|مجوهرات|حقائب)/.test(source)) return HERO_SLIDES[3].image;
+
+  return undefined;
+}
 
 export function GlobalNavigation() {
   const pathname = usePathname();
@@ -143,36 +155,60 @@ export function GlobalNavigation() {
         </div>
       </div>
 
-      <div className="border-t border-neutral-100 bg-neutral-50/70">
-        <div className="container-shell flex min-h-9 items-center gap-4 overflow-x-auto scroll-surface [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex shrink-0 items-center gap-1.5 text-label font-medium text-neutral-400">
-            <Sparkles className="h-3 w-3 text-brand" aria-hidden="true" />
-            تصفح سريع
+      <div className="border-t border-neutral-200 bg-ink-950">
+        <div className="container-shell flex min-h-[66px] items-center gap-2 overflow-x-auto py-2 scroll-surface [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex shrink-0 items-center gap-1.5 px-1.5 text-label font-semibold text-white/60">
+            <Sparkles className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
+            أقسام المتجر
           </div>
 
           {categories.length > 0 ? (
             categories.map((category) => {
               const active = pathname === category.href || pathname.startsWith(category.href + "/");
+              const image = getCategoryNavImage(category.label, category.label);
+
               return (
                 <Link
                   key={category.id}
                   href={category.href as Route}
                   aria-current={active ? "page" : undefined}
                   className={
-                    "shrink-0 rounded-full px-2.5 py-1 text-caption transition-colors duration-200 ease-brand " +
-                    (active
-                      ? "bg-surface font-medium text-brand shadow-sm"
-                      : "font-medium text-neutral-500 hover:text-brand")
+                    "group relative isolate flex h-[50px] min-w-[122px] shrink-0 items-end overflow-hidden rounded-xl border px-3 py-2 text-white shadow-sm transition duration-200 ease-brand hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 " +
+                    (active ? "border-primary-300 ring-2 ring-primary-300/70" : "border-white/10")
+                  }
+                  style={
+                    image
+                      ? {
+                          backgroundImage: \`linear-gradient(180deg, rgba(11, 14, 20, 0.08) 0%, rgba(11, 14, 20, 0.78) 100%), url(\"${image}\")\`,
+                          backgroundPosition: "center",
+                          backgroundSize: "cover",
+                        }
+                      : {
+                          backgroundImage:
+                            "linear-gradient(180deg, rgba(63, 67, 75, 0.72), rgba(11, 14, 20, 0.98))",
+                        }
                   }
                 >
-                  {category.label}
+                  <span className="relative z-10 truncate text-caption font-semibold drop-shadow-sm">
+                    {category.label}
+                  </span>
+                  {active ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-3 bottom-0 z-20 h-0.5 rounded-full bg-primary-300"
+                    />
+                  ) : null}
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 z-0 bg-brand/0 transition-colors duration-200 group-hover:bg-brand/10"
+                  />
                 </Link>
               );
             })
           ) : (
             <span
               aria-busy={categoriesQuery.isPending}
-              className="text-caption text-neutral-400"
+              className="px-1 text-caption text-white/50"
             >
               {categoriesQuery.isPending ? "جاري تحميل التصنيفات…" : "التصنيفات غير متاحة حاليًا"}
             </span>
