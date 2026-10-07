@@ -28,7 +28,7 @@ const navigation = [
 ] as const;
 
 function getCategoryNavImage(slug: string, label: string): string | undefined {
-  const source = `${slug} ${label}`.toLocaleLowerCase("ar");
+  const source = (slug + " " + label).toLocaleLowerCase("ar");
 
   if (/(watch|watches|ساعة|ساعات)/.test(source)) return HERO_SLIDES[0].image;
   if (/(shoe|shoes|footwear|حذاء|أحذية)/.test(source)) return HERO_SLIDES[2].image;
@@ -179,7 +179,8 @@ export function GlobalNavigation() {
                   style={
                     image
                       ? {
-                          backgroundImage: \`linear-gradient(180deg, rgba(11, 14, 20, 0.08) 0%, rgba(11, 14, 20, 0.78) 100%), url(\"${image}\")\`,
+                          backgroundImage:
+                            "linear-gradient(180deg, rgba(11, 14, 20, 0.08) 0%, rgba(11, 14, 20, 0.78) 100%), url(" + image + ")",
                           backgroundPosition: "center",
                           backgroundSize: "cover",
                         }
