@@ -1,0 +1,20 @@
+import type { StorybookConfig } from "@storybook/nextjs-vite";
+
+const config: StorybookConfig = {
+  stories: [
+    "../src/**/*.mdx",
+    "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+  ],
+  addons: [
+    "@storybook/addon-a11y",
+    "@storybook/addon-vitest",
+    "@storybook/addon-designs",
+  ],
+  framework: {
+    name: "@storybook/nextjs-vite",
+    options: {},
+  },
+  docs: { autodocs: "tag" },
+};
+
+export default config;
