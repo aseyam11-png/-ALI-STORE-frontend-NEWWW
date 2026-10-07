@@ -6,6 +6,15 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  { files: ["**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}"], ...jsxA11y.flatConfigs.recommended },
-  globalIgnores([".next/**", "node_modules/**", "coverage/**", "out/**", "artifacts/**"]),
+  {
+    files: ["**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}"],
+    ...jsxA11y.flatConfigs.recommended,
+  },
+  globalIgnores([
+    ".next/**",
+    "node_modules/**",
+    "coverage/**",
+    "out/**",
+    "artifacts/**",
+  ]),
 ]);
