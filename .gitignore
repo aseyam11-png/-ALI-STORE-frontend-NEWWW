@@ -2,6 +2,10 @@ node_modules/
 .next/
 out/
 dist/
+coverage/
+playwright-report/
+test-results/
+graphify-out/
 .env
 .env.local
 .env.development.local
