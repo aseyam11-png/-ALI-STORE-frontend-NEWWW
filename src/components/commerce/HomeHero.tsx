@@ -80,7 +80,7 @@ export function HomeHero() {
 
   return (
     <section aria-label="عروض ALI STORE" className="bg-background">
-      <div className="container-shell py-5 sm:py-6 lg:py-7">
+      <div className="container-shell py-4 sm:py-5 lg:py-6">
         <div
           className="relative overflow-hidden rounded-xl border border-border bg-ink-950 shadow-floating sm:rounded-2xl"
           onMouseEnter={() => setPaused(true)}
@@ -101,7 +101,7 @@ export function HomeHero() {
                   className="min-w-0 flex-[0_0_100%]"
                   aria-roledescription="شريحة"
                 >
-                  <div className="relative aspect-[16/6] min-h-[300px] sm:min-h-0">
+                  <div className="relative aspect-[6/1] min-h-[180px] sm:min-h-[200px] lg:min-h-0">
                     <Image
                       src={slide.image}
                       alt={slide.alt}
@@ -116,20 +116,20 @@ export function HomeHero() {
                       aria-hidden="true"
                     />
 
-                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 lg:p-10">
-                      <div className="max-w-md text-white">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-ink-950/35 px-3 py-1.5 text-label font-medium text-white/85 backdrop-blur-md">
+                    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 lg:p-7">
+                      <div className="max-w-sm text-white">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-ink-950/35 px-2.5 py-1 text-label font-medium text-white/85 backdrop-blur-md">
                           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                           مختارات ALI STORE
                         </div>
 
-                        <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+                        <h1 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">
                           {slide.title}
                         </h1>
 
                         <Link
                           href={slide.href as Route}
-                          className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-body-sm font-medium text-ink-900 shadow-raised transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-white/95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+                          className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg bg-white px-4 text-body-sm font-medium text-ink-900 shadow-raised transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-white/95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
                         >
                           اكتشف الآن
                           <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
@@ -146,7 +146,7 @@ export function HomeHero() {
             type="button"
             aria-label="الصورة السابقة"
             onClick={() => handleManualNavigation(() => emblaApi?.scrollPrev())}
-            className="absolute start-3 top-1/2 z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-ink-950/45 text-white backdrop-blur-md transition hover:bg-ink-950/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:start-5 sm:h-10 sm:w-10"
+            className="absolute start-3 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-ink-950/45 text-white backdrop-blur-md transition hover:bg-ink-950/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:start-4 sm:h-9 sm:w-9"
           >
             <ChevronRight className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
           </button>
@@ -155,14 +155,14 @@ export function HomeHero() {
             type="button"
             aria-label="الصورة التالية"
             onClick={() => handleManualNavigation(() => emblaApi?.scrollNext())}
-            className="absolute end-3 top-1/2 z-10 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-ink-950/45 text-white backdrop-blur-md transition hover:bg-ink-950/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:end-5 sm:h-10 sm:w-10"
+            className="absolute end-3 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-ink-950/45 text-white backdrop-blur-md transition hover:bg-ink-950/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:end-4 sm:h-9 sm:w-9"
           >
             <ChevronLeft className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
           </button>
 
-          <div className="absolute inset-x-0 bottom-4 z-10 flex justify-center sm:bottom-5">
+          <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-4">
             <div
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/45 px-2.5 py-1.5 backdrop-blur-md"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/45 px-2 py-1 backdrop-blur-md"
               aria-label="التنقل بين صور البانر"
             >
               {HERO_SLIDES.map((slide, index) => (
