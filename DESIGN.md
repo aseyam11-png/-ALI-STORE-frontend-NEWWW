@@ -1819,3 +1819,21 @@ Scope: ALI STORE customer-facing frontend
 Language/Direction: Arabic / RTL first
 Primary design system: Existing ALI STORE semantic tokens
 Business model constraint: B2C supplier-based commerce; no customer-facing B2B presentation
+
+
+## 20. Design System Tooling and Governance
+
+The implementation is now backed by a component-level tooling layer:
+
+- Storybook for isolated component development and documentation.
+- Storybook A11y for component accessibility review.
+- Storybook Vitest integration for story-driven component tests.
+- Storybook Designs for Figma/web reference context.
+- Style Dictionary for a governed token inventory.
+- eslint-plugin-jsx-a11y for static JSX accessibility checks.
+- Stylelint for CSS correctness checks.
+- Chromatic is supported as an optional visual-review gate.
+
+Every shared UI primitive should have a story covering its normal and material state variants. New styling should consume the existing semantic tokens in \`src/app/globals.css\` rather than introduce one-off colors, radii, shadows, or typography values.
+
+The initial token inventory does not replace the runtime CSS source. Runtime token migration is a separate visual change and must be protected by visual regression checks.
