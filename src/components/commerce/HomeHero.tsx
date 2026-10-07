@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -12,7 +13,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { HERO_SLIDES } from "./home-imagery";
+import { getCategoryNavImage, HERO_SLIDES } from "./home-imagery";
+import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
 
 export function HomeHero() {
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -25,6 +27,20 @@ export function HomeHero() {
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const categoriesQuery = useQuery({
+    queryKey: ["catalog", "categories"],
+    queryFn: getTopLevelCategories,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const categories = (categoriesQuery.data ?? []).map((category) => ({
+    id: category.id,
+    label: category.name,
+    slug: category.slug,
+    href: "/shop/categories/" + category.slug,
+  }));
 
   const scrollTo = useCallback(
     (index: number) => emblaApi?.scrollTo(index),
@@ -116,7 +132,7 @@ export function HomeHero() {
                       aria-hidden="true"
                     />
 
-                    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 lg:p-7">
+                    <div className="absolute inset-x-0 bottom-[70px] p-4 sm:p-5 lg:p-7">
                       <div className="max-w-sm text-white">
                         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-ink-950/35 px-2.5 py-1 text-label font-medium text-white/85 backdrop-blur-md">
                           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
@@ -139,6 +155,72 @@ export function HomeHero() {
                   </div>
                 </article>
               ))}
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/10 bg-ink-950/90 backdrop-blur-md">
+            <div className="container-shell flex min-h-[62px] items-center gap-2 overflow-x-auto py-1.5 scroll-surface [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex shrink-0 items-center gap-1.5 px-1.5 text-label font-semibold text-white/60">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary-300" aria-hidden="true" />
+                أقسام المتجر
+              </div>
+
+              {categories.length > 0 ? (
+                categories.map((category) => {
+                  const active = false;
+                  const image = getCategoryNavImage(category.slug, category.label);
+
+                  return (
+                    <Link
+                      key={category.id}
+                      href={category.href as Route}
+                      aria-current={active ? "page" : undefined}
+                      className={
+                        "group relative isolate flex h-[48px] min-w-[118px] shrink-0 items-end overflow-hidden rounded-lg border px-2.5 py-1.5 text-white shadow-sm transition duration-200 ease-brand hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 " +
+                        (active ? "border-primary-300 ring-1 ring-primary-300/80" : "border-white/10")
+                      }
+                      style={
+                        image
+                          ? {
+                              backgroundImage:
+                                "linear-gradient(180deg, rgba(11, 14, 20, 0.06) 0%, rgba(11, 14, 20, 0.82) 100%), url(" +
+                                image +
+                                ")",
+                              backgroundPosition: "center",
+                              backgroundSize: "cover",
+                            }
+                          : {
+                              backgroundImage:
+                                "linear-gradient(180deg, rgba(63, 67, 75, 0.72), rgba(11, 14, 20, 0.98))",
+                            }
+                      }
+                    >
+                      <span className="relative z-10 truncate text-caption font-semibold drop-shadow-sm">
+                        {category.label}
+                      </span>
+                      {active ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-x-2.5 bottom-0 z-20 h-0.5 rounded-full bg-primary-300"
+                        />
+                      ) : null}
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 z-0 bg-brand/0 transition-colors duration-200 group-hover:bg-brand/10"
+                      />
+                    </Link>
+                  );
+                })
+              ) : (
+                <span
+                  aria-busy={categoriesQuery.isPending}
+                  className="px-1 text-caption text-white/50"
+                >
+                  {categoriesQuery.isPending
+                    ? "جاري تحميل التصنيفات…"
+                    : "التصنيفات غير متاحة حاليًا"}
+                </span>
+              )}
             </div>
           </div>
 
