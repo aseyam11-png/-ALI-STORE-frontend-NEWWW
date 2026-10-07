@@ -45,20 +45,26 @@ export function AnalyticsScripts() {
       ) : null}
 
       {posthogToken ? (
-        <Script id="ali-store-posthog" strategy="afterInteractive">{`
-          (function initPostHog() {
-            if (window.posthog && typeof window.posthog.init === "function") {
-              window.posthog.init(${JSON.stringify(posthogToken)}, {
-                api_host: ${JSON.stringify(posthogHost)},
-                defaults: "2026-05-30",
-                capture_pageview: false,
-                capture_pageleave: true
-              });
-              return;
-            }
-            window.setTimeout(initPostHog, 100);
-          })();
-        `}</Script>
+        <>
+          <Script
+            src={posthogHost + "/static/array.js"}
+            strategy="afterInteractive"
+          />
+          <Script id="ali-store-posthog" strategy="afterInteractive">{`
+            (function initPostHog() {
+              if (window.posthog && typeof window.posthog.init === "function") {
+                window.posthog.init(${JSON.stringify(posthogToken)}, {
+                  api_host: ${JSON.stringify(posthogHost)},
+                  defaults: "2026-05-30",
+                  capture_pageview: false,
+                  capture_pageleave: true
+                });
+                return;
+              }
+              window.setTimeout(initPostHog, 100);
+            })();
+          `}</Script>
+        </>
       ) : null}
     </>
   );
