@@ -1,0 +1,13 @@
+{
+  "color": {
+    "primary": { "50": { "value": "#FFF3E8", "type": "color" }, "100": { "value": "#FFE3CC", "type": "color" }, "200": { "value": "#FFC79A", "type": "color" }, "300": { "value": "#FFA75F", "type": "color" }, "400": { "value": "#FF8B33", "type": "color" }, "500": { "value": "#FF6B00", "type": "color" }, "600": { "value": "#E85F00", "type": "color" }, "700": { "value": "#C24E00", "type": "color" } },
+    "neutral": { "0": { "value": "#FFFFFF", "type": "color" }, "50": { "value": "#FAFAF9", "type": "color" }, "100": { "value": "#F4F3F2", "type": "color" }, "200": { "value": "#E7E5E3", "type": "color" }, "400": { "value": "#A8A29C", "type": "color" }, "500": { "value": "#78716C", "type": "color" }, "700": { "value": "#44403C", "type": "color" }, "900": { "value": "#1C1917", "type": "color" }, "950": { "value": "#120F0E", "type": "color" } },
+    "success": { "500": { "value": "#16A34A", "type": "color" } },
+    "warning": { "500": { "value": "#EAB308", "type": "color" } },
+    "discount": { "500": { "value": "#DC2626", "type": "color" } }
+  },
+  "radius": { "sm": { "value": "0.5rem", "type": "dimension" }, "md": { "value": "0.75rem", "type": "dimension" }, "lg": { "value": "1.25rem", "type": "dimension" }, "xl": { "value": "1.75rem", "type": "dimension" } },
+  "spacing": { "3xs": { "value": "0.25rem", "type": "dimension" }, "2xs": { "value": "0.5rem", "type": "dimension" }, "xs": { "value": "0.75rem", "type": "dimension" }, "sm": { "value": "1rem", "type": "dimension" }, "md": { "value": "1.5rem", "type": "dimension" }, "lg": { "value": "2rem", "type": "dimension" }, "xl": { "value": "3rem", "type": "dimension" }, "2xl": { "value": "4rem", "type": "dimension" }, "3xl": { "value": "5rem", "type": "dimension" }, "4xl": { "value": "6rem", "type": "dimension" } },
+  "typography": { "body": { "value": "0.9375rem", "type": "dimension" }, "body-sm": { "value": "0.8125rem", "type": "dimension" }, "caption": { "value": "0.75rem", "type": "dimension" }, "h4": { "value": "1.125rem", "type": "dimension" } },
+  "motion": { "ease-brand": { "value": "cubic-bezier(0.22, 1, 0.36, 1)", "type": "cubicBezier" } }
+}
