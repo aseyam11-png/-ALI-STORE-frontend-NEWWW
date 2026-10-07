@@ -17,7 +17,11 @@
         "test:a11y": "npx pa11y-ci http://127.0.0.1:3000/",
         "quality:lighthouse": "npx lhci autorun --config=.lighthouserc.cjs",
         "quality:visual": "npx backstop test",
-        "quality:advanced": "npm run lint && npx tsc --noEmit && npm run test:unit && npm run test:contracts && npm run build"
+        "quality:advanced": "npm run lint && npx tsc --noEmit && npm run test:unit && npm run test:contracts && npm run build",
+        "storybook": "storybook dev -p 6006",
+        "storybook:build": "storybook build",
+        "design-tokens": "style-dictionary build --config style-dictionary.config.mjs",
+        "design-system:check": "node tools/design-system/check.mjs"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.1",
