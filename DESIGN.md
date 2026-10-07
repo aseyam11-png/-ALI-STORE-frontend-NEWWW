@@ -1840,25 +1840,60 @@ Every shared UI primitive should have a story covering its normal and material s
 
 The initial token inventory does not replace the runtime CSS source. Runtime token migration is a separate visual change and must be protected by visual regression checks.
 
-## 21. Homepage Quick Shop Sidebar
+## 21. Homepage Hero & Category Navigation
 
-The homepage hero uses a dedicated Quick Shop category rail on large screens. In RTL it occupies the right side, while the primary hero content and editorial image remain to its left.
+The homepage discovery area is intentionally split into three independent visual surfaces:
 
-Required category targets:
+1. **Wide Fashion Hero** — one editorial image per slide in a short landscape banner.
+2. **Vertical Category Rail** — a visually independent sidebar for the four priority departments.
+3. **Horizontal Category Rail** — a separate surface beside the sidebar for the active department's real child categories.
 
-- الملابس — resolves to the canonical clothing/fashion category when available.
-- الأحذية — resolves to the canonical shoes/footwear category when available.
-- الساعات — resolves to the canonical watches category when available.
-- الإكسسوارات — resolves to the canonical accessories category when available.
+### Hero requirements
 
-The sidebar is catalog-aware. It must not invent category ids, product counts, availability, prices, discounts, or other commerce truth. When a target category cannot be resolved from the real catalog, the item remains visually present but is disabled and marked unavailable rather than linking to an invented route.
+- Exactly four editorial slides are used.
+- Only one slide is visible at a time.
+- Slides advance automatically about every 3 seconds.
+- Previous/next controls and pagination dots remain available.
+- Autoplay pauses while the user hovers or focuses the carousel.
+- prefers-reduced-motion disables autoplay.
+- Hero height remains intentionally compact.
+- Hero imagery is presentation-only; product truth is never encoded in the banner.
+- Visual search remains available as a secondary action.
+- The implementation reuses the existing embla-carousel-react dependency.
 
-Desktop pattern:
+### Category navigation requirements
 
-`Quick Shop 280px → Hero content/image flexible area`
+Desktop composition:
 
-Mobile pattern:
+Hero → independent Category Rail + independent Horizontal Rail → Products
 
-`Quick Shop 2-column compact grid → Hero content → Hero image`
+The vertical rail must remain visually distinct:
 
-The sidebar uses existing ALI STORE semantic tokens, shared motion easing, RTL-safe logical positioning, focus-visible treatment, and Storybook coverage. It is a homepage composition pattern, not a second navigation system.
+- separate card;
+- separate border;
+- separate spacing;
+- separate interaction states.
+
+The horizontal rail must remain visually distinct:
+
+- independent card;
+- horizontal scrolling when needed;
+- active state;
+- child-category selection;
+- no shared background with the sidebar.
+
+The vertical rail selects one of:
+
+- الملابس
+- الأحذية
+- الساعات
+- الإكسسوارات
+
+The horizontal rail resolves its labels from the active category's real child nodes when available. No category id, count, price, stock, route, or other commerce truth may be fabricated.
+
+Product results continue to use the existing getProducts service and B2CProductCard pattern. The design change must not alter cart, wishlist, authentication, inventory, supplier, pricing, checkout, or API contracts.
+
+### Homepage duplication rule
+
+The old large CategoryGrid and repeated HomeCategorySections composition are not rendered on the homepage. Their homepage presentation responsibility is replaced by the single Category Explorer surface to reduce duplicated navigation and repeated product shelves.
+
