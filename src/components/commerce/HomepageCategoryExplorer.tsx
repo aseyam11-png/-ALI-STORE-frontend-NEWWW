@@ -183,14 +183,14 @@ export function HomepageCategoryExplorer() {
         />
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[224px_minmax(0,1fr)] lg:items-start lg:gap-5">
-          <aside className="rounded-2xl border border-border bg-surface p-2.5 shadow-raised">
+          <aside className="rounded-2xl border border-neutral-200 bg-neutral-100 p-2.5 shadow-raised">
             <div className="px-3 pb-2.5">
               <p className="text-label font-medium uppercase tracking-[0.14em] text-brand">
                 الأقسام
               </p>
             </div>
 
-            <nav aria-label="الأقسام الرئيسية" className="grid gap-1">
+            <nav aria-label="الأقسام الرئيسية" className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
               {targets.map((target) => {
                 const Icon = target.Icon;
                 const active = target.key === activeKey;
@@ -204,10 +204,10 @@ export function HomepageCategoryExplorer() {
                     disabled={!available}
                     onClick={() => handleCategoryChange(target.key)}
                     className={
-                      "relative flex min-h-14 items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-start transition-all duration-200 ease-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 " +
+                      "relative flex min-h-14 items-center gap-3 rounded-xl border bg-surface px-3 py-2 text-start transition-all duration-200 ease-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100 " +
                       (active
-                        ? "border-primary-100 bg-primary-50 text-brand shadow-sm"
-                        : "text-foreground hover:bg-neutral-50 hover:border-neutral-200") +
+                        ? "border-primary-200 bg-primary-50 text-brand shadow-sm"
+                        : "border-transparent text-foreground shadow-none hover:border-neutral-200 hover:bg-white") +
                       (!available ? " cursor-not-allowed opacity-45" : "")
                     }
                   >
@@ -250,7 +250,7 @@ export function HomepageCategoryExplorer() {
 
             <Link
               href={"/shop/products" as Route}
-              className="mt-1.5 flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-caption font-medium text-neutral-700 transition hover:border-primary-200 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+              className="mt-1.5 flex min-h-10 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-surface px-3 text-caption font-medium text-neutral-700 transition hover:border-primary-200 hover:text-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
             >
               جميع المنتجات
               <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
