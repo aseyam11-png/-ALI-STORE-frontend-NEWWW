@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
 
 import { useCartStore } from "@/stores/cart-store";
@@ -36,6 +36,30 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
     : product.stockStatus === "in_stock" || product.stockStatus === "low_stock";
 
   const subtotal = price * quantity;
+
+  useEffect(() => {
+    trackEcommerceEvent("view_item", {
+      currency: product.currency,
+      value: price,
+      items: [
+        {
+          item_id: product.id,
+          item_name: product.name,
+          price,
+          quantity: 1,
+          item_category: product.category,
+          item_brand: product.brand,
+        },
+      ],
+    });
+  }, [
+    product.id,
+    product.name,
+    product.category,
+    product.brand,
+    product.currency,
+    price,
+  ]);
 
   const increase = () => {
     if (quantity < stock) {
