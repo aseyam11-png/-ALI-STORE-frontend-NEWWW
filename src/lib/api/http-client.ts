@@ -27,16 +27,6 @@ const configuredServerApiBase =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
   null;
 
-if (
-  typeof window === "undefined" &&
-  process.env.NODE_ENV === "production" &&
-  !configuredServerApiBase
-) {
-  throw new Error(
-    "Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL for production server rendering.",
-  );
-}
-
 const SERVER_API_BASE_URL =
   configuredServerApiBase ?? "http://localhost:8080";
 
@@ -84,6 +74,16 @@ export class HttpClient {
   }
 
   async request<T>(path: string, init?: RequestInit): Promise<T> {
+    if (
+      typeof window === "undefined" &&
+      process.env.NODE_ENV === "production" &&
+      !configuredServerApiBase
+    ) {
+      throw new Error(
+        "Production API is not configured. Set BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL.",
+      );
+    }
+
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
