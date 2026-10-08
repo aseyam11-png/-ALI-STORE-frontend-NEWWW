@@ -61,4 +61,15 @@ export interface B2CProduct {
   featured?: boolean;
   flashSale?: boolean;
   tags?: string[];
+  shippingMethods: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    currency: string;
+    estimatedMinDays: number;
+    estimatedMaxDays: number;
+    available: boolean;
+  }>;
+  flashSale?: boolean;
 }

@@ -21,6 +21,42 @@ type BackendProduct = {
   availableQuantity?: number | null;
   rating?: number | string | null;
   reviewCount?: number | null;
+  originalPrice?: number | string | null;
+  discountPercentage?: number | string | null;
+  promotionTitle?: string | null;
+  flashSale?: boolean | null;
+  variants?: Array<{
+    id: number;
+    sku: string;
+    name: string;
+    value: string;
+    price?: number | string | null;
+    currency?: string | null;
+    availableQuantity?: number | null;
+    imageUrl?: string | null;
+    active: boolean;
+  }> | null;
+  shippingMethods?: Array<{
+    id: number;
+    code: string;
+    name: string;
+    description?: string | null;
+    price: number | string;
+    currency: string;
+    estimatedMinDays: number;
+    estimatedMaxDays: number;
+    countryCode?: string | null;
+    active: boolean;
+  }> | null;
+  reviewSummary?: {
+    averageRating: number | string;
+    reviewCount: number;
+    oneStar: number;
+    twoStar: number;
+    threeStar: number;
+    fourStar: number;
+    fiveStar: number;
+  } | null;
   categoryId?: number | null;
   categoryName?: string | null;
   categorySlug?: string | null;
@@ -104,6 +140,8 @@ function mapProduct(product: BackendProduct): ProductSummary {
       amount: price,
       currency: product.currency || "USD",
       unit: "piece",
+      originalAmount: product.originalPrice != null ? parseMoney(product.originalPrice) : undefined,
+      discountPercentage: product.discountPercentage != null ? parseMoney(product.discountPercentage) : undefined,
     },
     minOrderQuantity: 1,
     rating: Math.max(0, Math.min(5, Number(product.rating ?? 0))),
@@ -115,7 +153,9 @@ function mapProduct(product: BackendProduct): ProductSummary {
       name: "ALI STORE",
       verified: true,
     },
-    shipping: "Calculated at checkout",
+    shipping: product.shippingMethods?.[0]?.name
+      ? product.shippingMethods[0].name
+      : "Shipping details available at checkout",
     thumbnail: imageUrl
       ? {
           id: `product-${product.id}-primary`,
@@ -142,7 +182,7 @@ function mapProduct(product: BackendProduct): ProductSummary {
     stockQuantity: availableQuantity,
     stockStatus: mapStockStatus(product.availability, availableQuantity),
     status: mapStatus(product.status),
-    featured: false,
+    featured: Boolean(product.flashSale),
     bestseller: false,
     newArrival: false,
     tags: [],
@@ -172,7 +212,26 @@ function mapDetails(product: BackendProduct): ProductDetails {
     description: product.description ?? "",
     images: finalImages,
     videos: [],
-    variants: [],
+    variants: (product.variants ?? []).map((variant) => ({
+      id: String(variant.id),
+      sku: variant.sku,
+      name: variant.name,
+      price: variant.price != null ? {
+        amount: parseMoney(variant.price),
+        currency: variant.currency ?? product.currency,
+        unit: "piece",
+      } : undefined,
+      stockQuantity: parseQuantity(variant.availableQuantity),
+      availableQuantity: parseQuantity(variant.availableQuantity),
+      options: [{ id: String(variant.id), name: variant.name, value: variant.value }],
+      image: variant.imageUrl ? {
+        id: "variant-" + variant.id,
+        url: variant.imageUrl,
+        alt: product.name + " - " + variant.value,
+        sortOrder: 0,
+      } : undefined,
+      active: variant.active,
+    })),
     specifications: [
       { key: "sku", label: "SKU", value: product.sku, group: "Product" },
       {
@@ -195,16 +254,27 @@ function mapDetails(product: BackendProduct): ProductDetails {
       },
     ],
     priceTiers: [],
-    shippingMethods: [],
+    shippingMethods: (product.shippingMethods ?? []).map((method) => ({
+      id: String(method.id),
+      name: method.name,
+      description: method.description ?? undefined,
+      price: parseMoney(method.price),
+      currency: method.currency,
+      estimatedMinDays: method.estimatedMinDays,
+      estimatedMaxDays: method.estimatedMaxDays,
+      available: method.active,
+    })),
     reviewSummary: {
-      rating: summary.rating,
-      reviewCount: summary.reviewCount,
+      rating: product.reviewSummary?.averageRating != null
+        ? parseMoney(product.reviewSummary.averageRating)
+        : summary.rating,
+      reviewCount: product.reviewSummary?.reviewCount ?? summary.reviewCount,
       distribution: {
-        five: 0,
-        four: 0,
-        three: 0,
-        two: 0,
-        one: 0,
+        five: product.reviewSummary?.fiveStar ?? 0,
+        four: product.reviewSummary?.fourStar ?? 0,
+        three: product.reviewSummary?.threeStar ?? 0,
+        two: product.reviewSummary?.twoStar ?? 0,
+        one: product.reviewSummary?.oneStar ?? 0,
       },
     },
     seo: {
