@@ -96,6 +96,43 @@ export default function OrderConfirmationPage() {
     };
   }, [orderId]);
 
+  useEffect(() => {
+    if (!payment || payment.status !== "PENDING" || payment.method === "CASH_ON_DELIVERY") {
+      return;
+    }
+
+    let active = true;
+    let attempts = 0;
+
+    const poll = window.setInterval(async () => {
+      attempts += 1;
+      if (attempts > 15 || !active) {
+        window.clearInterval(poll);
+        return;
+      }
+
+      try {
+        const nextPayment = await getBackendPaymentByOrderId(orderId);
+        if (!active || !nextPayment) return;
+        setPayment(nextPayment);
+
+        if (nextPayment.status === "COMPLETED") {
+          const nextOrder = await getOrder(orderId);
+          if (!active) return;
+          setOrder(nextOrder);
+          window.clearInterval(poll);
+        }
+      } catch {
+        // Keep the last server-confirmed state visible while the webhook settles.
+      }
+    }, 2000);
+
+    return () => {
+      active = false;
+      window.clearInterval(poll);
+    };
+  }, [orderId, payment?.status, payment?.method]);
+
   if (loading) {
     return (
       <AppShell>
