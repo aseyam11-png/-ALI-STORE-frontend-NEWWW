@@ -297,3 +297,9 @@ test("release gate: package test/build/lint scripts remain defined", () => {
   assert.equal(pkg.scripts?.["test:contracts"], "node --test");
   assert.equal(typeof pkg.scripts?.build, "string");
 });
+
+
+test("production catalog has no legacy mock product source", async () => {
+  await assert.rejects(() => read("src/mocks/products.ts"));
+  await assert.rejects(() => read("src/features/products/services/product.mapper.ts"));
+});
