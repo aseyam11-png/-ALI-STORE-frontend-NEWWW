@@ -127,7 +127,10 @@ export default async function ProductDetailPage({
           </div>
 
           <section className="mt-8">
-            <ProductReviews productId={productDetails.id} />
+            <ProductReviews
+              productId={productDetails.id}
+              summary={productDetails.reviewSummary}
+            />
           </section>
 
           <RecentlyViewedSection
