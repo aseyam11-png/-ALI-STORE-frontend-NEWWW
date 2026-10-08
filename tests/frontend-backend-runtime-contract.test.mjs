@@ -13,6 +13,8 @@ test("browser API calls use the same-origin bridge while SSR uses the private ba
   assert.match(source, /process\.env\.NEXT_PUBLIC_API_BASE_URL \?\? ""/);
   assert.match(source, /typeof window === "undefined"/);
   assert.match(source, /credentials: "include"/);
+  assert.match(source, /Production API is not configured/);
+  assert.doesNotMatch(source, /if \(\s*typeof window === "undefined",[\s\S]*?throw new Error\(\s*"Missing BACKEND_INTERNAL_URL/);
 });
 
 test("Next.js proxies API and OAuth traffic to the configured private backend", async () => {
