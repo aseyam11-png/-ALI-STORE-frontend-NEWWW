@@ -56,11 +56,6 @@ export interface B2CProduct {
     estimatedDelivery: string;
   };
 
-  returnPolicy?: string;
-
-  featured?: boolean;
-  flashSale?: boolean;
-  tags?: string[];
   shippingMethods: Array<{
     id: string;
     name: string;
@@ -71,5 +66,10 @@ export interface B2CProduct {
     estimatedMaxDays: number;
     available: boolean;
   }>;
+
+  returnPolicy?: string;
+
+  featured?: boolean;
   flashSale?: boolean;
+  tags?: string[];
 }
