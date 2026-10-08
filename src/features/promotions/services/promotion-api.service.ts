@@ -12,6 +12,8 @@ export type ActivePromotion = {
   price: number;
   discountPercentage: number;
   currency: string;
+  availability: "IN_STOCK" | "OUT_OF_STOCK" | "UNKNOWN";
+  availableQuantity: number;
   startsAt: string;
   endsAt: string;
   active: boolean;
