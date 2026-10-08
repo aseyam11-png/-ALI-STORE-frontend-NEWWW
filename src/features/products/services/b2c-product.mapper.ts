@@ -1,8 +1,8 @@
-﻿import type { ProductSummary } from "../types/product.types";
+﻿import type { ProductDetails, ProductSummary } from "../types/product.types";
 import type { B2CProduct } from "../types/b2c-product.types";
 
 export function normalizeB2CProduct(
-  product: ProductSummary,
+  product: ProductSummary | ProductDetails,
 ): B2CProduct {
   return {
     id: product.id,
@@ -52,7 +52,25 @@ export function normalizeB2CProduct(
           ]
         : [],
 
-    variants: [],
+    variants: "variants" in product && Array.isArray(product.variants)
+      ? product.variants.map((variant) => ({
+          id: variant.id,
+          name: variant.options[0]?.name ?? variant.name,
+          value: variant.options[0]?.value ?? variant.name,
+          type:
+            (variant.options[0]?.name?.toLowerCase().includes("color") ? "color"
+              : variant.options[0]?.name?.toLowerCase().includes("size") ? "size"
+              : "option") as "color" | "size" | "storage" | "material" | "option",
+          available: variant.active && variant.availableQuantity > 0,
+          price: variant.price?.amount,
+          originalPrice: variant.price?.originalAmount,
+          stock: variant.availableQuantity,
+          image: variant.image?.url,
+          attributes: Object.fromEntries(
+            variant.options.map((option) => [option.name, option.value]),
+          ),
+        }))
+      : [],
 
     rating:
       product.rating,

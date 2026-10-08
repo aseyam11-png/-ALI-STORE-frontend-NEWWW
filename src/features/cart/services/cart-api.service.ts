@@ -6,6 +6,10 @@ export interface BackendCartItem {
   productId: number;
   productName: string;
   productPrice: number;
+  variantId?: number | null;
+  variantName?: string | null;
+  variantValue?: string | null;
+  variantSku?: string | null;
   currency?: string;
   quantity: number;
   subTotal: number;
@@ -26,6 +30,15 @@ function toPositiveProductId(productId: string | number) {
   return numericId;
 }
 
+function toPositiveVariantId(variantId?: string) {
+  if (!variantId) return undefined;
+  const numericId = Number(variantId);
+  if (!Number.isInteger(numericId) || numericId < 1) {
+    throw new Error("Invalid backend variant id: " + variantId);
+  }
+  return numericId;
+}
+
 function toPositiveQuantity(quantity: number) {
   if (!Number.isInteger(quantity) || quantity < 1) {
     throw new Error("Cart quantity must be a positive integer.");
@@ -40,11 +53,15 @@ export async function getBackendCart(): Promise<BackendCart> {
 export async function addBackendCartItem(
   productId: number,
   quantity: number,
+  variantId?: string,
 ): Promise<BackendCart> {
   return apiClient.requestData<BackendCart>("/api/v1/cart/items", {
     method: "POST",
     body: JSON.stringify({
       productId: toPositiveProductId(productId),
+      ...(toPositiveVariantId(variantId) !== undefined
+        ? { variantId: toPositiveVariantId(variantId) }
+        : {}),
       quantity: toPositiveQuantity(quantity),
     }),
   });
@@ -54,6 +71,7 @@ export async function updateBackendCartItem(
   itemId: number,
   quantity: number,
   productId: number,
+  variantId?: string,
 ): Promise<BackendCart> {
   if (!Number.isInteger(itemId) || itemId < 1) {
     throw new Error("Invalid backend cart item id: " + itemId);
@@ -65,6 +83,9 @@ export async function updateBackendCartItem(
       method: "PATCH",
       body: JSON.stringify({
         productId: toPositiveProductId(productId),
+        ...(toPositiveVariantId(variantId) !== undefined
+          ? { variantId: toPositiveVariantId(variantId) }
+          : {}),
         quantity: toPositiveQuantity(quantity),
       }),
     },
@@ -95,29 +116,26 @@ export async function clearBackendCart(): Promise<BackendCart> {
 export async function replaceBackendCart(
   items: Array<{ productId: string; quantity: number; variantId?: string }>,
 ): Promise<BackendCart> {
-  const seenProductIds = new Set<number>();
+  const seenCartLines = new Set<string>();
 
   const requestItems = items.map((item) => {
     const productId = toPositiveProductId(item.productId);
     const quantity = toPositiveQuantity(item.quantity);
 
-    if (item.variantId) {
-      throw new Error(
-        "The current cart API cannot persist product variants. Please select the base product before continuing.",
-      );
+    const variantId = toPositiveVariantId(item.variantId);
+    const lineKey = productId + ":" + (variantId ?? "base");
+
+    if (seenCartLines.has(lineKey)) {
+      throw new Error("The same product variant appears more than once in the backend cart contract.");
     }
 
-    if (seenProductIds.has(productId)) {
-      throw new Error(
-        "Product " +
-          productId +
-          " appears more than once in the backend cart contract.",
-      );
-    }
+    seenCartLines.add(lineKey);
 
-    seenProductIds.add(productId);
-
-    return { productId, quantity };
+    return {
+      productId,
+      ...(variantId !== undefined ? { variantId } : {}),
+      quantity,
+    };
   });
 
   return apiClient.requestData<BackendCart>("/api/v1/cart", {
@@ -142,22 +160,22 @@ export function mergeCartLines(
 
   for (const item of backend.items) {
     const productId = String(item.productId);
-    merged.set(productId, {
+    const variantId = item.variantId == null ? undefined : String(item.variantId);
+    const key = productId + ":" + (variantId ?? "base");
+    merged.set(key, {
       productId,
       quantity: toPositiveQuantity(item.quantity),
+      variantId,
     });
   }
 
   for (const item of localItems) {
     const productId = String(item.productId);
-    const existing = merged.get(productId);
+    const variantId = item.variantId;
+    const key = productId + ":" + (variantId ?? "base");
+    const existing = merged.get(key);
 
     if (existing) {
-      if (existing.variantId || item.variantId) {
-        throw new Error(
-          "Cannot merge variant cart lines with the current backend cart contract.",
-        );
-      }
 
       existing.quantity = toPositiveQuantity(
         existing.quantity + toPositiveQuantity(item.quantity),
@@ -165,10 +183,10 @@ export function mergeCartLines(
       continue;
     }
 
-    merged.set(productId, {
+    merged.set(key, {
       productId,
       quantity: toPositiveQuantity(item.quantity),
-      variantId: item.variantId,
+      variantId,
     });
   }
 
@@ -179,12 +197,16 @@ export function mapBackendCartToLocal(
   backend: BackendCart,
   localItems: CartItem[] = [],
 ): CartItem[] {
-  const cachedByProduct = new Map(
-    localItems.map((item) => [item.productId, item]),
+  const cachedByLine = new Map(
+    localItems.map((item) => [
+      item.productId + ":" + (item.variantId ?? "base"),
+      item,
+    ]),
   );
 
   return backend.items.map((item) => {
-    const cached = cachedByProduct.get(String(item.productId));
+    const key = String(item.productId) + ":" + (item.variantId == null ? "base" : String(item.variantId));
+    const cached = cachedByLine.get(key);
 
     return {
       productId: String(item.productId),
@@ -196,8 +218,10 @@ export function mapBackendCartToLocal(
       quantity: item.quantity,
       image: cached?.image,
       minOrderQuantity: cached?.minOrderQuantity ?? 1,
-      variantId: undefined,
-      variantLabel: undefined,
+      variantId: item.variantId == null ? undefined : String(item.variantId),
+      variantLabel: item.variantName && item.variantValue
+        ? item.variantName + ": " + item.variantValue
+        : undefined,
       shippingCost: undefined,
       shippingMethod: undefined,
       estimatedDelivery: undefined,
