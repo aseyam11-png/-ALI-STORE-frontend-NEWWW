@@ -1,3 +1,4 @@
+import { getSiteUrl } from "@/lib/seo/site-url";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -23,14 +24,6 @@ interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-function getSiteUrl(): string | undefined {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (configured) return configured.replace(/\\/$/, "");
-  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  return vercelHost
-    ? "https://" + vercelHost.replace(/^https?:\\/\\//, "").replace(/\\/$/, "")
-    : undefined;
-}
 
 function safeJsonLd(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c");
