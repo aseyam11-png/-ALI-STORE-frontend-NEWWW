@@ -63,7 +63,7 @@ function AiProductCard({ product }: { product: AiCatalogProduct }) {
             {product.name}
           </h3>
           <p className="mt-1 truncate text-caption text-muted-foreground">
-            {[product.categoryName, product.sku].filter(Boolean).join(" · ")}
+            {[product.categoryName].filter(Boolean).join(" · ")}
           </p>
           <p className="mt-3 text-h4 text-brand-ink">
             {formatCurrency(Number(product.price), product.currency || "USD")}
