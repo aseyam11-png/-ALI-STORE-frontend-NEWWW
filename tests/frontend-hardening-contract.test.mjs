@@ -92,7 +92,7 @@ test("production SSR cannot silently fall back to localhost", async () => {
 
   assert.match(source, /process.env.NODE_ENV === "production"/);
   assert.match(source, /Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL/);
-  assert.match(source, /http://localhost:8080/);
+  assert.ok(source.includes("http://localhost:8080"));
 });
 
 
