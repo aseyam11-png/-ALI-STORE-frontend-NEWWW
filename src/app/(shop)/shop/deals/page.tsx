@@ -3,11 +3,14 @@ import { ArrowRight, Flame, ShieldCheck, Tag, Timer } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { ProductCard } from "@/components/commerce/ProductCard";
-import { getActivePromotions } from "@/features/promotions/services/promotion-api.service";
+import {
+  getActivePromotions,
+  type ActivePromotion,
+} from "@/features/promotions/services/promotion-api.service";
 import { mapPromotionToProductCard } from "@/features/promotions/services/promotion.mapper";
 
 export default async function DealsPage() {
-  let promotions = [];
+  let promotions: ActivePromotion[] = [];
   try {
     promotions = await getActivePromotions(false);
   } catch {
