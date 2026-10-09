@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Providers } from "@/components/providers";
 import { AnalyticsScripts } from "@/components/ux/AnalyticsScripts";
 import { RouteAnalytics } from "@/components/ux/RouteAnalytics";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
@@ -14,19 +15,8 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
 });
 
 function getMetadataBase(): URL | undefined {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  const candidate = configured || (vercelHost ? "https://" + vercelHost.replace(/^https?:\\/\\//, "") : undefined);
-  if (!candidate) return undefined;
-
-  try {
-    const url = new URL(candidate);
-    return url.protocol === "https:" || process.env.NODE_ENV !== "production"
-      ? url
-      : undefined;
-  } catch {
-    return undefined;
-  }
+  const siteUrl = getSiteUrl();
+  return siteUrl ? new URL(siteUrl) : undefined;
 }
 
 export const metadata: Metadata = {
