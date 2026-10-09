@@ -8,7 +8,7 @@ test("Next.js applies baseline security headers to every route", async () => {
   assert.match(source, /async headers\(\)/);
   assert.match(source, /source:\s*["']\/:path\*["']/);
   assert.match(source, /X-Content-Type-Options["'],\s*value:\s*["']nosniff["']/);
-  assert.match(source, /X-Frame-Options["'],\s*value:\s*["']SAMEORIGIN["']/);
+  assert.match(source, /X-Frame-Options["'],\s*value:\s*["']DENY["']/);
   assert.match(source, /Referrer-Policy["'],\s*value:\s*["']strict-origin-when-cross-origin["']/);
   assert.match(source, /X-Permitted-Cross-Domain-Policies["'],\s*value:\s*["']none["']/);
 });
