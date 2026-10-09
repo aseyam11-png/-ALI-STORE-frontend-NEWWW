@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import {
   Filter,
+  Search,
   SlidersHorizontal,
   X,
 } from "lucide-react";
