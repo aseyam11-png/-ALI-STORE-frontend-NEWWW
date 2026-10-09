@@ -198,6 +198,11 @@ export default function OrderConfirmationPage() {
 
       setPayment(nextPayment);
 
+      if (nextPayment.status === "PENDING" && nextPayment.checkoutUrl) {
+        window.location.assign(nextPayment.checkoutUrl);
+        return;
+      }
+
       if (nextPayment.status === "COMPLETED") {
         const nextOrder = await getOrder(String(order.id));
         setOrder(nextOrder);
@@ -387,6 +392,14 @@ export default function OrderConfirmationPage() {
                           <p className="mt-2">
                             طلبك محفوظ لدينا. لا تنشئ طلبًا ثانيًا، وراجع حالة الطلب من صفحة طلباتك.
                           </p>
+                          {payment.status === "PENDING" && payment.checkoutUrl ? (
+                            <a
+                              href={payment.checkoutUrl}
+                              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-brand px-4 text-xs font-black text-white"
+                            >
+                              متابعة الدفع
+                            </a>
+                          ) : null}
                           {canRetryPayment ? (
                             <button
                               type="button"
