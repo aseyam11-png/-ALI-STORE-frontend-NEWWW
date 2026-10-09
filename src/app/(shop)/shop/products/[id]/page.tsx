@@ -9,6 +9,7 @@ import { ProductInfo } from "@/components/commerce/product/ProductInfo";
 import { ProductReviews } from "@/components/commerce/reviews/ProductReviews";
 import { ProductSpecifications } from "@/components/commerce/product/ProductSpecifications";
 import { ProductTrust } from "@/components/commerce/product/ProductTrust";
+import { ProductShippingOptions } from "@/components/commerce/product/ProductShippingOptions";
 import { RelatedProducts } from "@/components/commerce/product/RelatedProducts";
 import { RecentlyViewedSection } from "@/components/commerce/recently-viewed/RecentlyViewedSection";
 
@@ -98,14 +99,12 @@ export default async function ProductDetailPage({
 
           <div className="mt-8">
             <ProductTrust
-              estimatedDelivery={
-                estimatedDelivery
-              }
-              returnPolicy={
-                product.returnPolicy
-              }
+              estimatedDelivery={estimatedDelivery}
+              returnPolicy={product.returnPolicy}
             />
           </div>
+
+          <ProductShippingOptions methods={productDetails.shippingMethods} />
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
 
