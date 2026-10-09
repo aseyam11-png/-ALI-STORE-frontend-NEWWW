@@ -20,8 +20,11 @@ export function AdminRouteGuard({
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
-      const returnPath = pathname?.startsWith("/admin") ? pathname : "/admin";
-      router.replace("/login?returnTo=" + encodeURIComponent(returnPath));
+      const returnPath =
+        pathname?.startsWith("/admin") || pathname?.startsWith("/warehouse")
+          ? pathname
+          : "/admin";
+      router.replace("/login?next=" + encodeURIComponent(returnPath));
     }
   }, [pathname, router, session.status]);
 
