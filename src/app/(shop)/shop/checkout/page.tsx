@@ -26,6 +26,7 @@ import { trackEcommerceEvent } from "@/lib/ux/analytics";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
   getShippingMethods,
+  normalizeShippingCountryCode,
   type ShippingMethod,
 } from "@/features/shipping/services/shipping-api.service";
 import {
@@ -326,7 +327,7 @@ export default function CheckoutPage() {
       const order = await createBackendOrder({
         idempotencyKey: idempotencyKeyRef.current,
         shippingMethodCode: selectedShippingMethodCode || undefined,
-        shippingCountry: form.country.trim().toUpperCase() || undefined,
+        shippingCountry: normalizeShippingCountryCode(form.country),
         shippingAddress: [
           form.fullName,
           form.phone,
