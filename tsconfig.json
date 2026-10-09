@@ -42,6 +42,7 @@
     "uiux-backup-20260814-155817",
     "references",
     "vitest.config.ts",
+    "cypress.config.ts",
     "playwright.config.ts",
     "tests/e2e",
     "tests/unit",
