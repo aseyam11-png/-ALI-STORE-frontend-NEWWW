@@ -52,7 +52,7 @@ test("storefront hardening: selected product variants flow into pricing, cart pe
   assert.match(actions, /addBackendCartItem\([\s\S]*selectedVariant\?\.id/);
   assert.match(actions, /selectedVariant\.available && stock > 0/);
   assert.match(cartApi, /variantId\?: string/);
-  assert.match(cartApi, /variantId: item\.variantId/);
+  assert.match(cartApi, /variantId: item\.variantId == null/);
   assert.match(cartApi, /seenCartLines/);
   assert.match(productMapper, /ProductVariantResponse|variants:/);
   assert.doesNotMatch(actions, /does not persist variants yet|variantCartUnsupported/);
