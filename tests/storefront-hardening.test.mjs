@@ -36,9 +36,11 @@ test("storefront hardening: single discovery list is not wrapped in fake tabs", 
   assert.match(source, /<div className="mt-8">\s*\{renderGrid\(\)\}/);
 });
 
-test("storefront hardening: product variants flow into pricing, actions, and sticky CTA", () => {
+test("storefront hardening: selected product variants flow into pricing, cart persistence, and sticky CTA", () => {
   const info = read("src/components/commerce/product/ProductInfo.tsx");
   const actions = read("src/components/commerce/product/ProductActions.tsx");
+  const cartApi = read("src/features/cart/services/cart-api.service.ts");
+  const productMapper = read("src/features/products/services/product.service.ts");
   const sticky = read("src/components/commerce/product/StickyAddToCart.tsx");
 
   assert.match(info, /selectedVariant/);
@@ -47,23 +49,25 @@ test("storefront hardening: product variants flow into pricing, actions, and sti
   assert.match(info, /selectedVariant=\{selectedVariant\}/);
   assert.match(actions, /selectedVariant\?: B2CProductVariant/);
   assert.match(actions, /selectedVariant\?\.id/);
-  assert.match(actions, /does not persist variants yet/);
+  assert.match(actions, /addBackendCartItem\([\s\S]*selectedVariant\?\.id/);
   assert.match(actions, /selectedVariant\.available && stock > 0/);
+  assert.match(cartApi, /variantId\?: string/);
+  assert.match(cartApi, /variantId: item\.variantId/);
+  assert.match(cartApi, /seenCartLines/);
+  assert.match(productMapper, /ProductVariantResponse|variants:/);
+  assert.doesNotMatch(actions, /does not persist variants yet|variantCartUnsupported/);
+  assert.doesNotMatch(cartApi, /cannot persist product variants/);
   assert.match(sticky, /getVariantPrice/);
   assert.match(sticky, /getVariantStock/);
   assert.match(sticky, /selectedVariant\?: B2CProductVariant/);
 });
 
-test("storefront hardening: authenticated variant selection cannot be silently flattened into a product-only cart line", () => {
-  const actions = read("src/components/commerce/product/ProductActions.tsx");
+test("storefront hardening: authenticated cart lines retain variant identity during guest-cart migration", () => {
   const cartApi = read("src/features/cart/services/cart-api.service.ts");
-
-  assert.match(actions, /session\.status === "authenticated"/);
-  assert.match(actions, /if \(selectedVariant\)/);
-  assert.match(actions, /current cart API does not persist variants yet/);
-  assert.match(cartApi, /variantId: undefined/);
-  assert.match(cartApi, /cannot persist product variants/);
-  assert.match(cartApi, /variantId\?: string/);
+  assert.match(cartApi, /item\.productId \+ ":" \+ \(item\.variantId \?\? "base"\)/);
+  assert.match(cartApi, /const lineKey = productId \+ ":" \+ \(variantId \?\? "base"\)/);
+  assert.match(cartApi, /variantName/);
+  assert.match(cartApi, /variantValue/);
 });
 
 test("storefront hardening: checkout enforces its visible required email field", () => {
@@ -121,10 +125,17 @@ test("storefront hardening: customer pages reuse one canonical shell", () => {
   assert.doesNotMatch(source, /<Header\s*\/>/);
 });
 
-test("storefront hardening: flash deals stay empty until promotion data is real", () => {
+test("storefront hardening: flash deals require active backend promotion records", () => {
   const source = read("src/components/commerce/FlashDeals.tsx");
-  assert.match(source, /does not expose promotion\/discount fields/);
+  const promotionApi = read("src/features/promotions/services/promotion-api.service.ts");
+  const mapper = read("src/features/promotions/services/promotion.mapper.ts");
+  assert.match(source, /getActivePromotions\(true\)/);
+  assert.match(source, /promotion\.active && promotion\.flashSale/);
   assert.match(source, /return null/);
+  assert.match(promotionApi, /\/api\/v1\/promotions\/active/);
+  assert.match(mapper, /originalPrice > promotion\.price/);
+  assert.match(mapper, /promotion\.discountPercentage/);
+  assert.doesNotMatch(source, /MOCK|hardcoded discount/i);
 });
 
 
