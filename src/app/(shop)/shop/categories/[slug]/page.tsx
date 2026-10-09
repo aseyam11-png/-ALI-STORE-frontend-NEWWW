@@ -123,7 +123,7 @@ export default async function CategoryPage({
               </div>
 
               <Link
-                href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
+                href={("/shop/products?category=" + encodeURIComponent(category.id)) as Route}
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
               >
                 <ShoppingBag className="h-4 w-4" />
@@ -207,7 +207,7 @@ export default async function CategoryPage({
                   </p>
 
                   <Link
-                    href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
+                    href={("/shop/products?category=" + encodeURIComponent(category.id)) as Route}
                     className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
                   >
                     View products
