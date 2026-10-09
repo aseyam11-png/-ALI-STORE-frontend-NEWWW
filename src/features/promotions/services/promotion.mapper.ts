@@ -48,6 +48,5 @@ export function mapPromotionToProductCard(promotion: ActivePromotion): ProductCa
     featured: promotion.flashSale,
     bestseller: false,
     newArrival: false,
-    tags: [promotion.title],
   };
 }
