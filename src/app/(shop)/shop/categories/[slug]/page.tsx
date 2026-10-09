@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { Route } from "next";
 import {
@@ -9,12 +10,41 @@ import {
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import { CategoryTree } from "@/components/commerce/category/CategoryTree";
 import {
   getCategories,
+  getCategoryBySlug,
   getCategoryPathFromTree,
   flattenCategoryTree,
 } from "@/features/catalog/services/category-api.service";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getCategoryBySlug(slug);
+  if (!category) return { title: "القسم غير موجود | ALI STORE" };
+
+  const siteUrl = getSiteUrl();
+  const canonical = siteUrl
+    ? siteUrl + "/shop/categories/" + encodeURIComponent(category.slug)
+    : undefined;
+
+  return {
+    title: category.name + " | ALI STORE",
+    description: category.description || "تصفح منتجات " + category.name + " من ALI STORE.",
+    alternates: canonical ? { canonical } : undefined,
+    openGraph: {
+      title: category.name + " | ALI STORE",
+      description: category.description || "تصفح منتجات " + category.name + " من ALI STORE.",
+      type: "website",
+      url: canonical,
+    },
+  };
+}
 
 export default async function CategoryPage({
   params,
