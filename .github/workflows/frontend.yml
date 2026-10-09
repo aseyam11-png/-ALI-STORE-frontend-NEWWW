@@ -33,8 +33,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: TypeScript
-        run: npx --no-install tsc --noEmit
+      - name: Generate Next.js types and run TypeScript
+        run: npx --no-install next typegen && npx --no-install tsc --noEmit
 
       - name: Contract tests
         run: npm run test:contracts
