@@ -41,6 +41,7 @@
     "frontend-final-backup",
     "uiux-backup-20260814-155817",
     "references",
+    "cypress.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",
     "tests/e2e",
