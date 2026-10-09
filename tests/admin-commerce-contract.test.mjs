@@ -140,13 +140,14 @@ test("product cards use backend cart mutations and shared wishlist behavior", as
 });
 
 
-test("product detail does not fabricate variants or delivery tiers", async () => {
+test("product detail maps persisted variants and shipping contracts without synthetic defaults", async () => {
   const service = await read("src/features/products/services/product.service.ts");
   const mapper = await read("src/features/products/services/b2c-product.mapper.ts");
-  assert.match(service, /variants:\s*\[\]/);
+  assert.match(service, /variants:\s*\(product\.variants \?\? \[\]\)\.map/);
+  assert.match(service, /shippingMethods:\s*\(product\.shippingMethods \?\? \[\]\)\.map/);
   assert.match(service, /priceTiers:\s*\[\]/);
-  assert.match(service, /shippingMethods:\s*\[\]/);
-  assert.match(mapper, /variants:\s*\[\]/);
+  assert.match(mapper, /variants:\s*"variants" in product/);
+  assert.match(mapper, /shippingMethods:\s*shippingMethods\.map/);
   assert.doesNotMatch(service, /estimatedMinDays:\s*7/);
   assert.doesNotMatch(service, /Standard Shipping/);
 });
@@ -199,10 +200,10 @@ test("customer product cards do not create one session request per card render",
   }
 });
 
-test("live product detail contract does not fabricate variants or shipping estimates", async () => {
+test("live product detail maps real variants and configured shipping while withholding unsupported price tiers", async () => {
   const source = await read("src/features/products/services/product.service.ts");
-  assert.match(source, /variants:\s*\[\]/);
-  assert.match(source, /shippingMethods:\s*\[\]/);
+  assert.match(source, /variants:\s*\(product\.variants \?\? \[\]\)\.map/);
+  assert.match(source, /shippingMethods:\s*\(product\.shippingMethods \?\? \[\]\)\.map/);
   assert.match(source, /priceTiers:\s*\[\]/);
   assert.doesNotMatch(source, /estimatedMinDays:\s*7/);
   assert.doesNotMatch(source, /name:\s*"Standard Shipping"/);
