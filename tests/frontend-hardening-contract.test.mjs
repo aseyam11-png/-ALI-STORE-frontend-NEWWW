@@ -102,3 +102,15 @@ test("frontend repository does not carry a second backend source tree", async ()
     /ENOENT|no such file/i,
   );
 });
+
+
+test("release blockers: product and test configuration match declared contracts", async () => {
+  const productsPage = await read("src/components/commerce/products/ProductsPageContent.tsx");
+  const aiPanel = await read("src/components/commerce/AliAiPanel.tsx");
+  const tsconfig = await read("tsconfig.json");
+
+  assert.ok(productsPage.includes("  Search,"), "the empty-results Search icon must be imported");
+  assert.ok(productsPage.includes("<Search className="), "the empty-results Search icon must remain rendered");
+  assert.equal(aiPanel.includes("product.sku"), false, "AI cards must not use SKU unless the backend response exposes it");
+  assert.match(tsconfig, /"cypress\\.config\\.ts"/, "optional Cypress config must be excluded from app typechecking");
+});
