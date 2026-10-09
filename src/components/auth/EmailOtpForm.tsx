@@ -80,7 +80,7 @@ export function EmailOtpForm() {
       return;
     }
 
-    router.replace(nextPath);
+    router.replace(nextPath as Route);
   };
 
   const handleResend = async () => {
