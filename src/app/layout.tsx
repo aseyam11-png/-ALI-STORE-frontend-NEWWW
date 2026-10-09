@@ -21,9 +21,18 @@ function getMetadataBase(): URL | undefined {
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
-  title: "AliStore",
+  title: {
+    default: "ALI STORE",
+    template: "%s | ALI STORE",
+  },
   description:
-    "AliStore — shop direct. Every product sold, shipped and stood behind by AliStore.",
+    "ALI STORE — متجر تجزئة مباشر للملابس والأحذية والساعات والإكسسوارات، مع أسعار ومخزون وطرق شحن مرتبطة بخدمات المتجر.",
+  applicationName: "ALI STORE",
+  openGraph: {
+    siteName: "ALI STORE",
+    locale: "ar",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
