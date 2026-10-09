@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -66,7 +67,7 @@ function DashboardMetric({
   label: string;
   value: number;
   icon: typeof Package;
-  href: string;
+  href: Route;
   tone?: "neutral" | "brand" | "success";
 }) {
   const iconTone =
@@ -112,7 +113,7 @@ function QuickAction({
   description,
   icon: Icon,
 }: {
-  href: string;
+  href: Route;
   title: string;
   description: string;
   icon: typeof UserRound;
@@ -422,7 +423,7 @@ export default function BuyerAccountPage() {
                 {recentOrders.map((order) => (
                   <Link
                     key={order.id}
-                    href={"/buyer/orders/" + order.id}
+                    href={("/buyer/orders/" + order.id) as Route}
                     className="group flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex min-w-0 items-start gap-3">
