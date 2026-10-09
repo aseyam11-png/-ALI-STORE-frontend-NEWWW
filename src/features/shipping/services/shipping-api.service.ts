@@ -61,7 +61,7 @@ const COUNTRY_CODES: Record<string, string> = {
 
 export function normalizeShippingCountryCode(country?: string): string | undefined {
   if (!country?.trim()) return undefined;
-  const normalized = country.trim().toLocaleLowerCase().replace(/\\s+/g, " ");
+  const normalized = country.trim().toLocaleLowerCase().replace(/\s+/g, " ");
   if (/^[a-z]{2}$/i.test(country.trim())) return country.trim().toUpperCase();
   return COUNTRY_CODES[normalized];
 }
