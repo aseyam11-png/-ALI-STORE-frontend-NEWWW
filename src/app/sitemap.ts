@@ -1,3 +1,4 @@
+import { getSiteUrl } from "@/lib/seo/site-url";
 import type { MetadataRoute } from "next";
 
 import {
@@ -9,13 +10,6 @@ import {
 } from "@/features/products/services/product.service";
 import { defaultProductFilters } from "@/features/products/types/product-filter.types";
 
-function getSiteUrl(): string | undefined {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (configured) return configured.replace(/\/$/, "");
-
-  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  return vercelHost ? "https://" + vercelHost.replace(/^https?:\/\//, "").replace(/\/$/, "") : undefined;
-}
 
 export const revalidate = 3600;
 
