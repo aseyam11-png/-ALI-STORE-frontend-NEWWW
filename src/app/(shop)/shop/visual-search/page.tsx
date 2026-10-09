@@ -36,8 +36,7 @@ export default function VisualSearchPage() {
                 <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-ink">ابحث عن المنتجات بالصورة</h1>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-                  Upload a photo and discover visually similar products in the
-                  catalog.
+                  ارفع صورة واكتشف منتجات مشابهة لها في الكتالوج.
                 </p>
               </div>
 

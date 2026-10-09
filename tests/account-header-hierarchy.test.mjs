@@ -14,7 +14,7 @@ assert.match(shell, /<h1[^>]*>[\s\S]*\{title\}[\s\S]*<\/h1>/, "account shell sho
 assert.match(shell, /الحساب/, "account shell should use a concise section eyebrow");
 assert.doesNotMatch(shell, /مساحة حسابك/, "account shell should not use the redundant account-space label");
 assert.match(shell, /text-h1/, "account shell should preserve the design-system H1 scale");
-assert.match(shell, /text-body leading-7/, "account shell description should use comfortable Arabic reading rhythm");
+assert.match(shell, /text-body-sm leading-6/, "account shell description should use comfortable Arabic reading rhythm");
 assert.match(shell, /متابعة التسوق/, "account shell should preserve the shopping return action");
 assert.match(buyer, /title="حسابي"/, "buyer should keep the clear page title");
 assert.match(buyer, /description="تابع طلباتك وأدر بياناتك من مكان واحد\."/,

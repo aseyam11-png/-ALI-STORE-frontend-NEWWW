@@ -43,6 +43,7 @@
     "references",
     "vitest.config.ts",
     "playwright.config.ts",
+    "cypress.config.ts",
     "tests/e2e",
     "tests/unit",
     "tests/integration",

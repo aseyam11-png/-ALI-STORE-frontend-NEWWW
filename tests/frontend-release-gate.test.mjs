@@ -294,6 +294,6 @@ test("release gate: package test/build/lint scripts remain defined", () => {
   const pkg = JSON.parse(read("package.json"));
 
   assert.equal(typeof pkg.scripts?.lint, "string");
-  assert.equal(pkg.scripts?.["test:contracts"], "node --test");
+  assert.equal(pkg.scripts?.["test:contracts"], 'node --test "tests/**/*.test.mjs"');
   assert.equal(typeof pkg.scripts?.build, "string");
 });

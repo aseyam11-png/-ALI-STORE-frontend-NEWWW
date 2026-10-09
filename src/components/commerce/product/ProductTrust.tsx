@@ -38,20 +38,20 @@ export function ProductTrust({
         }]),
     {
       icon: ShieldCheck,
-      title: "Secure checkout",
+      title: "دفع آمن",
       description:
         "بيانات الدفع والطلب محمية أثناء العملية.",
     },
     ...(returnPolicy
       ? [{
           icon: RotateCcw,
-          title: "Returns",
+          title: "الإرجاع",
           description: returnPolicy,
         }]
       : []),
     {
       icon: Headphones,
-      title: "AliStore support",
+      title: "دعم علي ستور",
       description:
         "تابع طلبك أو تواصل مع الدعم بعد إتمام الشراء.",
     },

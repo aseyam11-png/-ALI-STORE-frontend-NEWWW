@@ -47,7 +47,7 @@ test("storefront hardening: product variants flow into pricing, actions, and sti
   assert.match(info, /selectedVariant=\{selectedVariant\}/);
   assert.match(actions, /selectedVariant\?: B2CProductVariant/);
   assert.match(actions, /selectedVariant\?\.id/);
-  assert.match(actions, /does not persist variants yet/);
+  assert.match(actions, /variantCartUnsupported/);
   assert.match(actions, /selectedVariant\.available && stock > 0/);
   assert.match(sticky, /getVariantPrice/);
   assert.match(sticky, /getVariantStock/);
@@ -60,7 +60,7 @@ test("storefront hardening: authenticated variant selection cannot be silently f
 
   assert.match(actions, /session\.status === "authenticated"/);
   assert.match(actions, /if \(selectedVariant\)/);
-  assert.match(actions, /current cart API does not persist variants yet/);
+  assert.match(actions, /t\(\s*"variantCartUnsupported"/);
   assert.match(cartApi, /variantId: undefined/);
   assert.match(cartApi, /cannot persist product variants/);
   assert.match(cartApi, /variantId\?: string/);
@@ -69,7 +69,7 @@ test("storefront hardening: authenticated variant selection cannot be silently f
 test("storefront hardening: checkout enforces its visible required email field", () => {
   const checkout = read("src/app/(shop)/shop/checkout/page.tsx");
   assert.match(checkout, /"fullName",\s*"email",\s*"phone"/);
-  assert.match(checkout, /Email \*/);
+  assert.match(checkout, /البريد الإلكتروني \*/);
 });
 
 test("storefront hardening: cart does not call a subtotal-only value Total when shipping is still unknown", () => {

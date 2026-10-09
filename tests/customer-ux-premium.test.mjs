@@ -13,7 +13,7 @@ test("customer UX: checkout exposes only truthful online payment options", () =>
   const source = read("src/app/(shop)/shop/checkout/page.tsx");
   assert.match(source, /useState\("cod"\)/);
   assert.match(source, /const onlinePaymentsEnabled = false/);
-  assert.match(source, /disabled=!option\.enabled/);
+  assert.match(source, /disabled=\{!option\.enabled\}/);
   assert.match(source, /غير متاح حاليًا/);
   assert.match(source, /role="radiogroup"/);
   assert.match(source, /role="radio"/);
@@ -140,7 +140,7 @@ test("customer UX: order confirmation hides internal order and payment lifecycle
   assert.doesNotMatch(source, /Order lifecycle:/);
   assert.doesNotMatch(source, /Payment #\{payment\.id\}/);
   assert.doesNotMatch(source, /payment\.status\}/);
-  assert.doesNotMatch(source, /REQUIRES_RECONCILIATION/);
+  assert.doesNotMatch(source, />\s*REQUIRES_RECONCILIATION\s*</);
   assert.doesNotMatch(source, /authoritative checkout record/);
 });
 

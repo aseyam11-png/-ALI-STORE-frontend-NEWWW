@@ -163,7 +163,7 @@ export function Footer() {
             <span>© 2026 AliStore</span>
             <div className="flex flex-wrap gap-5">
               <Link href="/support" className="transition hover:text-white">Support</Link>
-              <Link href="/buyer/orders" className="transition hover:text-white">Account &amp; orders</Link>
+              <Link href="/buyer/orders" className="transition hover:text-white">حسابي وطلباتي</Link>
               <Link href="/support" className="transition hover:text-white">Help</Link>
             </div>
           </div>

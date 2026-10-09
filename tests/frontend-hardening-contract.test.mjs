@@ -61,7 +61,7 @@ test("guest cart uses persistent browser storage and additive authentication mig
   assert.match(storage, /localStorage/);
   assert.match(storage, /alistore:guest-cart:v1/);
   assert.match(service, /mergeCartLines/);
-  assert.match(service, /existing.quantity + toPositiveQuantity(item.quantity)/);
+  assert.match(service, /existing\.quantity \+ toPositiveQuantity\(item\.quantity\)/);
   assert.match(provider, /readGuestCart/);
   assert.match(provider, /clearGuestCart/);
 });
@@ -81,8 +81,8 @@ test("authentication loss restores guest state instead of leaking authenticated 
   const provider = await read("src/components/providers.tsx");
 
   assert.match(provider, /session.status === "unauthenticated"/);
-  assert.match(provider, /replaceCart(readGuestCart())/);
-  assert.match(provider, /replaceWishlist(readGuestWishlist())/);
+  assert.match(provider, /replaceCart\(readGuestCart\(\)\)/);
+  assert.match(provider, /replaceWishlist\(readGuestWishlist\(\)\)/);
   assert.match(provider, /replaceNotifications\(\[\]\)/);
   assert.match(provider, /Never carry authenticated client state into a guest session/);
 });
@@ -92,7 +92,7 @@ test("production SSR cannot silently fall back to localhost", async () => {
 
   assert.match(source, /process.env.NODE_ENV === "production"/);
   assert.match(source, /Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL/);
-  assert.match(source, /http://localhost:8080/);
+  assert.match(source, /http:\/\/localhost:8080/);
 });
 
 

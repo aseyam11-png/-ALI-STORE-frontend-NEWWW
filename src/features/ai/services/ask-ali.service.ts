@@ -4,6 +4,7 @@ export type AiCatalogProduct = {
   id: number;
   name: string;
   slug: string;
+  sku?: string | null;
   price: number | string;
   currency: string;
   availability?: string | null;
@@ -34,7 +35,7 @@ function validatePrompt(prompt: string) {
 async function execute(prompt: string, mode: "ask" | "discover") {
   const clean = validatePrompt(prompt);
   try {
-    return await apiClient.requestData<AskAliResponse>(`/api/v1/ai/${mode}`, {
+    return await apiClient.requestData<AskAliResponse>(mode === "ask" ? "/api/v1/ai/ask" : "/api/v1/ai/discover", {
       method: "POST",
       body: JSON.stringify({ prompt: clean }),
     });

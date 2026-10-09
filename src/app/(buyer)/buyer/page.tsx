@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -66,7 +67,7 @@ function DashboardMetric({
   label: string;
   value: number;
   icon: typeof Package;
-  href: string;
+  href: Route;
   tone?: "neutral" | "brand" | "success";
 }) {
   const iconTone =
@@ -112,7 +113,7 @@ function QuickAction({
   description,
   icon: Icon,
 }: {
-  href: string;
+  href: Route;
   title: string;
   description: string;
   icon: typeof UserRound;
@@ -157,14 +158,9 @@ export default function BuyerAccountPage() {
   const [ordersError, setOrdersError] = useState("");
 
   useEffect(() => {
-    if (session.status !== "authenticated") {
-      setOrdersLoading(false);
-      return;
-    }
+    if (session.status !== "authenticated") return;
 
     let active = true;
-    setOrdersLoading(true);
-    setOrdersError("");
 
     getOrders(0, 8)
       .then((page) => {
@@ -203,7 +199,7 @@ export default function BuyerAccountPage() {
     <AccountWorkspace
       activeTab="overview"
       title="حسابي"
-      description="مركز واحد لإدارة طلباتك والمفضلة والعناوين وتفاصيل حسابك."
+      description="تابع طلباتك وأدر بياناتك من مكان واحد."
     >
       <div className="space-y-7">
         <section className="overflow-hidden rounded-2xl bg-brand-ink text-white shadow-raised">
@@ -344,7 +340,7 @@ export default function BuyerAccountPage() {
               </Link>
             </div>
 
-            {session.status === "loading" || ordersLoading ? (
+            {session.status === "loading" || (session.status === "authenticated" && ordersLoading) ? (
               <div className="mt-5 space-y-3" aria-busy="true">
                 {Array.from({ length: 3 }).map((_, index) => (
                   <div
@@ -422,7 +418,7 @@ export default function BuyerAccountPage() {
                 {recentOrders.map((order) => (
                   <Link
                     key={order.id}
-                    href={"/buyer/orders/" + order.id}
+                    href={`/buyer/orders/${order.id}` as Route}
                     className="group flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex min-w-0 items-start gap-3">

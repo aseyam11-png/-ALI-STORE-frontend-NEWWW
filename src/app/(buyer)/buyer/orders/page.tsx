@@ -151,7 +151,7 @@ export default function BuyerOrdersPage() {
             return (
               <article
                 key={order.id}
-                className="overflow-hidden rounded-md border border-neutral-200 bg-surface"
+                className="overflow-hidden rounded-2xl border border-neutral-200 bg-surface shadow-raised"
               >
                 <div className="border-b border-neutral-100 bg-neutral-50/60 p-5 sm:p-6">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

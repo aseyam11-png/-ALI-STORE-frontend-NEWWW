@@ -98,7 +98,7 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
       setSuggestedQuery(response.suggestedQuery);
       setAiGenerated(response.aiGenerated);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "تعذر تنفيذ الطلب.");
+      setError(requestError instanceof Error ? requestError.message : "خدمة Ask Ali غير متاحة حاليًا. حاول مرة أخرى لاحقًا.");
       setAnswer("");
       setProducts([]);
     } finally {

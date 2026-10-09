@@ -14,5 +14,6 @@ test("homepage renders real catalog category shelves", async () => {
   assert.match(shelves, /الساعات/);
   assert.match(shelves, /الإكسسوارات/);
   assert.match(shelves, /الأحذية/);
-  assert.match(shelves, /getProducts\(/);
+  const shelf = await readFile("src/components/commerce/HomeCategorySection.tsx", "utf8");
+  assert.match(shelf, /getProducts\(/);
 });

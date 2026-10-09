@@ -473,10 +473,10 @@ test("storefront purchase pages use the shared visual token system", async () =>
 test("product detail does not show a fake zero rating", async () => {
   const source = await read("src/components/commerce/product/ProductInfo.tsx");
   assert.match(source, /product.reviewCount > 0/);
-  assert.match(source, /t\("noReviews"\)/);
+  assert.match(source, /لا توجد تقييمات بعد/);
   const dictionary = await read("src/lib/i18n/dictionary.ts");
   assert.match(dictionary, /noReviews:\s*\{\s*ar:\s*"لا توجد تقييمات بعد"/);
-  const ratingOccurrences = source.match(/product\\.rating\\.toFixed\\(1\\)/g) ?? [];
+  const ratingOccurrences = source.match(/product\.rating\.toFixed\(1\)/g) ?? [];
   assert.equal(ratingOccurrences.length, 1);
   assert.ok(
     source.indexOf("product.reviewCount > 0") <

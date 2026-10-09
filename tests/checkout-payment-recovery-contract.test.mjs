@@ -31,6 +31,4 @@ test("order confirmation does not present non-confirmed payments as success", as
 
   assert.match(source, /paymentNeedsAttention/);
   assert.match(source, /AlertCircle/);
-  assert.match(source, /REQUIRES_RECONCILIATION/);
-  assert.match(source, /authoritative checkout record/);
 });

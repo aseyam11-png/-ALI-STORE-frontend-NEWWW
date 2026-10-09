@@ -787,7 +787,7 @@ export default function CheckoutPage() {
                   </div>
                 </section>
 
-                {/* Payment */}
+                {/* طريقة الدفع */}
                 <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
 
                   <div className="flex items-center gap-3">

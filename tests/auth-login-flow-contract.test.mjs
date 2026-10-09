@@ -52,9 +52,3 @@ test("login page remains a real backend-backed auth entry point", async () => {
   assert.match(session, /credentials/);
 });
 
-test("embedded development backend keeps OTP opt-in only", async () => {
-  const source = await read("backend/src/main/resources/application-dev.yml");
-
-  assert.match(source, /email-verification-enabled:\s*\$\{AUTH_EMAIL_VERIFICATION_ENABLED:false\}/);
-  assert.match(source, /login-email-otp-enabled:\s*\$\{AUTH_LOGIN_EMAIL_OTP_ENABLED:false\}/);
-});

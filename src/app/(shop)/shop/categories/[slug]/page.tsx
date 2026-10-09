@@ -97,7 +97,7 @@ export default async function CategoryPage({
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
               >
                 <ShoppingBag className="h-4 w-4" />
-                Shop this category
+                تسوّق هذا القسم
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -109,10 +109,10 @@ export default async function CategoryPage({
             <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
               <div className="mb-5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400">
-                  Browse
+                  تصفّح
                 </p>
                 <h2 className="mt-1 text-lg font-bold text-foreground">
-                  Categories
+                  الأقسام
                 </h2>
               </div>
 
@@ -156,7 +156,7 @@ export default async function CategoryPage({
                         )}
 
                         <div className="mt-5 text-xs font-bold text-brand">
-                          Explore category
+                          استكشف القسم
                         </div>
                       </Link>
                     ))}
@@ -180,7 +180,7 @@ export default async function CategoryPage({
                     href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
                     className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
                   >
-                    View products
+                    عرض المنتجات
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
