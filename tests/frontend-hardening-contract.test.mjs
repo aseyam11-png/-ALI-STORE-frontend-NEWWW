@@ -91,7 +91,12 @@ test("production SSR cannot silently fall back to localhost", async () => {
   const source = await read("src/lib/api/http-client.ts");
 
   assert.match(source, /process.env.NODE_ENV === "production"/);
-  assert.match(source, /Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL/);
+  assert.match(source, /Production API is not configured/);
+  assert.ok(
+    source.indexOf("Production API is not configured.") >
+      source.indexOf("async request<T>"),
+    "production API configuration must fail at request time, not module import",
+  );
   assert.match(source, /http:\/\/localhost:8080/);
 });
 
