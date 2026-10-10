@@ -14,7 +14,7 @@ type BackendProduct = {
   slug: string;
   description?: string | null;
   price: number | string;
-  currency: string;
+  currency?: string | null;
   sku: string;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   availability: "IN_STOCK" | "OUT_OF_STOCK" | "UNKNOWN";
@@ -55,8 +55,28 @@ function unwrap<T>(response: BackendApiResponse<T>): T {
 }
 
 function parseMoney(value: number | string | null | undefined): number {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    throw new Error("Invalid monetary value from product API.");
+  }
+
   const amount = Number(value);
-  return Number.isFinite(amount) ? amount : 0;
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error("Invalid monetary value from product API.");
+  }
+
+  return amount;
+}
+
+function requireCurrency(value: string | null | undefined): string {
+  const normalized = value?.trim().toUpperCase();
+  if (!normalized || !/^[A-Z]{3}$/.test(normalized)) {
+    throw new Error("Product API did not provide a valid currency code.");
+  }
+  return normalized;
 }
 
 function parseQuantity(value: number | string | null | undefined): number {
@@ -89,6 +109,7 @@ function mapStockStatus(
 
 function mapProduct(product: BackendProduct): ProductSummary {
   const price = parseMoney(product.price);
+  const currency = requireCurrency(product.currency);
   const availableQuantity = parseQuantity(product.availableQuantity);
   const imageUrl = product.primaryImageUrl ?? product.images?.[0] ?? undefined;
   const createdAt = product.createdAt ?? new Date(0).toISOString();
@@ -102,7 +123,7 @@ function mapProduct(product: BackendProduct): ProductSummary {
     shortDescription: product.description ?? "",
     price: {
       amount: price,
-      currency: product.currency || "USD",
+      currency,
       unit: "piece",
     },
     minOrderQuantity: 1,
