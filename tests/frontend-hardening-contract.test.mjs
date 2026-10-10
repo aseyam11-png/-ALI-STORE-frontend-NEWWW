@@ -107,3 +107,17 @@ test("frontend repository does not carry a second backend source tree", async ()
     /ENOENT|no such file/i,
   );
 });
+
+test("cookie-authenticated browser mutations fail closed without a CSRF token", async () => {
+  const source = await read("src/lib/api/http-client.ts");
+  const guard = source.indexOf('if (!csrfToken) {\n        throw new HttpApiError({');
+  const request = source.indexOf('const response = await fetch(this.baseUrl + path');
+  const csrfBootstrap = source.indexOf('await fetch(this.baseUrl + "/api/v1/auth/csrf"');
+
+  assert.notEqual(csrfBootstrap, -1, "CSRF bootstrap endpoint must be called when the token is missing");
+  assert.notEqual(guard, -1, "missing CSRF token must cause a local error");
+  assert.notEqual(request, -1, "ordinary API requests must still be sent when preconditions pass");
+  assert.ok(guard < request, "token guard must execute before the mutation request");
+  assert.match(source, /new Headers\(init\?\.headers\)/);
+  assert.match(source, /requestHeaders\.set\("X-XSRF-TOKEN", csrfToken\)/);
+});
