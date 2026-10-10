@@ -112,21 +112,26 @@ export class HttpClient {
             headers: { Accept: "application/json" },
           });
         } catch {
-          // The actual mutation below is the source of truth. A missing CSRF
-          // bootstrap must not prevent the client from reaching the backend.
+          // The token check below fails closed if the bootstrap request failed.
         }
         csrfToken = readCookie("XSRF-TOKEN");
       }
 
-      if (csrfToken) {
-        init = {
-          ...init,
-          headers: {
-            "X-XSRF-TOKEN": csrfToken,
-            ...(init?.headers ?? {}),
-          },
-        };
+      // Never send a cookie-authenticated mutation when the browser cannot
+      // attach the synchronizer token. The backend remains the final authority,
+      // but fail locally with an actionable message instead of issuing a request
+      // that is guaranteed to be rejected by CSRF protection.
+      if (!csrfToken) {
+        throw new HttpApiError({
+          status: 403,
+          message: "تعذر تجهيز رمز الحماية للطلب. حدّث الصفحة وحاول مرة أخرى.",
+        });
       }
+
+      // Headers handles object, tuple-array, and Headers inputs consistently.
+      const requestHeaders = new Headers(init?.headers);
+      requestHeaders.set("X-XSRF-TOKEN", csrfToken);
+      init = { ...init, headers: requestHeaders };
     }
 
     const headers = new Headers(init?.headers);
