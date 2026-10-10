@@ -12,6 +12,17 @@ test("browser API calls use the same-origin bridge while SSR uses the private ba
   assert.match(source, /process\.env\.BACKEND_INTERNAL_URL/);
   assert.match(source, /process\.env\.NEXT_PUBLIC_API_BASE_URL \?\? ""/);
   assert.match(source, /typeof window === "undefined"/);
+  assert.match(source, /Production API is not configured/);
+  assert.ok(
+    source.indexOf("Production API is not configured.") >
+      source.indexOf("async request<T>"),
+    "production API configuration must be checked when a request is made, not at module import",
+  );
+  assert.doesNotMatch(
+    source,
+    /Missing BACKEND_INTERNAL_URL or NEXT_PUBLIC_API_BASE_URL for production server rendering/,
+    "module import must not throw only because deployment secrets are absent during build",
+  );
   assert.match(source, /credentials: "include"/);
 });
 
