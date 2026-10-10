@@ -1,100 +1,268 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import type { CategoryNode } from "@/features/catalog/types/category.types";
-import { ArrowLeft, Camera, ShieldCheck } from "lucide-react";
+import type { Route } from "next";
+import { useCallback, useEffect, useRef, useState } from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+} from "lucide-react";
 
+import { getCategoryNavImage, HERO_SLIDES } from "./home-imagery";
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
-import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
-import { HERO_IMAGE_URL } from "./home-imagery";
 
-export async function HomeHero() {
-  let categories: CategoryNode[] = [];
+export function HomeHero() {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    direction: "rtl",
+    align: "start",
+    duration: 28,
+  });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  try {
-    categories = await getTopLevelCategories();
-  } catch {
-    categories = [];
-  }
+  const categoriesQuery = useQuery({
+    queryKey: ["catalog", "categories"],
+    queryFn: getTopLevelCategories,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+  const categories = (categoriesQuery.data ?? []).map((category) => ({
+    id: category.id,
+    label: category.name,
+    slug: category.slug,
+    href: "/shop/categories/" + category.slug,
+  }));
+
+  const scrollTo = useCallback(
+    (index: number) => emblaApi?.scrollTo(index),
+    [emblaApi],
+  );
+
+  const resetAutoplay = useCallback(() => {
+    if (autoplayRef.current) {
+      clearInterval(autoplayRef.current);
+      autoplayRef.current = null;
+    }
+
+    if (!emblaApi || paused || reducedMotion) return;
+
+    autoplayRef.current = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 3000);
+  }, [emblaApi, paused, reducedMotion]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("reInit", onSelect);
+    };
+  }, [emblaApi]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    resetAutoplay();
+    return () => {
+      if (autoplayRef.current) clearInterval(autoplayRef.current);
+    };
+  }, [resetAutoplay]);
+
+  const handleManualNavigation = (action: () => void) => {
+    action();
+    window.setTimeout(resetAutoplay, 50);
+  };
 
   return (
-    <section className="relative isolate overflow-hidden bg-ink-950 lg:min-h-[640px]">
-      <div className="pointer-events-none absolute -end-20 top-12 h-72 w-72 rounded-full bg-brand/15 blur-3xl" aria-hidden="true" />
+    <section aria-label="عروض ALI STORE" className="bg-background">
+      <div className="container-shell py-4 sm:py-5 lg:py-6">
+        <div
+          className="relative overflow-hidden rounded-xl border border-border bg-ink-950 shadow-floating sm:rounded-2xl"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocusCapture={() => setPaused(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setPaused(false);
+            }
+          }}
+        >
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex touch-pan-y">
+              {HERO_SLIDES.map((slide) => (
+                <article
+                  key={slide.id}
+                  role="group"
+                  className="min-w-0 flex-[0_0_100%]"
+                  aria-roledescription="شريحة"
+                >
+                  <div className="relative aspect-[6/1] min-h-[180px] sm:min-h-[200px] lg:min-h-0">
+                    <Image
+                      src={slide.image}
+                      alt={slide.alt}
+                      fill
+                      priority={slide.id === HERO_SLIDES[0].id}
+                      sizes="(max-width: 768px) 100vw, 1440px"
+                      className="object-cover"
+                    />
 
-      <div className="container-shell relative grid gap-8 py-10 sm:py-14 lg:min-h-[640px] lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-12 lg:py-16">
-        <div className="relative z-10 max-w-xl lg:pe-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-caption font-medium text-primary-200 backdrop-blur">
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            تجربة تسوق مباشرة من ALI STORE
+                    <div
+                      className="absolute inset-0 bg-gradient-to-l from-ink-950/78 via-ink-950/25 to-transparent"
+                      aria-hidden="true"
+                    />
+
+                    <div className="absolute inset-x-0 bottom-[70px] p-4 sm:p-5 lg:p-7">
+                      <div className="max-w-sm text-white">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-ink-950/35 px-2.5 py-1 text-label font-medium text-white/85 backdrop-blur-md">
+                          <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                          مختارات ALI STORE
+                        </div>
+
+                        <h1 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl lg:text-3xl">
+                          {slide.title}
+                        </h1>
+
+                        <Link
+                          href={slide.href as Route}
+                          className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg bg-white px-4 text-body-sm font-medium text-ink-900 shadow-raised transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-white/95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+                        >
+                          اكتشف الآن
+                          <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
 
-          <h1 className="mt-5 max-w-xl text-h1 font-bold leading-tight tracking-tight text-white lg:text-display">
-            اختَر أسرع. اكتشف أكثر. اشترِ بثقة.
-          </h1>
-
-          <p className="mt-4 max-w-lg text-body-lg leading-8 text-white/70">
-            كتالوج حي، بحث سريع، تجربة مرنة، ومعلومات المنتج والتوفر كما يرسلها النظام الفعلي.
-          </p>
-
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link
-              href="/shop/products"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-body-sm font-medium text-white transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-brand-hover focus-visible:ring-4 focus-visible:ring-primary-100/40"
-            >
-              تصفح المنتجات
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-
-            <Link
-              href="/shop/visual-search"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 text-body-sm font-medium text-white/90 transition-all duration-200 ease-brand hover:-translate-y-0.5 hover:bg-white/10 focus-visible:ring-4 focus-visible:ring-primary-100/30"
-            >
-              <Camera className="h-4 w-4" aria-hidden="true" />
-              البحث بصورة
-            </Link>
-          </div>
-
-          {categories.length > 0 ? (
-            <div className="mt-7">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-label font-medium text-white/50">ابدأ من قسم</p>
-                <span className="text-label text-white/35">{categories.length} أقسام متاحة</span>
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-white/10 bg-ink-950/90 backdrop-blur-md">
+            <div className="container-shell flex min-h-[62px] items-center gap-2 overflow-x-auto py-1.5 scroll-surface [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex shrink-0 items-center gap-1.5 px-1.5 text-label font-semibold text-white/60">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary-300" aria-hidden="true" />
+                أقسام المتجر
               </div>
 
-              <div className="flex flex-wrap gap-2" aria-label="أقسام المتجر">
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={("/shop/categories/" + encodeURIComponent(category.slug)) as import("next").Route}
-                    className="inline-flex min-h-9 items-center rounded-full border border-white/10 bg-white/5 px-3.5 text-caption font-medium text-white/80 transition-colors duration-200 ease-brand hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:ring-4 focus-visible:ring-primary-100/30"
-                  >
-                    {CATEGORY_LABEL_AR[category.slug] ?? category.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
+              {categories.length > 0 ? (
+                categories.map((category) => {
+                  const active = false;
+                  const image = getCategoryNavImage(category.slug, category.label);
 
-        <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 shadow-modal">
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/55 via-transparent to-transparent" aria-hidden="true" />
-          <div className="relative aspect-[5/4] overflow-hidden sm:aspect-[16/10] lg:aspect-[1/0.94]">
-            <Image
-              src={HERO_IMAGE_URL}
-              alt="تشكيلة أزياء من ALI STORE"
-              fill
-              sizes="(max-width: 1024px) 100vw, 52vw"
-              priority
-              className="object-cover transition-transform duration-700 ease-brand hover:scale-[1.02]"
-            />
-          </div>
-          <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 rounded-2xl border border-white/10 bg-ink-950/55 p-3 backdrop-blur-md sm:inset-x-5 sm:bottom-5 sm:p-4">
-            <div>
-              <p className="text-caption font-medium text-white/55">كتالوج المتجر</p>
-              <p className="mt-0.5 text-body-sm font-medium text-white">منتجات مختارة وتجربة شراء أوضح</p>
+                  return (
+                    <Link
+                      key={category.id}
+                      href={category.href as Route}
+                      aria-current={active ? "page" : undefined}
+                      className={
+                        "group relative isolate flex h-[48px] min-w-[118px] shrink-0 items-end overflow-hidden rounded-lg border px-2.5 py-1.5 text-white shadow-sm transition duration-200 ease-brand hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 " +
+                        (active ? "border-primary-300 ring-1 ring-primary-300/80" : "border-white/10")
+                      }
+                      style={
+                        image
+                          ? {
+                              backgroundImage:
+                                "linear-gradient(180deg, rgba(11, 14, 20, 0.06) 0%, rgba(11, 14, 20, 0.82) 100%), url(" +
+                                image +
+                                ")",
+                              backgroundPosition: "center",
+                              backgroundSize: "cover",
+                            }
+                          : {
+                              backgroundImage:
+                                "linear-gradient(180deg, rgba(63, 67, 75, 0.72), rgba(11, 14, 20, 0.98))",
+                            }
+                      }
+                    >
+                      <span className="relative z-10 truncate text-caption font-semibold drop-shadow-sm">
+                        {category.label}
+                      </span>
+                      {active ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-x-2.5 bottom-0 z-20 h-0.5 rounded-full bg-primary-300"
+                        />
+                      ) : null}
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 z-0 bg-brand/0 transition-colors duration-200 group-hover:bg-brand/10"
+                      />
+                    </Link>
+                  );
+                })
+              ) : (
+                <span
+                  aria-busy={categoriesQuery.isPending}
+                  className="px-1 text-caption text-white/50"
+                >
+                  {categoriesQuery.isPending
+                    ? "جاري تحميل التصنيفات…"
+                    : "التصنيفات غير متاحة حاليًا"}
+                </span>
+              )}
             </div>
-            <span className="hidden rounded-full bg-white/10 px-3 py-1.5 text-label font-medium text-white/70 sm:inline-flex">
-              مباشر
-            </span>
+          </div>
+
+          <button
+            type="button"
+            aria-label="الصورة السابقة"
+            onClick={() => handleManualNavigation(() => emblaApi?.scrollPrev())}
+            className="absolute start-3 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-ink-950/45 text-white backdrop-blur-md transition hover:bg-ink-950/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:start-4 sm:h-9 sm:w-9"
+          >
+            <ChevronRight className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            aria-label="الصورة التالية"
+            onClick={() => handleManualNavigation(() => emblaApi?.scrollNext())}
+            className="absolute end-3 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-ink-950/45 text-white backdrop-blur-md transition hover:bg-ink-950/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 sm:end-4 sm:h-9 sm:w-9"
+          >
+            <ChevronLeft className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
+          </button>
+
+          <div className="absolute inset-x-0 bottom-[68px] z-30 flex justify-center">
+            <div
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-ink-950/45 px-2 py-1 backdrop-blur-md"
+              aria-label="التنقل بين صور البانر"
+            >
+              {HERO_SLIDES.map((slide, index) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  aria-label={"الانتقال إلى " + slide.title}
+                  aria-current={selectedIndex === index ? "true" : undefined}
+                  onClick={() => handleManualNavigation(() => scrollTo(index))}
+                  className={
+                    "rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 " +
+                    (selectedIndex === index
+                      ? "h-1.5 w-7 bg-white"
+                      : "h-1.5 w-1.5 bg-white/45 hover:bg-white/75")
+                  }
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
