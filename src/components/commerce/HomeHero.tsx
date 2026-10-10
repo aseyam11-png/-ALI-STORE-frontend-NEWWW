@@ -15,6 +15,7 @@ import {
 
 import { getCategoryNavImage, HERO_SLIDES } from "./home-imagery";
 import { getTopLevelCategories } from "@/features/catalog/services/category-api.service";
+import { CATEGORY_LABEL_AR } from "@/features/categories/data/category-labels.ar";
 
 export function HomeHero() {
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -37,7 +38,7 @@ export function HomeHero() {
 
   const categories = (categoriesQuery.data ?? []).map((category) => ({
     id: category.id,
-    label: category.name,
+    label: CATEGORY_LABEL_AR[category.slug] ?? category.name,
     slug: category.slug,
     href: "/shop/categories/" + category.slug,
   }));
