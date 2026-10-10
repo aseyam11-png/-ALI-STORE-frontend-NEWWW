@@ -34,3 +34,14 @@ test("homepage category explorer uses live catalog services", async () => {
   assert.match(explorer, /getProducts/);
   assert.match(explorer, /B2CProductCard/);
 });
+
+test("homepage category rail localizes known category slugs and keeps a safe API-name fallback", async () => {
+  const hero = await read("src/components/commerce/HomeHero.tsx");
+  const labels = await read("src/features/categories/data/category-labels.ar.ts");
+
+  assert.match(hero, /CATEGORY_LABEL_AR\[category\.slug\]\s*\?\?\s*category\.name/);
+  assert.match(labels, /clothing:\s*"الملابس"/);
+  assert.match(labels, /shoes:\s*"الأحذية"/);
+  assert.match(labels, /watches:\s*"الساعات"/);
+  assert.match(labels, /accessories:\s*"الإكسسوارات"/);
+});
