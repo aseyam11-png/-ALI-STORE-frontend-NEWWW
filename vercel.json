@@ -1,4 +1,4 @@
 {
   "ignoreCommand": "git diff HEAD^ HEAD --quiet -- . ':(exclude).github/**'",
-  "buildCommand": "npm run test:contracts && npm run build"
+  "buildCommand": "node --test tests/frontend-backend-runtime-contract.test.mjs && npm run build"
 }
