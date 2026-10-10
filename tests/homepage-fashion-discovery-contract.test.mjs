@@ -40,6 +40,7 @@ test("homepage category rail localizes known category slugs and keeps a safe API
   const labels = await read("src/features/categories/data/category-labels.ar.ts");
 
   assert.match(hero, /CATEGORY_LABEL_AR\[category\.slug\]\s*\?\?\s*category\.name/);
+  assert.match(hero, /getCategoryNavImage\(category\.slug, category\.name\)/);
   assert.match(labels, /clothing:\s*"الملابس"/);
   assert.match(labels, /shoes:\s*"الأحذية"/);
   assert.match(labels, /watches:\s*"الساعات"/);
