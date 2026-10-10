@@ -64,7 +64,6 @@ export function HomeHero() {
     if (!emblaApi) return;
 
     const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
-    onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
 
@@ -77,9 +76,12 @@ export function HomeHero() {
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReducedMotion(mediaQuery.matches);
-    update();
+    const initialUpdate = window.requestAnimationFrame(update);
     mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
+    return () => {
+      window.cancelAnimationFrame(initialUpdate);
+      mediaQuery.removeEventListener("change", update);
+    };
   }, []);
 
   useEffect(() => {
