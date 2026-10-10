@@ -1,0 +1,16 @@
+export default {
+  rules: {
+    "block-no-empty": true,
+    "color-no-invalid-hex": true,
+    "declaration-block-no-duplicate-properties": true,
+    "property-no-unknown": true,
+    "unit-no-unknown": true,
+  },
+  ignoreFiles: [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/coverage/**",
+    "**/artifacts/**",
+  ],
+};

@@ -1819,3 +1819,86 @@ Scope: ALI STORE customer-facing frontend
 Language/Direction: Arabic / RTL first
 Primary design system: Existing ALI STORE semantic tokens
 Business model constraint: B2C supplier-based commerce; no customer-facing B2B presentation
+
+
+## 20. Design System Tooling and Governance
+
+The implementation is now backed by a component-level tooling layer:
+
+- Storybook for isolated component development and documentation.
+- Storybook A11y for component accessibility review.
+- Storybook Vitest integration for story-driven component tests.
+- Storybook Designs for Figma/web reference context.
+- Style Dictionary for a governed token inventory.
+- eslint-plugin-jsx-a11y for static JSX accessibility checks.
+- Stylelint for CSS correctness checks.
+- Chromatic is supported as an optional visual-review gate.
+- Chromatic remains optional and is enabled in CI only with repository variable \`CHROMATIC_ENABLED=true\` plus the \`CHROMATIC_PROJECT_TOKEN\` secret.
+
+
+Every shared UI primitive should have a story covering its normal and material state variants. New styling should consume the existing semantic tokens in \`src/app/globals.css\` rather than introduce one-off colors, radii, shadows, or typography values.
+
+The initial token inventory does not replace the runtime CSS source. Runtime token migration is a separate visual change and must be protected by visual regression checks.
+
+## 21. Homepage Hero & Category Navigation
+
+The homepage discovery area is intentionally split into three independent visual surfaces:
+
+1. **Wide Fashion Hero** — one editorial image per slide in a short landscape banner.
+2. **Vertical Category Rail** — a visually independent sidebar for the four priority departments.
+3. **Horizontal Category Rail** — a separate surface beside the sidebar for the active department's real child categories.
+
+### Hero requirements
+
+- Exactly four editorial slides are used.
+- Only one slide is visible at a time.
+- Slides advance automatically about every 3 seconds.
+- Previous/next controls and pagination dots remain available.
+- Autoplay pauses while the user hovers or focuses the carousel.
+- prefers-reduced-motion disables autoplay.
+- The hero uses a very wide banner proportion, targeting roughly 6:1 on desktop, so it reads as a horizontal storefront strip rather than a large editorial block.
+- Navigation controls (previous/next and pagination) stay inside the image surface as overlay controls; there is no separate navigation band below the image.
+- The mobile hero keeps the same wide visual language while allowing a minimum readable height.
+- The hero is intentionally larger than the previous compact card but still short enough to preserve above-the-fold shopping intent.
+- Hero copy is limited to one eyebrow, one title, and one primary CTA; do not add a second CTA unless there is a clear product need.
+- Hero imagery is presentation-only; product truth is never encoded in the banner.
+- The implementation reuses the existing embla-carousel-react dependency.
+
+### Category navigation requirements
+
+Desktop composition:
+
+Hero → independent Category Rail + independent Horizontal Rail → Products
+
+The vertical rail must remain visually distinct:
+
+- independent card surface;
+- neutral background distinct from the main page surface;
+- separate border and spacing;
+- compact item geometry;
+- soft brand-color active state;
+- separate interaction states.
+
+The horizontal rail must remain visually distinct:
+
+- independent card;
+- horizontal scrolling when needed;
+- active state;
+- child-category selection;
+- no shared background with the sidebar.
+
+The vertical rail selects one of:
+
+- الملابس
+- الأحذية
+- الساعات
+- الإكسسوارات
+
+The horizontal rail resolves its labels from the active category's real child nodes when available. No category id, count, price, stock, route, or other commerce truth may be fabricated.
+
+Product results continue to use the existing getProducts service and B2CProductCard pattern. The category explorer shows up to four products at a time to avoid duplicating the full ProductDiscovery shelf immediately below. The design change must not alter cart, wishlist, authentication, inventory, supplier, pricing, checkout, or API contracts.
+
+### Homepage duplication rule
+
+The old large CategoryGrid and repeated HomeCategorySections composition are not rendered on the homepage. Their homepage presentation responsibility is replaced by the single Category Explorer surface to reduce duplicated navigation and repeated product shelves.
+
