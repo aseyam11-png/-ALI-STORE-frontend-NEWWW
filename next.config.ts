@@ -27,6 +27,29 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
+  async headers() {
+    const responseSecurityHeaders = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
+    ];
+
+    // Emit HSTS only in production, where the public storefront uses HTTPS.
+    if (process.env.NODE_ENV === "production") {
+      responseSecurityHeaders.push({
+        key: "Strict-Transport-Security",
+        value: "max-age=31536000",
+      });
+    }
+
+    return [
+      {
+        source: "/:path*",
+        headers: responseSecurityHeaders,
+      },
+    ];
+  },
   async rewrites() {
     if (!backendInternalUrl) return [];
 
