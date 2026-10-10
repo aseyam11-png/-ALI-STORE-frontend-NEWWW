@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { login, loginWithGoogle } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CloudflareTurnstile } from "@/components/auth/CloudflareTurnstile";
 
 function resolveSafeNextPath(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -25,6 +26,10 @@ export function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminGateEnabled, setAdminGateEnabled] = useState(false);
+  const [adminGatePassword, setAdminGatePassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaEpoch, setCaptchaEpoch] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
@@ -54,20 +59,33 @@ export function LoginForm() {
 
     if (hasError) return;
 
+    if (adminGateEnabled && (!adminGatePassword.trim() || !captchaToken)) {
+      setFormError("أدخل كلمة مرور بوابة الإدارة وأكمل اختبار التحقق قبل المتابعة.");
+      return;
+    }
+
     setFormError(undefined);
     setSubmitting(true);
 
-    const result = await login({ email: normalizedEmail, password });
+    const result = await login({
+      email: normalizedEmail,
+      password,
+      ...(adminGateEnabled ? { adminGatePassword, captchaToken } : {}),
+    });
 
     setSubmitting(false);
 
     if (!result.ok) {
+      if (adminGateEnabled) {
+        setCaptchaToken("");
+        setCaptchaEpoch((current) => current + 1);
+      }
       if (result.requiresEmailVerification) {
         const query = new URLSearchParams({
           challenge: result.challengeId,
           email: result.maskedEmail,
           purpose: result.purpose,
-          next: nextPath,
+          next: adminGateEnabled && !searchParams.get("next") ? "/admin" : nextPath,
         });
         window.location.assign("/verify-email?" + query.toString());
         return;
@@ -77,7 +95,7 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign(nextPath);
+    window.location.assign(result.role === "ROLE_ADMIN" && !searchParams.get("next") ? "/admin" : nextPath);
   };
 
   return (
@@ -120,6 +138,50 @@ export function LoginForm() {
           </button>
         </div>
 
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-neutral-200 p-3">
+          <input
+            type="checkbox"
+            checked={adminGateEnabled}
+            onChange={(event) => {
+              const enabled = event.target.checked;
+              setAdminGateEnabled(enabled);
+              setAdminGatePassword("");
+              setCaptchaToken("");
+              setFormError(undefined);
+              setCaptchaEpoch((current) => current + 1);
+            }}
+            disabled={submitting || googleSubmitting}
+            className="mt-1 h-4 w-4 accent-brand"
+          />
+          <span className="min-w-0">
+            <span className="block text-body-sm font-semibold text-foreground">
+              تسجيل الدخول إلى إدارة المتجر
+            </span>
+            <span className="mt-1 block text-caption leading-5 text-muted-foreground">
+              يتطلب كلمة مرور إدارية ثانية واختبار تحقق أمني إضافي.
+            </span>
+          </span>
+        </label>
+
+        {adminGateEnabled && (
+          <div className="space-y-4 rounded-lg border border-primary-200 bg-primary-50/40 p-4">
+            <Input
+              id="admin-gate-password"
+              name="adminGatePassword"
+              type="password"
+              autoComplete="off"
+              label="كلمة مرور بوابة الإدارة"
+              value={adminGatePassword}
+              onChange={(event) => setAdminGatePassword(event.target.value)}
+              disabled={submitting || googleSubmitting}
+            />
+            <CloudflareTurnstile
+              key={captchaEpoch}
+              onTokenChange={setCaptchaToken}
+            />
+          </div>
+        )}
+
         {(formError ?? googleError) && (
           <p
             role="alert"
@@ -152,7 +214,7 @@ export function LoginForm() {
         variant="outline"
         size="lg"
         loading={googleSubmitting}
-        disabled={submitting}
+        disabled={submitting || adminGateEnabled}
         onClick={() => {
           setFormError(undefined);
           setGoogleSubmitting(true);
