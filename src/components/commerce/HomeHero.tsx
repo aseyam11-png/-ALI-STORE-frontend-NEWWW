@@ -171,7 +171,7 @@ export function HomeHero() {
               {categories.length > 0 ? (
                 categories.map((category) => {
                   const active = false;
-                  const image = getCategoryNavImage(category.slug, category.label);
+                  const image = getCategoryNavImage(category.slug, category.name);
 
                   return (
                     <Link
