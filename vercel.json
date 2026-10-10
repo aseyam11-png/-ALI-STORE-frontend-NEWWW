@@ -1,4 +1,4 @@
 {
   "ignoreCommand": "git diff HEAD^ HEAD --quiet -- . ':(exclude).github/**'",
-  "buildCommand": "mkdir -p public/__builddiag; npm run lint > public/__builddiag/lint.txt 2>&1; echo $? > public/__builddiag/lint.exit; npm run typecheck > public/__builddiag/typecheck.txt 2>&1; echo $? > public/__builddiag/typecheck.exit; npm run test:contracts > public/__builddiag/contracts.txt 2>&1; echo $? > public/__builddiag/contracts.exit; npm run build > public/__builddiag/build.txt 2>&1; echo $? > public/__builddiag/build.exit"
+  "buildCommand": "bash tools/preview-diagnostics.sh"
 }
