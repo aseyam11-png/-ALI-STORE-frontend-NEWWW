@@ -14,7 +14,7 @@ test("homepage composes one fashion hero and one live category explorer", async 
 test("fashion hero contains the four editorial retail themes", async () => {
   const imagery = await readFile("src/components/commerce/home-imagery.ts", "utf8");
   for (const id of ["watches", "clothing", "shoes", "accessories"]) {
-    assert.match(imagery, new RegExp('id:\\s*["\\']' + id + '["\\']'));
+    assert.ok(imagery.includes(`id: "${id}"`), `missing hero slide: ${id}`);
   }
   assert.match(imagery, /getCategoryNavImage/);
   assert.doesNotMatch(imagery, /photo-1542291026-7eec264c27ff/);
