@@ -19,9 +19,9 @@ type AliAiPanelProps = {
 };
 
 const QUICK_PROMPTS = [
-  "هاتف عملي بسعر أقل من 100 دولار",
-  "أبحث عن هدية مميزة",
-  "منتجات متوفرة الآن بسعر مناسب",
+  "ساعة أنيقة تناسب الاستخدام اليومي",
+  "حقيبة عملية بلون محايد",
+  "حذاء مريح للإطلالات اليومية",
 ];
 
 function formatAiProductPrice(product: AiCatalogProduct): string {
@@ -79,7 +79,7 @@ function AiProductCard({ product }: { product: AiCatalogProduct }) {
             {product.name}
           </h3>
           <p className="mt-1 truncate text-caption text-muted-foreground">
-            {[product.categoryName, product.sku].filter(Boolean).join(" · ")}
+            {[product.categoryName].filter(Boolean).join(" · ")}
           </p>
           <p className="mt-3 text-h4 text-brand-ink">
             {formatAiProductPrice(product)}
