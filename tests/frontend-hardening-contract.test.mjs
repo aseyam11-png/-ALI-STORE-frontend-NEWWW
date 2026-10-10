@@ -121,3 +121,11 @@ test("cookie-authenticated browser mutations fail closed without a CSRF token", 
   assert.match(source, /new Headers\(init\?\.headers\)/);
   assert.match(source, /requestHeaders\.set\("X-XSRF-TOKEN", csrfToken\)/);
 });
+
+test("all browser unsafe requests, including auth endpoints, require CSRF bootstrap", async () => {
+  const source = await read("src/lib/api/http-client.ts");
+
+  assert.match(source, /const shouldPrepareCsrf =\s*unsafeMethod\s*&&\s*typeof window !== "undefined"/);
+  assert.doesNotMatch(source, /csrfExemptMutationPaths/);
+  assert.doesNotMatch(source, /!csrfExemptMutationPaths\.has\(path\)/);
+});
