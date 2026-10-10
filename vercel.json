@@ -1,4 +1,3 @@
 {
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet -- . ':(exclude).github/**'",
-  "buildCommand": "npm run lint"
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet -- . ':(exclude).github/**'"
 }
