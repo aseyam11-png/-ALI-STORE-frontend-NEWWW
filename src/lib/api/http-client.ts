@@ -90,17 +90,10 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    const csrfExemptMutationPaths = new Set([
-      "/api/v1/auth/login",
-      "/api/v1/auth/register",
-      "/api/v1/auth/email/verify",
-      "/api/v1/auth/email/resend",
-    ]);
-
+    // All unsafe browser requests, including login/registration/OTP, must carry
+    // CSRF protection. Machine-to-machine webhook traffic does not use this browser client.
     const shouldPrepareCsrf =
-      unsafeMethod &&
-      typeof window !== "undefined" &&
-      !csrfExemptMutationPaths.has(path);
+      unsafeMethod && typeof window !== "undefined";
 
     if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
