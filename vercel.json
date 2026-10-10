@@ -1,4 +1,4 @@
 {
   "ignoreCommand": "git diff HEAD^ HEAD --quiet -- . ':(exclude).github/**'",
-  "buildCommand": "bash tools/preview-diagnostics.sh"
+  "buildCommand": "npm run lint"
 }
