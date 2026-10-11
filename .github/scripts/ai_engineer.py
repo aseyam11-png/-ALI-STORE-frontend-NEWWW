@@ -45,7 +45,7 @@ def read_file(path):
 
 
 def token_set(value):
-    return {word.lower() for word in re.findall("[A-Za-z0-9_-]{3,}", value)}
+    return {word.casefold() for word in re.findall(r"[^\\W_]{3,}", value, flags=re.UNICODE)}
 
 
 def main():
