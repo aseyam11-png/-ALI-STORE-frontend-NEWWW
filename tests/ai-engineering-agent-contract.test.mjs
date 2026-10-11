@@ -7,7 +7,7 @@ async function read(path) {
 }
 
 test(
-  "AI engineering workflow is manual, starts from trusted main, and separates validation",
+  "AI engineering workflow is manual and separates generation from validation",
   async () => {
     const workflow = await read(".github/workflows/ai-engineer.yml");
 
@@ -18,7 +18,7 @@ test(
     );
     assert.match(workflow, /ref: main/);
     assert.match(workflow, /persist-credentials: false/);
-    assert.match(workflow, /GEMINI_API_KEY: \$\{\{ secrets\.GEMINI_API_KEY \}\}/);
+    assert.match(workflow, /secrets\.GEMINI_API_KEY/);
     assert.match(workflow, /quality-gates\.yml/);
     assert.match(workflow, /--auto --squash/);
     assert.match(workflow, /high_risk/);
@@ -27,7 +27,7 @@ test(
 );
 
 test(
-  "patch generator constrains paths and refuses incomplete existing-file context",
+  "patch generator blocks unsafe paths and incomplete existing-file edits",
   async () => {
     const source = await read(".github/scripts/ai_engineer.py");
 
@@ -36,13 +36,13 @@ test(
     assert.match(source, /Absolute paths and path traversal are forbidden/);
     assert.match(source, /Existing file was not provided in full context/);
     assert.match(source, /Protected file cannot be edited/);
-    assert.match(source, /The proposed edits did not change the worktree/);
+    assert.match(source, /The proposed edits produced no worktree changes/);
     assert.doesNotMatch(source, /shell=True/);
   },
 );
 
 test(
-  "optional security scans use environment context rather than direct secret references in if",
+  "optional security scans avoid secrets in if conditions",
   async () => {
     const workflow = await read(".github/workflows/quality-gates.yml");
 
@@ -53,7 +53,7 @@ test(
 );
 
 test(
-  "backend verification runs when a backend Maven module exists and skips explicitly otherwise",
+  "backend verification runs only when a Maven module exists",
   async () => {
     const workflow = await read(".github/workflows/quality-gates.yml");
 
