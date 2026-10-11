@@ -5,7 +5,7 @@
 The AI Engineering Agent is an opt-in, manually started workflow. It proposes
 source, test, and documentation changes on a dedicated branch, opens a Draft
 Pull Request, and runs the repository quality-gates workflow against the
-generated commit. It does not write directly to \`main\`.
+generated commit. It does not write directly to `main`.
 
 The agent builds a tracked-file inventory and uses Graphify query output plus
 selected complete file contents to assemble task-specific context. This does
@@ -15,15 +15,15 @@ a change from the complete context it has.
 
 ## One-time setup
 
-1. Add \`GEMINI_API_KEY\` under GitHub repository Settings, Secrets and
+1. Add `GEMINI_API_KEY` under GitHub repository Settings, Secrets and
    variables, Actions, Secrets. Never put the key in source files or variables.
-2. Optionally set the repository Actions variable \`GEMINI_MODEL\`. The
-   workflow defaults to \`gemini-3.8-flash\`.
+2. Optionally set the repository Actions variable `GEMINI_MODEL`. The
+   workflow defaults to `gemini-3.8-flash`.
 3. Confirm workflow permissions allow the workflow token to create branches
    and pull requests.
 4. Enable GitHub Actions auto-merge in repository settings if automatic merge
    requests are desired. Configure branch protection and required checks for
-   \`main\`. If GitHub refuses an auto-merge request, the workflow will not
+   `main`. If GitHub refuses an auto-merge request, the workflow will not
    force a merge.
 5. Confirm Actions runners can start. A workflow cannot repair a repository
    runner, billing, or usage restriction from within the job.
@@ -31,13 +31,13 @@ a change from the complete context it has.
 ## Starting a task
 
 Open Actions, select **ALI STORE AI Engineering Agent**, choose **Run workflow**
-on \`main\`, and enter one concrete task. Include observed behavior, expected
+on `main`, and enter one concrete task. Include observed behavior, expected
 behavior, and acceptance criteria.
 
 Example: "Fix the product-list empty state when the API returns an empty page.
 Add regression coverage. Do not alter pricing, stock, or API contracts."
 
-The workflow checks out the trusted \`main\` branch, builds or queries the
+The workflow checks out the trusted `main` branch, builds or queries the
 Graphify architecture map, and invokes the trusted script. The generated patch
 is constrained to source, test, and documentation paths. It cannot change
 GitHub workflow files, environment or secret files, package manifests,
@@ -50,7 +50,7 @@ require a separately reviewed infrastructure change.
    source or test code.
 2. The generated changes are committed to an isolated AI branch and a Draft PR
    is opened.
-3. A separate job dispatches \`quality-gates.yml\` against that branch and waits
+3. A separate job dispatches `quality-gates.yml` against that branch and waits
    for the run.
 4. If the quality-gates run fails, is missing, is cancelled, or cannot be
    observed, the PR remains Draft and no auto-merge is requested.
@@ -65,14 +65,14 @@ require a separately reviewed infrastructure change.
 
 The quality-gates workflow runs the frontend lint, typecheck, contract tests,
 production build, dependency and security scans, browser quality checks, link
-checks, and an optional Maven verification step when \`backend/pom.xml\`
+checks, and an optional Maven verification step when `backend/pom.xml`
 exists. A skipped optional check does not prove the missing capability was
 tested.
 
 ## Security boundaries and limitations
 
 - Repository code and generated model output are untrusted input.
-- Generated code is not run in the job holding \`GEMINI_API_KEY\`.
+- Generated code is not run in the job holding `GEMINI_API_KEY`.
 - The patch generator does not execute commands supplied by the task or repo.
 - The separate validation workflow executes repository code without the
   Gemini key.
@@ -85,7 +85,7 @@ tested.
 
 ## Troubleshooting
 
-- Missing \`GEMINI_API_KEY\`: add the secret and rerun.
+- Missing `GEMINI_API_KEY`: add the secret and rerun.
 - Graphify fails: resolve the architecture-indexing failure first; the
   generator intentionally stops.
 - No safe patch is returned: refine the task and include acceptance criteria.
