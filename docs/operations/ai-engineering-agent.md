@@ -53,7 +53,7 @@ require a separately reviewed infrastructure change.
 3. A separate job dispatches `frontend.yml`, `quality-gates.yml`,
    `advanced-quality.yml`, and `security-static.yml` against that branch and
    waits for all four runs on the exact generated commit.
-4. If the quality-gates run fails, is missing, is cancelled, or cannot be
+4. If any required workflow fails, is missing, is cancelled, or cannot be
    observed, the PR remains Draft and no auto-merge is requested.
 5. After a successful run, the workflow checks that the PR head SHA still
    matches the validated commit.
