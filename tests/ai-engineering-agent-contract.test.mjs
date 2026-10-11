@@ -12,10 +12,12 @@ test(
     const workflow = await read(".github/workflows/ai-engineer.yml");
 
     assert.match(workflow, /workflow_dispatch:/);
-    assert.match(
-      workflow,
-      /if: \$\{\{ github\.ref == 'refs\/heads\/main' \}\}/,
-    );
+    assert.match(workflow, /workflow_dispatch:/);
+    assert.match(workflow, /issues:/);
+    assert.match(workflow, /types: \[labeled\]/);
+    assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+    assert.match(workflow, /github\.actor == github\.repository_owner/);
+    assert.match(workflow, /github\.event\.label\.name == 'ai-engineer'/);
     assert.match(workflow, /ref: main/);
     assert.match(workflow, /persist-credentials: false/);
     assert.match(workflow, /secrets\.GEMINI_API_KEY/);
