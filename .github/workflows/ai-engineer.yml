@@ -7,6 +7,8 @@ on:
         description: "Describe one concrete bug fix or feature with acceptance criteria"
         required: true
         type: string
+  issues:
+    types: [labeled]
 
 permissions:
   contents: read
@@ -18,7 +20,12 @@ concurrency:
 jobs:
   generate:
     name: Understand repository and propose a patch
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/main') ||
+          (github.event_name == 'issues' &&
+          github.actor == github.repository_owner &&
+          github.event.label.name == 'ai-engineer') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -47,7 +54,7 @@ jobs:
 
       - name: Install and run mandatory Graphify architecture analysis
         env:
-          AI_TASK: ${{ inputs.task }}
+          AI_TASK: ${{ inputs.task || format('Issue #{0}: {1} - {2}', github.event.issue.number, github.event.issue.title, github.event.issue.body) }}
         run: |
           uv tool install --upgrade "graphifyy==0.9.79"
           if [ ! -f graphify-out/graph.json ]; then
@@ -63,7 +70,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
-          AI_TASK: ${{ inputs.task }}
+          AI_TASK: ${{ inputs.task || format('Issue #{0}: {1} - {2}', github.event.issue.number, github.event.issue.title, github.event.issue.body) }}
           GRAPHIFY_CONTEXT_FILE: ${{ runner.temp }}/graphify-query.txt
           AI_RESULT_PATH: ${{ runner.temp }}/alistore-ai-result.json
         run: |
@@ -137,7 +144,7 @@ jobs:
         id: open
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AI_TASK: ${{ inputs.task }}
+          AI_TASK: ${{ inputs.task || format('Issue #{0}: {1} - {2}', github.event.issue.number, github.event.issue.title, github.event.issue.body) }}
           AI_BRANCH: ${{ needs.generate.outputs.branch }}
           AI_SUMMARY: ${{ needs.generate.outputs.summary }}
           AI_FILES: ${{ needs.generate.outputs.files_json }}
