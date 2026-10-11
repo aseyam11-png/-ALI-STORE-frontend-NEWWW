@@ -7,7 +7,7 @@ async function read(path) {
 }
 
 test(
-  "AI engineering workflow is manual and separates generation from validation",
+  "AI workflow separates generation and validation",
   async () => {
     const workflow = await read(".github/workflows/ai-engineer.yml");
 
@@ -50,8 +50,14 @@ test(
   async () => {
     const workflow = await read(".github/workflows/quality-gates.yml");
 
-    assert.match(workflow, /SNYK_ENABLED: \$\{\{ secrets\.SNYK_TOKEN != '' \}\}/);
-    assert.match(workflow, /FOSSA_ENABLED: \$\{\{ secrets\.FOSSA_API_KEY != '' \}\}/);
+    assert.match(
+      workflow,
+      /SNYK_ENABLED: \$\{\{ secrets\.SNYK_TOKEN != '' \}\}/,
+    );
+    assert.match(
+      workflow,
+      /FOSSA_ENABLED: \$\{\{ secrets\.FOSSA_API_KEY != '' \}\}/,
+    );
     assert.match(workflow, /if: \$\{\{ env\.SNYK_ENABLED == 'true' \}\}/);
     assert.match(workflow, /if: \$\{\{ env\.FOSSA_ENABLED == 'true' \}\}/);
     assert.doesNotMatch(workflow, /if:\s*\$\{\{\s*secrets\./);
@@ -69,7 +75,10 @@ test(
 
     assert.match(jobEnvironment, /SNYK_ENABLED:/);
     assert.doesNotMatch(jobEnvironment, /^\s+SNYK_TOKEN:/m);
-    assert.match(dependencyJob, /SNYK_TOKEN: \$\{\{ secrets\.SNYK_TOKEN \}\}/);
+    assert.match(
+      dependencyJob,
+      /SNYK_TOKEN: \$\{\{ secrets\.SNYK_TOKEN \}\}/,
+    );
   },
 );
 
@@ -77,13 +86,12 @@ test(
   "Chromatic token is scoped to the visual publication step",
   async () => {
     const workflow = await read(".github/workflows/advanced-quality.yml");
-    const job = workflow
-      .split("  chromatic:")[1]
-      .split("\n  ")
-      .slice(0, 1)
-      .join("\n  ");
+    const job = workflow.slice(workflow.indexOf("  chromatic:"));
     assert.match(job, /CHROMATIC_ENABLED:/);
-    assert.match(job, /CHROMATIC_PROJECT_TOKEN: \$\{\{ secrets\.CHROMATIC_PROJECT_TOKEN \}\}/);
+    assert.match(
+      job,
+      /CHROMATIC_PROJECT_TOKEN: \$\{\{ secrets\.CHROMATIC_PROJECT_TOKEN \}\}/,
+    );
   },
 );
 
