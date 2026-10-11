@@ -1,0 +1,245 @@
+name: ALI STORE AI Engineering Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Describe one concrete bug fix or feature with acceptance criteria"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-engineer-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Understand repository and propose a patch
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      branch: ${{ steps.publish.outputs.branch }}
+      head_sha: ${{ steps.publish.outputs.head_sha }}
+      summary: ${{ steps.publish.outputs.summary }}
+      files_json: ${{ steps.publish.outputs.files_json }}
+      high_risk: ${{ steps.publish.outputs.high_risk }}
+    steps:
+      - name: Checkout trusted main source
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install and run mandatory Graphify architecture analysis
+        env:
+          AI_TASK: ${{ inputs.task }}
+        run: |
+          uv tool install --upgrade "graphifyy==0.9.79"
+          if [ ! -f graphify-out/graph.json ]; then
+            graphify extract . --code-only
+          fi
+          graphify query "$AI_TASK" > "$RUNNER_TEMP/graphify-query.txt"
+          test -s "$RUNNER_TEMP/graphify-query.txt"
+
+      - name: Install Gemini SDK
+        run: python -m pip install --disable-pip-version-check "google-genai>=1.0,<2.0"
+
+      - name: Generate constrained source and test edits
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          AI_TASK: ${{ inputs.task }}
+          GRAPHIFY_CONTEXT_FILE: ${{ runner.temp }}/graphify-query.txt
+          AI_RESULT_PATH: ${{ runner.temp }}/alistore-ai-result.json
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::GEMINI_API_KEY is missing. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          python .github/scripts/ai_engineer.py
+
+      - name: Refresh Graphify after proposed edits
+        run: graphify update .
+
+      - name: Commit and push isolated AI branch
+        id: publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_RESULT_PATH: ${{ runner.temp }}/alistore-ai-result.json
+          AI_BRANCH: ai/engineering-${{ github.run_id }}-${{ github.run_attempt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed_paths < <(python -c 'import json,os; print("\n".join(json.load(open(os.environ["AI_RESULT_PATH"], encoding="utf-8"))["files"]))')
+          if [ "\${#changed_paths[@]}" -eq 0 ]; then
+            echo "::error::No patch paths were produced."
+            exit 1
+          fi
+          git diff --check
+          git switch -c "$AI_BRANCH"
+          git add -- "\${changed_paths[@]}"
+          if git diff --cached --quiet; then
+            echo "::error::The generated patch contains no staged changes."
+            exit 1
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "ai: propose requested engineering change"
+          HEAD_SHA="$(git rev-parse HEAD)"
+          gh auth setup-git
+          git push --set-upstream origin "$AI_BRANCH"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result = json.loads(Path(os.environ["AI_RESULT_PATH"]).read_text(encoding="utf-8"))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("branch=" + os.environ["AI_BRANCH"] + "\n")
+              output.write("head_sha=" + os.environ["HEAD_SHA"] + "\n")
+              output.write("summary=" + " ".join(result["summary"].split())[:500] + "\n")
+              output.write("files_json=" + json.dumps(result["files"], ensure_ascii=False, separators=(",", ":")) + "\n")
+              output.write("high_risk=" + str(bool(result["high_risk"])).lower() + "\n")
+          PY
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_RESULT_PATH: ${{ runner.temp }}/alistore-ai-result.json
+          AI_BRANCH: ai/engineering-${{ github.run_id }}-${{ github.run_attempt }}
+          HEAD_SHA: ${{ steps.publish.outputs.head_sha }}
+
+  create_pull_request:
+    name: Open draft pull request
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      pr_number: ${{ steps.open.outputs.pr_number }}
+      pr_url: ${{ steps.open.outputs.pr_url }}
+    steps:
+      - name: Create draft PR
+        id: open
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_TASK: ${{ inputs.task }}
+          AI_BRANCH: ${{ needs.generate.outputs.branch }}
+          AI_SUMMARY: ${{ needs.generate.outputs.summary }}
+          AI_FILES: ${{ needs.generate.outputs.files_json }}
+          HIGH_RISK: ${{ needs.generate.outputs.high_risk }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PR_TITLE="$(python -c 'import os; print(("AI: " + " ".join(os.environ["AI_TASK"].split()))[:90])')"
+          BODY_FILE="$(mktemp)"
+          {
+            printf '## AI Engineering Agent proposal\n\n'
+            printf '**Task:** %s\n\n' "$AI_TASK"
+            printf '**Proposed change:** %s\n\n' "$AI_SUMMARY"
+            printf '**Changed paths:**\n'
+            printf '%s\n' "$AI_FILES" | python -c 'import json,sys; [print("- " + p) for p in json.load(sys.stdin)]'
+            printf '\n**Risk classification:** %s\n\n' "$HIGH_RISK"
+            printf 'This PR was generated on an isolated branch. No generated code was executed in the credentialed generation job.\n\n'
+            printf 'The quality-gates workflow must complete on this exact head SHA before any merge is requested. High-risk changes remain in Draft for human review.\n'
+          } > "$BODY_FILE"
+          gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$AI_BRANCH" --draft --title "$PR_TITLE" --body-file "$BODY_FILE"
+          PR_NUMBER="$(gh pr view "$AI_BRANCH" --repo "$GITHUB_REPOSITORY" --json number --jq .number)"
+          PR_URL="$(gh pr view "$AI_BRANCH" --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+
+  validate:
+    name: Run repository quality gates on the exact AI commit
+    needs: [generate, create_pull_request]
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Dispatch the full quality-gates workflow for the AI branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_BRANCH: ${{ needs.generate.outputs.branch }}
+          AI_SHA: ${{ needs.generate.outputs.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run quality-gates.yml --repo "$GITHUB_REPOSITORY" --ref "$AI_BRANCH"
+          RUN_ID=""
+          for attempt in $(seq 1 60); do
+            RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow quality-gates.yml --branch "$AI_BRANCH" --limit 20 --json databaseId,headSha,event --jq ".[] | select(.headSha == \"$AI_SHA\" and .event == \"workflow_dispatch\") | .databaseId" | head -n 1)"
+            if [ -n "$RUN_ID" ]; then
+              break
+            fi
+            sleep 5
+          done
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::The dispatched quality-gates run could not be found for $AI_SHA. The PR will remain Draft."
+            exit 1
+          fi
+          echo "Watching quality-gates run $RUN_ID on $AI_SHA"
+          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --interval 20 --exit-status
+
+  finish:
+    name: Finalize based on verified results and risk
+    needs: [generate, create_pull_request, validate]
+    if: ${{ always() && needs.create_pull_request.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Request auto-merge after all quality gates pass
+        if: ${{ needs.validate.result == 'success' && needs.generate.outputs.high_risk != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.create_pull_request.outputs.pr_number }}
+          EXPECTED_SHA: ${{ needs.generate.outputs.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTUAL_SHA="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)"
+          if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Auto-merge was not requested: the PR head changed after validation. The new head must be checked again."
+            exit 0
+          fi
+          gh pr ready "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
+          if gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --auto --squash --delete-branch; then
+            echo "Auto-merge requested after the quality-gates workflow succeeded on $EXPECTED_SHA."
+          else
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "All dispatched quality gates passed for $EXPECTED_SHA, but GitHub did not accept the auto-merge request. Check repository auto-merge settings and branch protection. This workflow did not force a merge."
+            echo "::warning::Auto-merge could not be enabled; no forced merge was attempted."
+          fi
+
+      - name: Keep high-risk changes awaiting a human review
+        if: ${{ needs.validate.result == 'success' && needs.generate.outputs.high_risk == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.create_pull_request.outputs.pr_number }}
+          EXPECTED_SHA: ${{ needs.generate.outputs.head_sha }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "The quality-gates workflow passed for $EXPECTED_SHA, but the changed paths are classified as high risk. This PR remains Draft and must receive human review; auto-merge was not requested."
+
+      - name: Leave an unverified PR in Draft
+        if: ${{ needs.validate.result != 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.create_pull_request.outputs.pr_number }}
+          EXPECTED_SHA: ${{ needs.generate.outputs.head_sha }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "The required quality-gates workflow did not complete successfully for $EXPECTED_SHA. This PR remains Draft. Do not merge until the failed or unavailable checks are resolved."
