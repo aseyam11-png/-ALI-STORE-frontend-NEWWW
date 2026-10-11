@@ -167,12 +167,12 @@ jobs:
     name: Run repository quality gates on the exact AI commit
     needs: [generate, create_pull_request]
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 110
     permissions:
       actions: write
       contents: read
     steps:
-      - name: Dispatch the full quality-gates workflow for the AI branch
+      - name: Dispatch all required CI and security workflows for the AI branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AI_BRANCH: ${{ needs.generate.outputs.branch }}
@@ -180,21 +180,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh workflow run quality-gates.yml --repo "$GITHUB_REPOSITORY" --ref "$AI_BRANCH"
-          RUN_ID=""
-          for attempt in $(seq 1 60); do
-            RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow quality-gates.yml --branch "$AI_BRANCH" --limit 20 --json databaseId,headSha,event --jq ".[] | select(.headSha == \"$AI_SHA\" and .event == \"workflow_dispatch\") | .databaseId" | head -n 1)"
-            if [ -n "$RUN_ID" ]; then
-              break
-            fi
-            sleep 5
+          RUN_FILE="$RUNNER_TEMP/alistore-validation-runs.txt"
+          : > "$RUN_FILE"
+
+          # Dispatch all suites first so independent checks can run concurrently.
+          for workflow in frontend.yml quality-gates.yml advanced-quality.yml security-static.yml; do
+            gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref "$AI_BRANCH"
           done
-          if [ -z "$RUN_ID" ]; then
-            echo "::error::The dispatched quality-gates run could not be found for $AI_SHA. The PR will remain Draft."
-            exit 1
-          fi
-          echo "Watching quality-gates run $RUN_ID on $AI_SHA"
-          gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --interval 20 --exit-status
+
+          # Require a matching run on the exact generated commit for every suite.
+          for workflow in frontend.yml quality-gates.yml advanced-quality.yml security-static.yml; do
+            RUN_ID=""
+            for attempt in $(seq 1 60); do
+              RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --branch "$AI_BRANCH" --limit 50 --json databaseId,headSha,event --jq ".[] | select(.headSha == \"$AI_SHA\" and .event == \"workflow_dispatch\") | .databaseId" | head -n 1)"
+              if [ -n "$RUN_ID" ]; then
+                break
+              fi
+              sleep 5
+            done
+            if [ -z "$RUN_ID" ]; then
+              echo "::error::Could not find $workflow run for $AI_SHA. The PR must remain Draft."
+              exit 1
+            fi
+            printf '%s=%s\n' "$workflow" "$RUN_ID" >> "$RUN_FILE"
+          done
+
+          # A missing run or any non-zero result fails this validation job.
+          while IFS='=' read -r workflow run_id; do
+            echo "Watching $workflow run $run_id on $AI_SHA"
+            gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --interval 20 --exit-status
+          done < "$RUN_FILE"
+
 
   finish:
     name: Finalize based on verified results and risk
