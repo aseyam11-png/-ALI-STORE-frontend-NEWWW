@@ -1,0 +1,113 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+async function read(path) {
+  return readFile(path, "utf8");
+}
+
+test(
+  "AI workflow separates generation and validation",
+  async () => {
+    const workflow = await read(".github/workflows/ai-engineer.yml");
+    const frontendWorkflow = await read(".github/workflows/frontend.yml");
+
+    assert.match(workflow, /workflow_dispatch:/);
+    assert.match(frontendWorkflow, /workflow_dispatch:/);
+    assert.match(workflow, /issues:/);
+    assert.match(workflow, /types: \[labeled\]/);
+    assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+    assert.match(workflow, /github\.actor == github\.repository_owner/);
+    assert.match(workflow, /github\.event\.label\.name == 'ai-engineer'/);
+    assert.match(workflow, /ref: main/);
+    assert.match(workflow, /persist-credentials: false/);
+    assert.match(workflow, /secrets\.GEMINI_API_KEY/);
+    assert.match(workflow, /quality-gates\.yml/);
+    assert.match(workflow, /frontend\.yml/);
+    assert.match(workflow, /advanced-quality\.yml/);
+    assert.match(workflow, /security-static\.yml/);
+    assert.match(workflow, /--auto --squash/);
+    assert.match(workflow, /high_risk/);
+    assert.match(workflow, /Leave an unverified PR in Draft/);
+  },
+);
+
+test(
+  "patch generator blocks unsafe paths and incomplete existing-file edits",
+  async () => {
+    const source = await read(".github/scripts/ai_engineer.py");
+
+    assert.match(source, /ROOTS = \(/);
+    assert.match(source, /BLOCKED = \{/);
+    assert.match(source, /Absolute paths and path traversal are forbidden/);
+    assert.match(source, /Existing file was not provided in full context/);
+    assert.match(source, /Protected file cannot be edited/);
+    assert.match(source, /The proposed edits produced no worktree changes/);
+    assert.match(source, /flags=re\.UNICODE/);
+    assert.doesNotMatch(source, /shell=True/);
+  },
+);
+
+test(
+  "optional security scans avoid secrets in if conditions",
+  async () => {
+    const workflow = await read(".github/workflows/quality-gates.yml");
+
+    assert.match(
+      workflow,
+      /SNYK_ENABLED: \$\{\{ secrets\.SNYK_TOKEN != '' \}\}/,
+    );
+    assert.match(
+      workflow,
+      /FOSSA_ENABLED: \$\{\{ secrets\.FOSSA_API_KEY != '' \}\}/,
+    );
+    assert.match(workflow, /if: \$\{\{ env\.SNYK_ENABLED == 'true' \}\}/);
+    assert.match(workflow, /if: \$\{\{ env\.FOSSA_ENABLED == 'true' \}\}/);
+    assert.doesNotMatch(workflow, /if:\s*\$\{\{\s*secrets\./);
+  },
+);
+
+test(
+  "security workflow scopes the optional Snyk secret to its scan step",
+  async () => {
+    const security = await read(".github/workflows/security-static.yml");
+    const dependencyJob = security
+      .split("  dependency-security:")[1]
+      .split("  sbom-and-vulnerability:")[0];
+    const jobEnvironment = dependencyJob.split("    steps:")[0];
+
+    assert.match(jobEnvironment, /SNYK_ENABLED:/);
+    assert.doesNotMatch(jobEnvironment, /^\s+SNYK_TOKEN:/m);
+    assert.match(
+      dependencyJob,
+      /SNYK_TOKEN: \$\{\{ secrets\.SNYK_TOKEN \}\}/,
+    );
+  },
+);
+
+test(
+  "Chromatic token is scoped to the visual publication step",
+  async () => {
+    const workflow = await read(".github/workflows/advanced-quality.yml");
+    const job = workflow.slice(workflow.indexOf("  chromatic:"));
+    assert.match(job, /CHROMATIC_ENABLED:/);
+    assert.match(
+      job,
+      /CHROMATIC_PROJECT_TOKEN: \$\{\{ secrets\.CHROMATIC_PROJECT_TOKEN \}\}/,
+    );
+  },
+);
+
+test(
+  "backend verification runs only when a Maven module exists",
+  async () => {
+    const workflow = await read(".github/workflows/quality-gates.yml");
+
+    assert.match(workflow, /Optional Spring Boot backend verification/);
+    assert.match(workflow, /if \[ -f backend\/pom\.xml \]/);
+    assert.match(workflow, /mvnw -B -f backend\/pom\.xml verify/);
+    assert.match(workflow, /backend verification is explicitly skipped/);
+    assert.match(workflow, /workflow_dispatch:/);
+    assert.match(frontendWorkflow, /workflow_dispatch:/);
+  },
+);
