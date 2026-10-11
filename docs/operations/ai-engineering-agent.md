@@ -50,8 +50,9 @@ require a separately reviewed infrastructure change.
    source or test code.
 2. The generated changes are committed to an isolated AI branch and a Draft PR
    is opened.
-3. A separate job dispatches `quality-gates.yml` against that branch and waits
-   for the run.
+3. A separate job dispatches `frontend.yml`, `quality-gates.yml`,
+   `advanced-quality.yml`, and `security-static.yml` against that branch and
+   waits for all four runs on the exact generated commit.
 4. If the quality-gates run fails, is missing, is cancelled, or cannot be
    observed, the PR remains Draft and no auto-merge is requested.
 5. After a successful run, the workflow checks that the PR head SHA still
@@ -63,11 +64,14 @@ require a separately reviewed infrastructure change.
    This path-based classifier is conservative but is not a complete semantic
    security analysis.
 
-The quality-gates workflow runs the frontend lint, typecheck, contract tests,
-production build, dependency and security scans, browser quality checks, link
-checks, and an optional Maven verification step when `backend/pom.xml`
-exists. A skipped optional check does not prove the missing capability was
-tested.
+The four dispatched workflows cover the frontend baseline, static quality,
+contracts, production build, advanced unit/integration and Playwright checks,
+accessibility, performance, SEO, and static/supply-chain security. The
+quality-gates suite also runs an optional Maven verification step when
+`backend/pom.xml` exists. A skipped optional check does not prove the missing
+capability was tested. Active network penetration scans are intentionally not
+automatic; run `security-active.yml` manually only against a target you own or
+are explicitly authorized to test.
 
 ## Security boundaries and limitations
 
