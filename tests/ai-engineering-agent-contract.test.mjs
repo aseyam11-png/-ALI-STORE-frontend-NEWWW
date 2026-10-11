@@ -37,6 +37,7 @@ test(
     assert.match(source, /Existing file was not provided in full context/);
     assert.match(source, /Protected file cannot be edited/);
     assert.match(source, /The proposed edits produced no worktree changes/);
+    assert.match(source, /flags=re\.UNICODE/);
     assert.doesNotMatch(source, /shell=True/);
   },
 );
@@ -46,8 +47,10 @@ test(
   async () => {
     const workflow = await read(".github/workflows/quality-gates.yml");
 
-    assert.match(workflow, /if: \$\{\{ env\.SNYK_TOKEN != '' \}\}/);
-    assert.match(workflow, /if: \$\{\{ env\.FOSSA_API_KEY != '' \}\}/);
+    assert.match(workflow, /SNYK_ENABLED: \$\{\{ secrets\.SNYK_TOKEN != '' \}\}/);
+    assert.match(workflow, /FOSSA_ENABLED: \$\{\{ secrets\.FOSSA_API_KEY != '' \}\}/);
+    assert.match(workflow, /if: \$\{\{ env\.SNYK_ENABLED == 'true' \}\}/);
+    assert.match(workflow, /if: \$\{\{ env\.FOSSA_ENABLED == 'true' \}\}/);
     assert.doesNotMatch(workflow, /if:\s*\$\{\{\s*secrets\./);
   },
 );
