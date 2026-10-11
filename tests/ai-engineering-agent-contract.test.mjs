@@ -10,9 +10,10 @@ test(
   "AI workflow separates generation and validation",
   async () => {
     const workflow = await read(".github/workflows/ai-engineer.yml");
+    const frontendWorkflow = await read(".github/workflows/frontend.yml");
 
     assert.match(workflow, /workflow_dispatch:/);
-    assert.match(workflow, /workflow_dispatch:/);
+    assert.match(frontendWorkflow, /workflow_dispatch:/);
     assert.match(workflow, /issues:/);
     assert.match(workflow, /types: \[labeled\]/);
     assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
@@ -107,5 +108,6 @@ test(
     assert.match(workflow, /mvnw -B -f backend\/pom\.xml verify/);
     assert.match(workflow, /backend verification is explicitly skipped/);
     assert.match(workflow, /workflow_dispatch:/);
+    assert.match(frontendWorkflow, /workflow_dispatch:/);
   },
 );
