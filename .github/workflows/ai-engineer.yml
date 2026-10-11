@@ -99,6 +99,7 @@ jobs:
           fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "ai: propose requested engineering change"
           HEAD_SHA="$(git rev-parse HEAD)"
+          export HEAD_SHA
           gh auth setup-git
           git push --set-upstream origin "$AI_BRANCH"
           python - <<'PY'
@@ -113,11 +114,6 @@ jobs:
               output.write("files_json=" + json.dumps(result["files"], ensure_ascii=False, separators=(",", ":")) + "\n")
               output.write("high_risk=" + str(bool(result["high_risk"])).lower() + "\n")
           PY
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AI_RESULT_PATH: ${{ runner.temp }}/alistore-ai-result.json
-          AI_BRANCH: ai/engineering-${{ github.run_id }}-${{ github.run_attempt }}
-          HEAD_SHA: ${{ steps.publish.outputs.head_sha }}
 
   create_pull_request:
     name: Open draft pull request
