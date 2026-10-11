@@ -20,6 +20,9 @@ test(
     assert.match(workflow, /persist-credentials: false/);
     assert.match(workflow, /secrets\.GEMINI_API_KEY/);
     assert.match(workflow, /quality-gates\.yml/);
+    assert.match(workflow, /frontend\.yml/);
+    assert.match(workflow, /advanced-quality\.yml/);
+    assert.match(workflow, /security-static\.yml/);
     assert.match(workflow, /--auto --squash/);
     assert.match(workflow, /high_risk/);
     assert.match(workflow, /Leave an unverified PR in Draft/);
@@ -56,6 +59,35 @@ test(
 );
 
 test(
+  "security workflow scopes the optional Snyk secret to its scan step",
+  async () => {
+    const security = await read(".github/workflows/security-static.yml");
+    const dependencyJob = security
+      .split("  dependency-security:")[1]
+      .split("  sbom-and-vulnerability:")[0];
+    const jobEnvironment = dependencyJob.split("    steps:")[0];
+
+    assert.match(jobEnvironment, /SNYK_ENABLED:/);
+    assert.doesNotMatch(jobEnvironment, /^\s+SNYK_TOKEN:/m);
+    assert.match(dependencyJob, /SNYK_TOKEN: \$\{\{ secrets\.SNYK_TOKEN \}\}/);
+  },
+);
+
+test(
+  "Chromatic token is scoped to the visual publication step",
+  async () => {
+    const workflow = await read(".github/workflows/advanced-quality.yml");
+    const job = workflow
+      .split("  chromatic:")[1]
+      .split("\n  ")
+      .slice(0, 1)
+      .join("\n  ");
+    assert.match(job, /CHROMATIC_ENABLED:/);
+    assert.match(job, /CHROMATIC_PROJECT_TOKEN: \$\{\{ secrets\.CHROMATIC_PROJECT_TOKEN \}\}/);
+  },
+);
+
+test(
   "backend verification runs only when a Maven module exists",
   async () => {
     const workflow = await read(".github/workflows/quality-gates.yml");
@@ -64,5 +96,6 @@ test(
     assert.match(workflow, /if \[ -f backend\/pom\.xml \]/);
     assert.match(workflow, /mvnw -B -f backend\/pom\.xml verify/);
     assert.match(workflow, /backend verification is explicitly skipped/);
+    assert.match(workflow, /workflow_dispatch:/);
   },
 );
