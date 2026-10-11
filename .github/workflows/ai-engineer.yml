@@ -76,7 +76,7 @@ jobs:
           query = query_file.read_text(encoding="utf-8", errors="replace")
           candidates = []
           for raw_path in re.findall(r"([^\s]+?\.[A-Za-z0-9]+):\d+", query):
-              path = raw_path.strip("'\"()[]{}.,;")
+              path = raw_path.strip(chr(96) + "'\"()[]{}.,;")
               target = Path(path)
               if target.is_file() and not target.is_symlink() and path not in candidates:
                   candidates.append(path)
