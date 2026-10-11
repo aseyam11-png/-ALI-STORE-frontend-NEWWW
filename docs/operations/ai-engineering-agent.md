@@ -34,6 +34,11 @@ Open Actions, select **ALI STORE AI Engineering Agent**, choose **Run workflow**
 on `main`, and enter one concrete task. Include observed behavior, expected
 behavior, and acceptance criteria.
 
+Alternatively, create an Issue with the task and acceptance criteria, then add
+the `ai-engineer` label. The issue-triggered path starts only when the
+repository owner adds that label. Remove and re-add it to request another run,
+or use the manual workflow for a revised task.
+
 Example: "Fix the product-list empty state when the API returns an empty page.
 Add regression coverage. Do not alter pricing, stock, or API contracts."
 
