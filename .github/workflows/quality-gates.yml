@@ -116,16 +116,55 @@ jobs:
         run: npm ci
 
       - name: Snyk dependency scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
+        if: ${{ env.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: npx --yes snyk@latest test --severity-threshold=high
 
       - name: FOSSA license/compliance scan
-        if: ${{ secrets.FOSSA_API_KEY != '' }}
+        if: ${{ env.FOSSA_API_KEY != '' }}
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
         run: npx --yes fossa-cli@latest analyze
+
+  backend-quality:
+    name: Optional Spring Boot backend verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Detect backend module
+        id: detect
+        shell: bash
+        run: |
+          if [ -f backend/pom.xml ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No backend/pom.xml found; backend verification is explicitly skipped."
+          fi
+
+      - name: Set up Java 21
+        if: steps.detect.outputs.available == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Run Maven verification
+        if: steps.detect.outputs.available == 'true'
+        shell: bash
+        run: |
+          if [ -f backend/mvnw ]; then
+            chmod +x backend/mvnw
+            ./backend/mvnw -B -f backend/pom.xml verify
+          else
+            mvn -B -f backend/pom.xml verify
+          fi
 
   runtime-quality:
     name: Runtime browser quality
