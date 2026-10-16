@@ -6,6 +6,7 @@ import { LogIn, LogOut, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
+import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
 import { logout, useSession } from "@/features/auth/session";
 
 export default function BuyerSecurityPage() {
@@ -85,6 +86,10 @@ export default function BuyerSecurityPage() {
           {error}
         </div>
       )}
+
+      <div className="mt-5">
+        <ChangePasswordForm />
+      </div>
 
       <section className="mt-5 rounded-md border border-neutral-200 bg-surface p-6">
         <h2 className="text-body font-bold text-foreground">
