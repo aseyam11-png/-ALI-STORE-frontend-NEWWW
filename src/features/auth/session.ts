@@ -29,6 +29,13 @@ export type VerificationChallenge = {
   purpose: "EMAIL_VERIFICATION" | "LOGIN";
 };
 
+export type PasswordResetChallenge = {
+  challengeId: string;
+  maskedEmail: string;
+  expiresInSeconds: number;
+  purpose: "PASSWORD_RESET";
+};
+
 export type SessionStatus =
   | "loading"
   | "unauthenticated"
@@ -278,3 +285,39 @@ export async function logout(): Promise<void> {
     );
   }
 }
+
+export async function requestPasswordReset(email: string): Promise<PasswordResetChallenge> {
+  return apiClient.requestData<PasswordResetChallenge>(
+    "/api/v1/auth/password/forgot",
+    {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    },
+  );
+}
+
+export async function resetPassword(input: {
+  challengeId: string;
+  code: string;
+  newPassword: string;
+}): Promise<void> {
+  await apiClient.requestData<void>("/api/v1/auth/password/reset", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await apiClient.requestData<void>("/api/v1/auth/password/change", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("alistore:logout"));
+  }
+}
+
