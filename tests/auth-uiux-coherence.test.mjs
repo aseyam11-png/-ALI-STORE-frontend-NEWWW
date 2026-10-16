@@ -38,7 +38,7 @@ test("login keeps real authentication logic separate from presentation", async (
   const form = await read("src/components/auth/LoginForm.tsx");
 
   assert.match(page, /<LoginForm \/>/);
-  assert.match(form, /login\(\{ email: normalizedEmail, password \}\)/);
+  assert.match(form, /login\(\{\s*email:\s*normalizedEmail,\s*password,/);
   assert.match(form, /loginWithGoogle\(\)/);
   assert.match(form, /window\.location\.assign\(nextPath\)/);
 });
