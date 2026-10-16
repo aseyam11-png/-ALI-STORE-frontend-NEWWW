@@ -32,7 +32,7 @@ export type VerificationChallenge = {
 export type PasswordResetChallenge = {
   challengeId: string;
   maskedEmail: string;
-  expiresInSeconds: number;
+  expiresInSeconds?: number | null;
   purpose: "PASSWORD_RESET";
 };
 
