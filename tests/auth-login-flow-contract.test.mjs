@@ -9,9 +9,9 @@ async function read(path) {
 test("all browser unsafe requests, including login and OTP, prepare CSRF", async () => {
   const source = await read("src/lib/api/http-client.ts");
 
-  assert.match(source, /const shouldPrepareCsrf =\\s*unsafeMethod\\s*&&\\s*typeof window !== "undefined"/);
-  assert.match(source, /requestHeaders\\.set\\("X-XSRF-TOKEN", csrfToken\\)/);
-  assert.match(source, /await fetch\\(this\\.baseUrl \\+ "\\/api\\/v1\\/auth\\/csrf"/);
+  assert.match(source, /const shouldPrepareCsrf =\s*unsafeMethod\s*&&\s*typeof window !== "undefined"/);
+  assert.match(source, /requestHeaders\.set\("X-XSRF-TOKEN", csrfToken\)/);
+  assert.match(source, /await fetch\(this\.baseUrl \+ "\/api\/v1\/auth\/csrf"/);
   assert.doesNotMatch(source, /csrfExemptMutationPaths/);
 });
 test("login preserves an internal next destination through the authentication challenge", async () => {
@@ -36,7 +36,7 @@ test("login page remains a real backend-backed auth entry point", async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const session = await read("src/features/auth/session.ts");
 
-  assert.match(login, /login\(\{ email: normalizedEmail, password \}\)/);
+  assert.match(login, /login\(\{\s*email:\s*normalizedEmail,\s*password,/);
   assert.match(login, /loginWithGoogle\(\)/);
   assert.match(session, /["']\/api\/v1\/auth\/login["']/);
   assert.match(session, /credentials/);
