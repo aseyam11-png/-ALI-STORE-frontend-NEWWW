@@ -19,10 +19,26 @@ type AliAiPanelProps = {
 };
 
 const QUICK_PROMPTS = [
-  "هاتف عملي بسعر أقل من 100 دولار",
-  "أبحث عن هدية مميزة",
-  "منتجات متوفرة الآن بسعر مناسب",
+  "ساعة أنيقة تناسب الاستخدام اليومي",
+  "حقيبة عملية بلون محايد",
+  "حذاء مريح للإطلالات اليومية",
 ];
+
+function formatAiProductPrice(product: AiCatalogProduct): string {
+  const amount = Number(product.price);
+  const currency =
+    typeof product.currency === "string" ? product.currency.trim().toUpperCase() : "";
+
+  if (!Number.isFinite(amount) || amount < 0 || !/^[A-Z]{3}$/.test(currency)) {
+    return "السعر غير متاح";
+  }
+
+  try {
+    return formatCurrency(amount, currency);
+  } catch {
+    return "السعر غير متاح";
+  }
+}
 
 function AiProductCard({ product }: { product: AiCatalogProduct }) {
   const image = product.primaryImageUrl ?? product.images?.[0];
@@ -63,10 +79,10 @@ function AiProductCard({ product }: { product: AiCatalogProduct }) {
             {product.name}
           </h3>
           <p className="mt-1 truncate text-caption text-muted-foreground">
-            {[product.categoryName, product.sku].filter(Boolean).join(" · ")}
+            {[product.categoryName].filter(Boolean).join(" · ")}
           </p>
           <p className="mt-3 text-h4 text-brand-ink">
-            {formatCurrency(Number(product.price), product.currency || "USD")}
+            {formatAiProductPrice(product)}
           </p>
         </div>
       </Link>

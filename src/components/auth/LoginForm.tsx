@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 import { login, loginWithGoogle } from "@/features/auth/session";
@@ -22,6 +23,12 @@ export function LoginForm() {
     searchParams.get("error") === "google"
       ? "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى."
       : undefined;
+  const accountNotice =
+    searchParams.get("passwordReset") === "1"
+      ? "تمت إعادة تعيين كلمة المرور. سجّل الدخول باستخدام كلمة المرور الجديدة."
+      : searchParams.get("passwordChanged") === "1"
+        ? "تم تغيير كلمة المرور. سجّل الدخول مجددًا."
+        : undefined;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,11 +84,20 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign(nextPath);
+    window.location.assign(
+      result.role === "ROLE_ADMIN" && !searchParams.get("next")
+        ? "/admin"
+        : nextPath,
+    );
   };
 
   return (
     <div className="space-y-5">
+      {accountNotice ? (
+        <p role="status" className="rounded-md border border-success-100 bg-success-surface px-4 py-3 text-body-sm leading-6 text-foreground">
+          {accountNotice}
+        </p>
+      ) : null}
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <Input
           id="login-email"
@@ -118,6 +134,15 @@ export function LoginForm() {
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
+        </div>
+
+        <div className="-mt-2 flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="min-h-10 inline-flex items-center text-body-sm font-semibold text-brand underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
+          >
+            نسيت كلمة المرور؟
+          </Link>
         </div>
 
         {(formError ?? googleError) && (

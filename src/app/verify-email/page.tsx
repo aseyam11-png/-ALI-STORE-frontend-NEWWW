@@ -15,17 +15,28 @@ export default function VerifyEmailPage() {
     <AuthShell
       eyebrow="خطوة أمان"
       title="تأكيد البريد الإلكتروني"
-      description="أدخل رمز التحقق الذي أرسلناه إلى بريدك لإكمال تسجيل الدخول أو إنشاء الحساب بأمان."
+      description="أدخل رمز التحقق الذي أرسلناه إلى بريدك لإكمال العملية. إذا كان لديك حساب بالفعل أو لم يصلك رمز الاستعادة، يمكنك العودة لتسجيل الدخول أو استعادة كلمة المرور."
       formFooter={
-        <p className="text-center text-body-sm text-muted-foreground">
-          تريد البدء من جديد؟{" "}
-          <Link
-            href="/login"
-            className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
-          >
-            العودة لتسجيل الدخول
-          </Link>
-        </p>
+        <div className="space-y-3 text-center text-body-sm text-muted-foreground">
+          <p>
+            تريد البدء من جديد؟{" "}
+            <Link
+              href="/login"
+              className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
+            >
+              العودة لتسجيل الدخول
+            </Link>
+          </p>
+          <p>
+            تحتاج إلى إعادة تعيين كلمة المرور؟{" "}
+            <Link
+              href="/forgot-password"
+              className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
+            >
+              استعادة كلمة المرور
+            </Link>
+          </p>
+        </div>
       }
     >
       <Suspense
