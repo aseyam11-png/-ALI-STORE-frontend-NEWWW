@@ -1,25 +1,75 @@
-// Editorial imagery for the homepage Hero and CategoryGrid — kept in one
-// place so both consumers reuse the exact same verified sources instead of
-// duplicating URLs. Fashion/Accessories reuse PRODUCT_IMAGE_URL entries that
-// are already wired into the live catalog (mocks/products.ts) and were
-// confirmed logo-free during this pass — several other entries in that map
-// (sneaker, sunglasses, watch, handbag, perfume, makeup, skincare tube) were
-// checked too and show a real third-party brand mark, so they're
-// deliberately excluded from any large/prominent placement here even though
-// they're fine as small product-card thumbnails elsewhere.
-//
-// The one genuinely new asset — Beauty & Care has no logo-free candidate in
-// PRODUCT_IMAGE_URL — was sourced the same way every image in this codebase
-// is: downloaded and visually inspected in this pass (via
-// images.unsplash.com, the only host next.config.ts allows for remote
-// images) to confirm it's a real, generic (no visible brand mark) product
-// photo before being wired in.
-const IMAGE_PARAMS = "auto=format&fit=crop&w=1600&q=78";
+// Homepage editorial imagery is presentation-only. Product truth, category
+// truth, prices, inventory, shipping and discounts continue to come from
+// the live catalog/API services.
 
-export const HERO_IMAGE_URL = `https://images.unsplash.com/photo-1595777457583-95e059d581b8?${IMAGE_PARAMS}`; // red evening dress — same photo as prod-001, reused at hero resolution
+const IMAGE_PARAMS = "auto=format&fit=crop&w=1800&q=82";
+
+export interface HomeHeroSlide {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  image: string;
+  alt: string;
+}
+
+export const HERO_SLIDES: HomeHeroSlide[] = [
+  {
+    id: "watches",
+    title: "ساعات فاخرة",
+    description: "اختيارات أنيقة بإطلالة هادئة تركز على التفاصيل.",
+    href: "/shop/products",
+    image:
+      "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?" +
+      IMAGE_PARAMS,
+    alt: "ساعة يد فاخرة على خلفية أنيقة",
+  },
+  {
+    id: "clothing",
+    title: "ملابس مختارة",
+    description: "ستايلات عصرية للوك اليومي والمناسبات.",
+    href: "/shop/products",
+    image:
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?" +
+      IMAGE_PARAMS,
+    alt: "ملابس عصرية في مشهد تحريري",
+  },
+  {
+    id: "shoes",
+    title: "أحذية مميزة",
+    description: "تصاميم تجمع بين الحركة والإطلالة اليومية.",
+    href: "/shop/products",
+    image:
+      "https://assets.lummi.ai/assets/QmVQpu4r4f57Uuiwtx11CoaZtp4BThSE1SJ4jS23XU8uYq?auto=format&w=1800&q=82",
+    alt: "حذاء بلون بيج بتصميم بسيط دون شعار ظاهر",
+  },
+  {
+    id: "accessories",
+    title: "إكسسوارات تكمل الإطلالة",
+    description: "تفاصيل صغيرة تصنع فرقًا كبيرًا في المظهر.",
+    href: "/shop/products",
+    image:
+      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?" +
+      IMAGE_PARAMS,
+    alt: "إكسسوارات ومجوهرات بتكوين تحريري",
+  },
+];
+
+export function getCategoryNavImage(slug: string, label: string): string | undefined {
+  const source = (slug + " " + label).toLocaleLowerCase("ar");
+
+  if (/(watch|watches|ساعة|ساعات)/.test(source)) return HERO_SLIDES[0].image;
+  if (/(shoe|shoes|footwear|حذاء|أحذية)/.test(source)) return HERO_SLIDES[2].image;
+  if (/(fashion|clothing|apparel|ملابس|أزياء|موضة)/.test(source)) return HERO_SLIDES[1].image;
+  if (/(accessor|إكسسوارات|مجوهرات|حقائب)/.test(source)) return HERO_SLIDES[3].image;
+
+  return undefined;
+}
 
 export const CATEGORY_IMAGE_URL: Record<string, string> = {
-  fashion: `https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?${IMAGE_PARAMS}`, // white t-shirt — same photo as prod-002
-  accessories: `https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?${IMAGE_PARAMS}`, // pearl necklace — same photo as prod-008
-  "beauty-care": `https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?${IMAGE_PARAMS}`, // amber dropper serum bottle, no visible brand mark
+  fashion: HERO_SLIDES[1].image,
+  accessories: HERO_SLIDES[3].image,
+  "beauty-care":
+    "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?" +
+    IMAGE_PARAMS,
 };

@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "assets.lummi.ai",
+        pathname: "/assets/**",
+      },
       ...(process.env.NEXT_PUBLIC_MEDIA_BASE_URL
         ? (() => {
             const url = new URL(process.env.NEXT_PUBLIC_MEDIA_BASE_URL);
