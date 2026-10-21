@@ -100,14 +100,23 @@ export class HttpClient {
 
       if (!csrfToken) {
         try {
-          await fetch(this.baseUrl + "/api/v1/auth/csrf", {
+          const csrfResponse = await fetch(this.baseUrl + "/api/v1/auth/csrf", {
             credentials: "include",
             headers: { Accept: "application/json" },
           });
+          // On a different API origin, document.cookie cannot read the API's XSRF-TOKEN
+          // cookie. The backend exposes this same raw token in a CORS-readable response
+          // header so the SPA can still attach the synchronizer token to the mutation.
+          const responseToken = csrfResponse.headers.get("X-XSRF-TOKEN");
+          if (csrfResponse.ok && responseToken?.trim()) {
+            csrfToken = responseToken.trim();
+          }
         } catch {
           // The token check below fails closed if the bootstrap request failed.
         }
-        csrfToken = readCookie("XSRF-TOKEN");
+        if (!csrfToken) {
+          csrfToken = readCookie("XSRF-TOKEN");
+        }
       }
 
       // Never send a cookie-authenticated mutation when the browser cannot
