@@ -84,7 +84,7 @@ export default function AdminProductPage() {
           <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
             <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs font-black text-[#2563EB]"><ArrowLeft className="h-3.5 w-3.5" />Back to products</Link>
             <h1 className="mt-4 text-3xl font-black text-[#0F172A]">{product.name}</h1>
-            <p className="mt-2 text-xs text-slate-500">{product.sku} · supplier {product.supplierSku ?? "not configured"}</p>
+            <p className="mt-2 text-xs text-slate-500">Store SKU: {product.sku || "not assigned"} · Database ID: {product.id} · Supplier product ID: {product.supplierProductId ?? "not available"}</p>
           </div>
         </section>
 
@@ -106,9 +106,12 @@ export default function AdminProductPage() {
               </label>
               <ReadOnly label="Category" value={product.categoryName ?? "—"} />
               <ReadOnly label="Brand" value={product.brandName ?? "—"} />
+              <ReadOnly label="Store SKU" value={product.sku || "—"} />
+              <ReadOnly label="Database product ID" value={String(product.id)} />
               <ReadOnly label="Supplier" value={product.supplierName ?? "—"} />
-              <ReadOnly label="Supplier cost" value={product.supplierCost == null ? "—" : String(product.supplierCost) + " " + product.currency} />
+              <ReadOnly label="Supplier product ID" value={product.supplierProductId ?? "—"} />
               <ReadOnly label="Supplier SKU" value={product.supplierSku ?? "—"} />
+              <ReadOnly label="Supplier cost" value={product.supplierCost == null ? "—" : String(product.supplierCost) + " " + product.currency} />
             </div>
 
             <div className="mt-6 rounded-xl border border-amber-100 bg-amber-50 p-4 text-xs leading-5 text-amber-800">
