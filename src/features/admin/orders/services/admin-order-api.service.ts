@@ -1,8 +1,29 @@
 import { apiClient } from "@/lib/api/http-client";
 import type { BackendOrder } from "@/features/orders/services/order.service";
 
+export type AdminOrderItem = {
+  id: number;
+  productId: number;
+  productSku?: string | null;
+  productName: string;
+  quantity: number;
+  price: number;
+  subTotal: number;
+};
+
+/**
+ * Admin-only order payload. Customer contact information is returned only by
+ * /api/v1/admin/orders and is not added to the customer-facing order contract.
+ */
+export type AdminOrder = Omit<BackendOrder, "items"> & {
+  customerName: string;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  items: AdminOrderItem[];
+};
+
 export type AdminOrderPage = {
-  content: BackendOrder[];
+  content: AdminOrder[];
   pageNumber: number;
   pageSize: number;
   totalElements: number;
@@ -18,12 +39,12 @@ export async function getAdminOrders(page = 0, size = 50): Promise<AdminOrderPag
 
 export async function updateAdminOrderStatus(
   id: string | number,
-  status: BackendOrder["status"],
-): Promise<BackendOrder> {
+  status: AdminOrder["status"],
+): Promise<AdminOrder> {
   const numericId = Number(id);
   if (!Number.isInteger(numericId) || numericId < 1) throw new Error("Invalid order id");
 
-  return apiClient.requestData<BackendOrder>(
+  return apiClient.requestData<AdminOrder>(
     `/api/v1/admin/orders/${numericId}/status`,
     {
       method: "PATCH",
