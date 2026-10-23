@@ -19,6 +19,7 @@ export type AdminProduct = {
   supplierCode?: string | null;
   supplierName?: string | null;
   supplierSku?: string | null;
+  supplierProductId?: string | null;
   supplierCost?: number | null;
 };
 
