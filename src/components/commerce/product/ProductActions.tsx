@@ -96,18 +96,17 @@ export function ProductActions({ product, selectedVariant }: ProductActionsProps
       };
 
       if (session.status === "authenticated") {
-        if (selectedVariant) {
-          throw new Error(
-            t("variantCartUnsupported"),
-          );
-        }
         const numericId = Number(product.id);
         if (!Number.isInteger(numericId) || numericId < 1) {
           throw new Error(t("invalidProductId"));
         }
 
         const currentItems = useCartStore.getState().items;
-        const backend = await addBackendCartItem(numericId, quantity);
+        const backend = await addBackendCartItem(
+          numericId,
+          quantity,
+          selectedVariant?.id,
+        );
 
         replaceItems(
           mapBackendCartToLocal(
