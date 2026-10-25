@@ -109,7 +109,7 @@ test("frontend repository does not carry a second backend source tree", async ()
 });
 
 test("cookie-authenticated browser mutations fail closed without a CSRF token", async () => {
-  const source = await read("src/lib/api/http-client.ts");
+  const source = (await read("src/lib/api/http-client.ts")).replace(/\r\n/g, "\n");
   const guard = source.indexOf('if (!csrfToken) {\n        throw new HttpApiError({');
   const request = source.indexOf('const response = await fetch(this.baseUrl + path');
   const csrfBootstrap = source.indexOf('await fetch(this.baseUrl + "/api/v1/auth/csrf"');
