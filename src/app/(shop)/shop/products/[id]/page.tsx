@@ -1,3 +1,4 @@
+import { getSiteUrl } from "@/lib/seo/site-url";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -9,6 +10,7 @@ import { ProductInfo } from "@/components/commerce/product/ProductInfo";
 import { ProductReviews } from "@/components/commerce/reviews/ProductReviews";
 import { ProductSpecifications } from "@/components/commerce/product/ProductSpecifications";
 import { ProductTrust } from "@/components/commerce/product/ProductTrust";
+import { ProductShippingOptions } from "@/components/commerce/product/ProductShippingOptions";
 import { RelatedProducts } from "@/components/commerce/product/RelatedProducts";
 import { RecentlyViewedSection } from "@/components/commerce/recently-viewed/RecentlyViewedSection";
 
@@ -20,6 +22,11 @@ import { normalizeB2CProduct } from "@/features/products/services/b2c-product.ma
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+
+function safeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
 export async function generateMetadata({
@@ -34,16 +41,23 @@ export async function generateMetadata({
     };
   }
 
+  const siteUrl = getSiteUrl();
+  const canonicalUrl = siteUrl
+    ? siteUrl + "/shop/products/" + encodeURIComponent(productDetails.id)
+    : undefined;
+
   return {
     title: productDetails.seo.title,
     description: productDetails.seo.description,
     keywords: productDetails.seo.keywords,
+    alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
     openGraph: {
       title: productDetails.seo.title,
       description: productDetails.seo.description,
       type: "website",
+      url: canonicalUrl,
       images: productDetails.images[0]?.url
-        ? [{ url: productDetails.images[0].url }]
+        ? [{ url: productDetails.images[0].url, alt: productDetails.name }]
         : undefined,
     },
   };
@@ -79,9 +93,58 @@ export default async function ProductDetailPage({
       4,
     );
 
+  const siteUrl = getSiteUrl();
+  const canonicalUrl = siteUrl
+    ? siteUrl + "/shop/products/" + encodeURIComponent(productDetails.id)
+    : undefined;
+  const availabilityUrl =
+    product.stockStatus === "in_stock" || product.stockStatus === "low_stock"
+      ? "https://schema.org/InStock"
+      : product.stockStatus === "out_of_stock"
+        ? "https://schema.org/OutOfStock"
+        : product.stockStatus === "pre_order"
+          ? "https://schema.org/PreOrder"
+          : undefined;
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: productDetails.name,
+    description: productDetails.description,
+    sku: productDetails.sku,
+    image: productDetails.images.map((image) => image.url),
+    ...(canonicalUrl ? { url: canonicalUrl } : {}),
+    ...(productDetails.brand?.name
+      ? { brand: { "@type": "Brand", name: productDetails.brand.name } }
+      : {}),
+    ...(productDetails.reviewSummary.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: productDetails.reviewSummary.rating,
+            reviewCount: productDetails.reviewSummary.reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+    offers: {
+      "@type": "Offer",
+      priceCurrency: productDetails.price.currency,
+      price: productDetails.price.amount.toFixed(2),
+      seller: { "@type": "Organization", name: "ALI STORE" },
+      ...(canonicalUrl ? { url: canonicalUrl } : {}),
+      ...(availabilityUrl ? { availability: availabilityUrl } : {}),
+    },
+  };
+
   return (
     <AppShell>
       <main className="min-h-screen bg-background">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }}
+        />
 
         <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-8">
 
@@ -98,14 +161,12 @@ export default async function ProductDetailPage({
 
           <div className="mt-8">
             <ProductTrust
-              estimatedDelivery={
-                estimatedDelivery
-              }
-              returnPolicy={
-                product.returnPolicy
-              }
+              estimatedDelivery={estimatedDelivery}
+              returnPolicy={product.returnPolicy}
             />
           </div>
+
+          <ProductShippingOptions methods={productDetails.shippingMethods} />
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
 
@@ -127,7 +188,10 @@ export default async function ProductDetailPage({
           </div>
 
           <section className="mt-8">
-            <ProductReviews productId={productDetails.id} />
+            <ProductReviews
+              productId={productDetails.id}
+              summary={productDetails.reviewSummary}
+            />
           </section>
 
           <RecentlyViewedSection

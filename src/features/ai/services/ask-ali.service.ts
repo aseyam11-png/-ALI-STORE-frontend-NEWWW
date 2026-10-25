@@ -4,7 +4,6 @@ export type AiCatalogProduct = {
   id: number;
   name: string;
   slug: string;
-  sku?: string | null;
   price: number | string;
   currency: string;
   availability?: string | null;

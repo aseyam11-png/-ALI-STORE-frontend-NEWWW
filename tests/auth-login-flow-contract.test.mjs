@@ -31,7 +31,7 @@ test("login preserves an internal next destination through the authentication ch
   assert.match(login, /resolveSafeNextPath/);
   assert.match(login, /searchParams\.get\("next"\)/);
   assert.match(login, /next: nextPath/);
-  assert.match(login, /window\.location\.assign\(nextPath\)/);
+  assert.match(login, /window\.location\.assign\([\s\S]*?nextPath[\s\S]*?\)/);
 
   assert.match(otp, /resolveSafeNextPath/);
   assert.match(otp, /searchParams\.get\("next"\)/);

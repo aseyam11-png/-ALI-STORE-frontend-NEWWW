@@ -10,7 +10,17 @@ import {
   type BackendReview,
 } from "@/features/reviews/services/review-api.service";
 
-export function LiveProductReviews({ productId }: { productId: string }) {
+export function LiveProductReviews({
+  productId,
+  summary,
+}: {
+  productId: string;
+  summary?: {
+    rating: number;
+    reviewCount: number;
+    distribution: { one: number; two: number; three: number; four: number; five: number };
+  };
+}) {
   const session = useSession();
   const [reviews, setReviews] = useState<BackendReview[]>([]);
   const [rating, setRating] = useState(5);
@@ -54,9 +64,28 @@ export function LiveProductReviews({ productId }: { productId: string }) {
     () =>
       reviews.length
         ? reviews.reduce((sum, item) => sum + item.rating, 0) / reviews.length
-        : 0,
-    [reviews],
+        : summary?.rating ?? 0,
+    [reviews, summary],
   );
+
+  const distribution = useMemo(() => {
+    if (reviews.length > 0) {
+      return [1, 2, 3, 4, 5].map((value) => ({
+        rating: value,
+        count: reviews.filter((review) => review.rating === value).length,
+      }));
+    }
+    return [
+      { rating: 1, count: summary?.distribution.one ?? 0 },
+      { rating: 2, count: summary?.distribution.two ?? 0 },
+      { rating: 3, count: summary?.distribution.three ?? 0 },
+      { rating: 4, count: summary?.distribution.four ?? 0 },
+      { rating: 5, count: summary?.distribution.five ?? 0 },
+    ];
+  }, [reviews, summary]);
+
+  const distributionTotal = distribution.reduce((sum, item) => sum + item.count, 0);
+  const displayedReviewCount = reviews.length || summary?.reviewCount || 0;
 
   const submit = async () => {
     if (saving || !comment.trim()) return;
@@ -110,11 +139,38 @@ export function LiveProductReviews({ productId }: { productId: string }) {
             ))}
           </div>
           <div className="mt-2 text-xs text-neutral-400">
-            {reviews.length} تقييم
+            {displayedReviewCount} تقييم
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 space-y-3">
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="rounded-xl border border-neutral-200 p-5">
+            <p className="text-sm font-black text-neutral-800">توزيع التقييمات</p>
+            <div className="mt-4 space-y-2.5">
+              {[...distribution].reverse().map((item) => {
+                const percentage =
+                  distributionTotal > 0
+                    ? Math.round((item.count / distributionTotal) * 100)
+                    : 0;
+                return (
+                  <div key={item.rating} className="grid grid-cols-[28px_1fr_42px] items-center gap-3 text-xs">
+                    <span className="font-bold text-neutral-500">{item.rating}</span>
+                    <div
+                      className="h-2 overflow-hidden rounded-full bg-neutral-100"
+                      role="img"
+                      aria-label={item.rating + " نجوم: " + item.count + " تقييم"}
+                    >
+                      <div className="h-full rounded-full bg-warning-500" style={{ width: percentage + "%" }} />
+                    </div>
+                    <span className="text-end text-neutral-400">{item.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-[11px] text-neutral-400">
+              التوزيع مبني على التقييمات الفعلية من الخادم.
+            </p>
+          </div>
           {loading ? (
             <div className="rounded-xl bg-neutral-50 p-5 text-sm text-neutral-400">
               جارٍ تحميل التقييمات...

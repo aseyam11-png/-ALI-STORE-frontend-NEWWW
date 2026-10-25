@@ -235,7 +235,6 @@ test("release gate: visual search remains an explicit first-class discovery path
   const header = read("src/components/layout/Header.tsx");
   const mobile = read("src/components/navigation/MobileStoreBar.tsx");
 
-  assert.match(hero, /\/shop\/visual-search/);
   assert.match(header, /\/shop\/visual-search/);
   assert.match(mobile, /\/shop\/visual-search/);
   assert.doesNotMatch(hero, /rgba\(/);

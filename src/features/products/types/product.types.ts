@@ -19,6 +19,7 @@ export type ProductPrice = {
   unit: string;
   originalAmount?: number;
   discountPercentage?: number;
+  flashSale?: boolean;
 };
 
 export type ProductImage = {
@@ -142,6 +143,7 @@ export type ProductSummary = {
   shipping: string;
   thumbnail?: ProductImage;
   discountPercentage?: number;
+  flashSale?: boolean;
   category?: ProductCategory;
   brand?: ProductBrand;
   stockQuantity: number;

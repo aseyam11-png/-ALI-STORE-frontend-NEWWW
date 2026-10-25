@@ -90,43 +90,50 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    const csrfExemptMutationPaths = new Set([
-      "/api/v1/auth/login",
-      "/api/v1/auth/register",
-      "/api/v1/auth/email/verify",
-      "/api/v1/auth/email/resend",
-    ]);
-
+    // All unsafe browser requests, including login/registration/OTP, must carry
+    // CSRF protection. Machine-to-machine webhook traffic does not use this browser client.
     const shouldPrepareCsrf =
-      unsafeMethod &&
-      typeof window !== "undefined" &&
-      !csrfExemptMutationPaths.has(path);
+      unsafeMethod && typeof window !== "undefined";
 
     if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
 
       if (!csrfToken) {
         try {
-          await fetch(this.baseUrl + "/api/v1/auth/csrf", {
+          const csrfResponse = await fetch(this.baseUrl + "/api/v1/auth/csrf", {
             credentials: "include",
             headers: { Accept: "application/json" },
           });
+          // On a different API origin, document.cookie cannot read the API's XSRF-TOKEN
+          // cookie. The backend exposes this same raw token in a CORS-readable response
+          // header so the SPA can still attach the synchronizer token to the mutation.
+          const responseToken = csrfResponse.headers.get("X-XSRF-TOKEN");
+          if (csrfResponse.ok && responseToken?.trim()) {
+            csrfToken = responseToken.trim();
+          }
         } catch {
-          // The actual mutation below is the source of truth. A missing CSRF
-          // bootstrap must not prevent the client from reaching the backend.
+          // The token check below fails closed if the bootstrap request failed.
         }
-        csrfToken = readCookie("XSRF-TOKEN");
+        if (!csrfToken) {
+          csrfToken = readCookie("XSRF-TOKEN");
+        }
       }
 
-      if (csrfToken) {
-        init = {
-          ...init,
-          headers: {
-            "X-XSRF-TOKEN": csrfToken,
-            ...(init?.headers ?? {}),
-          },
-        };
+      // Never send a cookie-authenticated mutation when the browser cannot
+      // attach the synchronizer token. The backend remains the final authority,
+      // but fail locally with an actionable message instead of issuing a request
+      // that is guaranteed to be rejected by CSRF protection.
+      if (!csrfToken) {
+        throw new HttpApiError({
+          status: 403,
+          message: "تعذر تجهيز رمز الحماية للطلب. حدّث الصفحة وحاول مرة أخرى.",
+        });
       }
+
+      // Headers handles object, tuple-array, and Headers inputs consistently.
+      const requestHeaders = new Headers(init?.headers);
+      requestHeaders.set("X-XSRF-TOKEN", csrfToken);
+      init = { ...init, headers: requestHeaders };
     }
 
     const headers = new Headers(init?.headers);
