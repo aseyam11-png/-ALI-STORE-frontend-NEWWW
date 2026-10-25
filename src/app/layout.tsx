@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Providers } from "@/components/providers";
 import { AnalyticsScripts } from "@/components/ux/AnalyticsScripts";
 import { RouteAnalytics } from "@/components/ux/RouteAnalytics";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import "./globals.css";
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
@@ -13,10 +14,25 @@ const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
   display: "swap",
 });
 
+function getMetadataBase(): URL | undefined {
+  const siteUrl = getSiteUrl();
+  return siteUrl ? new URL(siteUrl) : undefined;
+}
+
 export const metadata: Metadata = {
-  title: "AliStore",
+  metadataBase: getMetadataBase(),
+  title: {
+    default: "ALI STORE",
+    template: "%s | ALI STORE",
+  },
   description:
-    "AliStore — shop direct. Every product sold, shipped and stood behind by AliStore.",
+    "ALI STORE — متجر تجزئة مباشر للملابس والأحذية والساعات والإكسسوارات، مع أسعار ومخزون وطرق شحن مرتبطة بخدمات المتجر.",
+  applicationName: "ALI STORE",
+  openGraph: {
+    siteName: "ALI STORE",
+    locale: "ar",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
