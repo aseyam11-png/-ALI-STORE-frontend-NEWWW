@@ -35,11 +35,14 @@ export type BackendPayment = {
     | "NOT_REQUIRED"
     | "PENDING"
     | "COLLECTED";
+  checkoutUrl?: string | null;
 };
 
 export async function createBackendOrder(input: {
   shippingAddress: string;
   couponCode?: string;
+  shippingMethodCode?: string;
+  shippingCountry?: string;
   idempotencyKey: string;
 }): Promise<BackendOrder> {
   return apiClient.requestData<BackendOrder>(
@@ -54,6 +57,12 @@ export async function createBackendOrder(input: {
           input.shippingAddress,
         ...(input.couponCode
           ? { couponCode: input.couponCode }
+          : {}),
+        ...(input.shippingMethodCode
+          ? { shippingMethodCode: input.shippingMethodCode }
+          : {}),
+        ...(input.shippingCountry
+          ? { shippingCountry: input.shippingCountry }
           : {}),
       }),
     },
