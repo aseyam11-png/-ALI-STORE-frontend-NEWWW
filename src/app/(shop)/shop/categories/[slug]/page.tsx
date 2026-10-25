@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { Route } from "next";
 import {
@@ -9,12 +10,41 @@ import {
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import { CategoryTree } from "@/components/commerce/category/CategoryTree";
 import {
   getCategories,
+  getCategoryBySlug,
   getCategoryPathFromTree,
   flattenCategoryTree,
 } from "@/features/catalog/services/category-api.service";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getCategoryBySlug(slug);
+  if (!category) return { title: "القسم غير موجود | ALI STORE" };
+
+  const siteUrl = getSiteUrl();
+  const canonical = siteUrl
+    ? siteUrl + "/shop/categories/" + encodeURIComponent(category.slug)
+    : undefined;
+
+  return {
+    title: category.name + " | ALI STORE",
+    description: category.description || "تصفح منتجات " + category.name + " من ALI STORE.",
+    alternates: canonical ? { canonical } : undefined,
+    openGraph: {
+      title: category.name + " | ALI STORE",
+      description: category.description || "تصفح منتجات " + category.name + " من ALI STORE.",
+      type: "website",
+      url: canonical,
+    },
+  };
+}
 
 export default async function CategoryPage({
   params,
@@ -93,7 +123,7 @@ export default async function CategoryPage({
               </div>
 
               <Link
-                href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
+                href={("/shop/products?category=" + encodeURIComponent(category.id)) as Route}
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
               >
                 <ShoppingBag className="h-4 w-4" />
@@ -177,7 +207,7 @@ export default async function CategoryPage({
                   </p>
 
                   <Link
-                    href={("/shop/products?category=" + encodeURIComponent(category.slug)) as Route}
+                    href={("/shop/products?category=" + encodeURIComponent(category.id)) as Route}
                     className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-raised"
                   >
                     عرض المنتجات
