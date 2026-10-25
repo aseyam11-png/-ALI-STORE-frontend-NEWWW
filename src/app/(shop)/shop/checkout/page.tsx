@@ -297,6 +297,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (paymentMethod !== "cod" && !onlinePaymentsEnabled) {
+      setError("الدفع الإلكتروني غير متاح حاليًا. اختر الدفع عند الاستلام.");
+      return;
+    }
+
     trackEcommerceEvent("begin_checkout", {
       currency: serverCartCurrency,
       value: total,
