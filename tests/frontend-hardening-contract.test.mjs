@@ -115,6 +115,11 @@ test("cookie-authenticated browser mutations fail closed without a CSRF token", 
   const csrfBootstrap = source.indexOf('await fetch(this.baseUrl + "/api/v1/auth/csrf"');
 
   assert.notEqual(csrfBootstrap, -1, "CSRF bootstrap endpoint must be called when the token is missing");
+  assert.match(
+    source,
+    /csrfResponse\.headers\.get\("X-XSRF-TOKEN"\)/,
+    "cross-origin SPA must use the CORS-exposed CSRF response header when it cannot read the cookie",
+  );
   assert.notEqual(guard, -1, "missing CSRF token must cause a local error");
   assert.notEqual(request, -1, "ordinary API requests must still be sent when preconditions pass");
   assert.ok(guard < request, "token guard must execute before the mutation request");
