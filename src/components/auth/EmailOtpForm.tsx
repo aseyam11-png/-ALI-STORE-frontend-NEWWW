@@ -23,7 +23,7 @@ function resolveSafeNextPath(value: string | null): string {
 export function EmailOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = resolveSafeNextPath(searchParams.get("next")) as Route;
+  const nextPath = resolveSafeNextPath(searchParams.get("next"));
 
   const queryChallengeId = searchParams.get("challenge") ?? "";
   const queryMaskedEmail = searchParams.get("email") ?? "";
@@ -80,7 +80,7 @@ export function EmailOtpForm() {
       return;
     }
 
-    router.replace(nextPath);
+    router.replace(nextPath as Route);
   };
 
   const handleResend = async () => {

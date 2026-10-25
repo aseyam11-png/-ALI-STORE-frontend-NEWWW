@@ -158,9 +158,14 @@ export default function BuyerAccountPage() {
   const [ordersError, setOrdersError] = useState("");
 
   useEffect(() => {
-    if (session.status !== "authenticated") return;
+    if (session.status !== "authenticated") {
+      setOrdersLoading(false);
+      return;
+    }
 
     let active = true;
+    setOrdersLoading(true);
+    setOrdersError("");
 
     getOrders(0, 8)
       .then((page) => {
@@ -418,7 +423,7 @@ export default function BuyerAccountPage() {
                 {recentOrders.map((order) => (
                   <Link
                     key={order.id}
-                    href={`/buyer/orders/${order.id}` as Route}
+                    href={("/buyer/orders/" + order.id) as Route}
                     className="group flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex min-w-0 items-start gap-3">
