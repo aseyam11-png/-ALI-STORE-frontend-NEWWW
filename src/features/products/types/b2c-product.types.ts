@@ -56,6 +56,17 @@ export interface B2CProduct {
     estimatedDelivery: string;
   };
 
+  shippingMethods: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    currency: string;
+    estimatedMinDays: number;
+    estimatedMaxDays: number;
+    available: boolean;
+  }>;
+
   returnPolicy?: string;
 
   featured?: boolean;
