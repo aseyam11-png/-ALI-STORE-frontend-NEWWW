@@ -25,6 +25,11 @@ import { CouponInput } from "@/components/checkout/CouponInput";
 import { trackEcommerceEvent } from "@/lib/ux/analytics";
 import type { AppliedCoupon } from "@/features/coupons/types/coupon.types";
 import {
+  getShippingMethods,
+  normalizeShippingCountryCode,
+  type ShippingMethod,
+} from "@/features/shipping/services/shipping-api.service";
+import {
   createBackendOrder,
   getBackendCart,
   mapBackendCartToLocal,
@@ -75,16 +80,18 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
   const [paymentMethod, setPaymentMethod] =
-    useState("cod");
+    useState<"card" | "cod">("cod");
 
-  // Online payments stay disabled until a real production gateway is configured.
-  const onlinePaymentsEnabled = false;
+  const onlinePaymentsEnabled =
+    process.env.NEXT_PUBLIC_ONLINE_PAYMENTS_ENABLED === "true";
 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [serverCartTotal, setServerCartTotal] =
     useState<number | null>(null);
   const [serverCartCurrency, setServerCartCurrency] =
     useState<string | undefined>(undefined);
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [selectedShippingMethodCode, setSelectedShippingMethodCode] = useState("");
 
   const [error, setError] =
     useState("");
@@ -181,6 +188,35 @@ export default function CheckoutPage() {
       });
   }, [router, session.status, session.user?.email]);
 
+  useEffect(() => {
+    if (!form.country || !serverCartCurrency || session.status !== "authenticated") {
+      setShippingMethods([]);
+      setSelectedShippingMethodCode("");
+      return;
+    }
+
+    let active = true;
+    getShippingMethods(form.country, serverCartCurrency)
+      .then((methods) => {
+        if (!active) return;
+        setShippingMethods(methods);
+        setSelectedShippingMethodCode((current) =>
+          current && methods.some((method) => method.code === current)
+            ? current
+            : methods[0]?.code ?? "",
+        );
+      })
+      .catch(() => {
+        if (!active) return;
+        setShippingMethods([]);
+        setSelectedShippingMethodCode("");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [form.country, serverCartCurrency, session.status]);
+
   const effectiveEmail = form.email || session.user?.email || "";
 
   if (session.status !== "authenticated") {
@@ -206,9 +242,14 @@ export default function CheckoutPage() {
   const couponDiscount =
     appliedCoupon?.finalDiscount ?? 0;
 
+  const selectedShippingMethod =
+    shippingMethods.find((method) => method.code === selectedShippingMethodCode) ?? null;
+
+  const shippingAmount = selectedShippingMethod?.price ?? 0;
+
   const total = Math.max(
     0,
-    cartSubtotal - couponDiscount,
+    cartSubtotal - couponDiscount + shippingAmount,
   );
 
   const setField = (
@@ -285,6 +326,8 @@ export default function CheckoutPage() {
 
       const order = await createBackendOrder({
         idempotencyKey: idempotencyKeyRef.current,
+        shippingMethodCode: selectedShippingMethodCode || undefined,
+        shippingCountry: normalizeShippingCountryCode(form.country),
         shippingAddress: [
           form.fullName,
           form.phone,
@@ -301,9 +344,7 @@ export default function CheckoutPage() {
       const backendPaymentMethod =
         paymentMethod === "cod"
           ? "CASH_ON_DELIVERY"
-          : paymentMethod === "wallet"
-            ? "PAYPAL"
-            : "CREDIT_CARD";
+          : "CREDIT_CARD";
 
       // The backend order creation consumes the persisted cart. Clear the
       // local presentation copy only after the order exists, while retaining
@@ -322,6 +363,15 @@ export default function CheckoutPage() {
         amount: order.totalAmount,
         method: backendPaymentMethod,
       });
+
+      if (
+        payment.status === "PENDING" &&
+        payment.checkoutUrl
+      ) {
+        clearCart();
+        window.location.assign(payment.checkoutUrl);
+        return;
+      }
 
       const paymentIsAccepted =
         payment.status === "COMPLETED" ||
@@ -802,24 +852,20 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <div role="radiogroup" aria-label="طريقة الدفع" className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div role="radiogroup" aria-label="طريقة الدفع" className="mt-5 grid gap-3 sm:grid-cols-2">
 
                     {[
                       {
-                        value: "card",
+                        value: "card" as const,
                         label: "بطاقة ائتمان / خصم",
                         enabled: onlinePaymentsEnabled,
                       },
                       {
-                        value: "wallet",
-                        label: "PayPal",
-                        enabled: onlinePaymentsEnabled,
-                      },
-                      {
-                        value: "cod",
+                        value: "cod" as const,
                         label: "الدفع عند الاستلام",
                         enabled: true,
-                      }                    ].map(
+                      }
+                    ].map(
                       (option) => (
                         <button
                           key={option.value}
@@ -899,9 +945,54 @@ export default function CheckoutPage() {
 
                 </div>
 
-                <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
-                  تكلفة الشحن غير متاحة كقيمة مؤكدة في هذه المرحلة، وتُحدد عند
-                  توفر بيانات الشحن النهائية.
+                <div className="mt-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-neutral-800">طريقة الشحن</p>
+                      <p className="mt-1 text-[11px] leading-5 text-neutral-400">
+                        السعر والمدة مأخوذان من عقد الشحن في الخادم.
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-neutral-500">
+                      {shippingMethods.length} خيارات
+                    </span>
+                  </div>
+
+                  {shippingMethods.length === 0 ? (
+                    <p className="mt-4 text-xs leading-5 text-neutral-500">
+                      لا توجد طريقة شحن مفعّلة لهذه الدولة والعملة حاليًا.
+                    </p>
+                  ) : (
+                    <div className="mt-4 space-y-2">
+                      {shippingMethods.map((method) => (
+                        <label
+                          key={method.code}
+                          className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-neutral-200 bg-surface p-4"
+                        >
+                          <span className="flex min-w-0 items-center gap-3">
+                            <input
+                              type="radio"
+                              name="shipping-method"
+                              value={method.code}
+                              checked={selectedShippingMethodCode === method.code}
+                              onChange={() => setSelectedShippingMethodCode(method.code)}
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-bold text-neutral-800">{method.name}</span>
+                              <span className="mt-1 block text-[11px] text-neutral-400">
+                                {method.estimatedMinDays}-{method.estimatedMaxDays} business days
+                              </span>
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-sm font-black text-brand-ink">
+                            {method.price === 0
+                              ? "مجاني"
+                              : <LocalizedPrice amountUSD={method.price} currency={method.currency} />}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-5">
@@ -928,7 +1019,11 @@ export default function CheckoutPage() {
                     <span className="text-neutral-500">الشحن</span>
 
                     <span className="font-bold text-neutral-800">
-                      تُحدد عند تأكيد بيانات الشحن
+                      {selectedShippingMethod
+                        ? selectedShippingMethod.price === 0
+                          ? "مجاني"
+                          : <LocalizedPrice amountUSD={selectedShippingMethod.price} currency={selectedShippingMethod.currency} />
+                        : "غير متاح"}
                     </span>
                   </div>
 
@@ -951,7 +1046,7 @@ export default function CheckoutPage() {
 
                   <div className="flex items-end justify-between">
 
-                    <span className="text-sm font-bold text-neutral-500">الإجمالي قبل الشحن</span>
+                    <span className="text-sm font-bold text-neutral-500">الإجمالي</span>
 
                     <LocalizedPrice
                       amountUSD={total}
