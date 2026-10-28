@@ -9,6 +9,7 @@ test("Ask Ali product cards never invent currency or display invalid prices", as
   );
 
   assert.match(source, /function formatAiProductPrice\(/);
+  assert.match(source, /rawPrice\.trim\(\) === ""/);
   assert.match(source, /Number\.isFinite\(amount\)/);
   assert.match(source, /product\.currency !== "SAR"/);
   assert.match(source, /formatCurrency\(amount, "SAR"\)/);
