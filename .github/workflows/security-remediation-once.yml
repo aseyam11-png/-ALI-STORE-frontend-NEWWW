@@ -1,0 +1,60 @@
+name: One-time frontend dependency remediation
+
+on:
+  push:
+    branches:
+      - feat/admin-console-backend-aligned-20261028
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-remediation-{{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  remediate:
+    if: github.event.head_commit.message == 'fix(security): trigger one-time dependency remediation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: feat/admin-console-backend-aligned-20261028
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Socket Firewall
+        uses: SocketDev/action@2d3f25590c6ed6ba11a9a14c064d962a3a04698f
+        with:
+          mode: firewall-free
+
+      - name: Upgrade patched direct dependencies and regenerate package-lock
+        run: sfw npm install --save-exact next@16.4.1 eslint-config-next@16.4.1 zod@4.6.6 sharp@0.35.5
+
+      - name: Verify source and production build
+        run: npm run verify
+
+      - name: Verify production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Commit regenerated dependency lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "No dependency changes were produced."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "fix(deps): patch vulnerable frontend dependencies"
+          git push origin HEAD:feat/admin-console-backend-aligned-20261028
