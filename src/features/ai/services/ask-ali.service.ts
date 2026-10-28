@@ -34,13 +34,18 @@ function validatePrompt(prompt: string) {
 async function execute(prompt: string, mode: "ask" | "discover") {
   const clean = validatePrompt(prompt);
   try {
-    return await apiClient.requestData<AskAliResponse>(mode === "ask" ? "/api/v1/ai/ask" : "/api/v1/ai/discover", {
-      method: "POST",
-      body: JSON.stringify({ prompt: clean }),
-    });
+    return await apiClient.requestData<AskAliResponse>(
+      mode === "ask" ? "/api/v1/ai/ask" : "/api/v1/ai/discover",
+      {
+        method: "POST",
+        body: JSON.stringify({ prompt: clean }),
+      },
+    );
   } catch (error) {
     if (error instanceof HttpApiError && error.status === 503) {
-      throw new Error("خدمة Ask Ali غير متاحة حاليًا. استخدم البحث العادي للوصول إلى الكتالوج.");
+      throw new Error(
+        "خدمة Ask Ali غير متاحة حاليًا. استخدم البحث العادي للوصول إلى الكتالوج.",
+      );
     }
     throw error instanceof Error
       ? error

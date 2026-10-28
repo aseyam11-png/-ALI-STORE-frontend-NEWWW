@@ -4,7 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
-import { ArrowLeft, Loader2, Search, ShieldCheck, Sparkles, WandSparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  WandSparkles,
+} from "lucide-react";
 
 import {
   askAli,
@@ -47,7 +54,9 @@ function AiProductCard({ product }: { product: AiCatalogProduct }) {
   return (
     <article className="group overflow-hidden rounded-2xl border border-neutral-200 bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-floating">
       <Link
-        href={("/shop/products/" + encodeURIComponent(String(product.id))) as Route}
+        href={
+          ("/shop/products/" + encodeURIComponent(String(product.id))) as Route
+        }
         className="block outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
       >
         <div className="relative aspect-square overflow-hidden bg-neutral-50">
@@ -70,7 +79,14 @@ function AiProductCard({ product }: { product: AiCatalogProduct }) {
             <span className="min-w-0 truncate text-caption font-medium text-brand">
               {product.brandName || "ALI STORE"}
             </span>
-            <span className={"shrink-0 rounded-full px-2 py-1 text-label font-medium " + (inStock ? "bg-success-surface text-success-700" : "bg-neutral-100 text-neutral-500")}>
+            <span
+              className={
+                "shrink-0 rounded-full px-2 py-1 text-label font-medium " +
+                (inStock
+                  ? "bg-success-surface text-success-700"
+                  : "bg-neutral-100 text-neutral-500")
+              }
+            >
               {inStock ? "متوفر" : "غير متوفر"}
             </span>
           </div>
@@ -89,7 +105,10 @@ function AiProductCard({ product }: { product: AiCatalogProduct }) {
   );
 }
 
-export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProps) {
+export function AliAiPanel({
+  mode = "discover",
+  className = "",
+}: AliAiPanelProps) {
   const isAsk = mode === "ask";
   const [prompt, setPrompt] = useState("");
   const [answer, setAnswer] = useState("");
@@ -107,13 +126,19 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
     setError("");
 
     try {
-      const response = isAsk ? await askAli(clean) : await discoverWithAli(clean);
+      const response = isAsk
+        ? await askAli(clean)
+        : await discoverWithAli(clean);
       setAnswer(response.answer);
       setProducts(response.products);
       setSuggestedQuery(response.suggestedQuery);
       setAiGenerated(response.aiGenerated);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "خدمة Ask Ali غير متاحة حاليًا. حاول مرة أخرى لاحقًا.");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "خدمة Ask Ali غير متاحة حاليًا. حاول مرة أخرى لاحقًا.",
+      );
       setAnswer("");
       setProducts([]);
     } finally {
@@ -133,7 +158,9 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
                   AI Discovery
                 </div>
                 <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-                  {isAsk ? "اسأل علي قبل أن تشتري" : "دع علي يساعدك تكتشف الأنسب"}
+                  {isAsk
+                    ? "اسأل علي قبل أن تشتري"
+                    : "دع علي يساعدك تكتشف الأنسب"}
                 </h2>
                 <p className="mt-2 max-w-xl text-body-sm leading-7 text-white/65">
                   {isAsk
@@ -168,7 +195,14 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
                 disabled={loading || !prompt.trim()}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-body-sm font-medium text-white transition-all hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-neutral-400"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <WandSparkles className="h-4 w-4" aria-hidden="true" />}
+                {loading ? (
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <WandSparkles className="h-4 w-4" aria-hidden="true" />
+                )}
                 {loading ? "جارٍ التحليل…" : isAsk ? "اسأل علي" : "اكتشف الآن"}
               </button>
             </form>
@@ -193,11 +227,22 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
           </div>
 
           {error ? (
-            <div role="alert" className="m-5 rounded-2xl border border-warning-100 bg-warning-surface p-4 sm:m-7">
-              <p className="text-body-sm font-medium text-warning-800">{error}</p>
-              <Link href="/shop/products" className="mt-3 inline-flex items-center gap-2 text-caption font-medium text-brand hover:underline">
+            <div
+              role="alert"
+              className="m-5 rounded-2xl border border-warning-100 bg-warning-surface p-4 sm:m-7"
+            >
+              <p className="text-body-sm font-medium text-warning-800">
+                {error}
+              </p>
+              <Link
+                href="/shop/products"
+                className="mt-3 inline-flex items-center gap-2 text-caption font-medium text-brand hover:underline"
+              >
                 افتح الكتالوج مباشرة
-                <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+                <ArrowLeft
+                  className="h-3.5 w-3.5 rtl:rotate-180"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
           ) : null}
@@ -210,32 +255,52 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
                     <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                     {aiGenerated ? "رد مدعوم بالـAI" : "مساعدة الكتالوج"}
                   </span>
-                  {products.length > 0 ? <span className="text-label text-muted-foreground">{products.length} منتجات مقترحة</span> : null}
+                  {products.length > 0 ? (
+                    <span className="text-label text-muted-foreground">
+                      {products.length} منتجات مقترحة
+                    </span>
+                  ) : null}
                 </div>
                 <p className="mt-3 max-w-4xl whitespace-pre-wrap text-body leading-8 text-foreground">
                   {answer}
                 </p>
                 {suggestedQuery ? (
                   <Link
-                    href={("/shop/products?q=" + encodeURIComponent(suggestedQuery)) as Route}
+                    href={
+                      ("/shop/products?q=" +
+                        encodeURIComponent(suggestedQuery)) as Route
+                    }
                     className="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-surface px-3.5 py-2 text-caption font-medium text-brand transition hover:border-primary-200"
                   >
                     مشاهدة نتائج البحث المقترحة
-                    <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+                    <ArrowLeft
+                      className="h-3.5 w-3.5 rtl:rotate-180"
+                      aria-hidden="true"
+                    />
                   </Link>
                 ) : null}
               </div>
 
               {products.length > 0 ? (
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {products.map((product) => <AiProductCard key={product.id} product={product} />)}
+                  {products.map((product) => (
+                    <AiProductCard key={product.id} product={product} />
+                  ))}
                 </div>
               ) : (
                 <div className="mt-6 rounded-2xl border border-dashed border-neutral-200 p-8 text-center">
-                  <p className="text-body-sm font-medium text-neutral-700">لا توجد منتجات مطابقة في الكتالوج الحالي.</p>
-                  <Link href="/shop/products" className="mt-3 inline-flex items-center gap-2 text-caption font-medium text-brand hover:underline">
+                  <p className="text-body-sm font-medium text-neutral-700">
+                    لا توجد منتجات مطابقة في الكتالوج الحالي.
+                  </p>
+                  <Link
+                    href="/shop/products"
+                    className="mt-3 inline-flex items-center gap-2 text-caption font-medium text-brand hover:underline"
+                  >
                     العودة للبحث العادي
-                    <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+                    <ArrowLeft
+                      className="h-3.5 w-3.5 rtl:rotate-180"
+                      aria-hidden="true"
+                    />
                   </Link>
                 </div>
               )}
@@ -245,9 +310,15 @@ export function AliAiPanel({ mode = "discover", className = "" }: AliAiPanelProp
 
         {!isAsk ? (
           <div className="mt-5 flex justify-end">
-            <Link href="/shop/ask-ali" className="inline-flex items-center gap-2 text-caption font-medium text-brand hover:underline">
+            <Link
+              href="/shop/ask-ali"
+              className="inline-flex items-center gap-2 text-caption font-medium text-brand hover:underline"
+            >
               فتح Ask Ali بالكامل
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+              <ArrowLeft
+                className="h-3.5 w-3.5 rtl:rotate-180"
+                aria-hidden="true"
+              />
             </Link>
           </div>
         ) : null}

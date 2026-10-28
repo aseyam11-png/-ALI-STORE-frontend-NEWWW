@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("Ask Ali product cards never invent currency or display invalid prices", async () => {
-  const source = await readFile("src/components/commerce/AliAiPanel.tsx", "utf8");
+  const source = await readFile(
+    "src/components/commerce/AliAiPanel.tsx",
+    "utf8",
+  );
 
   assert.match(source, /function formatAiProductPrice\(/);
   assert.match(source, /Number\.isFinite\(amount\)/);
@@ -15,8 +18,14 @@ test("Ask Ali product cards never invent currency or display invalid prices", as
 });
 
 test("Ask Ali product type matches the backend DTO and prompts fit ALI STORE", async () => {
-  const service = await readFile("src/features/ai/services/ask-ali.service.ts", "utf8");
-  const panel = await readFile("src/components/commerce/AliAiPanel.tsx", "utf8");
+  const service = await readFile(
+    "src/features/ai/services/ask-ali.service.ts",
+    "utf8",
+  );
+  const panel = await readFile(
+    "src/components/commerce/AliAiPanel.tsx",
+    "utf8",
+  );
 
   assert.doesNotMatch(service, /sku\?:\s*string/);
   assert.doesNotMatch(panel, /product\.sku/);
