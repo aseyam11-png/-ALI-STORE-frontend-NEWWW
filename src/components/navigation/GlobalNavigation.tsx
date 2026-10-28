@@ -110,7 +110,7 @@ export function GlobalNavigation() {
                 {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}
                 <span>{item.label}</span>
                 {"badge" in item && item.badge ? (
-                  <span className="rounded-full bg-primary-50 px-1.5 py-0.5 text-label font-medium text-brand">
+                  <span className="rounded-full bg-primary-50 px-1.5 py-0.5 text-label font-medium text-primary-800">
                     {item.badge}
                   </span>
                 ) : null}
@@ -249,7 +249,7 @@ export function GlobalNavigation() {
                           {item.label}
                         </span>
                         {"badge" in item && item.badge ? (
-                          <span className="rounded-full bg-primary-50 px-2 py-0.5 text-label font-medium text-brand">
+                          <span className="rounded-full bg-primary-50 px-2 py-0.5 text-label font-medium text-primary-800">
                             {item.badge}
                           </span>
                         ) : (
