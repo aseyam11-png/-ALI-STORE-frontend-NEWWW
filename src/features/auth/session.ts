@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  API_BASE_URL,
-  HttpApiError,
-  apiClient,
-} from "@/lib/api/http-client";
+import { API_BASE_URL, HttpApiError, apiClient } from "@/lib/api/http-client";
 
 type ApiEnvelope<T> = {
   data: T;
@@ -29,10 +25,7 @@ export type VerificationChallenge = {
   purpose: "EMAIL_VERIFICATION" | "LOGIN";
 };
 
-export type SessionStatus =
-  | "loading"
-  | "unauthenticated"
-  | "authenticated";
+export type SessionStatus = "loading" | "unauthenticated" | "authenticated";
 
 export interface SessionUser {
   id: number;
@@ -146,6 +139,8 @@ function mapAuthResponse(data: AuthResponse): AuthResult {
 export async function login(credentials: {
   email: string;
   password: string;
+  adminGatePassword?: string;
+  captchaToken?: string;
 }): Promise<AuthResult> {
   try {
     const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
@@ -215,17 +210,15 @@ export async function verifyEmailCode(input: {
 export async function resendEmailCode(
   challengeId: string,
 ): Promise<
-  | { ok: true; challenge: VerificationChallenge }
-  | { ok: false; reason: string }
+  { ok: true; challenge: VerificationChallenge } | { ok: false; reason: string }
 > {
   try {
-    const response = await apiClient.request<ApiEnvelope<VerificationChallenge>>(
-      "/api/v1/auth/email/resend",
-      {
-        method: "POST",
-        body: JSON.stringify({ challengeId }),
-      },
-    );
+    const response = await apiClient.request<
+      ApiEnvelope<VerificationChallenge>
+    >("/api/v1/auth/email/resend", {
+      method: "POST",
+      body: JSON.stringify({ challengeId }),
+    });
 
     return { ok: true, challenge: response.data };
   } catch (error) {
@@ -271,8 +264,6 @@ export async function logout(): Promise<void> {
   });
 
   if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new Event("alistore:logout"),
-    );
+    window.dispatchEvent(new Event("alistore:logout"));
   }
 }
