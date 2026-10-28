@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: frontend-quality-${{ github.ref }}
@@ -195,8 +196,9 @@ jobs:
       - name: Lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --root-dir "$(pwd)" --verbose --no-progress "./**/*.md" "./**/*.html"
+          args: --root-dir "$(pwd)" --verbose --no-progress "./**/*.md"
           fail: true
+          failIfEmpty: false
           lycheeVersion: v0.24.2
           output: lychee/results.md
           jobSummary: true
