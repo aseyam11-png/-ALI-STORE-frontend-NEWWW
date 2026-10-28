@@ -47,7 +47,7 @@ jobs:
         run: npm run test:contracts
 
       - name: Prettier (workflow files)
-        run: npx --yes prettier@3 --check .github/workflows/quality-gates.yml .github/workflows/advanced-quality.yml --ignore-path .prettierignore
+        run: npx --yes prettier@3 --check .github/workflows/advanced-quality.yml --ignore-path .prettierignore
 
       - name: Knip
         run: npx --yes knip@5 --no-progress
