@@ -47,7 +47,7 @@ test("customer UX: mobile catalog filters behave as an accessible modal surface"
 test("customer UX: customer account does not reference unsupported password management", () => {
   const profile = read("src/app/(buyer)/buyer/profile/page.tsx");
   assert.doesNotMatch(profile, /تغيير كلمة المرور موجود في صفحة الأمان/);
-  assert.match(profile, /إدارة الجلسة وتسجيل الخروج الآمن من صفحة الأمان/);
+  assert.match(profile, /إدارة الجلسة وتسجيل الخروج الآمن\s+من صفحة الأمان/);
 });
 
 test("customer UX: checkout, category, visual search, cart and trust surfaces avoid known English UI leakage", () => {
