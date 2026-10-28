@@ -50,7 +50,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pattern='\\.(js|mjs|cjs|ts|tsx|json|md|yml|yaml)
+          pattern='\.(js|mjs|cjs|ts|tsx|json|md|yml|yaml)$'
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            mapfile -t files < <(git diff --name-only --diff-filter=ACMRT "origin/${GITHUB_BASE_REF}...HEAD" | grep -E "$pattern" || true)
+          else
+            mapfile -t files < <(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD | grep -E "$pattern" || true)
+          fi
+
+          if (( ${#files[@]} == 0 )); then
+            echo "No supported changed files found; skipping Prettier."
+            exit 0
+          fi
+
+          npx --yes prettier@3 --check --ignore-path .prettierignore "${files[@]}"
 
       - name: Knip
         run: npx --yes knip@5 --no-progress
