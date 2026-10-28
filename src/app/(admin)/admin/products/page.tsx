@@ -48,7 +48,7 @@ export default function AdminProductsPage() {
     const needle = search.trim().toLowerCase();
     if (!needle) return products;
     return products.filter((product) =>
-      (product.name + " " + product.sku + " " + (product.supplierSku ?? ""))
+      (product.name + " " + product.sku + " " + product.id + " " + (product.supplierSku ?? "") + " " + (product.supplierProductId ?? ""))
         .toLowerCase()
         .includes(needle),
     );
@@ -106,7 +106,7 @@ export default function AdminProductsPage() {
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="ابحث بالاسم أو SKU أو Supplier SKU…"
+                  placeholder="ابحث بالاسم أو رقم المنتج أو SKU المورد أو معرّف المورد…"
                   aria-label="البحث في المنتجات"
                   className="h-12 min-w-0 flex-1 bg-transparent px-3 text-body-sm text-foreground outline-none placeholder:text-neutral-400"
                 />
@@ -138,10 +138,12 @@ export default function AdminProductsPage() {
                             />
                           </div>
                           <p className="mt-1 text-caption text-muted-foreground">
-                            {product.sku} · {product.categoryName ?? "بدون قسم"} · {product.brandName ?? "بدون علامة"}
+                            رمز المتجر: {product.sku} · رقم قاعدة البيانات: {product.id} · {product.categoryName ?? "بدون قسم"} · {product.brandName ?? "بدون علامة"}
                           </p>
                           <p className="mt-2 text-body-sm text-neutral-600">
                             المورد: <span className="font-medium text-foreground">{product.supplierName ?? "غير مضبوط"}</span>
+                            <span className="mx-1 text-neutral-300">·</span>
+                            معرّف المنتج لدى المورد: {product.supplierProductId ?? "غير متاح"}
                             <span className="mx-1 text-neutral-300">·</span>
                             SKU المورد: {product.supplierSku ?? "غير متاح"}
                           </p>
