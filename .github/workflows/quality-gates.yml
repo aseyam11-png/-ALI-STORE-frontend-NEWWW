@@ -47,7 +47,7 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          git fetch --no-tags --depth=1 origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
           files_file="$(mktemp)"
           git diff --name-only -z --diff-filter=ACMR "origin/$BASE_REF" HEAD -- \
             '*.js' '*.mjs' '*.cjs' '*.ts' '*.tsx' '*.json' '*.md' '*.yml' '*.yaml' > "$files_file"
@@ -219,4 +219,5 @@ jobs:
           lycheeVersion: v0.24.2
           output: lychee/results.md
           jobSummary: true
+          failIfEmpty: false
           failIfEmpty: false
