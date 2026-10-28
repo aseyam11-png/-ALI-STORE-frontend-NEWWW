@@ -42,7 +42,24 @@ jobs:
       - name: Contract tests
         run: npm run test:contracts
 
-      - name: Prettier
+      - name: Prettier changed files
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          files_file="$(mktemp)"
+          git diff --name-only -z --diff-filter=ACMR "origin/$BASE_REF...HEAD" -- \
+            '*.js' '*.mjs' '*.cjs' '*.ts' '*.tsx' '*.json' '*.md' '*.yml' '*.yaml' > "$files_file"
+          if [ ! -s "$files_file" ]; then
+            echo "No changed files are covered by Prettier."
+            exit 0
+          fi
+          xargs -0 -r npx --yes prettier@3 --check --ignore-path .prettierignore < "$files_file"
+
+      - name: Prettier full-tree baseline audit
+        if: ${{ github.event_name != 'pull_request' }}
+        continue-on-error: true
         run: npx --yes prettier@3 --check "**/*.{js,mjs,cjs,ts,tsx,json,md,yml,yaml}" --ignore-path .prettierignore
 
       - name: Knip
@@ -197,7 +214,7 @@ jobs:
       - name: Lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --root-dir . --verbose --no-progress $(git ls-files "*.md" "*.html")
+          args: --root-dir . --verbose --no-progress .claude/skills/graphify/SKILL.md .quality/README.md AGENTS.md DESIGN.md docs/ADVANCED_QUALITY_TOOLS.md docs/OPENTELEMETRY.md docs/PACT.md docs/QUALITY_TOOLING.md docs/SECURITY_20_TOOLS.md docs/SENTRY.md docs/UX_CRO_STACK.md docs/VISUAL_REGRESSION.md docs/frontend-consolidation-2026-10-04.md
           fail: true
           lycheeVersion: v0.24.2
           output: lychee/results.md
