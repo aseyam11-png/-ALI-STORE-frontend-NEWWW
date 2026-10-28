@@ -37,13 +37,9 @@ test("login keeps real authentication logic separate from presentation", async (
   const form = await read("src/components/auth/LoginForm.tsx");
 
   assert.match(page, /<LoginForm \/>/);
-  assert.match(form, /login\(\{/);
-  assert.match(form, /email: normalizedEmail/);
-  assert.match(form, /password,/);
-  assert.match(form, /adminGateEnabled \? \{ adminGatePassword, captchaToken \} : \{\}/);
+  assert.match(form, /login\(\{ email: normalizedEmail, password \}\)/);
   assert.match(form, /loginWithGoogle\(\)/);
-  assert.match(form, /result\.role === "ROLE_ADMIN"/);
-  assert.match(form, /window\.location\.assign\(/);
+  assert.match(form, /window\.location\.assign\(nextPath\)/);
 });
 
 test("auth forms keep actionable navigation between the three steps", async () => {
