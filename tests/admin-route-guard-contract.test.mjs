@@ -12,7 +12,7 @@ test("admin route group is guarded before rendering administrative pages", () =>
 
 test("admin guard redirects anonymous users and restricts pages to ADMIN role", () => {
   assert.ok(guard.includes('session.status === "unauthenticated"'));
-  assert.ok(guard.includes('router.replace("/login?next="'));
+  assert.ok(guard.includes('router.replace(("/login?next="'));
   assert.ok(guard.includes('role === "ADMIN"'));
   assert.ok(guard.includes("403 · Forbidden"));
   assert.ok(guard.includes("return children"));
