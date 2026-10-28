@@ -75,7 +75,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -116,13 +116,13 @@ jobs:
         run: npm ci
 
       - name: Snyk dependency scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
+        if: ${{ env.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: npx --yes snyk@latest test --severity-threshold=high
 
       - name: FOSSA license/compliance scan
-        if: ${{ secrets.FOSSA_API_KEY != '' }}
+        if: ${{ env.FOSSA_API_KEY != '' }}
         env:
           FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
         run: npx --yes fossa-cli@latest analyze
@@ -193,7 +193,7 @@ jobs:
       - name: Lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --root-dir "$(pwd)" --verbose --no-progress "./**/*.md" "./**/*.html"
+          args: --root-dir . --verbose --no-progress "./**/*.md" "./**/*.html"
           fail: true
           lycheeVersion: v0.24.2
           output: lychee/results.md
