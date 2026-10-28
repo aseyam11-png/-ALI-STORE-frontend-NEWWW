@@ -187,7 +187,7 @@ jobs:
         if: always()
         run: |
           if [ -f /tmp/ali-store-next.pid ]; then
-            kill $(cat /tmp/ali-store-next.pid) || true
+            kill "$(cat /tmp/ali-store-next.pid)" || true
           fi
 
   links:
@@ -208,25 +208,6 @@ jobs:
           output: lychee/results.md
           jobSummary: true
 
-
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-            range="origin/${GITHUB_BASE_REF}...HEAD"
-          else
-            range="HEAD^ HEAD"
-          fi
-
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-            mapfile -t files < <(git diff --name-only --diff-filter=ACMRT "$range" | grep -E "$pattern" || true)
-          else
-            mapfile -t files < <(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD | grep -E "$pattern" || true)
-          fi
-
-          if (( ${#files[@]} == 0 )); then
-            echo "No supported changed files found; skipping Prettier."
-            exit 0
-          fi
-
-          npx --yes prettier@3 --check --ignore-path .prettierignore "${files[@]}"
 
       - name: Knip
         run: npx --yes knip@5 --no-progress
