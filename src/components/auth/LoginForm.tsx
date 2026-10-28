@@ -60,7 +60,9 @@ export function LoginForm() {
     if (hasError) return;
 
     if (adminGateEnabled && (!adminGatePassword.trim() || !captchaToken)) {
-      setFormError("أدخل كلمة مرور بوابة الإدارة وأكمل اختبار التحقق قبل المتابعة.");
+      setFormError(
+        "أدخل كلمة مرور بوابة الإدارة وأكمل اختبار التحقق قبل المتابعة.",
+      );
       return;
     }
 
@@ -144,7 +146,11 @@ export function LoginForm() {
             aria-pressed={showPassword}
             className="absolute end-2 top-8 flex h-9 w-9 items-center justify-center rounded-sm text-neutral-500 transition-colors duration-200 ease-brand hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </button>
         </div>
 

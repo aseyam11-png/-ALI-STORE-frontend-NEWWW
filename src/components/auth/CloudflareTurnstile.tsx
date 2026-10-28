@@ -29,7 +29,9 @@ type CloudflareTurnstileProps = {
 const SCRIPT_SRC =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
-export function CloudflareTurnstile({ onTokenChange }: CloudflareTurnstileProps) {
+export function CloudflareTurnstile({
+  onTokenChange,
+}: CloudflareTurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const callbackRef = useRef(onTokenChange);
@@ -102,7 +104,8 @@ export function CloudflareTurnstile({ onTokenChange }: CloudflareTurnstileProps)
         role="alert"
         className="rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-caption text-warning-800"
       >
-        بوابة الإدارة غير مهيأة: يجب ضبط NEXT_PUBLIC_TURNSTILE_SITE_KEY قبل تسجيل دخول الأدمن.
+        بوابة الإدارة غير مهيأة: يجب ضبط NEXT_PUBLIC_TURNSTILE_SITE_KEY قبل
+        تسجيل دخول الأدمن.
       </p>
     );
   }
