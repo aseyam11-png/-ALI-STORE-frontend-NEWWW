@@ -67,7 +67,7 @@ jobs:
         run: npx --yes knip@5 --no-progress --max-issues 200
 
       - name: Dependency Cruiser
-        run: npx --yes dependency-cruiser@16 --validate quality/dependency-cruiser.cjs src
+        run: npx --yes dependency-cruiser@16 --config quality/dependency-cruiser.cjs src
 
       - name: Markdownlint
         run: npx --yes markdownlint-cli2@0.18 "**/*.md" "#node_modules/**" "#.next/**" "#out/**" "#coverage/**" "#unpacked_files/**" "#frontend-final-backup/**" "#uiux-backup-20260814-155817/**" "#references/**"
