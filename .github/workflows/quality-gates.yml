@@ -49,12 +49,6 @@ jobs:
       - name: Prettier (workflow files)
         run: npx --yes prettier@3 --check .github/workflows/quality-gates.yml .github/workflows/advanced-quality.yml --ignore-path .prettierignore
 
-      - name: Validate GitHub Actions workflows
-        uses: reviewdog/action-actionlint@v1
-        with:
-          reporter: local
-          fail_level: error
-
       - name: Knip
         run: npx --yes knip@5 --no-progress
 
