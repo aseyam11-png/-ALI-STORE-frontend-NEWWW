@@ -32,6 +32,15 @@
     "Sentry",
     "CodeQL",
     "WebKit",
-    "Lucide"
+    "Lucide",
+    "FAFC",
+    "alistore",
+    "labelledby",
+    "nosniff",
+    "HSTS",
+    "uiux"
+  ],
+  "ignoreRegExpList": [
+    "/[\\p{Script=Arabic}\\p{M}]+/gu"
   ]
 }
