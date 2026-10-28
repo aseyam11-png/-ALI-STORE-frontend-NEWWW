@@ -25,7 +25,10 @@ test("admin gate is opt-in in the UI and Google OAuth is disabled while selected
   const login = await read("src/components/auth/LoginForm.tsx");
 
   assert.match(login, /checked=\{adminGateEnabled\}/);
-  assert.match(login, /adminGateEnabled \? \{ adminGatePassword, captchaToken \} : \{\}/);
+  assert.match(login, /const result = adminGateEnabled/);
+  assert.match(login, /adminGatePassword,/);
+  assert.match(login, /captchaToken,/);
+  assert.match(login, /await login\(\{ email: normalizedEmail, password \}\)/);
   assert.match(login, /result\.role === "ROLE_ADMIN"/);
   assert.match(login, /disabled=\{submitting \|\| adminGateEnabled\}/);
 });
