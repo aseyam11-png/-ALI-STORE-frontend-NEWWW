@@ -3,7 +3,9 @@
   "language": "en",
   "useGitignore": true,
   "enableGlobDot": true,
-  "files": ["**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}"],
+  "files": [
+    "**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}"
+  ],
   "ignorePaths": [
     "node_modules/**",
     ".next/**",
@@ -19,6 +21,7 @@
   ],
   "words": [
     "ACMR",
+    "actionlint",
     "activewear",
     "Activewear",
     "Ahrefs",
@@ -89,6 +92,7 @@
     "Pa11y",
     "pageleave",
     "partialize",
+    "pipefail",
     "Playwright",
     "posthog",
     "POSTHOG",
@@ -115,5 +119,7 @@
     "WebKit",
     "zaproxy"
   ],
-  "ignoreRegExpList": ["/[\\p{Script=Arabic}\\p{M}]+/gu"]
+  "ignoreRegExpList": [
+    "/[\\p{Script=Arabic}\\p{M}]+/gu"
+  ]
 }
