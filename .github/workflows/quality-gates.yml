@@ -197,7 +197,7 @@ jobs:
       - name: Lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --root-dir . --verbose --no-progress "**/*.md" "**/*.html"
+          args: --root-dir . --verbose --no-progress $(git ls-files "*.md" "*.html")
           fail: true
           lycheeVersion: v0.24.2
           output: lychee/results.md
