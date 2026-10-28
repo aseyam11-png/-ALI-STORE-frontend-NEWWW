@@ -217,7 +217,7 @@ jobs:
         if: always()
         run: |
           if [ -f /tmp/ali-store-next.pid ]; then
-            kill $(cat /tmp/ali-store-next.pid) || true
+            kill "$(cat /tmp/ali-store-next.pid)" || true
           fi
 
   links:
