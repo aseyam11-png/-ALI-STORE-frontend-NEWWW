@@ -30,8 +30,9 @@ test("login preserves an internal next destination through the authentication ch
 
   assert.match(login, /resolveSafeNextPath/);
   assert.match(login, /searchParams\.get\("next"\)/);
-  assert.match(login, /next: nextPath/);
-  assert.match(login, /window\.location\.assign\(nextPath\)/);
+  assert.match(login, /next: adminGateEnabled && !searchParams\.get\("next"\) \? "\/admin" : nextPath/);
+  assert.match(login, /window\.location\.assign\(/);
+  assert.match(login, /result\.role === "ROLE_ADMIN"/);
 
   assert.match(otp, /resolveSafeNextPath/);
   assert.match(otp, /searchParams\.get\("next"\)/);
@@ -46,7 +47,10 @@ test("login page remains a real backend-backed auth entry point", async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const session = await read("src/features/auth/session.ts");
 
-  assert.match(login, /login\(\{ email: normalizedEmail, password \}\)/);
+  assert.match(login, /login\(\{/);
+  assert.match(login, /email: normalizedEmail/);
+  assert.match(login, /password,/);
+  assert.match(login, /adminGateEnabled \? \{ adminGatePassword, captchaToken \} : \{\}/);
   assert.match(login, /loginWithGoogle\(\)/);
   assert.match(session, /["']\/api\/v1\/auth\/login["']/);
   assert.match(session, /credentials/);
