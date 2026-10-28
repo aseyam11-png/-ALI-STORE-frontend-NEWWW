@@ -1,0 +1,53 @@
+name: Temporary Prettier Remediation
+
+on:
+  push:
+    branches:
+      - fix/quality-gates-workflows-20261028
+
+permissions:
+  contents: write
+
+jobs:
+  format-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v6
+        with:
+          ref: fix/quality-gates-workflows-20261028
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Format files required by the quality gate
+        run: |
+          npx --yes prettier@3 --write --ignore-path .prettierignore \
+            ".github/workflows/advanced-quality.yml" \
+            ".github/workflows/quality-gates.yml" \
+            "src/app/(buyer)/buyer/profile/page.tsx" \
+            "src/app/error.tsx" \
+            "src/app/global-error.tsx" \
+            "src/components/ui/error-state.tsx"
+
+      - name: Commit formatting changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            ".github/workflows/advanced-quality.yml" \
+            ".github/workflows/quality-gates.yml" \
+            "src/app/(buyer)/buyer/profile/page.tsx" \
+            "src/app/error.tsx" \
+            "src/app/global-error.tsx" \
+            "src/components/ui/error-state.tsx"
+          if git diff --cached --quiet; then
+            echo "No formatter changes were necessary."
+            exit 0
+          fi
+          git commit -m "style: satisfy frontend Prettier quality gate"
+          git push origin HEAD:fix/quality-gates-workflows-20261028
