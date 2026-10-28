@@ -74,8 +74,12 @@ export function Footer() {
                     <Icon className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-black text-brand-ink">{item.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-neutral-500">{item.text}</p>
+                    <p className="text-sm font-black text-brand-ink">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-neutral-500">
+                      {item.text}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -96,7 +100,8 @@ export function Footer() {
               </Link>
 
               <p className="mt-4 max-w-md text-sm leading-7 text-neutral-300">
-                ALI STORE is a single-merchant online store. Product ordering, payment and fulfillment are coordinated through one storefront.
+                ALI STORE is a single-merchant online store. Product ordering,
+                payment and fulfillment are coordinated through one storefront.
               </p>
 
               <div className="mt-6 space-y-3">
@@ -144,7 +149,9 @@ export function Footer() {
 
           <div className="mt-10 grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <p className="text-sm font-black">Need help finding the right product?</p>
+              <p className="text-sm font-black">
+                Need help finding the right product?
+              </p>
               <p className="mt-1 text-xs leading-5 text-neutral-400">
                 Browse the catalog or open the support center.
               </p>
@@ -162,9 +169,18 @@ export function Footer() {
           <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-neutral-300 sm:flex-row sm:items-center sm:justify-between">
             <span>© 2026 AliStore</span>
             <div className="flex flex-wrap gap-5">
-              <Link href="/support" className="transition hover:text-white">Support</Link>
-              <Link href="/buyer/orders" className="transition hover:text-white">حسابي وطلباتي</Link>
-              <Link href="/support" className="transition hover:text-white">Help</Link>
+              <Link href="/support" className="transition hover:text-white">
+                Support
+              </Link>
+              <Link
+                href="/buyer/orders"
+                className="transition hover:text-white"
+              >
+                حسابي وطلباتي
+              </Link>
+              <Link href="/support" className="transition hover:text-white">
+                Help
+              </Link>
             </div>
           </div>
         </div>
