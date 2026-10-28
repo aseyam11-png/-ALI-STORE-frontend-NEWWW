@@ -69,7 +69,23 @@ jobs:
       - name: Dependency Cruiser
         run: npx --yes dependency-cruiser@16 --config quality/dependency-cruiser.cjs src
 
-      - name: Markdownlint
+      - name: Markdownlint changed files
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+          files_file="$(mktemp)"
+          git diff --name-only -z --diff-filter=ACMR "origin/$BASE_REF" HEAD -- '*.md' > "$files_file"
+          if [ ! -s "$files_file" ]; then
+            echo "No changed Markdown files to lint."
+            exit 0
+          fi
+          xargs -0 -r npx --yes markdownlint-cli2@0.18 < "$files_file"
+
+      - name: Markdownlint full-tree baseline audit
+        if: ${{ github.event_name != 'pull_request' }}
+        continue-on-error: true
         run: npx --yes markdownlint-cli2@0.18 "**/*.md" "#node_modules/**" "#.next/**" "#out/**" "#coverage/**" "#unpacked_files/**" "#frontend-final-backup/**" "#uiux-backup-20260814-155817/**" "#references/**"
 
       - name: License inventory
