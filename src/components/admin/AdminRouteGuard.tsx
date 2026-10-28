@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 
 import { useSession } from "@/features/auth/session";
@@ -24,7 +25,7 @@ export function AdminRouteGuard({
         pathname?.startsWith("/admin") || pathname?.startsWith("/warehouse")
           ? pathname
           : "/admin";
-      router.replace("/login?next=" + encodeURIComponent(returnPath));
+      router.replace(("/login?next=" + encodeURIComponent(returnPath)) as Route);
     }
   }, [pathname, router, session.status]);
 
