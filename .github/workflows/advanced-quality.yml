@@ -108,7 +108,7 @@ jobs:
         run: npm install --no-save --no-package-lock pa11y-ci@latest
 
       - name: Run accessibility crawl
-        run: npx pa11y-ci http://127.0.0.1:3000/
+        run: npx pa11y-ci --config .pa11yci.json
 
       - name: Stop server
         if: always()
