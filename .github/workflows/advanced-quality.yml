@@ -174,7 +174,8 @@ jobs:
     steps:
       - name: Skip when not configured
         if: ${{ env.CHROMATIC_PROJECT_TOKEN == '' }}
-        run: echo "Chromatic skipped: configure Storybook and CHROMATIC_PROJECT_TOKEN."
+        run: |
+          echo "Chromatic skipped: configure Storybook and CHROMATIC_PROJECT_TOKEN."
 
       - name: Checkout
         if: ${{ env.CHROMATIC_PROJECT_TOKEN != '' }}
