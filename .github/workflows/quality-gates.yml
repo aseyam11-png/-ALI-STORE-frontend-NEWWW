@@ -154,8 +154,11 @@ jobs:
           echo $! > /tmp/ali-store-next.pid
           npx --yes wait-on@9 http://127.0.0.1:3000
 
+      - name: Install Cypress
+        run: npm install --no-save --no-package-lock cypress@15
+
       - name: Cypress smoke E2E
-        run: npx --yes cypress@15 run --config baseUrl=http://127.0.0.1:3000
+        run: npx cypress run --config baseUrl=http://127.0.0.1:3000
 
       - name: Lighthouse accessibility/performance/SEO
         run: |
@@ -194,9 +197,8 @@ jobs:
       - name: Lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --root-dir . --verbose --no-progress "./**/*.md" "./**/*.html"
+          args: --root-dir . --verbose --no-progress "**/*.md" "**/*.html"
           fail: true
           lycheeVersion: v0.24.2
           output: lychee/results.md
           jobSummary: true
-          failIfEmpty: false
