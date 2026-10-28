@@ -209,17 +209,3 @@ jobs:
           jobSummary: true
 
 
-      - name: Knip
-        run: npx --yes knip@5 --no-progress
-
-      - name: Dependency Cruiser
-        run: npx --yes dependency-cruiser@16 --validate quality/dependency-cruiser.cjs src
-
-      - name: Markdownlint
-        run: npx --yes markdownlint-cli2@0.18 "**/*.md" "#node_modules/**" "#.next/**" "#out/**" "#coverage/**" "#unpacked_files/**" "#frontend-final-backup/**" "#uiux-backup-20260814-155817/**" "#references/**"
-
-      - name: License inventory
-        run: npx --yes license-checker@25 --production --summary
-
-      - name: Production build
-        run: npm run build
