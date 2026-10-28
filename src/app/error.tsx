@@ -26,7 +26,8 @@ export default function Error({
           تعذر تحميل هذه الصفحة
         </h1>
         <p className="mt-3 text-body-sm leading-6 text-muted-foreground">
-          حدث خطأ مؤقت أثناء جلب البيانات. جرّب إعادة المحاولة قبل مغادرة الصفحة.
+          حدث خطأ مؤقت أثناء جلب البيانات. جرّب إعادة المحاولة قبل مغادرة
+          الصفحة.
         </p>
         <button
           type="button"

@@ -12,9 +12,7 @@ export default function GlobalError() {
             <p className="text-label font-bold uppercase tracking-[0.14em] text-brand">
               ALI STORE
             </p>
-            <h1 className="mt-3 text-2xl font-bold">
-              حدث خطأ غير متوقع
-            </h1>
+            <h1 className="mt-3 text-2xl font-bold">حدث خطأ غير متوقع</h1>
             <p className="mt-3 text-body-sm leading-6 text-muted-foreground">
               أعد تحميل الصفحة للمتابعة.
             </p>

@@ -21,9 +21,7 @@ export function ErrorState({
         <AlertCircle className="h-5 w-5" />
       </div>
 
-      <h2 className="mt-4 text-lg font-black text-danger-700">
-        {title}
-      </h2>
+      <h2 className="mt-4 text-lg font-black text-danger-700">{title}</h2>
 
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-danger-700/80">
         {message}
@@ -31,11 +29,7 @@ export function ErrorState({
 
       {onRetry && (
         <div className="mt-5">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onRetry}
-          >
+          <Button type="button" variant="outline" onClick={onRetry}>
             <RefreshCw className="h-4 w-4" />
             Try again
           </Button>
