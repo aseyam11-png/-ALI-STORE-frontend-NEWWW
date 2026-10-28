@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: frontend-quality-${{ github.ref }}
@@ -198,3 +199,4 @@ jobs:
           lycheeVersion: v0.24.2
           output: lychee/results.md
           jobSummary: true
+          failIfEmpty: false
