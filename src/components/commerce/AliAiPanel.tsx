@@ -32,7 +32,16 @@ const QUICK_PROMPTS = [
 ];
 
 function formatAiProductPrice(product: AiCatalogProduct): string {
-  const amount = Number(product.price);
+  const rawPrice: unknown = product.price;
+
+  if (
+    (typeof rawPrice !== "number" && typeof rawPrice !== "string") ||
+    (typeof rawPrice === "string" && rawPrice.trim() === "")
+  ) {
+    return "السعر غير متاح";
+  }
+
+  const amount = Number(rawPrice);
 
   // ALI STORE displays prices in SAR only; never infer or invent a currency.
   if (!Number.isFinite(amount) || amount < 0 || product.currency !== "SAR") {
