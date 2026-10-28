@@ -341,6 +341,7 @@ export function SmartAutocomplete({
             handleKeyDown
           }
           type="search"
+          aria-label="بحث عن منتجات المتجر"
           placeholder={
             placeholder
           }
