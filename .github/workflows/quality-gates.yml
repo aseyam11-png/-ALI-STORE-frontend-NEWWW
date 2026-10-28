@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -44,8 +46,187 @@ jobs:
       - name: Contract tests
         run: npm run test:contracts
 
-      - name: Prettier
-        run: npx --yes prettier@3 --check "**/*.{js,mjs,cjs,ts,tsx,json,md,yml,yaml}" --ignore-path .prettierignore
+      - name: Prettier (changed files)
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='\\.(js|mjs|cjs|ts|tsx|json|md|yml|yaml)
+
+      - name: Knip
+        run: npx --yes knip@5 --no-progress
+
+      - name: Dependency Cruiser
+        run: npx --yes dependency-cruiser@16 --validate quality/dependency-cruiser.cjs src
+
+      - name: Markdownlint
+        run: npx --yes markdownlint-cli2@0.18 "**/*.md" "#node_modules/**" "#.next/**" "#out/**" "#coverage/**" "#unpacked_files/**" "#frontend-final-backup/**" "#uiux-backup-20260814-155817/**" "#references/**"
+
+      - name: License inventory
+        run: npx --yes license-checker@25 --production --summary
+
+      - name: Production build
+        run: npm run build
+
+  security-supply-chain:
+    name: Supply-chain security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Dependency vulnerability audit
+        run: npm audit --audit-level=high
+
+  external-security:
+    name: Optional SCA/compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Snyk dependency scan
+        if: ${{ env.SNYK_TOKEN != '' }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: npx --yes snyk@latest test --severity-threshold=high
+
+      - name: FOSSA license/compliance scan
+        if: ${{ env.FOSSA_API_KEY != '' }}
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+        run: npx --yes fossa-cli@latest analyze
+
+  runtime-quality:
+    name: Runtime browser quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Start production server
+        run: |
+          nohup npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/ali-store-next.log 2>&1 &
+          echo $! > /tmp/ali-store-next.pid
+          npx --yes wait-on@9 http://127.0.0.1:3000
+
+      - name: Cypress smoke E2E
+        run: npx --yes cypress@15 run --config baseUrl=http://127.0.0.1:3000
+
+      - name: Lighthouse accessibility/performance/SEO
+        run: |
+          mkdir -p artifacts/lighthouse
+          npx --yes lighthouse@13 http://127.0.0.1:3000             --output=json             --output-path=artifacts/lighthouse/home.json             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --only-categories=accessibility,best-practices,performance,seo
+
+      - name: axe accessibility audit
+        run: |
+          mkdir -p artifacts/axe
+          npx --yes @axe-core/cli@4.13.0             http://127.0.0.1:3000             --stdout > artifacts/axe/home.json
+        continue-on-error: true
+
+      - name: Upload browser audit artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: frontend-browser-quality
+          path: artifacts/
+          if-no-files-found: ignore
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/ali-store-next.pid ]; then
+            kill $(cat /tmp/ali-store-next.pid) || true
+          fi
+
+  links:
+    name: Broken-link scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --root-dir "$(pwd)" --verbose --no-progress "./**/*.md"
+          fail: true
+          failIfEmpty: false
+          lycheeVersion: v0.24.2
+          output: lychee/results.md
+          jobSummary: true
+
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            range="origin/${GITHUB_BASE_REF}...HEAD"
+          else
+            range="HEAD^ HEAD"
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            mapfile -t files < <(git diff --name-only --diff-filter=ACMRT "$range" | grep -E "$pattern" || true)
+          else
+            mapfile -t files < <(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD | grep -E "$pattern" || true)
+          fi
+
+          if (( ${#files[@]} == 0 )); then
+            echo "No supported changed files found; skipping Prettier."
+            exit 0
+          fi
+
+          npx --yes prettier@3 --check --ignore-path .prettierignore "${files[@]}"
 
       - name: Knip
         run: npx --yes knip@5 --no-progress
