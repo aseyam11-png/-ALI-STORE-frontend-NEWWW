@@ -53,12 +53,6 @@ export default function AdminProductPage() {
 
   useEffect(() => {
     let active = true;
-    if (!params?.id) {
-      setLoading(false);
-      setError("رقم المنتج غير صالح.");
-      return () => { active = false; };
-    }
-
     getAdminProduct(params.id)
       .then((next) => {
         if (!active) return;
