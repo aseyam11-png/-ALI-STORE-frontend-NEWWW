@@ -95,9 +95,9 @@
   --color-muted: var(--color-neutral-100);
   --color-muted-foreground: var(--color-neutral-500);
 
-  --color-brand: var(--color-primary-500);
-  --color-brand-hover: var(--color-primary-600);
-  --color-brand-active: var(--color-primary-700);
+  --color-brand: var(--color-primary-800);
+  --color-brand-hover: var(--color-primary-900);
+  --color-brand-active: var(--color-primary-950);
   --color-brand-ink: var(--color-ink-800);
   --color-brand-ink-hover: var(--color-ink-900);
 

@@ -16,10 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { AccountWorkspace } from "@/components/commerce/account/AccountWorkspace";
-import {
-  updateProfile,
-  useSession,
-} from "@/features/auth/session";
+import { updateProfile, useSession } from "@/features/auth/session";
 
 type ProfileForm = {
   firstName: string;
@@ -78,7 +75,8 @@ export default function BuyerProfilePage() {
             سجّل الدخول للوصول إلى ملفك الشخصي
           </h2>
           <p className="mx-auto mt-2 max-w-md text-body-sm leading-6 text-muted-foreground">
-            بيانات الملف الشخصي محفوظة في حسابك ولا يمكن عرضها قبل التحقق من الجلسة.
+            بيانات الملف الشخصي محفوظة في حسابك ولا يمكن عرضها قبل التحقق من
+            الجلسة.
           </p>
           <Link
             href="/login?next=/buyer/profile"
@@ -152,12 +150,9 @@ function AuthenticatedProfile({
   const validate = () => {
     if (!form.firstName.trim()) return "الاسم الأول مطلوب.";
     if (!form.lastName.trim()) return "اسم العائلة مطلوب.";
-    if (form.firstName.trim().length > 100)
-      return "الاسم الأول طويل جدًا.";
-    if (form.lastName.trim().length > 100)
-      return "اسم العائلة طويل جدًا.";
-    if (form.phoneNumber.trim().length > 32)
-      return "رقم الهاتف طويل جدًا.";
+    if (form.firstName.trim().length > 100) return "الاسم الأول طويل جدًا.";
+    if (form.lastName.trim().length > 100) return "اسم العائلة طويل جدًا.";
+    if (form.phoneNumber.trim().length > 32) return "رقم الهاتف طويل جدًا.";
     return "";
   };
 
@@ -199,13 +194,11 @@ function AuthenticatedProfile({
     }
   };
 
-  const setField =
-    (field: keyof ProfileForm) =>
-    (value: string) => {
-      setForm((current) => ({ ...current, [field]: value }));
-      setError("");
-      setSuccess("");
-    };
+  const setField = (field: keyof ProfileForm) => (value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setError("");
+    setSuccess("");
+  };
 
   return (
     <AccountWorkspace
@@ -298,7 +291,8 @@ function AuthenticatedProfile({
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-caption text-muted-foreground">
-              يمكنك حفظ الاسم ورقم الهاتف فقط. إدارة الجلسة وتسجيل الخروج الآمن من صفحة الأمان.
+              يمكنك حفظ الاسم ورقم الهاتف فقط. إدارة الجلسة وتسجيل الخروج الآمن
+              من صفحة الأمان.
             </p>
 
             <button
@@ -328,7 +322,8 @@ function AuthenticatedProfile({
                   بيانات الحساب
                 </h3>
                 <p className="mt-1 text-body-sm leading-6 text-muted-foreground">
-                  البريد الإلكتروني والصلاحية يقرؤهما النظام من الجلسة ولا يتم تعديلهما من نموذج الملف الشخصي.
+                  البريد الإلكتروني والصلاحية يقرؤهما النظام من الجلسة ولا يتم
+                  تعديلهما من نموذج الملف الشخصي.
                 </p>
               </div>
             </div>
@@ -341,7 +336,9 @@ function AuthenticatedProfile({
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-neutral-100 pt-3">
-                <dt className="text-caption text-muted-foreground">نوع الحساب</dt>
+                <dt className="text-caption text-muted-foreground">
+                  نوع الحساب
+                </dt>
                 <dd className="text-caption font-bold text-foreground">
                   {formatRole(user.role)}
                 </dd>
@@ -350,7 +347,9 @@ function AuthenticatedProfile({
           </section>
 
           <section className="rounded-2xl border border-neutral-200 bg-surface p-5 shadow-sm">
-            <h3 className="text-body font-bold text-foreground">اختصارات الحساب</h3>
+            <h3 className="text-body font-bold text-foreground">
+              اختصارات الحساب
+            </h3>
             <div className="mt-4 grid gap-2">
               <Link
                 href="/buyer/addresses"
@@ -373,7 +372,6 @@ function AuthenticatedProfile({
     </AccountWorkspace>
   );
 }
-
 
 function Field({
   id,

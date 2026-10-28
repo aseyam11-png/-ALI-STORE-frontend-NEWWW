@@ -36,7 +36,9 @@ test("customer UX: order tracking maps backend shipment enums to human labels", 
 });
 
 test("customer UX: mobile catalog filters behave as an accessible modal surface", () => {
-  const source = read("src/components/commerce/products/ProductsPageContent.tsx");
+  const source = read(
+    "src/components/commerce/products/ProductsPageContent.tsx",
+  );
   assert.match(source, /z-\[var\(--z-overlay\)\]/);
   assert.match(source, /document\.body\.style\.overflow = "hidden"/);
   assert.match(source, /event\.key === "Escape"/);
@@ -47,17 +49,35 @@ test("customer UX: mobile catalog filters behave as an accessible modal surface"
 test("customer UX: customer account does not reference unsupported password management", () => {
   const profile = read("src/app/(buyer)/buyer/profile/page.tsx");
   assert.doesNotMatch(profile, /تغيير كلمة المرور موجود في صفحة الأمان/);
-  assert.match(profile, /إدارة الجلسة وتسجيل الخروج الآمن من صفحة الأمان/);
+  assert.match(profile, /إدارة الجلسة وتسجيل الخروج الآمن\s+من صفحة الأمان/);
 });
 
 test("customer UX: checkout, category, visual search, cart and trust surfaces avoid known English UI leakage", () => {
   const cases = [
-    ["src/app/(shop)/shop/checkout/page.tsx", /\b(Checkout|Your cart is empty|Place order|Payment|Delivery information|Full name|Phone|Address)\b/],
-    ["src/app/(shop)/shop/categories/[slug]/page.tsx", /\b(Shop this category|Browse|Explore category|View products)\b/],
-    ["src/app/(shop)/shop/visual-search/page.tsx", /\b(Find products by image|Upload a photo|Products)\b/],
-    ["src/components/layout/TopBar.tsx", /\b(Product information|Shipping details|Secure checkout|Help Center)\b/],
-    ["src/components/checkout/CouponInput.tsx", /\b(Coupon applied|Apply|Checking\.\.\.|Remove coupon)\b/],
-    ["src/components/commerce/product/ProductTrust.tsx", /\b(Secure checkout|Returns|AliStore support|Shipping cost)\b/],
+    [
+      "src/app/(shop)/shop/checkout/page.tsx",
+      /\b(Checkout|Your cart is empty|Place order|Payment|Delivery information|Full name|Phone|Address)\b/,
+    ],
+    [
+      "src/app/(shop)/shop/categories/[slug]/page.tsx",
+      /\b(Shop this category|Browse|Explore category|View products)\b/,
+    ],
+    [
+      "src/app/(shop)/shop/visual-search/page.tsx",
+      /\b(Find products by image|Upload a photo|Products)\b/,
+    ],
+    [
+      "src/components/layout/TopBar.tsx",
+      /\b(Product information|Shipping details|Secure checkout|Help Center)\b/,
+    ],
+    [
+      "src/components/checkout/CouponInput.tsx",
+      /\b(Coupon applied|Apply|Checking\.\.\.|Remove coupon)\b/,
+    ],
+    [
+      "src/components/commerce/product/ProductTrust.tsx",
+      /\b(Secure checkout|Returns|AliStore support|Shipping cost)\b/,
+    ],
   ];
 
   for (const [file, pattern] of cases) {
@@ -68,7 +88,10 @@ test("customer UX: checkout, category, visual search, cart and trust surfaces av
 test("customer UX: category tree uses semantic design tokens", () => {
   const source = read("src/components/commerce/category/CategoryTree.tsx");
   assert.doesNotMatch(source, /#[0-9A-Fa-f]{6}\b/);
-  assert.doesNotMatch(source, /(?:bg|text|border)-(?:slate|blue|red|emerald|amber)-/);
+  assert.doesNotMatch(
+    source,
+    /(?:bg|text|border)-(?:slate|blue|red|emerald|amber)-/,
+  );
   assert.doesNotMatch(source, /Collapse |Expand /);
   assert.match(source, /طي |فتح /);
 });
@@ -86,7 +109,6 @@ test("customer UX: gallery labels are Arabic and touch-safe", () => {
   assert.match(source, /لا توجد صور للمنتج/);
 });
 
-
 test("customer UX: product and deals surfaces do not leak English customer copy", () => {
   assert.doesNotMatch(
     read("src/components/commerce/product/ProductInfo.tsx"),
@@ -96,10 +118,7 @@ test("customer UX: product and deals surfaces do not leak English customer copy"
     read("src/app/(shop)/shop/deals/page.tsx"),
     />\s*Active deals\s*</,
   );
-  assert.match(
-    read("src/app/(shop)/shop/deals/page.tsx"),
-    /العروض النشطة/,
-  );
+  assert.match(read("src/app/(shop)/shop/deals/page.tsx"), /العروض النشطة/);
 });
 
 test("customer UX: product card and catalog shipping fallbacks are Arabic", () => {
@@ -121,22 +140,29 @@ test("customer UX: product card and catalog shipping fallbacks are Arabic", () =
   );
 });
 
-
 test("customer UX: keyboard autocomplete selection navigates to the selected live result", () => {
   const source = read("src/components/search/SmartAutocomplete.tsx");
   assert.match(source, /useRouter/);
   assert.match(source, /router\.push\(suggestion\.href/);
-  assert.match(source, /selectSuggestion\(\s*suggestions\[highlighted\],\s*true/);
+  assert.match(
+    source,
+    /selectSuggestion\(\s*suggestions\[highlighted\],\s*true/,
+  );
 });
 
 test("customer UX: clearing a cart requires explicit confirmation", () => {
   const source = read("src/app/(shop)/shop/cart/page.tsx");
-  assert.match(source, /window\.confirm\("هل أنت متأكد من حذف جميع المنتجات من السلة؟"/);
+  assert.match(
+    source,
+    /window\.confirm\("هل أنت متأكد من حذف جميع المنتجات من السلة؟"/,
+  );
   assert.match(source, /if \(!confirmed\) return/);
 });
 
 test("customer UX: order confirmation hides internal order and payment lifecycle details", () => {
-  const source = read("src/app/(buyer)/buyer/orders/[id]/confirmation/page.tsx");
+  const source = read(
+    "src/app/(buyer)/buyer/orders/[id]/confirmation/page.tsx",
+  );
   assert.doesNotMatch(source, /Order lifecycle:/);
   assert.doesNotMatch(source, /Payment #\{payment\.id\}/);
   assert.doesNotMatch(source, /payment\.status\}/);

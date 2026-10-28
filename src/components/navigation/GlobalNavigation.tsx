@@ -68,7 +68,10 @@ export function GlobalNavigation() {
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <nav aria-label="التنقل الرئيسي" className="relative z-[var(--z-nav)] border-b border-neutral-200 bg-surface">
+    <nav
+      aria-label="التنقل الرئيسي"
+      className="relative z-[var(--z-nav)] border-b border-neutral-200 bg-surface"
+    >
       <div className="container-shell flex min-h-12 items-center">
         <button
           type="button"
@@ -107,10 +110,12 @@ export function GlobalNavigation() {
                   (active ? "text-brand" : "text-neutral-600 hover:text-brand")
                 }
               >
-                {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                {Icon ? (
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : null}
                 <span>{item.label}</span>
                 {"badge" in item && item.badge ? (
-                  <span className="rounded-full bg-primary-50 px-1.5 py-0.5 text-label font-medium text-brand">
+                  <span className="rounded-full bg-primary-50 px-1.5 py-0.5 text-label font-medium text-primary-800">
                     {item.badge}
                   </span>
                 ) : null}
@@ -152,7 +157,9 @@ export function GlobalNavigation() {
 
           {categories.length > 0 ? (
             categories.map((category) => {
-              const active = pathname === category.href || pathname.startsWith(category.href + "/");
+              const active =
+                pathname === category.href ||
+                pathname.startsWith(category.href + "/");
               return (
                 <Link
                   key={category.id}
@@ -174,7 +181,9 @@ export function GlobalNavigation() {
               aria-busy={categoriesQuery.isPending}
               className="text-caption text-neutral-400"
             >
-              {categoriesQuery.isPending ? "جاري تحميل التصنيفات…" : "التصنيفات غير متاحة حاليًا"}
+              {categoriesQuery.isPending
+                ? "جاري تحميل التصنيفات…"
+                : "التصنيفات غير متاحة حاليًا"}
             </span>
           )}
         </div>
@@ -245,11 +254,13 @@ export function GlobalNavigation() {
                         }
                       >
                         <span className="flex items-center gap-2">
-                          {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : null}
+                          {Icon ? (
+                            <Icon className="h-4 w-4" aria-hidden="true" />
+                          ) : null}
                           {item.label}
                         </span>
                         {"badge" in item && item.badge ? (
-                          <span className="rounded-full bg-primary-50 px-2 py-0.5 text-label font-medium text-brand">
+                          <span className="rounded-full bg-primary-50 px-2 py-0.5 text-label font-medium text-primary-800">
                             {item.badge}
                           </span>
                         ) : (
@@ -266,7 +277,9 @@ export function GlobalNavigation() {
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {categories.map((category) => {
-                      const active = pathname === category.href || pathname.startsWith(category.href + "/");
+                      const active =
+                        pathname === category.href ||
+                        pathname.startsWith(category.href + "/");
                       return (
                         <Link
                           key={category.id}
