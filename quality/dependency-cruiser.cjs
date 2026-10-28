@@ -3,7 +3,8 @@ module.exports = {
     {
       name: "no-circular",
       severity: "error",
-      comment: "Circular dependencies can create runtime initialization problems.",
+      comment:
+        "Circular dependencies can create runtime initialization problems.",
       from: {},
       to: { circular: true },
     },
