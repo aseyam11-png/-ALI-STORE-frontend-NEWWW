@@ -221,4 +221,3 @@ jobs:
           output: lychee/results.md
           jobSummary: true
           failIfEmpty: false
-          failIfEmpty: false
