@@ -49,7 +49,7 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin "$BASE_REF"
           files_file="$(mktemp)"
-          git diff --name-only -z --diff-filter=ACMR "origin/$BASE_REF...HEAD" -- \
+          git diff --name-only -z --diff-filter=ACMR "origin/$BASE_REF" HEAD -- \
             '*.js' '*.mjs' '*.cjs' '*.ts' '*.tsx' '*.json' '*.md' '*.yml' '*.yaml' > "$files_file"
           if [ ! -s "$files_file" ]; then
             echo "No changed files are covered by Prettier."
