@@ -114,7 +114,7 @@ jobs:
         if: always()
         run: |
           if [ -f /tmp/ali-store-pa11y.pid ]; then
-            kill $(cat /tmp/ali-store-pa11y.pid) || true
+            kill "$(cat /tmp/ali-store-pa11y.pid)" || true
           fi
 
   content-quality:
