@@ -164,8 +164,11 @@ jobs:
           echo $! > /tmp/ali-store-next.pid
           npx --yes wait-on@9 http://127.0.0.1:3000
 
+      - name: Install Cypress for config resolution
+        run: npm install --no-save --no-package-lock cypress@15.21.1
+
       - name: Cypress smoke E2E
-        run: npx --yes cypress@15 run --config baseUrl=http://127.0.0.1:3000
+        run: npx cypress run --config baseUrl=http://127.0.0.1:3000
 
       - name: Lighthouse accessibility/performance/SEO
         run: |
