@@ -214,8 +214,9 @@ jobs:
       - name: Lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --root-dir . --verbose --no-progress ./.claude/skills/graphify/SKILL.md ./.quality/README.md ./AGENTS.md ./DESIGN.md ./docs/ADVANCED_QUALITY_TOOLS.md ./docs/OPENTELEMETRY.md ./docs/PACT.md ./docs/QUALITY_TOOLING.md ./docs/SECURITY_20_TOOLS.md ./docs/SENTRY.md ./docs/UX_CRO_STACK.md ./docs/VISUAL_REGRESSION.md ./docs/frontend-consolidation-2026-10-04.md
+          args: --verbose --no-progress './**/*.md' './**/*.html'
           fail: true
           lycheeVersion: v0.24.2
           output: lychee/results.md
           jobSummary: true
+          failIfEmpty: false
