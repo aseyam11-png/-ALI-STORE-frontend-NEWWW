@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   remediate:
-    if: github.event.head_commit.message == 'fix(security): trigger one-time dependency remediation'
+    if: ${{ startsWith(github.event.head_commit.message, 'fix(security)') }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
