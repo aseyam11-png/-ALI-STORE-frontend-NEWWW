@@ -67,11 +67,14 @@ export function LoginForm() {
     setFormError(undefined);
     setSubmitting(true);
 
-    const result = await login({
-      email: normalizedEmail,
-      password,
-      ...(adminGateEnabled ? { adminGatePassword, captchaToken } : {}),
-    });
+    const result = adminGateEnabled
+      ? await login({
+          email: normalizedEmail,
+          password,
+          adminGatePassword,
+          captchaToken,
+        })
+      : await login({ email: normalizedEmail, password });
 
     setSubmitting(false);
 
@@ -85,8 +88,11 @@ export function LoginForm() {
           challenge: result.challengeId,
           email: result.maskedEmail,
           purpose: result.purpose,
-          next: adminGateEnabled && !searchParams.get("next") ? "/admin" : nextPath,
+          next: nextPath,
         });
+        if (adminGateEnabled && !searchParams.get("next")) {
+          query.set("next", "/admin");
+        }
         window.location.assign("/verify-email?" + query.toString());
         return;
       }
@@ -95,11 +101,11 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign(
-      result.role === "ROLE_ADMIN" && !searchParams.get("next")
-        ? "/admin"
-        : nextPath,
-    );
+    if (result.role === "ROLE_ADMIN" && !searchParams.get("next")) {
+      window.location.assign("/admin");
+    } else {
+      window.location.assign(nextPath);
+    }
   };
 
   return (
