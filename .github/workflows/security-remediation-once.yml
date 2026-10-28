@@ -38,6 +38,9 @@ jobs:
       - name: Upgrade patched direct dependencies and regenerate package-lock
         run: sfw npm install --save-exact next@16.4.1 eslint-config-next@16.4.1 zod@4.6.6 sharp@0.35.5
 
+      - name: Apply compatible transitive dependency security fixes
+        run: sfw npm audit fix
+
       - name: Verify source and production build
         run: npm run verify
 
