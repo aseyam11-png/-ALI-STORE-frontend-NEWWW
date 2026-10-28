@@ -11,8 +11,12 @@ module.exports = {
   options: {
     tsPreCompilationDeps: true,
     tsConfig: { fileName: "tsconfig.json" },
-    doNotFollow: { path: ["^node_modules", "^\\.next", "^coverage", "^out"] },
-    exclude: { path: ["\\.(test|spec)\\.(ts|tsx|js|mjs|cjs)$"] },
+    doNotFollow: {
+      path: ["^node_modules", "^\\.next", "^coverage", "^out"],
+    },
+    exclude: {
+      path: ["\\.(test|spec)\\.(ts|tsx|js|mjs|cjs)$"],
+    },
     preserveSymlinks: false,
   },
 };
