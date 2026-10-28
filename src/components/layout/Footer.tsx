@@ -131,7 +131,7 @@ export function Footer() {
                     <Link
                       key={href + label}
                       href={href as Route}
-                      className="group/link flex items-center justify-between rounded-lg px-1 py-1.5 text-sm text-neutral-400 transition-colors duration-200 ease-brand hover:text-white"
+                      className="group/link flex items-center justify-between rounded-lg px-1 py-1.5 text-sm text-neutral-300 transition-colors duration-200 ease-brand hover:text-white"
                     >
                       <span>{label}</span>
                       <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover/link:opacity-100" />
@@ -159,7 +159,7 @@ export function Footer() {
             </Link>
           </div>
 
-          <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-neutral-300 sm:flex-row sm:items-center sm:justify-between">
             <span>© 2026 AliStore</span>
             <div className="flex flex-wrap gap-5">
               <Link href="/support" className="transition hover:text-white">Support</Link>
