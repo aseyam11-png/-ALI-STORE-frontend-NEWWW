@@ -1,6 +1,8 @@
 name: ALI STORE Advanced Frontend Quality
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   schedule:
