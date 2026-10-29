@@ -51,7 +51,30 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    if (!backendInternalUrl) return [];
+    if (!backendInternalUrl) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(
+          "BACKEND_INTERNAL_URL is required to configure production API rewrites.",
+        );
+      }
+      return [];
+    }
+
+    let backendUrl: URL;
+    try {
+      backendUrl = new URL(backendInternalUrl);
+    } catch {
+      throw new Error("BACKEND_INTERNAL_URL must be an absolute URL.");
+    }
+
+    if (
+      process.env.NODE_ENV === "production" &&
+      (backendUrl.protocol !== "https:" ||
+        backendUrl.username.length > 0 ||
+        backendUrl.password.length > 0)
+    ) {
+      throw new Error("Production BACKEND_INTERNAL_URL must be HTTPS without embedded credentials.");
+    }
 
     return [
       {

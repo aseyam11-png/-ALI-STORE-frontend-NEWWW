@@ -73,8 +73,8 @@ function parseMoney(value: number | string | null | undefined): number {
 
 function requireCurrency(value: string | null | undefined): string {
   const normalized = value?.trim().toUpperCase();
-  if (!normalized || !/^[A-Z]{3}$/.test(normalized)) {
-    throw new Error("Product API did not provide a valid currency code.");
+  if (normalized !== "SAR") {
+    throw new Error("ALI STORE accepts Saudi riyals (SAR) only; product currency is missing or unsupported.");
   }
   return normalized;
 }
@@ -93,7 +93,8 @@ function mapStatus(status: BackendProduct["status"]): ProductSummary["status"] {
     case "ARCHIVED":
       return "archived";
     default:
-      return "active";
+      // Unknown upstream states must never make a product purchasable.
+      return "archived";
   }
 }
 

@@ -38,9 +38,20 @@ interface FormState {
   email: string;
   phone: string;
   address: string;
+  apartment: string;
   city: string;
   country: string;
   postalCode: string;
+}
+
+function requireSarCurrency(value: string | null | undefined): string {
+  const normalized = value?.trim().toUpperCase();
+  if (normalized !== "SAR") {
+    throw new Error(
+      "ALI STORE requires an explicit SAR currency from the backend; missing or unsupported currency was returned.",
+    );
+  }
+  return normalized;
 }
 
 const initialForm: FormState = {
@@ -48,6 +59,7 @@ const initialForm: FormState = {
   email: "",
   phone: "",
   address: "",
+  apartment: "",
   city: "",
   country: "",
   postalCode: "",
@@ -118,7 +130,7 @@ export default function CheckoutPage() {
           replaceItems(mapped);
           setServerCartTotal(migrated.totalPrice);
           setServerCartCurrency(
-            migrated.currency ?? mapped[0]?.currency,
+            requireSarCurrency(migrated.currency ?? mapped[0]?.currency),
           );
           return;
         }
@@ -127,7 +139,7 @@ export default function CheckoutPage() {
         replaceItems(mapped);
         setServerCartTotal(backend.totalPrice);
         setServerCartCurrency(
-          backend.currency ?? mapped[0]?.currency,
+          requireSarCurrency(backend.currency ?? mapped[0]?.currency),
         );
       } catch (caughtError) {
         if (active) {
@@ -168,9 +180,9 @@ export default function CheckoutPage() {
           address: [
             defaultAddress.street,
             defaultAddress.building,
-            defaultAddress.apartment ? `Apt ${defaultAddress.apartment}` : "",
             defaultAddress.area,
           ].filter(Boolean).join(", "),
+          apartment: defaultAddress.apartment ?? "",
           city: defaultAddress.city,
           country: defaultAddress.country,
           postalCode: defaultAddress.postalCode ?? "",
@@ -221,10 +233,8 @@ export default function CheckoutPage() {
     }));
   };
 
-  const validate = () => {
-    const required: Array<
-      keyof FormState
-    > = [
+  const validate = (): string | null => {
+    const required: Array<keyof FormState> = [
       "fullName",
       "email",
       "phone",
@@ -233,12 +243,32 @@ export default function CheckoutPage() {
       "country",
     ];
 
-    return required.every(
-      (field) =>
-        field === "email"
-          ? effectiveEmail.trim().length > 0
-          : form[field].trim().length > 0,
+    const missingField = required.find((field) =>
+      field === "email"
+        ? effectiveEmail.trim().length === 0
+        : form[field].trim().length === 0,
     );
+    if (missingField) {
+      return "أكمل جميع بيانات التوصيل المطلوبة.";
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(effectiveEmail.trim())) {
+      return "أدخل بريدًا إلكترونيًا صحيحًا.";
+    }
+
+    const phone = form.phone.trim();
+    const phoneDigits = phone.replace(/\D/g, "");
+    const phonePattern = /^\+?[0-9\s().-]+$/;
+    if (
+      !phonePattern.test(phone) ||
+      phoneDigits.length < 7 ||
+      phoneDigits.length > 15
+    ) {
+      return "أدخل رقم هاتف صحيحًا يتكوّن من 7 إلى 15 رقمًا.";
+    }
+
+    return null;
   };
 
   const placeOrder = async () => {
@@ -251,8 +281,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!validate()) {
-      setError("أكمل جميع بيانات التوصيل المطلوبة.");
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -276,9 +307,7 @@ export default function CheckoutPage() {
       replaceItems(synchronizedItems);
       setServerCartTotal(synchronizedCart.totalPrice);
       setServerCartCurrency(
-        synchronizedCart.currency ??
-          synchronizedItems[0]?.currency ??
-          "USD",
+        requireSarCurrency(synchronizedCart.currency ?? synchronizedItems[0]?.currency),
       );
 
       idempotencyKeyRef.current ??= crypto.randomUUID();
@@ -289,6 +318,7 @@ export default function CheckoutPage() {
           form.fullName,
           form.phone,
           form.address,
+          form.apartment.trim() ? `Apt ${form.apartment.trim()}` : "",
           form.city,
           form.country,
           form.postalCode,
@@ -297,6 +327,7 @@ export default function CheckoutPage() {
       });
 
       createdOrderId = String(order.id);
+      const orderCurrency = requireSarCurrency(order.currency ?? serverCartCurrency);
 
       const backendPaymentMethod =
         paymentMethod === "cod"
@@ -312,7 +343,7 @@ export default function CheckoutPage() {
       replaceItems([]);
 
       trackEcommerceEvent("add_payment_info", {
-        currency: order.currency ?? serverCartCurrency,
+        currency: orderCurrency,
         value: order.totalAmount,
         payment_type: backendPaymentMethod,
       });
@@ -339,7 +370,7 @@ export default function CheckoutPage() {
 
       trackEcommerceEvent("purchase", {
         transaction_id: createdOrderId,
-        currency: order.currency ?? serverCartCurrency,
+        currency: orderCurrency,
         value: order.totalAmount,
         payment_type: backendPaymentMethod,
         coupon: appliedCoupon?.coupon.code,
@@ -576,9 +607,9 @@ export default function CheckoutPage() {
                       address: [
                         selected.street,
                         selected.building,
-                        selected.apartment ? `Apt ${selected.apartment}` : "",
                         selected.area,
                       ].filter(Boolean).join(", "),
+                      apartment: selected.apartment ?? "",
                       city: selected.city,
                       country: selected.country,
                       postalCode: selected.postalCode ?? "",
@@ -705,6 +736,21 @@ export default function CheckoutPage() {
                             event.target.value,
                           )
                         }
+                        className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label
+                        htmlFor="apartment"
+                        className="text-xs font-bold text-neutral-600"
+                      >
+                        رقم الشقة (اختياري)
+                      </label>
+                      <input
+                        id="apartment"
+                        value={form.apartment}
+                        onChange={(event) => setField("apartment", event.target.value)}
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>

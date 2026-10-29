@@ -90,46 +90,45 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    const csrfExemptMutationPaths = new Set([
-      "/api/v1/auth/login",
-      "/api/v1/auth/register",
-      "/api/v1/auth/email/verify",
-      "/api/v1/auth/email/resend",
-    ]);
+    const headers = new Headers(init?.headers);
+    const authorization = headers.get("Authorization");
+    const usesBearerAuthentication =
+      authorization !== null && /^Bearer\s+\S+$/i.test(authorization.trim());
 
+    // Cookie/session-authenticated browser mutations must all bootstrap CSRF,
+    // including login, registration, email verification, and resend. The server
+    // explicitly exempts machine-to-machine Bearer requests instead.
     const shouldPrepareCsrf =
       unsafeMethod &&
       typeof window !== "undefined" &&
-      !csrfExemptMutationPaths.has(path);
+      !usesBearerAuthentication;
 
     if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
 
       if (!csrfToken) {
-        try {
-          await fetch(this.baseUrl + "/api/v1/auth/csrf", {
-            credentials: "include",
-            headers: { Accept: "application/json" },
-          });
-        } catch {
-          // The actual mutation below is the source of truth. A missing CSRF
-          // bootstrap must not prevent the client from reaching the backend.
+        const csrfResponse = await fetch(this.baseUrl + "/api/v1/auth/csrf", {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        if (!csrfResponse.ok) {
+          throw new Error("Could not initialize CSRF protection for this request.");
         }
-        csrfToken = readCookie("XSRF-TOKEN");
+
+        csrfToken =
+          readCookie("XSRF-TOKEN") ??
+          csrfResponse.headers.get("X-XSRF-TOKEN") ??
+          undefined;
       }
 
-      if (csrfToken) {
-        init = {
-          ...init,
-          headers: {
-            "X-XSRF-TOKEN": csrfToken,
-            ...(init?.headers ?? {}),
-          },
-        };
+      if (!csrfToken) {
+        throw new Error("CSRF token is unavailable; the request was not sent.");
       }
+
+      headers.set("X-XSRF-TOKEN", csrfToken);
     }
-
-    const headers = new Headers(init?.headers);
     headers.set("Accept", "application/json");
 
     const body = init?.body;

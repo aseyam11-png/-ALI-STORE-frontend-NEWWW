@@ -149,6 +149,12 @@ export function mergeCartLines(
   }
 
   for (const item of localItems) {
+    if (item.variantId) {
+      throw new Error(
+        "Product variants cannot be migrated because the backend contract does not support them yet. The cart was not changed.",
+      );
+    }
+
     const productId = String(item.productId);
     const existing = merged.get(productId);
 

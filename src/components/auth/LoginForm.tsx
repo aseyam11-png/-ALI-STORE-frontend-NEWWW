@@ -26,7 +26,9 @@ export function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminGateEnabled, setAdminGateEnabled] = useState(false);
+  const [adminGateEnabled, setAdminGateEnabled] = useState(
+    () => nextPath === "/admin" || nextPath.startsWith("/admin/"),
+  );
   const [adminGatePassword, setAdminGatePassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaEpoch, setCaptchaEpoch] = useState(0);
@@ -174,7 +176,7 @@ export function LoginForm() {
               تسجيل الدخول إلى إدارة المتجر
             </span>
             <span className="mt-1 block text-caption leading-5 text-muted-foreground">
-              يتطلب كلمة مرور إدارية ثانية واختبار تحقق أمني إضافي.
+              يجهّز هذا الخيار الحقول الإضافية فقط؛ الخادم يفرض التحقق على حسابات الإدارة حتى عند إيقافه.
             </span>
           </span>
         </label>
