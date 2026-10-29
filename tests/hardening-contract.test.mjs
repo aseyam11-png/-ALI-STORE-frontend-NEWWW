@@ -18,7 +18,7 @@ test("product API enforces SAR and unknown product states do not become active",
   const products = read("src/features/products/services/product.service.ts");
   assert.match(products, /normalized !== "SAR"/);
   assert.match(products, /Unknown upstream states must never make a product purchasable/);
-  assert.match(products, /default:\s*\/\/ Unknown upstream states must never make a product purchasable\s*return "archived";/);
+  assert.match(products, /default:\s*\/\/ Unknown upstream states must never make a product purchasable\.?\s*return "archived";/);
 });
 
 test("checkout validates contact details and keeps apartment data separate", () => {
