@@ -6,24 +6,14 @@ async function read(path) {
   return readFile(path, "utf8");
 }
 
-test("login and public verification mutations do not depend on a csrf bootstrap request", async () => {
+test("login and public verification mutations use the shared CSRF-protected client", async () => {
   const source = await read("src/lib/api/http-client.ts");
 
-  for (const path of [
-    "/api/v1/auth/login",
-    "/api/v1/auth/register",
-    "/api/v1/auth/email/verify",
-    "/api/v1/auth/email/resend",
-  ]) {
-    assert.match(source, new RegExp(
-      `["']${path.replaceAll("/", "\\/")}["']`,
-    ));
-  }
-
-  assert.match(source, /csrfExemptMutationPaths/);
-  assert.match(source, /!csrfExemptMutationPaths\.has\(path\)/);
+  assert.match(source, /const shouldPrepareCsrf/);
+  assert.doesNotMatch(source, /csrfExemptMutationPaths/);
+  assert.match(source, /usesBearerAuthentication/);
+  assert.match(source, /CSRF token is unavailable; the request was not sent/);
 });
-
 test("login preserves an internal next destination through the authentication challenge", async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const otp = await read("src/components/auth/EmailOtpForm.tsx");
