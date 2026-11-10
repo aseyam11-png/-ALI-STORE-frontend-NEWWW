@@ -90,43 +90,36 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    const csrfExemptMutationPaths = new Set([
-      "/api/v1/auth/login",
-      "/api/v1/auth/register",
-      "/api/v1/auth/email/verify",
-      "/api/v1/auth/email/resend",
-    ]);
-
     const shouldPrepareCsrf =
-      unsafeMethod &&
-      typeof window !== "undefined" &&
-      !csrfExemptMutationPaths.has(path);
+      unsafeMethod && typeof window !== "undefined";
 
     if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
 
       if (!csrfToken) {
-        try {
-          await fetch(this.baseUrl + "/api/v1/auth/csrf", {
-            credentials: "include",
-            headers: { Accept: "application/json" },
-          });
-        } catch {
-          // The actual mutation below is the source of truth. A missing CSRF
-          // bootstrap must not prevent the client from reaching the backend.
+        const csrfResponse = await fetch(this.baseUrl + "/api/v1/auth/csrf", {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        if (!csrfResponse.ok) {
+          throw new Error("تعذر تهيئة حماية الطلب. أعد تحميل الصفحة وحاول مرة أخرى.");
         }
         csrfToken = readCookie("XSRF-TOKEN");
       }
 
-      if (csrfToken) {
-        init = {
-          ...init,
-          headers: {
-            "X-XSRF-TOKEN": csrfToken,
-            ...(init?.headers ?? {}),
-          },
-        };
+      if (!csrfToken) {
+        throw new Error("رمز حماية الطلب غير متاح. لم يتم إرسال الطلب.");
       }
+
+      init = {
+        ...init,
+        headers: {
+          ...(init?.headers ?? {}),
+          "X-XSRF-TOKEN": csrfToken,
+        },
+      };
     }
 
     const headers = new Headers(init?.headers);

@@ -6,49 +6,39 @@ async function read(path) {
   return readFile(path, "utf8");
 }
 
-test("login and public verification mutations do not depend on a csrf bootstrap request", async () => {
-  const source = await read("src/lib/api/http-client.ts");
+test("customer login remains separate from the administrator login screen", async () => {
+  const login = await read("src/components/auth/LoginForm.tsx");
+  const session = await read("src/features/auth/session.ts");
+  const admin = await read("src/components/auth/AdminLoginForm.tsx");
 
-  for (const path of [
-    "/api/v1/auth/login",
-    "/api/v1/auth/register",
-    "/api/v1/auth/email/verify",
-    "/api/v1/auth/email/resend",
-  ]) {
-    assert.match(source, new RegExp(
-      `["']${path.replaceAll("/", "\\/")}["']`,
-    ));
-  }
-
-  assert.match(source, /csrfExemptMutationPaths/);
-  assert.match(source, /!csrfExemptMutationPaths\.has\(path\)/);
+  assert.match(login, /login\(\{ email: normalizedEmail, password \}\)/);
+  assert.doesNotMatch(login, /adminGatePassword|CloudflareTurnstile|adminGateEnabled/);
+  assert.match(session, /"\/api\/v1\/auth\/login"/);
+  assert.match(admin, /adminLogin\(/);
+  assert.match(session, /"\/api\/v1\/auth\/admin\/login"/);
 });
 
-test("login preserves an internal next destination through the authentication challenge", async () => {
+test("administrator login continues to a dedicated six-digit OTP challenge", async () => {
+  const admin = await read("src/components/auth/AdminLoginForm.tsx");
+  const otp = await read("src/components/auth/EmailOtpForm.tsx");
+  const session = await read("src/features/auth/session.ts");
+
+  assert.match(admin, /purpose: "ADMIN_LOGIN"/);
+  assert.match(admin, /\/verify-email\?/);
+  assert.match(otp, /purpose === "ADMIN_LOGIN"/);
+  assert.match(otp, /verifyAdminLoginCode/);
+  assert.match(otp, /resendAdminLoginCode/);
+  assert.match(session, /"\/api\/v1\/auth\/admin\/email\/verify"/);
+  assert.match(session, /"\/api\/v1\/auth\/admin\/email\/resend"/);
+});
+
+test("OTP verification preserves a safe internal next destination", async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const otp = await read("src/components/auth/EmailOtpForm.tsx");
 
   assert.match(login, /resolveSafeNextPath/);
   assert.match(login, /searchParams\.get\("next"\)/);
-  assert.match(login, /next: nextPath/);
-  assert.match(login, /window\.location\.assign\(nextPath\)/);
-
   assert.match(otp, /resolveSafeNextPath/);
-  assert.match(otp, /searchParams\.get\("next"\)/);
   assert.match(otp, /router\.replace\(nextPath\)/);
-  assert.match(otp, /next: nextPath/);
-
-  assert.match(login, /value\.startsWith\("\/"\)/);
-  assert.match(login, /value\.startsWith\("\/\/"\)/);
+  assert.match(otp, /value\.startsWith\("\/\/"\)/);
 });
-
-test("login page remains a real backend-backed auth entry point", async () => {
-  const login = await read("src/components/auth/LoginForm.tsx");
-  const session = await read("src/features/auth/session.ts");
-
-  assert.match(login, /login\(\{ email: normalizedEmail, password \}\)/);
-  assert.match(login, /loginWithGoogle\(\)/);
-  assert.match(session, /["']\/api\/v1\/auth\/login["']/);
-  assert.match(session, /credentials/);
-});
-

@@ -18,16 +18,20 @@ export function AdminRouteGuard({
 
   const role = session.user?.role?.trim().toUpperCase().replace(/^ROLE_/, "");
   const isAdministrator = session.status === "authenticated" && role === "ADMIN";
+  const isAdminLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
+    if (isAdminLoginPage) return;
     if (session.status === "unauthenticated") {
       const returnPath =
         pathname?.startsWith("/admin") || pathname?.startsWith("/warehouse")
           ? pathname
           : "/admin";
-      router.replace(("/login?next=" + encodeURIComponent(returnPath)) as Route);
+      router.replace(("/admin/login?next=" + encodeURIComponent(returnPath)) as Route);
     }
-  }, [pathname, router, session.status]);
+  }, [isAdminLoginPage, pathname, router, session.status]);
+
+  if (isAdminLoginPage) return children;
 
   if (session.status === "loading") {
     return (
