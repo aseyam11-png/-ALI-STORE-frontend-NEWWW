@@ -8,6 +8,8 @@ type ApiEnvelope<T> = {
   data: T;
 };
 
+export type OtpPurpose = "EMAIL_VERIFICATION" | "LOGIN" | "ADMIN_LOGIN";
+
 type AuthResponse = {
   email: string;
   role: string;
@@ -15,14 +17,14 @@ type AuthResponse = {
   challengeId?: string;
   maskedEmail?: string;
   expiresInSeconds?: number;
-  purpose?: "EMAIL_VERIFICATION" | "LOGIN";
+  purpose?: OtpPurpose;
 };
 
 export type VerificationChallenge = {
   challengeId: string;
   maskedEmail: string;
   expiresInSeconds: number;
-  purpose: "EMAIL_VERIFICATION" | "LOGIN";
+  purpose: OtpPurpose;
 };
 
 export type SessionStatus = "loading" | "unauthenticated" | "authenticated";
@@ -107,7 +109,7 @@ export type AuthResult =
       challengeId: string;
       maskedEmail: string;
       expiresInSeconds: number;
-      purpose: "EMAIL_VERIFICATION" | "LOGIN";
+      purpose: OtpPurpose;
     }
   | { ok: false; requiresEmailVerification?: false; reason: string };
 
@@ -139,8 +141,6 @@ function mapAuthResponse(data: AuthResponse): AuthResult {
 export async function login(credentials: {
   email: string;
   password: string;
-  adminGatePassword?: string;
-  captchaToken?: string;
 }): Promise<AuthResult> {
   try {
     const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
@@ -156,6 +156,30 @@ export async function login(credentials: {
     return {
       ok: false,
       reason: error instanceof Error ? error.message : "login_failed",
+    };
+  }
+}
+
+export async function adminLogin(credentials: {
+  email: string;
+  password: string;
+  adminGatePassword: string;
+  captchaToken: string;
+}): Promise<AuthResult> {
+  try {
+    const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
+      "/api/v1/auth/admin/login",
+      {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      },
+    );
+
+    return mapAuthResponse(response.data);
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "admin_login_failed",
     };
   }
 }
@@ -188,10 +212,15 @@ export async function register(credentials: {
 export async function verifyEmailCode(input: {
   challengeId: string;
   code: string;
+  purpose?: OtpPurpose;
 }): Promise<AuthResult> {
   try {
+    const endpoint =
+      input.purpose === "ADMIN_LOGIN"
+        ? "/api/v1/auth/admin/email/verify"
+        : "/api/v1/auth/email/verify";
     const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
-      "/api/v1/auth/email/verify",
+      endpoint,
       {
         method: "POST",
         body: JSON.stringify(input),
@@ -209,13 +238,16 @@ export async function verifyEmailCode(input: {
 
 export async function resendEmailCode(
   challengeId: string,
+  purpose: OtpPurpose = "EMAIL_VERIFICATION",
 ): Promise<
   { ok: true; challenge: VerificationChallenge } | { ok: false; reason: string }
 > {
   try {
     const response = await apiClient.request<
       ApiEnvelope<VerificationChallenge>
-    >("/api/v1/auth/email/resend", {
+    >(purpose === "ADMIN_LOGIN"
+      ? "/api/v1/auth/admin/email/resend"
+      : "/api/v1/auth/email/resend", {
       method: "POST",
       body: JSON.stringify({ challengeId }),
     });
