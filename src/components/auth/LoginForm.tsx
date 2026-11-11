@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import { CloudflareTurnstile } from "@/components/auth/CloudflareTurnstile";
-import { login, loginWithGoogle } from "@/features/auth/session";
+import { adminLogin, login, loginWithGoogle } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -70,7 +70,7 @@ export function LoginForm() {
     setSubmitting(true);
 
     const result = adminGateEnabled
-      ? await login({
+      ? await adminLogin({
           email: normalizedEmail,
           password,
           adminGatePassword,
