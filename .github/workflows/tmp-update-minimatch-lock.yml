@@ -31,7 +31,7 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm ls @typescript-eslint/typescript-estree minimatch
-          node --input-type=module -e "import assert from 'node:assert/strict'; import { minimatch } from 'minimatch'; assert.equal(minimatch('src/example.ts', '**/*.ts'), true); console.log('minimatch 11 API smoke test passed');"
+          node --input-type=module -e "import assert from 'node:assert/strict'; import { minimatch } from './node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch/dist/esm/index.js'; assert.equal(minimatch('src/example.ts', '**/*.ts'), true); console.log('nested minimatch 11 API smoke test passed');"
 
       - name: Commit lockfile and remove temporary workflow
         run: |
