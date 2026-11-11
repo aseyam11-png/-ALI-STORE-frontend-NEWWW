@@ -223,7 +223,10 @@ export async function verifyEmailCode(input: {
       endpoint,
       {
         method: "POST",
-        body: JSON.stringify({ challengeId: input.challengeId, code: input.code }),
+        body: JSON.stringify({
+          challengeId: input.challengeId,
+          code: input.code,
+        }),
       },
     );
 
@@ -245,12 +248,15 @@ export async function resendEmailCode(
   try {
     const response = await apiClient.request<
       ApiEnvelope<VerificationChallenge>
-    >(purpose === "ADMIN_LOGIN"
-      ? "/api/v1/auth/admin/email/resend"
-      : "/api/v1/auth/email/resend", {
-      method: "POST",
-      body: JSON.stringify({ challengeId }),
-    });
+    >(
+      purpose === "ADMIN_LOGIN"
+        ? "/api/v1/auth/admin/email/resend"
+        : "/api/v1/auth/email/resend",
+      {
+        method: "POST",
+        body: JSON.stringify({ challengeId }),
+      },
+    );
 
     return { ok: true, challenge: response.data };
   } catch (error) {
