@@ -15,9 +15,10 @@ test("login and public verification mutations do not depend on a csrf bootstrap 
     "/api/v1/auth/email/verify",
     "/api/v1/auth/email/resend",
   ]) {
-    assert.match(source, new RegExp(
-      `["']${path.replaceAll("/", "\\/")}["']`,
-    ));
+    assert.match(
+      source,
+      new RegExp(`["']${path.replaceAll("/", "\\/")}["']`),
+    );
   }
 
   assert.match(source, /csrfExemptMutationPaths/);
