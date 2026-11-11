@@ -1,0 +1,54 @@
+name: Temporary Graphify Authentication UI Audit
+
+on:
+  push:
+    branches:
+      - feat/separate-admin-email-otp-login
+
+permissions:
+  contents: read
+
+concurrency:
+  group: graphify-frontend-auth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  graphify-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Graphify
+        run: |
+          python -m pip install --upgrade uv
+          uv tool install --upgrade "graphifyy==0.9.79"
+          graphify --version
+
+      - name: Build frontend auth graph
+        run: graphify extract . --code-only
+
+      - name: Trace admin login and OTP UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          graphify query "Trace the customer login route, dedicated admin login route and form, server authentication session methods, CSRF token bootstrap, admin OTP verification and resend purpose routing, and admin route guard. Identify the precise frontend request payloads and tests."
+          graphify path "AdminLoginForm" "adminLogin()" --undirected
+          graphify path "EmailOtpForm" "verifyAdminLoginCode()" --undirected
+          graphify path "AdminRouteGuard" "AdminLoginForm" --undirected
+          graphify explain "AdminLoginForm"
+          graphify explain "adminLogin()"
+          graphify explain "verifyAdminLoginCode()"
+
+      - name: Upload temporary graph artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: alistore-frontend-admin-auth-graphify-audit
+          path: graphify-out/
+          if-no-files-found: ignore
