@@ -27,8 +27,11 @@ export function EmailOtpForm() {
 
   const queryChallengeId = searchParams.get("challenge") ?? "";
   const queryMaskedEmail = searchParams.get("email") ?? "";
-  const queryPurpose =
-    searchParams.get("purpose") === "LOGIN" ? "LOGIN" : "EMAIL_VERIFICATION";
+  const queryPurposeValue = searchParams.get("purpose");
+  const queryPurpose: VerificationChallenge["purpose"] =
+    queryPurposeValue === "LOGIN" || queryPurposeValue === "ADMIN_LOGIN"
+      ? queryPurposeValue
+      : "EMAIL_VERIFICATION";
   const [localChallenge, setLocalChallenge] =
     useState<VerificationChallenge | null>(null);
 
@@ -72,7 +75,7 @@ export function EmailOtpForm() {
     }
 
     setSubmitting(true);
-    const result = await verifyEmailCode({ challengeId, code });
+    const result = await verifyEmailCode({ challengeId, code, purpose });
     setSubmitting(false);
 
     if (!result.ok) {
@@ -88,7 +91,7 @@ export function EmailOtpForm() {
 
     setError(undefined);
     setResending(true);
-    const result = await resendEmailCode(challengeId);
+    const result = await resendEmailCode(challengeId, purpose);
     setResending(false);
 
     if (!result.ok) {
@@ -129,9 +132,11 @@ export function EmailOtpForm() {
         </div>
         <div>
           <p className="text-body-sm font-semibold text-foreground">
-            {purpose === "LOGIN"
-              ? "أرسلنا رمز أمان لإكمال تسجيل الدخول"
-              : "أرسلنا رمزًا لتأكيد بريدك الإلكتروني"}
+            {purpose === "ADMIN_LOGIN"
+              ? "أرسلنا رمز أمان لإكمال دخول إدارة المتجر"
+              : purpose === "LOGIN"
+                ? "أرسلنا رمز أمان لإكمال تسجيل الدخول"
+                : "أرسلنا رمزًا لتأكيد بريدك الإلكتروني"}
           </p>
           <p className="mt-1 text-body-sm text-muted-foreground">
             {maskedEmail || "بريدك الإلكتروني"}
