@@ -52,3 +52,18 @@ test("login page remains a real backend-backed auth entry point", async () => {
   assert.match(session, /credentials/);
 });
 
+test("administrator authentication uses isolated endpoints and keeps generic login customer-only", async () => {
+  const login = await read("src/components/auth/LoginForm.tsx");
+  const otp = await read("src/components/auth/EmailOtpForm.tsx");
+  const session = await read("src/features/auth/session.ts");
+
+  assert.match(login, /adminGateEnabled \\?\\s*await adminLogin/);
+  assert.match(login, /await login\\(\\{ email: normalizedEmail, password \\}\\)/);
+  assert.match(session, /"\\/api\\/v1\\/auth\\/admin\\/login"/);
+  assert.match(session, /"\\/api\\/v1\\/auth\\/admin\\/email\\/verify"/);
+  assert.match(session, /"\\/api\\/v1\\/auth\\/admin\\/email\\/resend"/);
+  assert.match(otp, /purpose === "ADMIN_LOGIN"/);
+  assert.match(otp, /verifyEmailCode\\(\\{ challengeId, code, purpose \\}\\)/);
+  assert.match(otp, /resendEmailCode\\(challengeId, purpose\\)/);
+});
+
