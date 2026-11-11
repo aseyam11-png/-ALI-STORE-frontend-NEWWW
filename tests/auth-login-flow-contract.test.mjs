@@ -57,13 +57,13 @@ test("administrator authentication uses isolated endpoints and keeps generic log
   const otp = await read("src/components/auth/EmailOtpForm.tsx");
   const session = await read("src/features/auth/session.ts");
 
-  assert.match(login, /adminGateEnabled \\?\\s*await adminLogin/);
-  assert.match(login, /await login\\(\\{ email: normalizedEmail, password \\}\\)/);
-  assert.match(session, /"\\/api\\/v1\\/auth\\/admin\\/login"/);
-  assert.match(session, /"\\/api\\/v1\\/auth\\/admin\\/email\\/verify"/);
-  assert.match(session, /"\\/api\\/v1\\/auth\\/admin\\/email\\/resend"/);
-  assert.match(otp, /purpose === "ADMIN_LOGIN"/);
-  assert.match(otp, /verifyEmailCode\\(\\{ challengeId, code, purpose \\}\\)/);
-  assert.match(otp, /resendEmailCode\\(challengeId, purpose\\)/);
+  assert.ok(login.includes("adminGateEnabled"));
+  assert.ok(login.includes("await adminLogin({"));
+  assert.ok(login.includes("await login({ email: normalizedEmail, password })"));
+  assert.ok(session.includes("/api/v1/auth/admin/login"));
+  assert.ok(session.includes("/api/v1/auth/admin/email/verify"));
+  assert.ok(session.includes("/api/v1/auth/admin/email/resend"));
+  assert.ok(otp.includes('purpose === "ADMIN_LOGIN"'));
+  assert.ok(otp.includes("verifyEmailCode({ challengeId, code, purpose })"));
+  assert.ok(otp.includes("resendEmailCode(challengeId, purpose)"));
 });
-
