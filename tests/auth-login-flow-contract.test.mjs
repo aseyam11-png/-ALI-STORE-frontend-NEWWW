@@ -6,7 +6,9 @@ async function read(path) {
   return readFile(path, "utf8");
 }
 
-test("login and public verification mutations do not depend on a csrf bootstrap request", async () => {
+test(
+  "login and public verification mutations do not depend on a csrf bootstrap request",
+  async () => {
   const source = await read("src/lib/api/http-client.ts");
 
   for (const path of [
@@ -25,7 +27,9 @@ test("login and public verification mutations do not depend on a csrf bootstrap 
   assert.match(source, /!csrfExemptMutationPaths\.has\(path\)/);
 });
 
-test("login preserves an internal next destination through the authentication challenge", async () => {
+test(
+  "login preserves an internal next destination through the authentication challenge",
+  async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const otp = await read("src/components/auth/EmailOtpForm.tsx");
 
@@ -53,14 +57,18 @@ test("login page remains a real backend-backed auth entry point", async () => {
   assert.match(session, /credentials/);
 });
 
-test("administrator authentication uses isolated endpoints and keeps generic login customer-only", async () => {
+test(
+  "administrator authentication uses isolated endpoints and keeps generic login customer-only",
+  async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const otp = await read("src/components/auth/EmailOtpForm.tsx");
   const session = await read("src/features/auth/session.ts");
 
   assert.ok(login.includes("adminGateEnabled"));
   assert.ok(login.includes("await adminLogin({"));
-  assert.ok(login.includes("await login({ email: normalizedEmail, password })"));
+  assert.ok(
+    login.includes("await login({ email: normalizedEmail, password })"),
+  );
   assert.ok(session.includes("/api/v1/auth/admin/login"));
   assert.ok(session.includes("/api/v1/auth/admin/email/verify"));
   assert.ok(session.includes("/api/v1/auth/admin/email/resend"));
