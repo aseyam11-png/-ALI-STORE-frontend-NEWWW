@@ -223,7 +223,7 @@ export async function verifyEmailCode(input: {
       endpoint,
       {
         method: "POST",
-        body: JSON.stringify(input),
+        body: JSON.stringify({ challengeId: input.challengeId, code: input.code }),
       },
     );
 
