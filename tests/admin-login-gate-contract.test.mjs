@@ -21,7 +21,11 @@ test("admin login submits the secondary password and an admin_login Turnstile to
   assert.match(service, /adminGatePassword: string/);
   assert.match(service, /captchaToken: string/);
   assert.match(service, /"\/api\/v1\/auth\/admin\/login"/);
-  assert.doesNotMatch(service, /export async function login\(credentials: \{[\s\S]*?adminGatePassword/);
+  const customerLogin = service.slice(
+    service.indexOf("export async function login("),
+    service.indexOf("export async function adminLogin("),
+  );
+  assert.doesNotMatch(customerLogin, /adminGatePassword|captchaToken/);
 });
 
 test("admin gate is opt-in in the UI and Google OAuth is disabled while selected", async () => {
