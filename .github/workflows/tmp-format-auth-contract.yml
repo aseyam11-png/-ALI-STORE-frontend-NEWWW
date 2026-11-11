@@ -1,0 +1,37 @@
+name: Temporary auth contract formatter
+
+on:
+  push:
+    branches:
+      - integration/admin-otp-api-20261111
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: integration/admin-otp-api-20261111
+          persist-credentials: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Format the changed contract file
+        run: npx --yes prettier@3 --write tests/auth-login-flow-contract.test.mjs
+
+      - name: Commit formatting only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/auth-login-flow-contract.test.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "style(test): apply Prettier to auth contract"
+            git push origin integration/admin-otp-api-20261111
+          fi
