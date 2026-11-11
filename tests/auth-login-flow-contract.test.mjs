@@ -17,14 +17,11 @@ test(
       "/api/v1/auth/email/verify",
       "/api/v1/auth/email/resend",
     ]) {
-      assert.match(
-        source,
-        new RegExp(`["']${path.replaceAll("/", "\\\\/")}["']`),
-      );
+      assert.ok(source.includes(path), `Missing CSRF-exempt auth path: ${path}`);
     }
 
-    assert.match(source, /csrfExemptMutationPaths/);
-    assert.match(source, /!csrfExemptMutationPaths\\.has\\(path\\)/);
+    assert.ok(source.includes("csrfExemptMutationPaths"));
+    assert.ok(source.includes("!csrfExemptMutationPaths.has(path)"));
   },
 );
 
@@ -34,18 +31,18 @@ test(
     const login = await read("src/components/auth/LoginForm.tsx");
     const otp = await read("src/components/auth/EmailOtpForm.tsx");
 
-    assert.match(login, /resolveSafeNextPath/);
-    assert.match(login, /searchParams\\.get\\("next"\\)/);
-    assert.match(login, /next: nextPath/);
-    assert.match(login, /window\\.location\\.assign\\(nextPath\\)/);
+    assert.ok(login.includes("resolveSafeNextPath"));
+    assert.ok(login.includes('searchParams.get("next")'));
+    assert.ok(login.includes("next: nextPath"));
+    assert.ok(login.includes("window.location.assign(nextPath)"));
 
-    assert.match(otp, /resolveSafeNextPath/);
-    assert.match(otp, /searchParams\\.get\\("next"\\)/);
-    assert.match(otp, /router\\.replace\\(nextPath\\)/);
-    assert.match(otp, /next: nextPath/);
+    assert.ok(otp.includes("resolveSafeNextPath"));
+    assert.ok(otp.includes('searchParams.get("next")'));
+    assert.ok(otp.includes("router.replace(nextPath)"));
+    assert.ok(otp.includes("next: nextPath"));
 
-    assert.match(login, /value\\.startsWith\\("\\/"\\)/);
-    assert.match(login, /value\\.startsWith\\("\\/\\/"\\)/);
+    assert.ok(login.includes('value.startsWith("/")'));
+    assert.ok(login.includes('value.startsWith("//")'));
   },
 );
 
@@ -53,10 +50,10 @@ test("login page remains a real backend-backed auth entry point", async () => {
   const login = await read("src/components/auth/LoginForm.tsx");
   const session = await read("src/features/auth/session.ts");
 
-  assert.match(login, /login\\(\\{ email: normalizedEmail, password \\}\\)/);
-  assert.match(login, /loginWithGoogle\\(\\)/);
-  assert.match(session, /["']\\/api\\/v1\\/auth\\/login["']/);
-  assert.match(session, /credentials/);
+  assert.ok(login.includes("login({ email: normalizedEmail, password })"));
+  assert.ok(login.includes("loginWithGoogle()"));
+  assert.ok(session.includes("/api/v1/auth/login"));
+  assert.ok(session.includes("credentials"));
 });
 
 test(
