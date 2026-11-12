@@ -47,12 +47,19 @@ test("unsupported cart variants are rejected rather than downgraded to base prod
   assert.match(cart, /backend contract does not support them yet/);
 });
 
-test("production API rewrites require an absolute HTTPS backend target", () => {
+test("server-side backend transport validates HTTPS and fails closed on invalid targets", () => {
+  const helper = read("src/lib/server/backend-proxy.ts");
+  const route = read("src/app/api/v1/[[...path]]/route.ts");
   const config = read("next.config.ts");
-  assert.match(
-    config,
-    /BACKEND_INTERNAL_URL is required to configure production API rewrites/,
-  );
-  assert.match(config, /BACKEND_INTERNAL_URL must be an absolute URL/);
-  assert.match(config, /backendUrl\.protocol !== "https:"/);
+
+  assert.match(helper, /process\.env\.BACKEND_INTERNAL_URL/);
+  assert.match(helper, /Backend API is not configured/);
+  assert.match(helper, /new URL\(configuredBackend\)/);
+  assert.match(helper, /backend\.protocol !== "https:"/);
+  assert.match(helper, /backend\.username/);
+  assert.match(helper, /backend\.password/);
+  assert.match(helper, /status,?\s*503/);
+  assert.match(route, /runtime = "nodejs"/);
+  assert.match(route, /proxyBackendRequest/);
+  assert.doesNotMatch(config, /async rewrites\(/);
 });
