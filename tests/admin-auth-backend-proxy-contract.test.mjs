@@ -23,7 +23,9 @@ test("protected backend access is handled by Node.js route handlers", async () =
   assert.ok(helper.includes('"x-vercel-trusted-oidc-idp-token"'));
   assert.ok(helper.includes("headers.delete(VERCEL_OIDC_HEADER)"));
   assert.ok(helper.includes("headers.delete(TRUSTED_SOURCE_HEADER)"));
-  assert.ok(helper.includes("headers.set(TRUSTED_SOURCE_HEADER, deploymentIdentity)"));
+  assert.ok(
+    helper.includes("headers.set(TRUSTED_SOURCE_HEADER, deploymentIdentity)"),
+  );
   assert.ok(helper.includes('backend.protocol !== "https:"'));
   assert.ok(helper.includes('redirect: "manual"'));
   assert.ok(helper.includes('cache: "no-store"'));

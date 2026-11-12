@@ -56,10 +56,7 @@ export async function proxyBackendRequest(request: Request): Promise<Response> {
     return proxyError("Backend API configuration is not allowed.", 503);
   }
 
-  const target = new URL(
-    `${incoming.pathname}${incoming.search}`,
-    backend,
-  );
+  const target = new URL(`${incoming.pathname}${incoming.search}`, backend);
   if (target.origin !== backend.origin) {
     return proxyError("Backend API destination is invalid.", 503);
   }
