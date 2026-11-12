@@ -69,7 +69,9 @@ export function AdminLoginForm() {
 
       setCaptchaToken("");
       setCaptchaEpoch((current) => current + 1);
-      setError("تعذر تسجيل الدخول. تحقق من بيانات الإدارة واختبار الحماية وحاول مرة أخرى.");
+      setError(
+        "تعذر تسجيل الدخول. تحقق من بيانات الإدارة واختبار الحماية وحاول مرة أخرى.",
+      );
       return;
     }
 
@@ -110,10 +112,7 @@ export function AdminLoginForm() {
         disabled={submitting}
       />
 
-      <CloudflareTurnstile
-        key={captchaEpoch}
-        onTokenChange={setCaptchaToken}
-      />
+      <CloudflareTurnstile key={captchaEpoch} onTokenChange={setCaptchaToken} />
 
       <Input
         id="admin-login-password"

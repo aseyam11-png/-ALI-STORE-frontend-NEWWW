@@ -3,11 +3,16 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const layout = await readFile("src/app/(admin)/layout.tsx", "utf8");
-const guard = await readFile("src/components/admin/AdminRouteGuard.tsx", "utf8");
+const guard = await readFile(
+  "src/components/admin/AdminRouteGuard.tsx",
+  "utf8",
+);
 
 test("admin route group stays guarded while the dedicated admin login route is public", () => {
   assert.ok(layout.includes("AdminRouteGuard"));
-  assert.ok(layout.includes("return <AdminRouteGuard>{children}</AdminRouteGuard>"));
+  assert.ok(
+    layout.includes("return <AdminRouteGuard>{children}</AdminRouteGuard>"),
+  );
   assert.ok(guard.includes('pathname === "/admin/login"'));
   assert.ok(guard.includes("if (isAdminLoginPage) return children"));
 });

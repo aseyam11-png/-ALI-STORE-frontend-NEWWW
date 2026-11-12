@@ -21,7 +21,10 @@ export default function AdminLoginPage() {
         <div className="space-y-3 text-center text-body-sm text-muted-foreground">
           <p>
             أنت عميل؟{" "}
-            <Link href="/login" className="font-medium text-brand hover:underline">
+            <Link
+              href="/login"
+              className="font-medium text-brand hover:underline"
+            >
               تسجيل دخول العملاء
             </Link>
           </p>
@@ -33,7 +36,11 @@ export default function AdminLoginPage() {
         </div>
       }
     >
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-neutral-50" />}>
+      <Suspense
+        fallback={
+          <div className="h-64 animate-pulse rounded-2xl bg-neutral-50" />
+        }
+      >
         <AdminLoginForm />
       </Suspense>
     </AuthShell>

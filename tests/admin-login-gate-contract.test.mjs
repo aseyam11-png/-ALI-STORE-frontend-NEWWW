@@ -15,7 +15,10 @@ test("admin login is dedicated and does not reuse the customer credential form",
   assert.match(adminForm, /label="البريد الإلكتروني لحساب الإدارة"/);
   assert.match(adminForm, /label="كلمة المرور"/);
   assert.match(adminForm, /adminLogin\(/);
-  assert.doesNotMatch(customerForm, /adminGatePassword|CloudflareTurnstile|adminGateEnabled/);
+  assert.doesNotMatch(
+    customerForm,
+    /adminGatePassword|CloudflareTurnstile|adminGateEnabled/,
+  );
 });
 
 test("admin form routes only to an internal administrative destination after OTP", async () => {

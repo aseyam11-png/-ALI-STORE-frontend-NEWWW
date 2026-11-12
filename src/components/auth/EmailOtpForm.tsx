@@ -31,7 +31,10 @@ export function EmailOtpForm() {
       : searchParams.get("purpose") === "LOGIN"
         ? "LOGIN"
         : "EMAIL_VERIFICATION";
-  const nextPath = resolveSafeNextPath(searchParams.get("next"), queryPurpose) as Route;
+  const nextPath = resolveSafeNextPath(
+    searchParams.get("next"),
+    queryPurpose,
+  ) as Route;
 
   const queryChallengeId = searchParams.get("challenge") ?? "";
   const queryMaskedEmail = searchParams.get("email") ?? "";
@@ -50,7 +53,9 @@ export function EmailOtpForm() {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const challenge = activeLocalChallenge;
-  const [resendAvailableAt, setResendAvailableAt] = useState(() => Date.now() + 60_000);
+  const [resendAvailableAt, setResendAvailableAt] = useState(
+    () => Date.now() + 60_000,
+  );
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -85,7 +90,11 @@ export function EmailOtpForm() {
     setSubmitting(false);
 
     if (!result.ok) {
-      setError(result.requiresEmailVerification ? "أعد إرسال رمز تحقق جديد." : result.reason);
+      setError(
+        result.requiresEmailVerification
+          ? "أعد إرسال رمز تحقق جديد."
+          : result.reason,
+      );
       return;
     }
 

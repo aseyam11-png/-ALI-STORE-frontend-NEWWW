@@ -171,7 +171,10 @@ export async function adminLogin(credentials: {
     );
     return mapAuthResponse(response.data);
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : "admin_login_failed" };
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "admin_login_failed",
+    };
   }
 }
 
@@ -233,21 +236,32 @@ export async function verifyAdminLoginCode(input: {
     );
     return mapAuthResponse(response.data);
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : "admin_verification_failed" };
+    return {
+      ok: false,
+      reason:
+        error instanceof Error ? error.message : "admin_verification_failed",
+    };
   }
 }
 
 export async function resendAdminLoginCode(
   challengeId: string,
-): Promise<{ ok: true; challenge: VerificationChallenge } | { ok: false; reason: string }> {
+): Promise<
+  { ok: true; challenge: VerificationChallenge } | { ok: false; reason: string }
+> {
   try {
-    const response = await apiClient.request<ApiEnvelope<VerificationChallenge>>(
-      "/api/v1/auth/admin/email/resend",
-      { method: "POST", body: JSON.stringify({ challengeId }) },
-    );
+    const response = await apiClient.request<
+      ApiEnvelope<VerificationChallenge>
+    >("/api/v1/auth/admin/email/resend", {
+      method: "POST",
+      body: JSON.stringify({ challengeId }),
+    });
     return { ok: true, challenge: response.data };
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : "admin_resend_failed" };
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "admin_resend_failed",
+    };
   }
 }
 

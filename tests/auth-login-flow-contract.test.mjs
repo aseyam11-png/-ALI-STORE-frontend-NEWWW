@@ -12,7 +12,10 @@ test("customer login remains separate from the administrator login screen", asyn
   const admin = await read("src/components/auth/AdminLoginForm.tsx");
 
   assert.match(login, /login\(\{ email: normalizedEmail, password \}\)/);
-  assert.doesNotMatch(login, /adminGatePassword|CloudflareTurnstile|adminGateEnabled/);
+  assert.doesNotMatch(
+    login,
+    /adminGatePassword|CloudflareTurnstile|adminGateEnabled/,
+  );
   assert.match(session, /"\/api\/v1\/auth\/login"/);
   assert.match(admin, /adminLogin\(/);
   assert.match(session, /"\/api\/v1\/auth\/admin\/login"/);

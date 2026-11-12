@@ -27,11 +27,9 @@ const configuredServerApiBase =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
   null;
 
-const SERVER_API_BASE_URL =
-  configuredServerApiBase ?? "http://localhost:8080";
+const SERVER_API_BASE_URL = configuredServerApiBase ?? "http://localhost:8080";
 
-const BROWSER_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const BROWSER_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 export const API_BASE_URL =
   typeof window === "undefined"
@@ -90,8 +88,7 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    const shouldPrepareCsrf =
-      unsafeMethod && typeof window !== "undefined";
+    const shouldPrepareCsrf = unsafeMethod && typeof window !== "undefined";
 
     if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
@@ -104,7 +101,9 @@ export class HttpClient {
         });
 
         if (!csrfResponse.ok) {
-          throw new Error("تعذر تهيئة حماية الطلب. أعد تحميل الصفحة وحاول مرة أخرى.");
+          throw new Error(
+            "تعذر تهيئة حماية الطلب. أعد تحميل الصفحة وحاول مرة أخرى.",
+          );
         }
         csrfToken = readCookie("XSRF-TOKEN");
       }
@@ -128,15 +127,12 @@ export class HttpClient {
     const body = init?.body;
     const isFormData =
       typeof FormData !== "undefined" && body instanceof FormData;
-    const isBlob =
-      typeof Blob !== "undefined" && body instanceof Blob;
+    const isBlob = typeof Blob !== "undefined" && body instanceof Blob;
     const isUrlSearchParams =
-      typeof URLSearchParams !== "undefined" &&
-      body instanceof URLSearchParams;
+      typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams;
     const isArrayBuffer =
       typeof ArrayBuffer !== "undefined" &&
-      (body instanceof ArrayBuffer ||
-        ArrayBuffer.isView(body));
+      (body instanceof ArrayBuffer || ArrayBuffer.isView(body));
 
     if (
       body &&
@@ -156,7 +152,7 @@ export class HttpClient {
     });
 
     if (!response.ok) {
-      const body = await response.json().catch(() => null) as {
+      const body = (await response.json().catch(() => null)) as {
         message?: string;
         code?: string;
         errors?: Record<string, string>;
@@ -164,8 +160,8 @@ export class HttpClient {
 
       const fieldErrors = body?.errors;
       const fieldMessages = fieldErrors
-        ? Object.values(fieldErrors).filter(
-            (message): message is string => Boolean(message),
+        ? Object.values(fieldErrors).filter((message): message is string =>
+            Boolean(message),
           )
         : [];
 
@@ -174,7 +170,7 @@ export class HttpClient {
         message:
           fieldMessages.length > 0
             ? fieldMessages.join(" ")
-            : body?.message ?? response.statusText,
+            : (body?.message ?? response.statusText),
         code: body?.code,
         fieldErrors,
         correlationId: response.headers.get("X-Correlation-Id") ?? undefined,
