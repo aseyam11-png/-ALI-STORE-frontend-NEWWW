@@ -161,6 +161,8 @@ export async function login(credentials: {
 export async function adminLogin(credentials: {
   email: string;
   password: string;
+  adminGatePassword: string;
+  captchaToken: string;
 }): Promise<AuthResult> {
   try {
     const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
