@@ -42,6 +42,8 @@ test("admin OTP rejects customer and external return paths", async () => {
   assert.ok(otp.includes('value.startsWith("//")'));
   assert.ok(otp.includes('value.includes("\\\\")'));
   assert.ok(
-    otp.includes('return purpose === "ADMIN_LOGIN" ? "/admin" : "/buyer/profile"'),
+    otp.includes(
+      'return purpose === "ADMIN_LOGIN" ? "/admin" : "/buyer/profile"',
+    ),
   );
 });
