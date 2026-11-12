@@ -203,7 +203,7 @@ jobs:
       - name: Lighthouse accessibility/performance/SEO
         run: |
           mkdir -p artifacts/lighthouse
-          npx --yes lighthouse@13 http://127.0.0.1:3000             --output=json             --output-path=artifacts/lighthouse/home.json             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --only-categories=accessibility,best-practices,performance,seo
+          npx --yes lighthouse@13.4.1 http://127.0.0.1:3000             --output=json             --output-path=artifacts/lighthouse/home.json             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --only-categories=accessibility,best-practices,performance,seo
 
       - name: axe accessibility audit
         run: |
