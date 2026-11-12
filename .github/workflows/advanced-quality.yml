@@ -53,6 +53,8 @@ jobs:
     name: Playwright cross-browser E2E
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      BACKEND_INTERNAL_URL: https://ali-store-backend-git-deploy-vercel-container-run-a0d65f-a-28f5.vercel.app
     steps:
       - uses: actions/checkout@v6
 
@@ -89,6 +91,8 @@ jobs:
     name: Pa11y accessibility
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      BACKEND_INTERNAL_URL: https://ali-store-backend-git-deploy-vercel-container-run-a0d65f-a-28f5.vercel.app
     steps:
       - uses: actions/checkout@v6
 
@@ -150,6 +154,8 @@ jobs:
     name: Lighthouse CI regression
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      BACKEND_INTERNAL_URL: https://ali-store-backend-git-deploy-vercel-container-run-a0d65f-a-28f5.vercel.app
     steps:
       - uses: actions/checkout@v6
 
