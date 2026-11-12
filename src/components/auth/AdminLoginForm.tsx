@@ -51,7 +51,8 @@ export function AdminLoginForm() {
       setError("أدخل البريد الإلكتروني وكلمة المرور وكلمة مرور بوابة الإدارة.");
       return;
     }
-    const adminGatePasswordBytes = new TextEncoder().encode(adminGatePassword).length;
+    const encodedGatePassword = new TextEncoder().encode(adminGatePassword);
+    const adminGatePasswordBytes = encodedGatePassword.length;
     if (adminGatePasswordBytes < 16 || adminGatePasswordBytes > 72) {
       setError("كلمة مرور بوابة الإدارة يجب أن تكون بين 16 و72 بايت.");
       return;
