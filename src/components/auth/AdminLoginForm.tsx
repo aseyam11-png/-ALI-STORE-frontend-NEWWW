@@ -51,6 +51,12 @@ export function AdminLoginForm() {
       setError("أدخل البريد الإلكتروني وكلمة المرور وكلمة مرور بوابة الإدارة.");
       return;
     }
+    const adminGatePasswordBytes = new TextEncoder().encode(adminGatePassword).length;
+    if (adminGatePasswordBytes < 16 || adminGatePasswordBytes > 72) {
+      setError("كلمة مرور بوابة الإدارة يجب أن تكون بين 16 و72 بايت.");
+      return;
+    }
+
     if (!captchaToken) {
       setError("أكمل اختبار التحقق الأمني قبل المتابعة.");
       return;
