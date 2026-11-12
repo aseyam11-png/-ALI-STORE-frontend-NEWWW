@@ -9,12 +9,22 @@ import { adminLogin } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+function isAdministrativePath(path: string): boolean {
+  return (
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path === "/warehouse" ||
+    path.startsWith("/warehouse/")
+  );
+}
+
 function resolveSafeNextPath(value: string | null): string {
   if (
     !value ||
     !value.startsWith("/") ||
     value.startsWith("//") ||
-    !(value.startsWith("/admin") || value.startsWith("/warehouse"))
+    value.includes("\\") ||
+    !isAdministrativePath(value)
   ) {
     return "/admin";
   }
