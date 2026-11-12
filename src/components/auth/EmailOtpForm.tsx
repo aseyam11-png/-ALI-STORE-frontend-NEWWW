@@ -6,16 +6,18 @@ import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
+  resendAdminLoginCode,
   resendEmailCode,
+  verifyAdminLoginCode,
   verifyEmailCode,
   type VerificationChallenge,
 } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-function resolveSafeNextPath(value: string | null): string {
+function resolveSafeNextPath(value: string | null, purpose: string): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/buyer/profile";
+    return purpose === "ADMIN_LOGIN" ? "/admin" : "/buyer/profile";
   }
   return value;
 }
@@ -23,12 +25,19 @@ function resolveSafeNextPath(value: string | null): string {
 export function EmailOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = resolveSafeNextPath(searchParams.get("next")) as Route;
+  const queryPurpose =
+    searchParams.get("purpose") === "ADMIN_LOGIN"
+      ? "ADMIN_LOGIN"
+      : searchParams.get("purpose") === "LOGIN"
+        ? "LOGIN"
+        : "EMAIL_VERIFICATION";
+  const nextPath = resolveSafeNextPath(
+    searchParams.get("next"),
+    queryPurpose,
+  ) as Route;
 
   const queryChallengeId = searchParams.get("challenge") ?? "";
   const queryMaskedEmail = searchParams.get("email") ?? "";
-  const queryPurpose =
-    searchParams.get("purpose") === "LOGIN" ? "LOGIN" : "EMAIL_VERIFICATION";
   const [localChallenge, setLocalChallenge] =
     useState<VerificationChallenge | null>(null);
 
@@ -44,7 +53,9 @@ export function EmailOtpForm() {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const challenge = activeLocalChallenge;
-  const [resendAvailableAt, setResendAvailableAt] = useState(() => Date.now() + 60_000);
+  const [resendAvailableAt, setResendAvailableAt] = useState(
+    () => Date.now() + 60_000,
+  );
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -72,11 +83,18 @@ export function EmailOtpForm() {
     }
 
     setSubmitting(true);
-    const result = await verifyEmailCode({ challengeId, code });
+    const result =
+      purpose === "ADMIN_LOGIN"
+        ? await verifyAdminLoginCode({ challengeId, code })
+        : await verifyEmailCode({ challengeId, code });
     setSubmitting(false);
 
     if (!result.ok) {
-      setError(result.requiresEmailVerification ? "أعد إرسال رمز تحقق جديد." : result.reason);
+      setError(
+        result.requiresEmailVerification
+          ? "أعد إرسال رمز تحقق جديد."
+          : result.reason,
+      );
       return;
     }
 
@@ -88,7 +106,10 @@ export function EmailOtpForm() {
 
     setError(undefined);
     setResending(true);
-    const result = await resendEmailCode(challengeId);
+    const result =
+      purpose === "ADMIN_LOGIN"
+        ? await resendAdminLoginCode(challengeId)
+        : await resendEmailCode(challengeId);
     setResending(false);
 
     if (!result.ok) {
@@ -129,9 +150,11 @@ export function EmailOtpForm() {
         </div>
         <div>
           <p className="text-body-sm font-semibold text-foreground">
-            {purpose === "LOGIN"
-              ? "أرسلنا رمز أمان لإكمال تسجيل الدخول"
-              : "أرسلنا رمزًا لتأكيد بريدك الإلكتروني"}
+            {purpose === "ADMIN_LOGIN"
+              ? "أرسلنا رمز أمان للدخول إلى لوحة الإدارة"
+              : purpose === "LOGIN"
+                ? "أرسلنا رمز أمان لإكمال تسجيل الدخول"
+                : "أرسلنا رمزًا لتأكيد بريدك الإلكتروني"}
           </p>
           <p className="mt-1 text-body-sm text-muted-foreground">
             {maskedEmail || "بريدك الإلكتروني"}
