@@ -20,6 +20,8 @@ test("admin login is dedicated and does not reuse the customer credential form",
 
 test("admin form routes only to an internal administrative destination after OTP", async () => {
   const adminForm = await read("src/components/auth/AdminLoginForm.tsx");
+  assert.match(adminForm, /adminGatePassword,/);
+  assert.match(adminForm, /captchaToken,/);
   assert.match(adminForm, /purpose: "ADMIN_LOGIN"/);
   assert.match(adminForm, /value\.startsWith\("\/warehouse"\)/);
   assert.match(adminForm, /\/verify-email\?/);
