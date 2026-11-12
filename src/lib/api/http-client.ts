@@ -27,11 +27,9 @@ const configuredServerApiBase =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
   null;
 
-const SERVER_API_BASE_URL =
-  configuredServerApiBase ?? "http://localhost:8080";
+const SERVER_API_BASE_URL = configuredServerApiBase ?? "http://localhost:8080";
 
-const BROWSER_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const BROWSER_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 export const API_BASE_URL =
   typeof window === "undefined"
@@ -90,60 +88,58 @@ export class HttpClient {
     const method = (init?.method ?? "GET").toUpperCase();
     const unsafeMethod = !["GET", "HEAD", "OPTIONS"].includes(method);
 
-    const csrfExemptMutationPaths = new Set([
-      "/api/v1/auth/login",
-      "/api/v1/auth/register",
-      "/api/v1/auth/email/verify",
-      "/api/v1/auth/email/resend",
-    ]);
+    const headers = new Headers(init?.headers);
+    const authorization = headers.get("Authorization");
+    const usesBearerAuthentication =
+      authorization !== null && /^Bearer\s+\S+$/i.test(authorization.trim());
 
+    // Cookie/session-authenticated browser mutations must all bootstrap CSRF,
+    // including login, registration, email verification, and resend. The server
+    // explicitly exempts machine-to-machine Bearer requests instead.
     const shouldPrepareCsrf =
       unsafeMethod &&
       typeof window !== "undefined" &&
-      !csrfExemptMutationPaths.has(path);
+      !usesBearerAuthentication;
 
     if (shouldPrepareCsrf) {
       let csrfToken = readCookie("XSRF-TOKEN");
 
       if (!csrfToken) {
-        try {
-          await fetch(this.baseUrl + "/api/v1/auth/csrf", {
-            credentials: "include",
-            headers: { Accept: "application/json" },
-          });
-        } catch {
-          // The actual mutation below is the source of truth. A missing CSRF
-          // bootstrap must not prevent the client from reaching the backend.
+        const csrfResponse = await fetch(this.baseUrl + "/api/v1/auth/csrf", {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        if (!csrfResponse.ok) {
+          throw new Error(
+            "Could not initialize CSRF protection for this request.",
+          );
         }
-        csrfToken = readCookie("XSRF-TOKEN");
+
+        csrfToken =
+          readCookie("XSRF-TOKEN") ??
+          csrfResponse.headers.get("X-XSRF-TOKEN") ??
+          undefined;
       }
 
-      if (csrfToken) {
-        init = {
-          ...init,
-          headers: {
-            "X-XSRF-TOKEN": csrfToken,
-            ...(init?.headers ?? {}),
-          },
-        };
+      if (!csrfToken) {
+        throw new Error("CSRF token is unavailable; the request was not sent.");
       }
+
+      headers.set("X-XSRF-TOKEN", csrfToken);
     }
-
-    const headers = new Headers(init?.headers);
     headers.set("Accept", "application/json");
 
     const body = init?.body;
     const isFormData =
       typeof FormData !== "undefined" && body instanceof FormData;
-    const isBlob =
-      typeof Blob !== "undefined" && body instanceof Blob;
+    const isBlob = typeof Blob !== "undefined" && body instanceof Blob;
     const isUrlSearchParams =
-      typeof URLSearchParams !== "undefined" &&
-      body instanceof URLSearchParams;
+      typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams;
     const isArrayBuffer =
       typeof ArrayBuffer !== "undefined" &&
-      (body instanceof ArrayBuffer ||
-        ArrayBuffer.isView(body));
+      (body instanceof ArrayBuffer || ArrayBuffer.isView(body));
 
     if (
       body &&
@@ -163,7 +159,7 @@ export class HttpClient {
     });
 
     if (!response.ok) {
-      const body = await response.json().catch(() => null) as {
+      const body = (await response.json().catch(() => null)) as {
         message?: string;
         code?: string;
         errors?: Record<string, string>;
@@ -171,8 +167,8 @@ export class HttpClient {
 
       const fieldErrors = body?.errors;
       const fieldMessages = fieldErrors
-        ? Object.values(fieldErrors).filter(
-            (message): message is string => Boolean(message),
+        ? Object.values(fieldErrors).filter((message): message is string =>
+            Boolean(message),
           )
         : [];
 
@@ -181,7 +177,7 @@ export class HttpClient {
         message:
           fieldMessages.length > 0
             ? fieldMessages.join(" ")
-            : body?.message ?? response.statusText,
+            : (body?.message ?? response.statusText),
         code: body?.code,
         fieldErrors,
         correlationId: response.headers.get("X-Correlation-Id") ?? undefined,

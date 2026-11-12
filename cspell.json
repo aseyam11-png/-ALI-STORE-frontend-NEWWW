@@ -116,7 +116,8 @@
     "Vitest",
     "WCAG",
     "WebKit",
-    "zaproxy"
+    "zaproxy",
+    "nonrecursive"
   ],
   "ignoreRegExpList": ["/[\\p{Script=Arabic}\\p{M}]+/gu"]
 }
