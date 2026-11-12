@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
+import { CloudflareTurnstile } from "@/components/auth/CloudflareTurnstile";
 import { adminLogin } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,9 @@ export function AdminLoginForm() {
   const nextPath = resolveSafeNextPath(searchParams.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminGatePassword, setAdminGatePassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaEpoch, setCaptchaEpoch] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -33,8 +37,12 @@ export function AdminLoginForm() {
     setError(undefined);
 
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail || !password) {
-      setError("أدخل البريد الإلكتروني وكلمة المرور.");
+    if (!normalizedEmail || !password || !adminGatePassword.trim()) {
+      setError("أدخل البريد الإلكتروني وكلمة المرور وكلمة مرور بوابة الإدارة.");
+      return;
+    }
+    if (!captchaToken) {
+      setError("أكمل اختبار التحقق الأمني قبل المتابعة.");
       return;
     }
 
@@ -42,6 +50,8 @@ export function AdminLoginForm() {
     const result = await adminLogin({
       email: normalizedEmail,
       password,
+      adminGatePassword,
+      captchaToken,
     });
     setSubmitting(false);
 
@@ -57,7 +67,9 @@ export function AdminLoginForm() {
         return;
       }
 
-      setError("تعذر تسجيل الدخول. تحقق من بيانات الإدارة وحاول مرة أخرى.");
+      setCaptchaToken("");
+      setCaptchaEpoch((current) => current + 1);
+      setError("تعذر تسجيل الدخول. تحقق من بيانات الإدارة واختبار الحماية وحاول مرة أخرى.");
       return;
     }
 
@@ -88,6 +100,22 @@ export function AdminLoginForm() {
       />
 
       <Input
+        id="admin-gate-password"
+        name="adminGatePassword"
+        type="password"
+        autoComplete="off"
+        label="كلمة مرور بوابة الإدارة الثانية"
+        value={adminGatePassword}
+        onChange={(event) => setAdminGatePassword(event.target.value)}
+        disabled={submitting}
+      />
+
+      <CloudflareTurnstile
+        key={captchaEpoch}
+        onTokenChange={setCaptchaToken}
+      />
+
+      <Input
         id="admin-login-password"
         name="password"
         type="password"
@@ -112,6 +140,7 @@ export function AdminLoginForm() {
         variant="primary"
         size="lg"
         loading={submitting}
+        disabled={submitting || !adminGatePassword.trim() || !captchaToken}
         className="w-full"
       >
         متابعة التحقق
