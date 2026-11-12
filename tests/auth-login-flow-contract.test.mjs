@@ -41,4 +41,3 @@ test("login page remains a real backend-backed auth entry point", async () => {
   assert.match(session, /["']\/api\/v1\/auth\/login["']/);
   assert.match(session, /credentials/);
 });
-

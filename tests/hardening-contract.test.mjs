@@ -17,8 +17,14 @@ test("browser cookie mutations bootstrap CSRF and fail closed when token setup f
 test("product API enforces SAR and unknown product states do not become active", () => {
   const products = read("src/features/products/services/product.service.ts");
   assert.match(products, /normalized !== "SAR"/);
-  assert.match(products, /Unknown upstream states must never make a product purchasable/);
-  assert.match(products, /default:\s*\/\/ Unknown upstream states must never make a product purchasable\.?\s*return "archived";/);
+  assert.match(
+    products,
+    /Unknown upstream states must never make a product purchasable/,
+  );
+  assert.match(
+    products,
+    /default:\s*\/\/ Unknown upstream states must never make a product purchasable\.?\s*return "archived";/,
+  );
 });
 
 test("checkout validates contact details and keeps apartment data separate", () => {
@@ -29,7 +35,10 @@ test("checkout validates contact details and keeps apartment data separate", () 
   assert.match(checkout, /htmlFor="apartment"/);
   assert.match(checkout, /form\.apartment\.trim\(\)/);
   assert.match(checkout, /function requireSarCurrency/);
-  assert.doesNotMatch(checkout, /synchronizedItems\[0\]\?\.currency\s*\?\?\s*"USD"/);
+  assert.doesNotMatch(
+    checkout,
+    /synchronizedItems\[0\]\?\.currency\s*\?\?\s*"USD"/,
+  );
 });
 
 test("unsupported cart variants are rejected rather than downgraded to base products", () => {
@@ -40,7 +49,10 @@ test("unsupported cart variants are rejected rather than downgraded to base prod
 
 test("production API rewrites require an absolute HTTPS backend target", () => {
   const config = read("next.config.ts");
-  assert.match(config, /BACKEND_INTERNAL_URL is required to configure production API rewrites/);
+  assert.match(
+    config,
+    /BACKEND_INTERNAL_URL is required to configure production API rewrites/,
+  );
   assert.match(config, /BACKEND_INTERNAL_URL must be an absolute URL/);
   assert.match(config, /backendUrl\.protocol !== "https:"/);
 });

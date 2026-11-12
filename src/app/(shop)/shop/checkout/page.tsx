@@ -66,45 +66,38 @@ const initialForm: FormState = {
 };
 
 export default function CheckoutPage() {
-  const items = useCartStore(
-    (state) => state.items,
-  );
+  const items = useCartStore((state) => state.items);
 
-  const clearCart = useCartStore(
-    (state) => state.clearCart,
-  );
-  const replaceItems = useCartStore(
-    (state) => state.replaceItems,
-  );
+  const clearCart = useCartStore((state) => state.clearCart);
+  const replaceItems = useCartStore((state) => state.replaceItems);
 
   const session = useSession();
   const router = useRouter();
 
-  const [form, setForm] =
-    useState<FormState>(initialForm);
+  const [form, setForm] = useState<FormState>(initialForm);
 
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null,
+  );
 
-  const [paymentMethod, setPaymentMethod] =
-    useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   // Online payments stay disabled until a real production gateway is configured.
   const onlinePaymentsEnabled = false;
 
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const [serverCartTotal, setServerCartTotal] =
-    useState<number | null>(null);
-  const [serverCartCurrency, setServerCartCurrency] =
-    useState<string | undefined>(undefined);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(
+    null,
+  );
+  const [serverCartTotal, setServerCartTotal] = useState<number | null>(null);
+  const [serverCartCurrency, setServerCartCurrency] = useState<
+    string | undefined
+  >(undefined);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [successOrderId, setSuccessOrderId] =
-    useState("");
-  const [paymentRecoveryOrderId, setPaymentRecoveryOrderId] =
-    useState("");
+  const [successOrderId, setSuccessOrderId] = useState("");
+  const [paymentRecoveryOrderId, setPaymentRecoveryOrderId] = useState("");
   const idempotencyKeyRef = useRef<string | null>(null);
   const [successPaymentStatus, setSuccessPaymentStatus] =
     useState<BackendPayment["status"]>("PENDING");
@@ -170,7 +163,9 @@ export default function CheckoutPage() {
     getMyAddresses()
       .then((nextAddresses) => {
         setAddresses(nextAddresses);
-        const defaultAddress = nextAddresses.find((address) => address.isDefault) ?? nextAddresses[0];
+        const defaultAddress =
+          nextAddresses.find((address) => address.isDefault) ??
+          nextAddresses[0];
         if (!defaultAddress) return;
         setSelectedAddressId(defaultAddress.id);
         setForm((current) => ({
@@ -181,7 +176,9 @@ export default function CheckoutPage() {
             defaultAddress.street,
             defaultAddress.building,
             defaultAddress.area,
-          ].filter(Boolean).join(", "),
+          ]
+            .filter(Boolean)
+            .join(", "),
           apartment: defaultAddress.apartment ?? "",
           city: defaultAddress.city,
           country: defaultAddress.country,
@@ -212,21 +209,13 @@ export default function CheckoutPage() {
     0,
   );
 
-  const cartSubtotal =
-    serverCartTotal ?? subtotal;
+  const cartSubtotal = serverCartTotal ?? subtotal;
 
-  const couponDiscount =
-    appliedCoupon?.finalDiscount ?? 0;
+  const couponDiscount = appliedCoupon?.finalDiscount ?? 0;
 
-  const total = Math.max(
-    0,
-    cartSubtotal - couponDiscount,
-  );
+  const total = Math.max(0, cartSubtotal - couponDiscount);
 
-  const setField = (
-    key: keyof FormState,
-    value: string,
-  ) => {
+  const setField = (key: keyof FormState, value: string) => {
     setForm((current) => ({
       ...current,
       [key]: value,
@@ -300,14 +289,13 @@ export default function CheckoutPage() {
 
     try {
       const synchronizedCart = await replaceBackendCart(items);
-      const synchronizedItems = mapBackendCartToLocal(
-        synchronizedCart,
-        items,
-      );
+      const synchronizedItems = mapBackendCartToLocal(synchronizedCart, items);
       replaceItems(synchronizedItems);
       setServerCartTotal(synchronizedCart.totalPrice);
       setServerCartCurrency(
-        requireSarCurrency(synchronizedCart.currency ?? synchronizedItems[0]?.currency),
+        requireSarCurrency(
+          synchronizedCart.currency ?? synchronizedItems[0]?.currency,
+        ),
       );
 
       idempotencyKeyRef.current ??= crypto.randomUUID();
@@ -322,12 +310,16 @@ export default function CheckoutPage() {
           form.city,
           form.country,
           form.postalCode,
-        ].filter(Boolean).join(", "),
+        ]
+          .filter(Boolean)
+          .join(", "),
         couponCode: appliedCoupon?.coupon.code,
       });
 
       createdOrderId = String(order.id);
-      const orderCurrency = requireSarCurrency(order.currency ?? serverCartCurrency);
+      const orderCurrency = requireSarCurrency(
+        order.currency ?? serverCartCurrency,
+      );
 
       const backendPaymentMethod =
         paymentMethod === "cod"
@@ -356,14 +348,13 @@ export default function CheckoutPage() {
 
       const paymentIsAccepted =
         payment.status === "COMPLETED" ||
-        (payment.method === "CASH_ON_DELIVERY" &&
-          payment.status === "PENDING");
+        (payment.method === "CASH_ON_DELIVERY" && payment.status === "PENDING");
 
       if (!paymentIsAccepted) {
         setPaymentRecoveryOrderId(createdOrderId);
         setError(
-          "The order was created, but the payment was not confirmed. "
-          + "Do not place a second order; review the existing order status.",
+          "The order was created, but the payment was not confirmed. " +
+            "Do not place a second order; review the existing order status.",
         );
         return;
       }
@@ -394,8 +385,8 @@ export default function CheckoutPage() {
       if (createdOrderId) {
         setPaymentRecoveryOrderId(createdOrderId);
         setError(
-          "The order was created, but the payment could not be confirmed. "
-          + "Do not place a second order; review the existing order status.",
+          "The order was created, but the payment could not be confirmed. " +
+            "Do not place a second order; review the existing order status.",
         );
         return;
       }
@@ -426,16 +417,13 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-neutral-500">
-                تعذر تأكيد الدفع في محاولة الشراء الحالية.
-                لا ترسل طلبًا ثانيًا. تم حفظ الطلب الحالي
-                ويمكن التحقق من حالة دفعه من الخادم.
+                تعذر تأكيد الدفع في محاولة الشراء الحالية. لا ترسل طلبًا ثانيًا.
+                تم حفظ الطلب الحالي ويمكن التحقق من حالة دفعه من الخادم.
               </p>
 
               <div className="mt-7 rounded-2xl bg-neutral-50 p-5">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-xs text-neutral-400">
-                    Order number
-                  </span>
+                  <span className="text-xs text-neutral-400">Order number</span>
                   <span className="text-sm font-bold text-brand-ink">
                     {paymentRecoveryOrderId}
                   </span>
@@ -460,8 +448,8 @@ export default function CheckoutPage() {
               </div>
 
               <p className="mt-5 text-center text-[11px] leading-5 text-neutral-400">
-                لم تتم إعادة إنشاء السلة لأن الخادم قام بالفعل
-                باستهلاكها لهذا الطلب.
+                لم تتم إعادة إنشاء السلة لأن الخادم قام بالفعل باستهلاكها لهذا
+                الطلب.
               </p>
             </section>
           </div>
@@ -475,9 +463,7 @@ export default function CheckoutPage() {
       <AppShell>
         <main className="min-h-screen bg-background">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-
             <section className="rounded-3xl border border-neutral-200 bg-surface p-8 text-center shadow-sm sm:p-12">
-
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success-surface text-success-600">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
@@ -491,16 +477,13 @@ export default function CheckoutPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-neutral-500">
-                تم إنشاء طلبك، وحالة الدفع أدناه مأخوذة مباشرة
-                من خدمة الدفع. سيظهر التتبع بعد بدء تنفيذ الطلب.
+                تم إنشاء طلبك، وحالة الدفع أدناه مأخوذة مباشرة من خدمة الدفع.
+                سيظهر التتبع بعد بدء تنفيذ الطلب.
               </p>
 
               <div className="mx-auto mt-7 max-w-md rounded-2xl bg-neutral-50 p-5 text-start">
-
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-neutral-400">
-                    Order number
-                  </span>
+                  <span className="text-xs text-neutral-400">Order number</span>
 
                   <span className="text-sm font-bold text-brand-ink">
                     {successOrderId}
@@ -518,11 +501,9 @@ export default function CheckoutPage() {
                         : "PENDING"}
                   </span>
                 </div>
-
               </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-
                 <Link
                   href="/buyer"
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-bold text-white"
@@ -537,9 +518,7 @@ export default function CheckoutPage() {
                 >
                   متابعة التسوق
                 </Link>
-
               </div>
-
             </section>
           </div>
         </main>
@@ -550,10 +529,8 @@ export default function CheckoutPage() {
   return (
     <AppShell>
       <main className="min-h-screen bg-background">
-
         <section className="border-b border-neutral-200 bg-surface">
           <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-
             <Link
               href="/shop/cart"
               className="inline-flex items-center gap-2 text-xs font-bold text-brand"
@@ -562,23 +539,24 @@ export default function CheckoutPage() {
               العودة إلى السلة
             </Link>
 
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">إتمام الطلب</h1>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
+              إتمام الطلب
+            </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
               أكمل طلبك من خلال عملية شراء آمنة.
             </p>
-
           </div>
         </section>
 
         <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-6 lg:px-8">
-
           {items.length === 0 ? (
             <section className="rounded-2xl border border-dashed border-neutral-300 bg-surface p-12 text-center">
-
               <Package className="mx-auto h-8 w-8 text-neutral-300" />
 
-              <h2 className="mt-5 text-xl font-bold text-foreground">سلتك فارغة</h2>
+              <h2 className="mt-5 text-xl font-bold text-foreground">
+                سلتك فارغة
+              </h2>
 
               <Link
                 href="/shop/products"
@@ -587,15 +565,12 @@ export default function CheckoutPage() {
                 تصفح المنتجات
                 <ArrowRight className="h-4 w-4" />
               </Link>
-
             </section>
           ) : (
             <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_380px]">
-
               <div className="space-y-6">
-
                 {/* Saved addresses */}
-                          <CheckoutAddressSelector
+                <CheckoutAddressSelector
                   addresses={addresses}
                   selectedAddressId={selectedAddressId}
                   onSelect={(selected) => {
@@ -608,7 +583,9 @@ export default function CheckoutPage() {
                         selected.street,
                         selected.building,
                         selected.area,
-                      ].filter(Boolean).join(", "),
+                      ]
+                        .filter(Boolean)
+                        .join(", "),
                       apartment: selected.apartment ?? "",
                       city: selected.city,
                       country: selected.country,
@@ -619,7 +596,6 @@ export default function CheckoutPage() {
 
                 {/* Contact */}
                 <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
-
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-surface text-brand">
                       <MapPin className="h-5 w-5" />
@@ -637,7 +613,6 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="full-name"
@@ -648,16 +623,9 @@ export default function CheckoutPage() {
 
                       <input
                         id="full-name"
-                        value={
-                          form.fullName
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "fullName",
-                            event.target.value,
-                          )
+                        value={form.fullName}
+                        onChange={(event) =>
+                          setField("fullName", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
@@ -674,16 +642,9 @@ export default function CheckoutPage() {
                       <input
                         id="email"
                         type="email"
-                        value={
-                          form.email || session.user?.email || ""
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "email",
-                            event.target.value,
-                          )
+                        value={form.email || session.user?.email || ""}
+                        onChange={(event) =>
+                          setField("email", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
@@ -700,16 +661,9 @@ export default function CheckoutPage() {
                       <input
                         id="phone"
                         type="tel"
-                        value={
-                          form.phone
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "phone",
-                            event.target.value,
-                          )
+                        value={form.phone}
+                        onChange={(event) =>
+                          setField("phone", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
@@ -725,16 +679,9 @@ export default function CheckoutPage() {
 
                       <input
                         id="address"
-                        value={
-                          form.address
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "address",
-                            event.target.value,
-                          )
+                        value={form.address}
+                        onChange={(event) =>
+                          setField("address", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
@@ -750,7 +697,9 @@ export default function CheckoutPage() {
                       <input
                         id="apartment"
                         value={form.apartment}
-                        onChange={(event) => setField("apartment", event.target.value)}
+                        onChange={(event) =>
+                          setField("apartment", event.target.value)
+                        }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
@@ -765,16 +714,9 @@ export default function CheckoutPage() {
 
                       <input
                         id="city"
-                        value={
-                          form.city
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "city",
-                            event.target.value,
-                          )
+                        value={form.city}
+                        onChange={(event) =>
+                          setField("city", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
@@ -790,16 +732,9 @@ export default function CheckoutPage() {
 
                       <input
                         id="country"
-                        value={
-                          form.country
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "country",
-                            event.target.value,
-                          )
+                        value={form.country}
+                        onChange={(event) =>
+                          setField("country", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
@@ -815,32 +750,25 @@ export default function CheckoutPage() {
 
                       <input
                         id="postal-code"
-                        value={
-                          form.postalCode
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setField(
-                            "postalCode",
-                            event.target.value,
-                          )
+                        value={form.postalCode}
+                        onChange={(event) =>
+                          setField("postalCode", event.target.value)
                         }
                         className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-surface px-3 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-primary-100"
                       />
                     </div>
-
                   </div>
                 </section>
 
                 {/* طريقة الدفع */}
                 <section className="rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm">
-
                   <div className="flex items-center gap-3">
                     <CreditCard className="h-5 w-5 text-brand" />
 
                     <div>
-                      <h2 className="text-lg font-bold text-foreground">الدفع</h2>
+                      <h2 className="text-lg font-bold text-foreground">
+                        الدفع
+                      </h2>
 
                       <p className="mt-1 text-xs text-neutral-400">
                         اختر طريقة الدفع المناسبة لك.
@@ -848,8 +776,11 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <div role="radiogroup" aria-label="طريقة الدفع" className="mt-5 grid gap-3 sm:grid-cols-3">
-
+                  <div
+                    role="radiogroup"
+                    aria-label="طريقة الدفع"
+                    className="mt-5 grid gap-3 sm:grid-cols-3"
+                  >
                     {[
                       {
                         value: "card",
@@ -865,37 +796,36 @@ export default function CheckoutPage() {
                         value: "cod",
                         label: "الدفع عند الاستلام",
                         enabled: true,
-                      }                    ].map(
-                      (option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={paymentMethod === option.value}
-                          disabled={!option.enabled}
-                          onClick={() => setPaymentMethod(option.value)}
-                          className={`w-full rounded-2xl border p-4 text-start transition ${
-                            paymentMethod === option.value
-                              ? "border-brand bg-info-surface"
-                              : option.enabled
-                                ? "border-neutral-200 hover:bg-neutral-50"
-                                : "cursor-not-allowed border-neutral-200 bg-neutral-50 opacity-60"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-bold text-foreground">{option.label}</p>
-                            {!option.enabled ? (
-                              <span className="rounded-full bg-neutral-100 px-2 py-1 text-[10px] font-bold text-neutral-500">
-                                غير متاح حاليًا
-                              </span>
-                            ) : null}
-                          </div>
-                        </button>
-                      ),
-                    )}
-
+                      },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentMethod === option.value}
+                        disabled={!option.enabled}
+                        onClick={() => setPaymentMethod(option.value)}
+                        className={`w-full rounded-2xl border p-4 text-start transition ${
+                          paymentMethod === option.value
+                            ? "border-brand bg-info-surface"
+                            : option.enabled
+                              ? "border-neutral-200 hover:bg-neutral-50"
+                              : "cursor-not-allowed border-neutral-200 bg-neutral-50 opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-bold text-foreground">
+                            {option.label}
+                          </p>
+                          {!option.enabled ? (
+                            <span className="rounded-full bg-neutral-100 px-2 py-1 text-[10px] font-bold text-neutral-500">
+                              غير متاح حاليًا
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                    ))}
                   </div>
-
                 </section>
 
                 {error && (
@@ -906,43 +836,39 @@ export default function CheckoutPage() {
                     {error}
                   </div>
                 )}
-
               </div>
 
               {/* Summary */}
               <aside className="h-fit rounded-2xl border border-neutral-200 bg-surface p-6 shadow-sm xl:sticky xl:top-24">
-
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-brand" />
 
-                  <h2 className="text-lg font-bold text-foreground">ملخص طلبك</h2>
+                  <h2 className="text-lg font-bold text-foreground">
+                    ملخص طلبك
+                  </h2>
                 </div>
 
                 <div className="mt-6 space-y-2">
+                  {items.map((item) => (
+                    <div
+                      key={`${item.productId}-${item.variantId ?? "default"}`}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 p-3"
+                    >
+                      <p className="min-w-0 truncate text-xs font-bold text-neutral-700">
+                        {item.name}{" "}
+                        <span className="text-neutral-400">
+                          × {item.quantity}
+                        </span>
+                      </p>
 
-                  {items.map(
-                    (item) => (
-                      <div
-                        key={`${item.productId}-${item.variantId ?? "default"}`}
-                        className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 p-3"
-                      >
-                        <p className="min-w-0 truncate text-xs font-bold text-neutral-700">
-                          {item.name}{" "}
-                          <span className="text-neutral-400">
-                            × {item.quantity}
-                          </span>
-                        </p>
-
-                        <p className="shrink-0 text-xs font-bold text-foreground">
-                          <LocalizedPrice
-                            amountUSD={item.price * item.quantity}
-                            currency={item.currency ?? serverCartCurrency}
-                          />
-                        </p>
-                      </div>
-                    ),
-                  )}
-
+                      <p className="shrink-0 text-xs font-bold text-foreground">
+                        <LocalizedPrice
+                          amountUSD={item.price * item.quantity}
+                          currency={item.currency ?? serverCartCurrency}
+                        />
+                      </p>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="mt-5 rounded-xl bg-neutral-50 p-3 text-[11px] text-neutral-400">
@@ -959,7 +885,6 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="mt-6 space-y-3 border-t border-neutral-100 pt-5">
-
                   <div className="flex justify-between text-sm">
                     <span className="text-neutral-500">المجموع الفرعي</span>
 
@@ -983,30 +908,28 @@ export default function CheckoutPage() {
                       <span className="text-neutral-500">الخصم</span>
 
                       <span className="font-bold text-success-600">
-                        −<LocalizedPrice
+                        −
+                        <LocalizedPrice
                           amountUSD={couponDiscount}
                           currency={serverCartCurrency}
                         />
                       </span>
                     </div>
                   )}
-
                 </div>
 
                 <div className="mt-5 border-t border-neutral-100 pt-5">
-
                   <div className="flex items-end justify-between">
-
-                    <span className="text-sm font-bold text-neutral-500">الإجمالي قبل الشحن</span>
+                    <span className="text-sm font-bold text-neutral-500">
+                      الإجمالي قبل الشحن
+                    </span>
 
                     <LocalizedPrice
                       amountUSD={total}
                       currency={serverCartCurrency}
                       className="text-3xl font-bold text-brand-ink"
                     />
-
                   </div>
-
                 </div>
 
                 <button
@@ -1014,7 +937,9 @@ export default function CheckoutPage() {
                   onClick={placeOrder}
                   className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-bold text-white transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-100"
                 >
-                  <LockKeyhole className="h-4 w-4" />تأكيد الطلب</button>
+                  <LockKeyhole className="h-4 w-4" />
+                  تأكيد الطلب
+                </button>
 
                 <div className="mt-4 rounded-xl bg-success-surface p-3">
                   <div className="flex items-start gap-2">
@@ -1025,12 +950,9 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                 </div>
-
               </aside>
-
             </div>
           )}
-
         </div>
       </main>
     </AppShell>

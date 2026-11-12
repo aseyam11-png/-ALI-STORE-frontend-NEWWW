@@ -74,16 +74,16 @@ function parseMoney(value: number | string | null | undefined): number {
 function requireCurrency(value: string | null | undefined): string {
   const normalized = value?.trim().toUpperCase();
   if (normalized !== "SAR") {
-    throw new Error("ALI STORE accepts Saudi riyals (SAR) only; product currency is missing or unsupported.");
+    throw new Error(
+      "ALI STORE accepts Saudi riyals (SAR) only; product currency is missing or unsupported.",
+    );
   }
   return normalized;
 }
 
 function parseQuantity(value: number | string | null | undefined): number {
   const quantity = Number(value);
-  return Number.isFinite(quantity) && quantity >= 0
-    ? Math.floor(quantity)
-    : 0;
+  return Number.isFinite(quantity) && quantity >= 0 ? Math.floor(quantity) : 0;
 }
 
 function mapStatus(status: BackendProduct["status"]): ProductSummary["status"] {
@@ -146,13 +146,14 @@ function mapProduct(product: BackendProduct): ProductSummary {
           sortOrder: 0,
         }
       : undefined,
-    category: product.categoryId != null
-      ? {
-          id: String(product.categoryId),
-          name: product.categoryName ?? "Category",
-          slug: product.categorySlug ?? "",
-        }
-      : undefined,
+    category:
+      product.categoryId != null
+        ? {
+            id: String(product.categoryId),
+            name: product.categoryName ?? "Category",
+            slug: product.categorySlug ?? "",
+          }
+        : undefined,
     brand: brandName
       ? {
           id: product.brandId != null ? String(product.brandId) : "brand",
@@ -183,11 +184,7 @@ function mapDetails(product: BackendProduct): ProductDetails {
     sortOrder: index,
   }));
   const finalImages =
-    images.length > 0
-      ? images
-      : summary.thumbnail
-        ? [summary.thumbnail]
-        : [];
+    images.length > 0 ? images : summary.thumbnail ? [summary.thumbnail] : [];
 
   return {
     ...summary,
@@ -231,10 +228,12 @@ function mapDetails(product: BackendProduct): ProductDetails {
     },
     seo: {
       title: `${product.name} | ALI STORE`,
-      description:
-        product.description ?? `Buy ${product.name} from ALI STORE.`,
-      keywords: [product.name, product.categoryName ?? "", product.brandName ?? ""]
-        .filter(Boolean),
+      description: product.description ?? `Buy ${product.name} from ALI STORE.`,
+      keywords: [
+        product.name,
+        product.categoryName ?? "",
+        product.brandName ?? "",
+      ].filter(Boolean),
     },
     relatedProductIds: [],
   };
@@ -281,9 +280,7 @@ function requireFilterId(
 
   const parsed = toLong(value);
   if (parsed === undefined) {
-    throw new Error(
-      `${field} must use the backend numeric identifier.`,
-    );
+    throw new Error(`${field} must use the backend numeric identifier.`);
   }
 
   return parsed;
@@ -296,18 +293,12 @@ export async function getProducts(
 
   if (filters.search.trim()) params.set("q", filters.search.trim());
 
-  const categoryId = requireFilterId(
-    "categoryId",
-    filters.categoryId,
-  );
+  const categoryId = requireFilterId("categoryId", filters.categoryId);
   if (categoryId !== undefined) {
     params.set("category", String(categoryId));
   }
 
-  const brandId = requireFilterId(
-    "brand",
-    filters.brand,
-  );
+  const brandId = requireFilterId("brand", filters.brand);
   if (brandId !== undefined) {
     params.set("brand", String(brandId));
   }
@@ -342,9 +333,8 @@ export async function getProductById(
       ? `/api/v1/products/${encoded}`
       : `/api/v1/products/slug/${encoded}`;
 
-    const response = await apiClient.request<
-      BackendApiResponse<BackendProduct>
-    >(endpoint);
+    const response =
+      await apiClient.request<BackendApiResponse<BackendProduct>>(endpoint);
 
     return mapDetails(unwrap(response));
   } catch (error) {
@@ -362,10 +352,7 @@ export async function getRelatedProducts(
 ): Promise<ProductSummary[]> {
   const params = new URLSearchParams();
 
-  const numericCategoryId = requireFilterId(
-    "categoryId",
-    categoryId,
-  );
+  const numericCategoryId = requireFilterId("categoryId", categoryId);
   if (numericCategoryId !== undefined) {
     params.set("category", String(numericCategoryId));
   }
@@ -378,15 +365,12 @@ export async function getRelatedProducts(
   >(`/api/v1/products?${params.toString()}`);
 
   return unwrap(response)
-    .content
-    .map(mapProduct)
+    .content.map(mapProduct)
     .filter((product) => product.id !== productId)
     .slice(0, limit);
 }
 
-export async function searchProducts(
-  query: string,
-): Promise<ProductSummary[]> {
+export async function searchProducts(query: string): Promise<ProductSummary[]> {
   const response = await getProducts({
     search: query,
     categoryId: undefined,

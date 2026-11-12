@@ -176,7 +176,8 @@ export function LoginForm() {
               تسجيل الدخول إلى إدارة المتجر
             </span>
             <span className="mt-1 block text-caption leading-5 text-muted-foreground">
-              يجهّز هذا الخيار الحقول الإضافية فقط؛ الخادم يفرض التحقق على حسابات الإدارة حتى عند إيقافه.
+              يجهّز هذا الخيار الحقول الإضافية فقط؛ الخادم يفرض التحقق على حسابات
+              الإدارة حتى عند إيقافه.
             </span>
           </span>
         </label>

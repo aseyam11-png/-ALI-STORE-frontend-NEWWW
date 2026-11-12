@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const backendInternalUrl =
   process.env.BACKEND_INTERNAL_URL?.replace(/\/$/, "") ??
-  (process.env.NODE_ENV === "development" ? "http://localhost:8080" : undefined);
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:8080"
+    : undefined);
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
@@ -73,7 +75,9 @@ const nextConfig: NextConfig = {
         backendUrl.username.length > 0 ||
         backendUrl.password.length > 0)
     ) {
-      throw new Error("Production BACKEND_INTERNAL_URL must be HTTPS without embedded credentials.");
+      throw new Error(
+        "Production BACKEND_INTERNAL_URL must be HTTPS without embedded credentials.",
+      );
     }
 
     return [

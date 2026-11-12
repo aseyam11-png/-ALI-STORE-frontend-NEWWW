@@ -59,16 +59,13 @@ export async function updateBackendCartItem(
     throw new Error("Invalid backend cart item id: " + itemId);
   }
 
-  return apiClient.requestData<BackendCart>(
-    "/api/v1/cart/items/" + itemId,
-    {
-      method: "PATCH",
-      body: JSON.stringify({
-        productId: toPositiveProductId(productId),
-        quantity: toPositiveQuantity(quantity),
-      }),
-    },
-  );
+  return apiClient.requestData<BackendCart>("/api/v1/cart/items/" + itemId, {
+    method: "PATCH",
+    body: JSON.stringify({
+      productId: toPositiveProductId(productId),
+      quantity: toPositiveQuantity(quantity),
+    }),
+  });
 }
 
 export async function removeBackendCartItem(
@@ -78,12 +75,9 @@ export async function removeBackendCartItem(
     throw new Error("Invalid backend cart item id: " + itemId);
   }
 
-  return apiClient.requestData<BackendCart>(
-    "/api/v1/cart/items/" + itemId,
-    {
-      method: "DELETE",
-    },
-  );
+  return apiClient.requestData<BackendCart>("/api/v1/cart/items/" + itemId, {
+    method: "DELETE",
+  });
 }
 
 export async function clearBackendCart(): Promise<BackendCart> {
