@@ -6,29 +6,26 @@ async function read(path) {
   return readFile(path, "utf8");
 }
 
-test("admin login submits the secondary password and an admin_login Turnstile token", async () => {
-  const login = await read("src/components/auth/LoginForm.tsx");
-  const widget = await read("src/components/auth/CloudflareTurnstile.tsx");
-  const service = await read("src/features/auth/session.ts");
+test("admin login is dedicated and does not reuse the customer credential form", async () => {
+  const route = await read("src/app/(admin)/admin/login/page.tsx");
+  const adminForm = await read("src/components/auth/AdminLoginForm.tsx");
+  const customerForm = await read("src/components/auth/LoginForm.tsx");
 
-  assert.match(login, /adminGatePassword/);
-  assert.match(login, /captchaToken/);
-  assert.match(login, /CloudflareTurnstile/);
-  assert.match(login, /adminGateEnabled/);
-  assert.match(widget, /action: "admin_login"/);
-  assert.match(widget, /NEXT_PUBLIC_TURNSTILE_SITE_KEY/);
-  assert.match(service, /adminGatePassword\?: string/);
-  assert.match(service, /captchaToken\?: string/);
+  assert.match(route, /AdminLoginForm/);
+  assert.match(adminForm, /label="البريد الإلكتروني لحساب الإدارة"/);
+  assert.match(adminForm, /label="كلمة المرور"/);
+  assert.match(adminForm, /adminLogin\(/);
+  assert.doesNotMatch(
+    customerForm,
+    /adminGatePassword|CloudflareTurnstile|adminGateEnabled/,
+  );
 });
 
-test("admin gate is opt-in in the UI and Google OAuth is disabled while selected", async () => {
-  const login = await read("src/components/auth/LoginForm.tsx");
-
-  assert.match(login, /checked=\{adminGateEnabled\}/);
-  assert.match(login, /const result = adminGateEnabled/);
-  assert.match(login, /adminGatePassword,/);
-  assert.match(login, /captchaToken,/);
-  assert.match(login, /await login\(\{ email: normalizedEmail, password \}\)/);
-  assert.match(login, /result\.role === "ROLE_ADMIN"/);
-  assert.match(login, /disabled=\{submitting \|\| adminGateEnabled\}/);
+test("admin form routes only to an internal administrative destination after OTP", async () => {
+  const adminForm = await read("src/components/auth/AdminLoginForm.tsx");
+  assert.match(adminForm, /adminGatePassword,/);
+  assert.match(adminForm, /captchaToken,/);
+  assert.match(adminForm, /purpose: "ADMIN_LOGIN"/);
+  assert.match(adminForm, /value\.startsWith\("\/warehouse"\)/);
+  assert.match(adminForm, /\/verify-email\?/);
 });
