@@ -15,14 +15,14 @@ type AuthResponse = {
   challengeId?: string;
   maskedEmail?: string;
   expiresInSeconds?: number;
-  purpose?: "EMAIL_VERIFICATION" | "LOGIN";
+  purpose?: "EMAIL_VERIFICATION" | "LOGIN" | "ADMIN_LOGIN";
 };
 
 export type VerificationChallenge = {
   challengeId: string;
   maskedEmail: string;
   expiresInSeconds: number;
-  purpose: "EMAIL_VERIFICATION" | "LOGIN";
+  purpose: "EMAIL_VERIFICATION" | "LOGIN" | "ADMIN_LOGIN";
 };
 
 export type SessionStatus = "loading" | "unauthenticated" | "authenticated";
@@ -107,7 +107,7 @@ export type AuthResult =
       challengeId: string;
       maskedEmail: string;
       expiresInSeconds: number;
-      purpose: "EMAIL_VERIFICATION" | "LOGIN";
+      purpose: "EMAIL_VERIFICATION" | "LOGIN" | "ADMIN_LOGIN";
     }
   | { ok: false; requiresEmailVerification?: false; reason: string };
 
@@ -139,8 +139,6 @@ function mapAuthResponse(data: AuthResponse): AuthResult {
 export async function login(credentials: {
   email: string;
   password: string;
-  adminGatePassword?: string;
-  captchaToken?: string;
 }): Promise<AuthResult> {
   try {
     const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
@@ -156,6 +154,26 @@ export async function login(credentials: {
     return {
       ok: false,
       reason: error instanceof Error ? error.message : "login_failed",
+    };
+  }
+}
+
+export async function adminLogin(credentials: {
+  email: string;
+  password: string;
+  adminGatePassword: string;
+  captchaToken: string;
+}): Promise<AuthResult> {
+  try {
+    const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
+      "/api/v1/auth/admin/login",
+      { method: "POST", body: JSON.stringify(credentials) },
+    );
+    return mapAuthResponse(response.data);
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "admin_login_failed",
     };
   }
 }
@@ -203,6 +221,46 @@ export async function verifyEmailCode(input: {
     return {
       ok: false,
       reason: error instanceof Error ? error.message : "verification_failed",
+    };
+  }
+}
+
+export async function verifyAdminLoginCode(input: {
+  challengeId: string;
+  code: string;
+}): Promise<AuthResult> {
+  try {
+    const response = await apiClient.request<ApiEnvelope<AuthResponse>>(
+      "/api/v1/auth/admin/email/verify",
+      { method: "POST", body: JSON.stringify(input) },
+    );
+    return mapAuthResponse(response.data);
+  } catch (error) {
+    return {
+      ok: false,
+      reason:
+        error instanceof Error ? error.message : "admin_verification_failed",
+    };
+  }
+}
+
+export async function resendAdminLoginCode(
+  challengeId: string,
+): Promise<
+  { ok: true; challenge: VerificationChallenge } | { ok: false; reason: string }
+> {
+  try {
+    const response = await apiClient.request<
+      ApiEnvelope<VerificationChallenge>
+    >("/api/v1/auth/admin/email/resend", {
+      method: "POST",
+      body: JSON.stringify({ challengeId }),
+    });
+    return { ok: true, challenge: response.data };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "admin_resend_failed",
     };
   }
 }
