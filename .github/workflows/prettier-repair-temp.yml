@@ -1,0 +1,56 @@
+name: Temporary Prettier Repair
+
+on:
+  push:
+    branches:
+      - feat/separate-admin-email-otp-login
+
+permissions:
+  contents: write
+
+jobs:
+  format-changed-files:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Format the files currently rejected by the quality gate
+        run: |
+          npx --yes prettier@3 --write --ignore-path .prettierignore \
+            "src/app/(admin)/admin/login/page.tsx" \
+            src/components/admin/AdminRouteGuard.tsx \
+            src/components/auth/AdminLoginForm.tsx \
+            src/components/auth/EmailOtpForm.tsx \
+            src/features/auth/session.ts \
+            src/lib/api/http-client.ts \
+            tests/admin-login-gate-contract.test.mjs \
+            tests/admin-route-guard-contract.test.mjs \
+            tests/auth-login-flow-contract.test.mjs
+
+      - name: Commit formatted source files
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            "src/app/(admin)/admin/login/page.tsx" \
+            src/components/admin/AdminRouteGuard.tsx \
+            src/components/auth/AdminLoginForm.tsx \
+            src/components/auth/EmailOtpForm.tsx \
+            src/features/auth/session.ts \
+            src/lib/api/http-client.ts \
+            tests/admin-login-gate-contract.test.mjs \
+            tests/admin-route-guard-contract.test.mjs \
+            tests/auth-login-flow-contract.test.mjs
+          git commit -m "style: format admin auth integration for CI quality gate"
+          git push
