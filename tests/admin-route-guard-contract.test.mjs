@@ -21,7 +21,9 @@ test("anonymous users entering admin routes are redirected to the admin login pa
   assert.ok(guard.includes('session.status === "unauthenticated"'));
   assert.ok(guard.includes("router.replace("));
   assert.ok(
-    guard.includes('("/admin/login?next=" + encodeURIComponent(returnPath)) as Route'),
+    guard.includes(
+      '("/admin/login?next=" + encodeURIComponent(returnPath)) as Route',
+    ),
   );
   assert.ok(guard.includes('role === "ADMIN"'));
   assert.ok(guard.includes("403 · Forbidden"));
