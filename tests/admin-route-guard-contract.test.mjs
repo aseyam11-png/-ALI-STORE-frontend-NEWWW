@@ -19,7 +19,10 @@ test("admin route group stays guarded while the dedicated admin login route is p
 
 test("anonymous users entering admin routes are redirected to the admin login page", () => {
   assert.ok(guard.includes('session.status === "unauthenticated"'));
-  assert.ok(guard.includes('router.replace(("/admin/login?next="'));
+  assert.match(
+    guard,
+    /router\\.replace\\(\\s*\\(\\s*"\\/admin\\/login\\?next="\\s*\\+\\s*encodeURIComponent\\(returnPath\\)\\s*\\)\\s+as Route\\s*,?\\s*\\)/,
+  );
   assert.ok(guard.includes('role === "ADMIN"'));
   assert.ok(guard.includes("403 · Forbidden"));
   assert.ok(guard.includes("return children"));
