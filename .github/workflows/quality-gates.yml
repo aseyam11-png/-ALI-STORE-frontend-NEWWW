@@ -22,6 +22,8 @@ jobs:
     name: Static quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      BACKEND_INTERNAL_URL: https://ali-store-backend-git-deploy-vercel-container-run-a0d65f-a-28f5.vercel.app
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -168,6 +170,8 @@ jobs:
     name: Runtime browser quality
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      BACKEND_INTERNAL_URL: https://ali-store-backend-git-deploy-vercel-container-run-a0d65f-a-28f5.vercel.app
     steps:
       - name: Checkout
         uses: actions/checkout@v6
