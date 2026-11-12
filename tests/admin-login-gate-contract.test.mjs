@@ -6,53 +6,42 @@ async function read(path) {
   return readFile(path, "utf8");
 }
 
-test(
-  "admin login is dedicated and does not reuse the customer credential form",
-  async () => {
-    const route = await read("src/app/(admin)/admin/login/page.tsx");
-    const adminForm = await read("src/components/auth/AdminLoginForm.tsx");
-    const customerForm = await read("src/components/auth/LoginForm.tsx");
+test("admin login uses a dedicated credential form", async () => {
+  const route = await read("src/app/(admin)/admin/login/page.tsx");
+  const admin = await read("src/components/auth/AdminLoginForm.tsx");
+  const customer = await read("src/components/auth/LoginForm.tsx");
 
-    assert.match(route, /AdminLoginForm/);
-    assert.match(adminForm, /label="البريد الإلكتروني لحساب الإدارة"/);
-    assert.match(adminForm, /label="كلمة المرور"/);
-    assert.match(adminForm, /adminLogin\(/);
-    assert.doesNotMatch(
-      customerForm,
-      /adminGatePassword|CloudflareTurnstile|adminGateEnabled/,
-    );
-  },
-);
+  assert.ok(route.includes("AdminLoginForm"));
+  assert.ok(admin.includes('label="البريد الإلكتروني لحساب الإدارة"'));
+  assert.ok(admin.includes('label="كلمة المرور"'));
+  assert.ok(admin.includes("adminLogin("));
+  assert.doesNotMatch(
+    customer,
+    /adminGatePassword|CloudflareTurnstile|adminGateEnabled/,
+  );
+});
 
-test(
-  "admin form routes only to exact internal administrative path segments",
-  async () => {
-    const adminForm = await read("src/components/auth/AdminLoginForm.tsx");
-    assert.match(adminForm, /adminGatePassword,/);
-    assert.match(adminForm, /captchaToken,/);
-    assert.match(adminForm, /purpose: "ADMIN_LOGIN"/);
-    assert.match(adminForm, /path === "\/admin"/);
-    assert.match(adminForm, /path\.startsWith\("\/admin\/"\)/);
-    assert.match(adminForm, /path === "\/warehouse"/);
-    assert.match(adminForm, /path\.startsWith\("\/warehouse\/"\)/);
-    assert.match(adminForm, /value\.includes\("\\\\"\)/);
-    assert.match(adminForm, /\/verify-email\?/);
-  },
-);
+test("admin login accepts only internal admin return paths", async () => {
+  const admin = await read("src/components/auth/AdminLoginForm.tsx");
 
-test(
-  "admin OTP cannot redirect to customer or lookalike external paths",
-  async () => {
-    const otpForm = await read("src/components/auth/EmailOtpForm.tsx");
-    assert.match(
-      otpForm,
-      /purpose === "ADMIN_LOGIN" && !isAdministrativePath\(value\)/,
-    );
-    assert.match(otpForm, /value\.startsWith\("\/\/"\)/);
-    assert.match(otpForm, /value\.includes\("\\\\"\)/);
-    assert.match(
-      otpForm,
-      /return purpose === "ADMIN_LOGIN" \? "\/admin" : "\/buyer\/profile"/,
-    );
-  },
-);
+  assert.ok(admin.includes("adminGatePassword,"));
+  assert.ok(admin.includes("captchaToken,"));
+  assert.ok(admin.includes('purpose: "ADMIN_LOGIN"'));
+  assert.ok(admin.includes('path === "/admin"'));
+  assert.ok(admin.includes('path.startsWith("/admin/")'));
+  assert.ok(admin.includes('path === "/warehouse"'));
+  assert.ok(admin.includes('path.startsWith("/warehouse/")'));
+  assert.ok(admin.includes('value.includes("\\\\")'));
+  assert.ok(admin.includes("/verify-email?"));
+});
+
+test("admin OTP rejects customer and external return paths", async () => {
+  const otp = await read("src/components/auth/EmailOtpForm.tsx");
+
+  assert.ok(otp.includes("!isAdministrativePath(value)"));
+  assert.ok(otp.includes('value.startsWith("//")'));
+  assert.ok(otp.includes('value.includes("\\\\")'));
+  assert.ok(
+    otp.includes('return purpose === "ADMIN_LOGIN" ? "/admin" : "/buyer/profile"'),
+  );
+});
