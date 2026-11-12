@@ -17,7 +17,7 @@ assert.match(client, /Object\.values\(fieldErrors\)/, "HTTP client should surfac
 assert.match(session, /["']\/api\/v1\/auth\/register["']/, "auth session should call the canonical register endpoint");
 assert.match(
   nextConfig,
-  /process\.env\.NODE_ENV === "development" \? "http:\/\/localhost:8080" : undefined/,
+  /process\.env\.NODE_ENV === "development"\s*\?\s*"http:\/\/localhost:8080"\s*:\s*undefined/,
   "local development should default API rewrites to localhost:8080 when BACKEND_INTERNAL_URL is absent",
 );
 assert.doesNotMatch(
