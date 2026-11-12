@@ -15,9 +15,7 @@ test("admin login uses a dedicated credential form", async () => {
   assert.ok(admin.includes('label="البريد الإلكتروني لحساب الإدارة"'));
   assert.ok(admin.includes('label="كلمة المرور"'));
   assert.ok(admin.includes("adminLogin("));
-  assert.ok(
-    admin.includes("new TextEncoder().encode(adminGatePassword)"),
-  );
+  assert.ok(admin.includes("new TextEncoder().encode(adminGatePassword)"));
   assert.ok(admin.includes("encodedGatePassword.length"));
   assert.ok(admin.includes("adminGatePasswordBytes < 16"));
   assert.ok(admin.includes("adminGatePasswordBytes > 72"));
