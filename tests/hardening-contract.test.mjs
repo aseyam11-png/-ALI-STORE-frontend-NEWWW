@@ -53,12 +53,11 @@ test("server-side backend transport validates HTTPS and fails closed on invalid 
   const config = read("next.config.ts");
 
   assert.match(helper, /process\.env\.BACKEND_INTERNAL_URL/);
-  assert.match(helper, /Backend API is not configured/);
+  assert.match(helper, /proxyError\("Backend API is not configured\.", 503\)/);
   assert.match(helper, /new URL\(configuredBackend\)/);
   assert.match(helper, /backend\.protocol !== "https:"/);
   assert.match(helper, /backend\.username/);
   assert.match(helper, /backend\.password/);
-  assert.match(helper, /status,?\s*503/);
   assert.match(route, /runtime = "nodejs"/);
   assert.match(route, /proxyBackendRequest/);
   assert.doesNotMatch(config, /async rewrites\(/);
