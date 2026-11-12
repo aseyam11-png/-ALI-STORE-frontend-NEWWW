@@ -18,8 +18,7 @@ jobs:
         with:
           node-version: "24"
       - name: Format remaining changed files
-        run: npx --yes prettier@3 --write --ignore-path .prettierignore cspell.json \
-            tests/admin-route-guard-contract.test.mjs
+        run: npx --yes prettier@3 --write --ignore-path .prettierignore cspell.json tests/admin-route-guard-contract.test.mjs
       - name: Commit formatting
         run: |
           if git diff --quiet; then exit 0; fi
