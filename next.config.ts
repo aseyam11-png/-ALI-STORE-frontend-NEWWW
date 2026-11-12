@@ -1,11 +1,5 @@
 import type { NextConfig } from "next";
 
-const backendInternalUrl =
-  process.env.BACKEND_INTERNAL_URL?.replace(/\/$/, "") ??
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:8080"
-    : undefined);
-
 const nextConfig: NextConfig = {
   typedRoutes: true,
   images: {
@@ -49,49 +43,6 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: responseSecurityHeaders,
-      },
-    ];
-  },
-  async rewrites() {
-    if (!backendInternalUrl) {
-      if (process.env.NODE_ENV === "production") {
-        throw new Error(
-          "BACKEND_INTERNAL_URL is required to configure production API rewrites.",
-        );
-      }
-      return [];
-    }
-
-    let backendUrl: URL;
-    try {
-      backendUrl = new URL(backendInternalUrl);
-    } catch {
-      throw new Error("BACKEND_INTERNAL_URL must be an absolute URL.");
-    }
-
-    if (
-      process.env.NODE_ENV === "production" &&
-      (backendUrl.protocol !== "https:" ||
-        backendUrl.username.length > 0 ||
-        backendUrl.password.length > 0)
-    ) {
-      throw new Error(
-        "Production BACKEND_INTERNAL_URL must be HTTPS without embedded credentials.",
-      );
-    }
-
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${backendInternalUrl}/api/v1/:path*`,
-      },
-      {
-        source: "/oauth2/:path*",
-        destination: `${backendInternalUrl}/oauth2/:path*`,
-      },
-      {
-        source: "/login/oauth2/:path*",
-        destination: `${backendInternalUrl}/login/oauth2/:path*`,
       },
     ];
   },
