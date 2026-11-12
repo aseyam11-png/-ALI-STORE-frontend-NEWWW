@@ -26,14 +26,31 @@ test("browser API calls use the same-origin bridge while SSR uses the private ba
   assert.match(source, /credentials: "include"/);
 });
 
-test("Next.js proxies API and OAuth traffic to the configured private backend", async () => {
-  const source = await read("next.config.ts");
+test("Node.js route handlers proxy API and OAuth traffic to the validated private backend", async () => {
+  const helper = await read("src/lib/server/backend-proxy.ts");
+  const apiRoute = await read("src/app/api/v1/[[...path]]/route.ts");
+  const oauthRoute = await read("src/app/oauth2/[[...path]]/route.ts");
+  const callbackRoute = await read("src/app/login/oauth2/[[...path]]/route.ts");
+  const config = await read("next.config.ts");
 
-  assert.match(source, /process\.env\.BACKEND_INTERNAL_URL/);
-  assert.match(source, /source: "\/api\/v1\/:path\*"/);
-  assert.match(source, /source: "\/oauth2\/:path\*"/);
-  assert.match(source, /source: "\/login\/oauth2\/:path\*"/);
-  assert.match(source, /destination: `\$\{backendInternalUrl\}\/api\/v1\/:path\*`/);
+  assert.match(helper, /process\.env\.BACKEND_INTERNAL_URL/);
+  assert.match(helper, /Backend API is not configured/);
+  assert.match(helper, /new URL\(configuredBackend\)/);
+  assert.match(helper, /backend\.protocol !== "https:"/);
+  assert.match(helper, /backend\.username/);
+  assert.match(helper, /backend\.password/);
+  assert.match(helper, /redirect: "manual"/);
+  assert.match(helper, /cache: "no-store"/);
+
+  for (const route of [apiRoute, oauthRoute, callbackRoute]) {
+    assert.match(route, /runtime = "nodejs"/);
+    assert.match(route, /proxyBackendRequest/);
+    assert.match(route, /export const GET/);
+    assert.match(route, /export const POST/);
+  }
+
+  assert.doesNotMatch(config, /async rewrites\(/);
+  assert.doesNotMatch(config, /destination:.*BACKEND_INTERNAL_URL/);
 });
 
 test("frontend runtime environment keeps the public API base same-origin by default", async () => {
@@ -44,9 +61,10 @@ test("frontend runtime environment keeps the public API base same-origin by defa
   assert.match(source, /NEXT_PUBLIC_MEDIA_BASE_URL=/);
 });
 
-
 test("brand suggestions keep the backend numeric brand identity", async () => {
-  const autocomplete = await read("src/features/search/services/autocomplete.service.ts");
+  const autocomplete = await read(
+    "src/features/search/services/autocomplete.service.ts",
+  );
   const search = await read("src/features/search/services/search.service.ts");
 
   assert.match(autocomplete, /product\.brand\?\.id/);

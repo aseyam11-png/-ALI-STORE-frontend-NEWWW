@@ -28,6 +28,15 @@ export default function LoginPage() {
             </Link>
           </p>
           <p>
+            هل أنت مدير المتجر؟{" "}
+            <Link
+              href="/admin/login"
+              className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
+            >
+              دخول الإدارة
+            </Link>
+          </p>
+          <p>
             تريد التسوق فقط؟{" "}
             <Link
               href="/shop/products"

@@ -17,15 +17,23 @@ export default function VerifyEmailPage() {
       title="تأكيد البريد الإلكتروني"
       description="أدخل رمز التحقق الذي أرسلناه إلى بريدك لإكمال تسجيل الدخول أو إنشاء الحساب بأمان."
       formFooter={
-        <p className="text-center text-body-sm text-muted-foreground">
-          تريد البدء من جديد؟{" "}
-          <Link
-            href="/login"
-            className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
-          >
-            العودة لتسجيل الدخول
-          </Link>
-        </p>
+        <div className="space-y-3 text-center text-body-sm text-muted-foreground">
+          <p>تريد البدء من جديد؟</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/login"
+              className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
+            >
+              دخول العملاء
+            </Link>
+            <Link
+              href="/admin/login"
+              className="font-medium text-brand underline-offset-4 hover:text-brand hover:underline"
+            >
+              دخول الإدارة
+            </Link>
+          </div>
+        </div>
       }
     >
       <Suspense

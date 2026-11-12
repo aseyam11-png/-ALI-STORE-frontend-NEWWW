@@ -7,27 +7,33 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { useSession } from "@/features/auth/session";
 
-export function AdminRouteGuard({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   const session = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
-  const role = session.user?.role?.trim().toUpperCase().replace(/^ROLE_/, "");
-  const isAdministrator = session.status === "authenticated" && role === "ADMIN";
+  const role = session.user?.role
+    ?.trim()
+    .toUpperCase()
+    .replace(/^ROLE_/, "");
+  const isAdministrator =
+    session.status === "authenticated" && role === "ADMIN";
+  const isAdminLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
+    if (isAdminLoginPage) return;
     if (session.status === "unauthenticated") {
       const returnPath =
         pathname?.startsWith("/admin") || pathname?.startsWith("/warehouse")
           ? pathname
           : "/admin";
-      router.replace(("/login?next=" + encodeURIComponent(returnPath)) as Route);
+      router.replace(
+        ("/admin/login?next=" + encodeURIComponent(returnPath)) as Route,
+      );
     }
-  }, [pathname, router, session.status]);
+  }, [isAdminLoginPage, pathname, router, session.status]);
+
+  if (isAdminLoginPage) return children;
 
   if (session.status === "loading") {
     return (
@@ -40,7 +46,9 @@ export function AdminRouteGuard({
           <div className="h-4 w-32 animate-pulse rounded bg-neutral-100" />
           <div className="mt-4 h-3 w-full animate-pulse rounded bg-neutral-100" />
           <div className="mt-2 h-3 w-3/4 animate-pulse rounded bg-neutral-100" />
-          <p className="mt-5 text-xs text-neutral-500">جارٍ التحقق من صلاحيات الإدارة…</p>
+          <p className="mt-5 text-xs text-neutral-500">
+            جارٍ التحقق من صلاحيات الإدارة…
+          </p>
         </div>
       </main>
     );
@@ -49,7 +57,9 @@ export function AdminRouteGuard({
   if (session.status === "unauthenticated") {
     return (
       <main className="grid min-h-screen place-items-center bg-background px-5">
-        <p role="status" className="text-sm text-neutral-500">يتم تحويلك إلى تسجيل الدخول…</p>
+        <p role="status" className="text-sm text-neutral-500">
+          يتم تحويلك إلى تسجيل الدخول…
+        </p>
       </main>
     );
   }
@@ -64,9 +74,12 @@ export function AdminRouteGuard({
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-danger-600">
             403 · Forbidden
           </p>
-          <h1 className="mt-3 text-2xl font-black text-foreground">لا تملك صلاحية الوصول</h1>
+          <h1 className="mt-3 text-2xl font-black text-foreground">
+            لا تملك صلاحية الوصول
+          </h1>
           <p className="mt-3 text-sm leading-6 text-neutral-500">
-            هذه المساحة مخصصة لحسابات الإدارة فقط. لن يتم عرض محتوى صفحات الإدارة لهذا الحساب.
+            هذه المساحة مخصصة لحسابات الإدارة فقط. لن يتم عرض محتوى صفحات
+            الإدارة لهذا الحساب.
           </p>
           <Link
             href="/"
