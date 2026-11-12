@@ -15,10 +15,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+function isAdministrativePath(path: string): boolean {
+  return (
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path === "/warehouse" ||
+    path.startsWith("/warehouse/")
+  );
+}
+
 function resolveSafeNextPath(value: string | null, purpose: string): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+  if (
+    !value ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\")
+  ) {
     return purpose === "ADMIN_LOGIN" ? "/admin" : "/buyer/profile";
   }
+
+  if (purpose === "ADMIN_LOGIN" && !isAdministrativePath(value)) {
+    return "/admin";
+  }
+
   return value;
 }
 
