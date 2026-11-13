@@ -74,3 +74,35 @@ test("admin OTP rejects customer and external return paths", async () => {
     ),
   );
 });
+
+
+test("Tailwind container widths do not inherit the compact spacing scale", async () => {
+  const css = await read("src/app/globals.css");
+
+  const containerWidths = [
+    ["3xs", "16rem"],
+    ["2xs", "18rem"],
+    ["xs", "20rem"],
+    ["sm", "24rem"],
+    ["md", "28rem"],
+    ["lg", "32rem"],
+    ["xl", "36rem"],
+    ["2xl", "42rem"],
+    ["3xl", "48rem"],
+    ["4xl", "56rem"],
+    ["5xl", "64rem"],
+    ["6xl", "72rem"],
+    ["7xl", "80rem"],
+  ];
+
+  for (const [size, width] of containerWidths) {
+    assert.ok(
+      css.includes(`--container-${size}: ${width};`),
+      `missing Tailwind container width token: ${size}`,
+    );
+  }
+
+  // Spacing remains compact; the fix must not enlarge margins, padding, or gaps.
+  assert.ok(css.includes("--spacing-lg: 2rem;"));
+  assert.ok(css.includes("--spacing-xl: 3rem;"));
+});
