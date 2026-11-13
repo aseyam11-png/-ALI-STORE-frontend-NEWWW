@@ -176,6 +176,24 @@
   --spacing-3xl: 5rem;     /* 80 */
   --spacing-4xl: 6rem;     /* 96 */
 
+  /* ---------- Container widths — independent from the spacing scale ----------
+     Tailwind v4 resolves named max-w-*/w-* utilities through --container-*.
+     Keep these widths separate so semantic spacing tokens (lg = 2rem, xl = 3rem)
+     never collapse layout containers. */
+  --container-3xs: 16rem;
+  --container-2xs: 18rem;
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-2xl: 42rem;
+  --container-3xl: 48rem;
+  --container-4xl: 56rem;
+  --container-5xl: 64rem;
+  --container-6xl: 72rem;
+  --container-7xl: 80rem;
+
   /* ---------- Motion — one shared easing curve, used everywhere ---------- */
   --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
 }
