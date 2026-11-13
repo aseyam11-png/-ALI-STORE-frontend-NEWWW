@@ -176,10 +176,12 @@
   --spacing-3xl: 5rem;     /* 80 */
   --spacing-4xl: 6rem;     /* 96 */
 
-  /* ---------- Container widths — independent from the spacing scale ----------
-     Tailwind v4 resolves named max-width and width utilities through --container-*.
-     Keep these widths separate so semantic spacing tokens (lg = 2rem, xl = 3rem)
-     never collapse layout containers. */
+  /* ---------- Motion — one shared easing curve, used everywhere ---------- */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Layout widths must not be pruned when only some named utilities are present. */
+@theme static {
   --container-3xs: 16rem;
   --container-2xs: 18rem;
   --container-xs: 20rem;
@@ -193,9 +195,6 @@
   --container-5xl: 64rem;
   --container-6xl: 72rem;
   --container-7xl: 80rem;
-
-  /* ---------- Motion — one shared easing curve, used everywhere ---------- */
-  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /*
@@ -340,3 +339,24 @@ button:disabled {
     transform: translateY(-2px);
   }
 }
+
+/*
+ * Explicitly bind named max-width utilities to the container scale.
+ * Tailwind can resolve same-named --spacing-* tokens first, which would make
+ * max-w-lg resolve to 2rem and max-w-xl resolve to 3rem in this design system.
+ * These unlayered rules override the generated utility-layer declarations.
+ */
+.max-w-3xs { max-width: var(--container-3xs); }
+.max-w-2xs { max-width: var(--container-2xs); }
+.max-w-xs { max-width: var(--container-xs); }
+.max-w-sm { max-width: var(--container-sm); }
+.max-w-md { max-width: var(--container-md); }
+.max-w-lg { max-width: var(--container-lg); }
+.max-w-xl { max-width: var(--container-xl); }
+.max-w-2xl { max-width: var(--container-2xl); }
+.max-w-3xl { max-width: var(--container-3xl); }
+.max-w-4xl { max-width: var(--container-4xl); }
+.max-w-5xl { max-width: var(--container-5xl); }
+.max-w-6xl { max-width: var(--container-6xl); }
+.max-w-7xl { max-width: var(--container-7xl); }
+
