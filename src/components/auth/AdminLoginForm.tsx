@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
 import { CloudflareTurnstile } from "@/components/auth/CloudflareTurnstile";
@@ -9,31 +8,11 @@ import { adminLogin } from "@/features/auth/session";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-function isAdministrativePath(path: string): boolean {
-  return (
-    path === "/admin" ||
-    path.startsWith("/admin/") ||
-    path === "/warehouse" ||
-    path.startsWith("/warehouse/")
-  );
-}
+type AdminLoginFormProps = {
+  nextPath: string;
+};
 
-function resolveSafeNextPath(value: string | null): string {
-  if (
-    !value ||
-    !value.startsWith("/") ||
-    value.startsWith("//") ||
-    value.includes("\\") ||
-    !isAdministrativePath(value)
-  ) {
-    return "/admin";
-  }
-  return value;
-}
-
-export function AdminLoginForm() {
-  const searchParams = useSearchParams();
-  const nextPath = resolveSafeNextPath(searchParams.get("next"));
+export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminGatePassword, setAdminGatePassword] = useState("");
@@ -98,7 +77,7 @@ export function AdminLoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="w-full min-w-0 space-y-5">
       <div className="flex items-start gap-3 rounded-xl border border-primary-100 bg-primary-50 p-4">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
         <p className="text-sm leading-6 text-foreground">
@@ -129,7 +108,9 @@ export function AdminLoginForm() {
         disabled={submitting}
       />
 
-      <CloudflareTurnstile key={captchaEpoch} onTokenChange={setCaptchaToken} />
+      <div className="min-w-0 overflow-x-auto">
+        <CloudflareTurnstile key={captchaEpoch} onTokenChange={setCaptchaToken} />
+      </div>
 
       <Input
         id="admin-login-password"
