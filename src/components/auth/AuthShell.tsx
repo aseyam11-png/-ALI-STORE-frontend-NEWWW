@@ -70,14 +70,14 @@ export function AuthShell({
       <main
         className={
           "container-shell py-8 sm:py-12 lg:py-16 " +
-          (focused ? "lg:py-20" : "")
+          (focused ? "lg:py-16" : "")
         }
       >
-        <div className={focused ? "mx-auto max-w-3xl" : "mx-auto max-w-6xl"}>
+        <div className={focused ? "mx-auto w-full max-w-xl" : "mx-auto max-w-6xl"}>
           {focused ? (
             <section
               aria-labelledby="auth-page-title"
-              className="relative overflow-hidden rounded-[1.75rem] border border-neutral-200 bg-surface p-5 shadow-floating sm:p-8 lg:p-10"
+              className="relative w-full overflow-hidden rounded-[1.75rem] border border-neutral-200 bg-surface p-4 shadow-floating sm:p-7 lg:p-8"
             >
               <div
                 aria-hidden="true"
@@ -92,20 +92,20 @@ export function AuthShell({
                 className="absolute -start-24 -bottom-28 h-64 w-64 rounded-full bg-neutral-100/80 blur-3xl"
               />
 
-              <div className="relative">
-                <div className="mx-auto max-w-2xl text-center">
+              <div className="relative min-w-0">
+                <div className="mx-auto w-full max-w-lg text-center">
                   <div className="inline-flex items-center gap-2 rounded-md bg-primary-50 px-3 py-1.5 text-label font-medium text-brand">
                     <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                     {eyebrow}
                   </div>
 
-                  <p className="mt-6 text-caption font-medium tracking-[0.18em] text-muted-foreground">
+                  <p className="mt-5 text-caption font-medium tracking-[0.18em] text-muted-foreground">
                     ALI STORE
                   </p>
 
                   <h1
                     id="auth-page-title"
-                    className="mt-2 text-h1 text-foreground sm:text-display"
+                    className="mt-2 text-h1 text-foreground sm:text-3xl"
                   >
                     {title}
                   </h1>
@@ -115,8 +115,8 @@ export function AuthShell({
                   </p>
                 </div>
 
-                <div className="mx-auto mt-8 max-w-2xl border-t border-neutral-100 pt-8 sm:mt-10 sm:pt-10">
-                  <div className="min-w-0">{children}</div>
+                <div className="mx-auto mt-7 w-full max-w-lg border-t border-neutral-100 pt-7 sm:mt-8 sm:pt-8">
+                  <div className="min-w-0 w-full">{children}</div>
 
                   <div className="mt-7 border-t border-neutral-100 pt-6">
                     {formFooter}
