@@ -102,6 +102,14 @@ test("Tailwind container widths do not inherit the compact spacing scale", async
     );
   }
 
+  // max-width named utilities must explicitly use the independent container scale.
+  for (const [size] of containerWidths) {
+    assert.ok(
+      css.includes(`.max-w-${size} { max-width: var(--container-${size}); }`),
+      `max-w-${size} must resolve through the container scale`,
+    );
+  }
+
   // Spacing remains compact; the fix must not enlarge margins, padding, or gaps.
   assert.ok(css.includes("--spacing-lg: 2rem;"));
   assert.ok(css.includes("--spacing-xl: 3rem;"));
