@@ -6,6 +6,19 @@ async function read(path) {
   return readFile(path, "utf8");
 }
 
+test("admin login is server-rendered without a blocking Suspense placeholder", async () => {
+  const route = await read("src/app/(admin)/admin/login/page.tsx");
+  const admin = await read("src/components/auth/AdminLoginForm.tsx");
+
+  assert.ok(route.includes("searchParams: Promise"));
+  assert.ok(route.includes("resolveSafeNextPath(requestedNextPath)"));
+  assert.ok(route.includes("<AdminLoginForm nextPath={nextPath} />"));
+  assert.doesNotMatch(route, /<Suspense|h-64 animate-pulse/);
+  assert.ok(admin.includes("type AdminLoginFormProps"));
+  assert.ok(admin.includes("nextPath: string"));
+  assert.doesNotMatch(admin, /useSearchParams/);
+});
+
 test("admin login uses a dedicated credential form", async () => {
   const route = await read("src/app/(admin)/admin/login/page.tsx");
   const admin = await read("src/components/auth/AdminLoginForm.tsx");
@@ -26,17 +39,27 @@ test("admin login uses a dedicated credential form", async () => {
 });
 
 test("admin login accepts only internal admin return paths", async () => {
+  const route = await read("src/app/(admin)/admin/login/page.tsx");
   const admin = await read("src/components/auth/AdminLoginForm.tsx");
 
   assert.ok(admin.includes("adminGatePassword,"));
   assert.ok(admin.includes("captchaToken,"));
   assert.ok(admin.includes('purpose: "ADMIN_LOGIN"'));
-  assert.ok(admin.includes('path === "/admin"'));
-  assert.ok(admin.includes('path.startsWith("/admin/")'));
-  assert.ok(admin.includes('path === "/warehouse"'));
-  assert.ok(admin.includes('path.startsWith("/warehouse/")'));
-  assert.ok(admin.includes('value.includes("\\\\")'));
+  assert.ok(route.includes('path === "/admin"'));
+  assert.ok(route.includes('path.startsWith("/admin/")'));
+  assert.ok(route.includes('path === "/warehouse"'));
+  assert.ok(route.includes('path.startsWith("/warehouse/")'));
+  assert.ok(route.includes('value.includes("\\\\")'));
   assert.ok(admin.includes("/verify-email?"));
+});
+
+test("focused auth shell stays centered and responsive on narrow screens", async () => {
+  const shell = await read("src/components/auth/AuthShell.tsx");
+
+  assert.ok(shell.includes("mx-auto w-full max-w-xl"));
+  assert.ok(shell.includes("w-full overflow-hidden"));
+  assert.ok(shell.includes("p-4 shadow-floating sm:p-7 lg:p-8"));
+  assert.ok(shell.includes("min-w-0 w-full"));
 });
 
 test("admin OTP rejects customer and external return paths", async () => {
