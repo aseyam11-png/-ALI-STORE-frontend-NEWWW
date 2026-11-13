@@ -177,7 +177,7 @@
   --spacing-4xl: 6rem;     /* 96 */
 
   /* ---------- Container widths — independent from the spacing scale ----------
-     Tailwind v4 resolves named max-w-*/w-* utilities through --container-*.
+     Tailwind v4 resolves named max-width and width utilities through --container-*.
      Keep these widths separate so semantic spacing tokens (lg = 2rem, xl = 3rem)
      never collapse layout containers. */
   --container-3xs: 16rem;
