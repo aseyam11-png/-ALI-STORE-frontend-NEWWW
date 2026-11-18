@@ -9,7 +9,12 @@ const manifests = [];
 const malformed = [];
 
 function collectManifests(directory) {
-  if (!fs.existsSync(directory)) return;
+  try {
+    if (!fs.lstatSync(directory).isDirectory()) return;
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
 
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const fullPath = path.join(directory, entry.name);
@@ -35,8 +40,12 @@ function collectManifests(directory) {
 
 collectManifests(serverRoot);
 
-if (fs.existsSync(rootServerTrace)) {
-  manifests.push(rootServerTrace);
+try {
+  if (fs.lstatSync(rootServerTrace).isFile()) {
+    manifests.push(rootServerTrace);
+  }
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
 }
 
 function includesPackage(file, packageName) {
