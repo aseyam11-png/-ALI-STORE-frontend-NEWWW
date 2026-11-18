@@ -132,7 +132,7 @@ jobs:
         run: npm ci
 
       - name: Dependency vulnerability audit
-        run: npm audit --audit-level=high
+        run: node scripts/audit-dependencies.mjs
 
   external-security:
     name: Optional SCA/compliance

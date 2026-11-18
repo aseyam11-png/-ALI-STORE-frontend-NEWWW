@@ -77,7 +77,11 @@ export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="w-full min-w-0 space-y-5">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="w-full min-w-0 space-y-5"
+    >
       <div className="flex items-start gap-3 rounded-xl border border-primary-100 bg-primary-50 p-4">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
         <p className="text-sm leading-6 text-foreground">
@@ -109,7 +113,10 @@ export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
       />
 
       <div className="min-w-0 overflow-x-auto">
-        <CloudflareTurnstile key={captchaEpoch} onTokenChange={setCaptchaToken} />
+        <CloudflareTurnstile
+          key={captchaEpoch}
+          onTokenChange={setCaptchaToken}
+        />
       </div>
 
       <Input

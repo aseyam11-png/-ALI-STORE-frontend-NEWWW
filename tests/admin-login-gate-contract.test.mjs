@@ -75,7 +75,6 @@ test("admin OTP rejects customer and external return paths", async () => {
   );
 });
 
-
 test("Tailwind container widths do not inherit the compact spacing scale", async () => {
   const css = await read("src/app/globals.css");
 
@@ -115,16 +114,19 @@ test("Tailwind container widths do not inherit the compact spacing scale", async
   assert.ok(css.includes("--spacing-xl: 3rem;"));
 });
 
-
 test("admin Turnstile diagnostics expose actionable Cloudflare error codes", async () => {
   const widget = await read("src/components/auth/CloudflareTurnstile.tsx");
 
-  assert.ok(widget.includes('"error-callback"?: (errorCode: string) => boolean | void'));
+  assert.ok(
+    widget.includes('"error-callback"?: (errorCode: string) => boolean | void'),
+  );
   assert.ok(widget.includes('"error-callback": (rawCode) =>'));
-  assert.ok(widget.includes('return false;'));
+  assert.ok(widget.includes("return false;"));
   assert.ok(widget.includes('code === "110200"'));
   assert.ok(widget.includes('code === "200500"'));
-  assert.ok(widget.includes('code.startsWith("300") || code.startsWith("600")'));
+  assert.ok(
+    widget.includes('code.startsWith("300") || code.startsWith("600")'),
+  );
   assert.ok(widget.includes("Turnstile error:"));
   assert.ok(widget.includes("challenges.cloudflare.com"));
 });

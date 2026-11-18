@@ -73,7 +73,9 @@ export function AuthShell({
           (focused ? "lg:py-16" : "")
         }
       >
-        <div className={focused ? "mx-auto w-full max-w-xl" : "mx-auto max-w-6xl"}>
+        <div
+          className={focused ? "mx-auto w-full max-w-xl" : "mx-auto max-w-6xl"}
+        >
           {focused ? (
             <section
               aria-labelledby="auth-page-title"
