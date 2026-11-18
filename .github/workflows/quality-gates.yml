@@ -46,10 +46,6 @@ jobs:
       - name: Contract tests
         run: npm run test:contracts
 
-      - name: Temporary Prettier output diagnostic
-        if: ${{ github.event_name == 'pull_request' }}
-        run: npx --yes prettier@3 quality/inspect-next-traces.mjs
-
       - name: Prettier changed files
         if: ${{ github.event_name == 'pull_request' }}
         env:
