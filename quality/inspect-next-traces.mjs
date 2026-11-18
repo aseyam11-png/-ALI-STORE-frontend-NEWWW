@@ -18,8 +18,8 @@ function collectManifests(directory) {
       entry.name === "." ||
       entry.name === ".." ||
       entry.name.includes("/") ||
-      entry.name.includes("\\\\") ||
-      entry.name.includes("\\0") ||
+      entry.name.includes("\\") ||
+      entry.name.includes("\0") ||
       !fullPath.startsWith(`${directory}${path.sep}`)
     ) {
       continue;
@@ -40,7 +40,7 @@ if (fs.existsSync(rootServerTrace)) {
 }
 
 function includesPackage(file, packageName) {
-  const segments = file.replaceAll("\\\\", "/").split("/").filter(Boolean);
+  const segments = file.replaceAll("\\", "/").split("/").filter(Boolean);
   const packageSegments = packageName.split("/");
 
   for (
@@ -134,11 +134,11 @@ if (malformed.length > 0) {
   }
 }
 
-const report = `${lines.join("\\n")}\\n`;
+const report = `${lines.join("\n")}\n`;
 process.stdout.write(report);
 
 if (process.env.GITHUB_STEP_SUMMARY) {
-  fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\\n${report}`);
+  fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\n${report}`);
 }
 
 if (malformed.length > 0) {
