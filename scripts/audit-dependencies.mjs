@@ -102,8 +102,8 @@ function fail(message, details = "") {
   process.exit(1);
 }
 
-const affectedPicomatch = entriesForPackage("picomatch").filter(
-  ([, entry]) => isAffectedPicomatchVersion(entry.version),
+const affectedPicomatch = entriesForPackage("picomatch").filter(([, entry]) =>
+  isAffectedPicomatchVersion(entry.version),
 );
 
 if (affectedPicomatch.some(([, entry]) => entry.dev !== true)) {
@@ -166,9 +166,7 @@ if (unexpected.length > 0) {
 }
 
 if (severe.length > 0) {
-  console.warn(
-    `[dependency-audit] REVIEWED DEV-ONLY EXCEPTION: ${ADVISORY}.`,
-  );
+  console.warn(`[dependency-audit] REVIEWED DEV-ONLY EXCEPTION: ${ADVISORY}.`);
   console.warn(
     `[dependency-audit] ${severe.length} high/critical audit entries are transitive effects of this one advisory.`,
   );
