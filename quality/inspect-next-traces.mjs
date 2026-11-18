@@ -65,7 +65,7 @@ function findPackageVersion(tracePath, tracedFile, packageName) {
         const metadata = JSON.parse(fs.readFileSync(packageJson, 'utf8'));
         if (metadata.name === packageName) return metadata.version ?? 'unknown';
       } catch {
-        // Keep walking: a nested package.json may not describe the target package.
+        // A nested package.json may not describe the target package.
       }
     }
 
@@ -96,7 +96,11 @@ for (const manifestPath of manifests) {
     for (const packageName of packages) {
       if (!includesPackage(tracedFile, packageName)) continue;
       const version = findPackageVersion(manifestPath, tracedFile, packageName);
-      const key = `${version}\t${path.relative(process.cwd(), manifestPath)}\t${tracedFile}`;
+      const key = [
+        version,
+        path.relative(process.cwd(), manifestPath),
+        tracedFile,
+      ].join('\\t');
       findings.get(packageName).set(key, {
         version,
         manifest: path.relative(process.cwd(), manifestPath),
@@ -134,7 +138,9 @@ for (const packageName of packages) {
     lines.push(`  - ${match.manifest} → ${match.file}`);
   }
   if (matches.length > 12) {
-    lines.push(`  - … ${matches.length - 12} additional matching entries omitted.`);
+    lines.push(
+      `  - … ${matches.length - 12} additional matching entries omitted.`
+    );
   }
 }
 
