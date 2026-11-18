@@ -115,13 +115,13 @@ for (const packageName of packages) {
 
   if (matches.length === 0) {
     lines.push(
-      `- \\`${packageName}\\`: no references found in inspected server traces.`
+      `- ${packageName}: no references found in inspected server traces.`
     );
     continue;
   }
 
   lines.push(
-    `- \\`${packageName}\\`: FOUND; matched entries: ${matches.length}.`
+    `- ${packageName}: FOUND; matched entries: ${matches.length}.`
   );
 
   for (const match of matches.slice(0, 12)) {
