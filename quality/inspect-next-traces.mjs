@@ -100,7 +100,7 @@ for (const manifestPath of manifests) {
         version,
         path.relative(process.cwd(), manifestPath),
         tracedFile,
-      ].join('\\t');
+      ].join('\t');
       findings.get(packageName).set(key, {
         version,
         manifest: path.relative(process.cwd(), manifestPath),
