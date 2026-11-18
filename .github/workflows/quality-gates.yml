@@ -242,7 +242,9 @@ jobs:
           echo "1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a  /tmp/lychee.tar.gz" | sha256sum --check -
           mkdir -p /tmp/lychee-bin
           tar -xzf /tmp/lychee.tar.gz --strip-components=1 -C /tmp/lychee-bin
-          install -m 0755 /tmp/lychee-bin/lychee /usr/local/bin/lychee
+          mkdir -p "$HOME/.local/bin"
+          install -m 0755 /tmp/lychee-bin/lychee "$HOME/.local/bin/lychee"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           lychee --version
 
       - name: Lychee
