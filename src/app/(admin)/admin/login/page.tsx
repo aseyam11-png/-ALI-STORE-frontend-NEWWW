@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { AdminLoginForm } from "@/components/auth/AdminLoginForm";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -10,7 +9,42 @@ export const metadata: Metadata = {
   description: "تسجيل دخول آمن إلى لوحة إدارة ALI STORE.",
 };
 
-export default function AdminLoginPage() {
+type AdminLoginPageProps = {
+  searchParams: Promise<{ next?: string | string[] }>;
+};
+
+function isAdministrativePath(path: string): boolean {
+  return (
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path === "/warehouse" ||
+    path.startsWith("/warehouse/")
+  );
+}
+
+function resolveSafeNextPath(value: string | undefined): string {
+  if (
+    !value ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\") ||
+    !isAdministrativePath(value)
+  ) {
+    return "/admin";
+  }
+
+  return value;
+}
+
+export default async function AdminLoginPage({
+  searchParams,
+}: AdminLoginPageProps) {
+  const params = await searchParams;
+  const requestedNextPath = Array.isArray(params.next)
+    ? params.next[0]
+    : params.next;
+  const nextPath = resolveSafeNextPath(requestedNextPath);
+
   return (
     <AuthShell
       eyebrow="مساحة محمية"
@@ -36,13 +70,7 @@ export default function AdminLoginPage() {
         </div>
       }
     >
-      <Suspense
-        fallback={
-          <div className="h-64 animate-pulse rounded-2xl bg-neutral-50" />
-        }
-      >
-        <AdminLoginForm />
-      </Suspense>
+      <AdminLoginForm nextPath={nextPath} />
     </AuthShell>
   );
 }
