@@ -25,7 +25,7 @@ for (const root of scanRoots) collectManifests(root);
 if (fs.existsSync(rootServerTrace)) manifests.push(rootServerTrace);
 
 function includesPackage(file, packageName) {
-  const segments = file.replaceAll('\\\\', '/').split('/').filter(Boolean);
+  const segments = file.replaceAll('\\', '/').split('/').filter(Boolean);
   const packageSegments = packageName.split('/');
 
   for (let index = 0; index <= segments.length - packageSegments.length - 1; index += 1) {
@@ -84,7 +84,7 @@ for (const manifestPath of manifests) {
     for (const packageName of packages) {
       if (!includesPackage(tracedFile, packageName)) continue;
       const version = findPackageVersion(manifestPath, tracedFile, packageName);
-      const key = `${version}\\t${path.relative(process.cwd(), manifestPath)}\\t${tracedFile}`;
+      const key = `${version}\t${path.relative(process.cwd(), manifestPath)}\t${tracedFile}`;
       findings.get(packageName).set(key, {
         version,
         manifest: path.relative(process.cwd(), manifestPath),
@@ -123,11 +123,11 @@ if (malformed.length > 0) {
   for (const item of malformed) lines.push(`- ${item}`);
 }
 
-const report = `${lines.join('\\n')}\\n`;
+const report = `${lines.join('\n')}\n`;
 process.stdout.write(report);
 
 if (process.env.GITHUB_STEP_SUMMARY) {
-  fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\\n${report}`);
+  fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\n${report}`);
 }
 
 if (malformed.length > 0) process.exitCode = 1;
