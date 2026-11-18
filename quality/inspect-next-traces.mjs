@@ -117,7 +117,8 @@ const lines = [
 
 if (manifests.length === 0) {
   lines.push(
-    'No Next.js `.nft.json` trace manifests were found under `.next/server` or at `.next/next-server.js.nft.json`.'
+    'No Next.js `.nft.json` trace manifests were found under ' +
+      '`.next/server` or at `.next/next-server.js.nft.json`.'
   );
 }
 
@@ -132,7 +133,8 @@ for (const packageName of packages) {
 
   const versions = [...new Set(matches.map((item) => item.version))].join(', ');
   lines.push(
-    `- \`${packageName}\`: FOUND; traced version(s): ${versions}; matched entries: ${matches.length}.`
+    `- \`${packageName}\`: FOUND; traced version(s): ${versions}; ` +
+      `matched entries: ${matches.length}.`
   );
   for (const match of matches.slice(0, 12)) {
     lines.push(`  - ${match.manifest} → ${match.file}`);
