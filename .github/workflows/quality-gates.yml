@@ -99,7 +99,7 @@ jobs:
         run: npm run build
 
       - name: Inspect Next.js server trace dependencies
-        run: node quality/inspect-next-traces.mjs .next
+        run: bash quality/inspect-next-traces.sh
 
   security-supply-chain:
     name: Supply-chain security
