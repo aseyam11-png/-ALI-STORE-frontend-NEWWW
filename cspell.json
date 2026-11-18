@@ -91,6 +91,7 @@
     "pageleave",
     "partialize",
     "pipefail",
+    "PIPESTATUS",
     "Playwright",
     "posthog",
     "POSTHOG",

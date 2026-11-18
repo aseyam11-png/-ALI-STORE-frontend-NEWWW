@@ -98,6 +98,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Inspect Next.js server trace dependencies
+        run: bash quality/inspect-next-traces.sh
+
   security-supply-chain:
     name: Supply-chain security
     runs-on: ubuntu-latest
@@ -234,12 +237,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Install pinned Lychee binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSLo /tmp/lychee.tar.gz https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz
+          echo "1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a  /tmp/lychee.tar.gz" | sha256sum --check -
+          mkdir -p /tmp/lychee-bin
+          tar -xzf /tmp/lychee.tar.gz --strip-components=1 -C /tmp/lychee-bin
+          mkdir -p "$HOME/.local/bin"
+          install -m 0755 /tmp/lychee-bin/lychee "$HOME/.local/bin/lychee"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          lychee --version
+
       - name: Lychee
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: --verbose --no-progress './**/*.md' './**/*.html'
-          fail: true
-          lycheeVersion: v0.24.2
-          output: lychee/results.md
-          jobSummary: true
-          failIfEmpty: false
+        shell: bash
+        run: |
+          set +e
+          lychee --verbose --no-progress './**/*.md' './**/*.html' 2>&1 | tee /tmp/lychee-results.log
+          status=${PIPESTATUS[0]}
+          {
+            echo "## Broken-link scan (Lychee 0.24.2)"
+            echo '```text'
+            cat /tmp/lychee-results.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p lychee
+          cp /tmp/lychee-results.log lychee/results.md
+          exit "$status"
