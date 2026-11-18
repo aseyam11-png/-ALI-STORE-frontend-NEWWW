@@ -2,7 +2,7 @@ name: ALI STORE Security Static & Supply Chain
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/admin-auth-mainline-20261112]
   schedule:
     - cron: "15 3 * * 1"
   workflow_dispatch:
