@@ -1,3 +1,5 @@
+import { buildBackendTarget } from "./backend-proxy-target.mjs";
+
 const VERCEL_OIDC_HEADER = "x-vercel-oidc-token";
 const TRUSTED_SOURCE_HEADER = "x-vercel-trusted-oidc-idp-token";
 
@@ -56,8 +58,10 @@ export async function proxyBackendRequest(request: Request): Promise<Response> {
     return proxyError("Backend API configuration is not allowed.", 503);
   }
 
-  const target = new URL(`${incoming.pathname}${incoming.search}`, backend);
-  if (target.origin !== backend.origin) {
+  // Request-controlled path/query are accepted only when URL resolution
+  // keeps the destination on the configured backend origin.
+  const target = buildBackendTarget(backend, incoming);
+  if (!target) {
     return proxyError("Backend API destination is invalid.", 503);
   }
 
