@@ -58,7 +58,11 @@ test("request-controlled paths cannot redirect the backend target to another ori
 
   for (const requestUrl of hostileRequests) {
     const target = buildBackendTarget(backend, new URL(requestUrl));
-    assert.equal(target, null, `Expected cross-origin path to be rejected: ${requestUrl}`);
+    assert.equal(
+      target,
+      null,
+      `Expected cross-origin path to be rejected: ${requestUrl}`,
+    );
   }
 });
 
