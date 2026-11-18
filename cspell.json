@@ -3,9 +3,7 @@
   "language": "en",
   "useGitignore": true,
   "enableGlobDot": true,
-  "files": [
-    "**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}"
-  ],
+  "files": ["**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}"],
   "ignorePaths": [
     "node_modules/**",
     ".next/**",
@@ -86,7 +84,6 @@
     "Nmap",
     "nohup",
     "nointeractive",
-    "nonrecursive",
     "nosniff",
     "NOTIF",
     "outputformat",
@@ -120,9 +117,8 @@
     "Vitest",
     "WCAG",
     "WebKit",
-    "zaproxy"
+    "zaproxy",
+    "nonrecursive"
   ],
-  "ignoreRegExpList": [
-    "/[\\p{Script=Arabic}\\p{M}]+/gu"
-  ]
+  "ignoreRegExpList": ["/[\\p{Script=Arabic}\\p{M}]+/gu"]
 }
