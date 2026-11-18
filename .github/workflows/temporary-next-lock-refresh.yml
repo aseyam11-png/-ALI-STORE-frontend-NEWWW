@@ -1,0 +1,36 @@
+name: Temporary Next.js lockfile refresh
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lockfile:
+    if: startsWith(github.head_ref, 'security/next-16.4.6-remediation-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Regenerate lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit generated lockfile and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore(deps): regenerate lockfile for Next.js 16.4.6"
+          git rm .github/workflows/temporary-next-lock-refresh.yml
+          git commit -m "chore(ci): remove temporary lockfile refresh workflow"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
