@@ -28,9 +28,17 @@ function includesPackage(file, packageName) {
   const segments = file.replaceAll('\\', '/').split('/').filter(Boolean);
   const packageSegments = packageName.split('/');
 
-  for (let index = 0; index <= segments.length - packageSegments.length - 1; index += 1) {
+  for (
+    let index = 0;
+    index <= segments.length - packageSegments.length - 1;
+    index += 1
+  ) {
     if (segments[index] !== 'node_modules') continue;
-    if (packageSegments.every((segment, offset) => segments[index + 1 + offset] === segment)) {
+    if (
+      packageSegments.every(
+        (segment, offset) => segments[index + 1 + offset] === segment
+      )
+    ) {
       return true;
     }
   }
@@ -43,7 +51,9 @@ function findPackageVersion(tracePath, tracedFile, packageName) {
   if (!fs.existsSync(candidate)) return 'unknown';
 
   try {
-    if (!fs.statSync(candidate).isDirectory()) candidate = path.dirname(candidate);
+    if (!fs.statSync(candidate).isDirectory()) {
+      candidate = path.dirname(candidate);
+    }
   } catch {
     return 'unknown';
   }
@@ -74,7 +84,9 @@ for (const manifestPath of manifests) {
   try {
     trace = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   } catch (error) {
-    malformed.push(`${path.relative(process.cwd(), manifestPath)}: ${error.message}`);
+    malformed.push(
+      `${path.relative(process.cwd(), manifestPath)}: ${error.message}`
+    );
     continue;
   }
 
@@ -100,22 +112,30 @@ const lines = [
 ];
 
 if (manifests.length === 0) {
-  lines.push('No Next.js `.nft.json` trace manifests were found under `.next/server` or at `.next/next-server.js.nft.json`.');
+  lines.push(
+    'No Next.js `.nft.json` trace manifests were found under `.next/server` or at `.next/next-server.js.nft.json`.'
+  );
 }
 
 for (const packageName of packages) {
   const matches = [...findings.get(packageName).values()];
   if (matches.length === 0) {
-    lines.push(`- \`${packageName}\`: no references found in inspected server traces.`);
+    lines.push(
+      `- \`${packageName}\`: no references found in inspected server traces.`
+    );
     continue;
   }
 
   const versions = [...new Set(matches.map((item) => item.version))].join(', ');
-  lines.push(`- \`${packageName}\`: FOUND; traced version(s): ${versions}; matched entries: ${matches.length}.`);
+  lines.push(
+    `- \`${packageName}\`: FOUND; traced version(s): ${versions}; matched entries: ${matches.length}.`
+  );
   for (const match of matches.slice(0, 12)) {
     lines.push(`  - ${match.manifest} → ${match.file}`);
   }
-  if (matches.length > 12) lines.push(`  - … ${matches.length - 12} additional matching entries omitted.`);
+  if (matches.length > 12) {
+    lines.push(`  - … ${matches.length - 12} additional matching entries omitted.`);
+  }
 }
 
 if (malformed.length > 0) {
