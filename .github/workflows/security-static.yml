@@ -2,7 +2,7 @@ name: ALI STORE Security Static & Supply Chain
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/admin-auth-mainline-20261112]
   schedule:
     - cron: "15 3 * * 1"
   workflow_dispatch:
@@ -63,6 +63,9 @@ jobs:
           severity: critical,high,medium
           format: sarif
           output: artifacts/security/bearer.sarif
+          # One reviewed false-positive fingerprint only. The destination builder
+          # rejects cross-origin URL resolution before fetch; targeted tests cover it.
+          exclude-fingerprint: "0bdd2bd7c6af5e25d5b0cf563f69d67b_0"
           exit-code: "1"
 
       - name: TruffleHog secret scan

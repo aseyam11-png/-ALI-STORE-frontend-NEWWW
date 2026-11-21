@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, fix/admin-auth-mainline-20261112]
   schedule:
     - cron: "45 2 * * 1"
   workflow_dispatch:
@@ -132,7 +132,7 @@ jobs:
         run: npm ci
 
       - name: Dependency vulnerability audit
-        run: npm audit --audit-level=high
+        run: node scripts/audit-dependencies.mjs
 
   external-security:
     name: Optional SCA/compliance
@@ -203,7 +203,7 @@ jobs:
       - name: Lighthouse accessibility/performance/SEO
         run: |
           mkdir -p artifacts/lighthouse
-          npx --yes lighthouse@13 http://127.0.0.1:3000             --output=json             --output-path=artifacts/lighthouse/home.json             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --only-categories=accessibility,best-practices,performance,seo
+          npx --yes lighthouse@13.4.1 http://127.0.0.1:3000             --output=json             --output-path=artifacts/lighthouse/home.json             --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"             --only-categories=accessibility,best-practices,performance,seo
 
       - name: axe accessibility audit
         run: |

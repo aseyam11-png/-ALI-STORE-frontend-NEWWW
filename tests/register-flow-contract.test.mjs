@@ -52,14 +52,19 @@ assert.match(
   "auth session should call the canonical register endpoint",
 );
 assert.match(
-  nextConfig,
-  /process\.env\.NODE_ENV === "development"\s*\?\s*"http:\/\/localhost:8080"\s*:\s*undefined/,
-  "local development should default API rewrites to localhost:8080 when BACKEND_INTERNAL_URL is absent",
+  client,
+  /const SERVER_API_BASE_URL = configuredServerApiBase \?\? "http:\/\/localhost:8080"/,
+  "local development server-side API calls should retain the localhost fallback",
+);
+assert.match(
+  client,
+  /process\.env\.NODE_ENV === "production"[\s\S]*?!configuredServerApiBase/,
+  "production server-side API calls must fail closed when the private backend origin is missing",
 );
 assert.doesNotMatch(
   nextConfig,
-  /process\.env\.NODE_ENV === "production" \? "http:\/\/localhost:8080"/,
-  "production must never fall back to localhost",
+  /async rewrites\(/,
+  "backend API and OAuth requests must use the authenticated Node.js route handlers instead of direct rewrites",
 );
 
 console.log("register flow contract checks passed");
